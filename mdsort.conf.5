@@ -1,0 +1,7 @@
+maildir "~/Maildir/INBOX" {
+	match header "From" "notifications@github.com" move "~/Maildir/github"
+
+	match header "To" "ports@openbsd.org"
+	match header { "Cc" "To" } "source-changes@openbsd.org" \
+		move "~/Maildir/openbsd-cvs"
+}
