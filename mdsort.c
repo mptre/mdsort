@@ -89,7 +89,8 @@ main(int argc, char *argv[])
 				    path, maildir_get_path(dst));
 				if (dflag) {
 					str = rule_match_str(match);
-					log_info("%s", str);
+					if (str != NULL)
+						log_info("%s", str);
 					free(str);
 				} else {
 					maildir_move(md, dst, path);

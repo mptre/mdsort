@@ -13,8 +13,8 @@ testcase "sanity"
 			header "Subject" /hello/ move "~/Maildir/Junk"
 
 		match header "To" /user@example.com/ or \
-			header "Subject" /hello/ or \
-			new move "~/Maildir/Junk"
+			! header "Subject" /hello/ or \
+			! new move "~/Maildir/Junk"
 	}
 
 	maildir "~/Maildir/test2" {

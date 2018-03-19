@@ -28,9 +28,9 @@ static int flags, lineno, newline, parse_errors;
 }
 
 %token AND HEADER MAILDIR MATCH MOVE NEW OR PATTERN STRING
-%type <i> AND OR binop flags flag
+%type <i> AND OR binop flags flag neg
 %type <s> PATTERN STRING action
-%type <e> expr
+%type <e> expr expr1
 %type <r> rule
 
 %%
@@ -100,7 +100,13 @@ binop		: AND {
 		}
 		;
 
-expr		: HEADER {
+expr		: neg expr1 {
+			expr_set_negate($2, $1);
+			$$ = $2;
+		}
+		;
+
+expr1		: HEADER {
 			$<e>$ = expr_alloc(EXPR_TYPE_HEADER);
 		} headers PATTERN flags {
 			const char *errstr;
@@ -112,6 +118,14 @@ expr		: HEADER {
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW);
+		}
+		;
+
+neg		: /* empty */ {
+			$$ = 0;
+		}
+		| '!' {
+			$$ = 1;
 		}
 		;
 
@@ -238,6 +252,7 @@ again:
 	switch (c) {
 	case EOF:
 		return 0;
+	case '!':
 	case '{':
 	case '}':
 		return c;

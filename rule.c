@@ -30,6 +30,7 @@ struct rule {
 
 struct expr {
 	enum expr_type type;
+	int negate;
 	regex_t pattern;
 	regmatch_t *matches;
 	size_t nmatches;
@@ -125,6 +126,7 @@ rule_eval(struct rule *rl, const struct message *msg)
 	struct expr *ex;
 	int res = 1;
 
+	rule_match_free(&rl->match);
 	TAILQ_FOREACH(ex, &rl->expressions, entry) {
 		if ((res = expr_eval(ex, &rl->match, msg)) == 0) {
 			if (rule_get_type(rl) == RULE_TYPE_OR)
@@ -149,9 +151,8 @@ rule_match_free(struct rule_match *match)
 	for (i = 0; i < match->nmatches; i++)
 		free(match->matches[i]);
 	free(match->matches);
-	/* Don't free match since it's stored inside its corresponding rule. */
-	match->matches = NULL;
-	match->nmatches = 0;
+	/* Do not free match since it's stored inside its corresponding rule. */
+	memset(match, 0, sizeof(*match));
 }
 
 const char *
@@ -169,6 +170,9 @@ rule_match_str(const struct rule_match *match)
 	char *buf;
 	size_t size;
 	int lenval, n, padbeg, padend;
+
+	if (match->nmatches == 0)
+		return NULL;
 
 	/* ':' + ' ' + '\n' + '\0' = 4 */
 	size = 2 * (strlen(match->key) + strlen(match->val) + 4);
@@ -267,6 +271,12 @@ expr_set_header_pattern(struct expr *ex, const char *pattern, int flags,
 	return 0;
 }
 
+void
+expr_set_negate(struct expr *ex, int negate)
+{
+	ex->negate = negate;
+}
+
 static int
 expr_eval(struct expr *ex, struct rule_match *match, const struct message *msg)
 {
@@ -287,6 +297,8 @@ expr_eval(struct expr *ex, struct rule_match *match, const struct message *msg)
 	}
 	if (res == -1)
 		errx(1, "%s: %d: unknown expr type", __func__, ex->type);
+	if (ex->negate)
+		res = !res;
 	return res;
 }
 

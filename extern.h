@@ -150,6 +150,9 @@ void expr_set_header_key(struct expr *ex, const char *key);
 int expr_set_header_pattern(struct expr *ex, const char *pattern, int flags,
     const char **errstr);
 
+/* XXX */
+void expr_set_negate(struct expr *ex, int negate);
+
 struct config_list {
 	struct config *list;
 	size_t nmemb;
