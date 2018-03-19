@@ -71,6 +71,11 @@ void message_free(struct message *msg);
  */
 const char *message_get_header(const struct message *msg, const char *header);
 
+/*
+ * Returns the message path.
+ */
+const char *message_get_path(const struct message *msg);
+
 enum rule_type {
 	RULE_TYPE_AND = 1,
 	RULE_TYPE_OR,
@@ -128,6 +133,7 @@ char *rule_match_str(const struct rule_match *match);
 
 enum expr_type {
 	EXPR_TYPE_HEADER = 1,
+	EXPR_TYPE_NEW,
 };
 
 enum expr_pattern {

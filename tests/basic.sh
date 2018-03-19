@@ -104,6 +104,33 @@ testcase "match many or conditions"
 		fail "expected dst/new directory to not be empty"
 	pass
 
+testcase "match new"
+	mkmd "${MAILDIR}/dst"
+	mkmd "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+		To: user@example.com
+
+	EOF
+	mkmsg "${MAILDIR}/src/cur" <<-EOF
+		To: user@example.com
+
+	EOF
+	cat <<-EOF >$CONF
+		maildir "${MAILDIR}/src" {
+			match header "To" /user/ and new move "${MAILDIR}/dst"
+		}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+		fail "expected dst/new directory to not be empty"
+	ls "${MAILDIR}/src/cur" | cmp -s - /dev/null && \
+		fail "expected src/cur directory to not be empty"
+	grep -Rq "To: user@example.com" "${MAILDIR}/src/cur" || \
+		fail "expected src/cur directory to not be empty"
+	pass
+
 testcase "header key comparison is case insensitive"
 	mkmd "${MAILDIR}/dst"
 	mkmd "${MAILDIR}/src"

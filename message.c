@@ -105,6 +105,12 @@ message_get_header(const struct message *msg, const char *header)
 	return found->val;
 }
 
+const char *
+message_get_path(const struct message *msg)
+{
+	return msg->path;
+}
+
 static void
 message_parse_headers(struct message *msg)
 {

@@ -27,7 +27,7 @@ static int flags, lineno, newline, parse_errors;
 	struct expr *e;
 }
 
-%token AND HEADER MAILDIR MATCH MOVE OR PATTERN STRING
+%token AND HEADER MAILDIR MATCH MOVE NEW OR PATTERN STRING
 %type <i> AND OR binop flags flag
 %type <s> PATTERN STRING action
 %type <e> expr
@@ -110,6 +110,9 @@ expr		: HEADER {
 			flags = 0;
 			$$ = $2;
 		}
+		| NEW {
+			$$ = expr_alloc(EXPR_TYPE_NEW);
+		}
 		;
 
 headers		: '{' {
@@ -189,6 +192,7 @@ yylex(void)
 		{ "maildir",	MAILDIR },
 		{ "match",	MATCH },
 		{ "move",	MOVE },
+		{ "new",	NEW },
 		{ "or",		OR },
 		{ NULL,		0 },
 	};

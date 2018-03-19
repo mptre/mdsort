@@ -1,16 +1,20 @@
 testcase "sanity"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
-		match header "From" /user1@example.com/ move "~/Maildir/Junk"
+		match header "From" /user@example.com/ move "~/Maildir/Junk"
 
-		match header { "Cc" "To" } /user2@example.com/ \
+		match header { "Cc" "To" } /user@example.com/ \
 			move "~/Maildir/Junk"
 
-		match header "To" /user3@example.com/ \
-			and header "Subject" /hello/ move "~/Maildir/Junk"
+		match header "To" /user@example.com/ and \
+			header "Subject" /hello/ move "~/Maildir/Junk"
 
-		match header "To" /user4@example.com/ \
-			or header "Subject" /test/ move "~/Maildir/Junk"
+		match header "To" /user@example.com/ or \
+			header "Subject" /hello/ move "~/Maildir/Junk"
+
+		match header "To" /user@example.com/ or \
+			header "Subject" /hello/ or \
+			new move "~/Maildir/Junk"
 	}
 
 	maildir "~/Maildir/test2" {

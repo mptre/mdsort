@@ -46,6 +46,10 @@ struct header {
 
 static int expr_eval(struct expr *, struct rule_match *,
     const struct message *);
+static int expr_header_eval(struct expr *, struct rule_match *,
+    const struct message *);
+static int expr_new_eval(struct expr *, struct rule_match *,
+    const struct message *);
 static int rule_get_type(const struct rule *);
 
 struct rule *
@@ -266,6 +270,29 @@ expr_set_header_pattern(struct expr *ex, const char *pattern, int flags,
 static int
 expr_eval(struct expr *ex, struct rule_match *match, const struct message *msg)
 {
+	int res = -1;
+
+	switch (ex->type) {
+	case EXPR_TYPE_HEADER:
+		res = expr_header_eval(ex, match, msg);
+		break;
+	case EXPR_TYPE_NEW:
+		res = expr_new_eval(ex, match, msg);
+		break;
+
+	/*
+	 * Conscious decision to leave out the default case, any decent compiler
+	 * will warn if the switch is not exhaustive.
+	 */
+	}
+	if (res == -1)
+		errx(1, "%s: %d: unknown expr type", __func__, ex->type);
+	return res;
+}
+
+static int expr_header_eval(struct expr *ex, struct rule_match *match,
+    const struct message *msg)
+{
 	const char *val;
 	const struct header *hdr;
 	char *str;
@@ -302,6 +329,24 @@ expr_eval(struct expr *ex, struct rule_match *match, const struct message *msg)
 		return 0;
 	}
 	return 1;
+}
+
+static int expr_new_eval(__unused struct expr *ex,
+    __unused struct rule_match *match, const struct message *msg)
+{
+	const char *beg, *end, *p, *path;
+
+	path = message_get_path(msg);
+	beg = end = path;
+	for (;;) {
+		if ((p = strchr(end, '/')) == NULL)
+			break;
+		beg = end;
+		end = p + 1;
+	}
+	if (strncmp(beg, "new/", 4))
+		return 1;
+	return 0;
 }
 
 static int
