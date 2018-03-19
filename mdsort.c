@@ -159,7 +159,7 @@ log_debug(const char *fmt, ...)
 	if (verbose < 2)
 		return;
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	vfprintf(stdout, fmt, ap);
 	va_end(ap);
 }
 
@@ -171,6 +171,6 @@ log_info(const char *fmt, ...)
 	if (verbose < 1)
 		return;
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	vfprintf(stdout, fmt, ap);
 	va_end(ap);
 }
