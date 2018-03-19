@@ -208,6 +208,26 @@ testcase "destination interpolation"
 		fail "expected example/new directory to not be empty"
 	pass
 
+testcase "destination interpolation first match is favored"
+	mkmd "${MAILDIR}/first"
+	mkmd "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
+		To: first@last.com
+
+	EOF
+	cat <<-EOF >$CONF
+		maildir "${MAILDIR}/src" {
+			match header "To" /(first)/ and header "To" /(last)/ \
+				move "${MAILDIR}/\1"
+		}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	grep -Rq "To: first@last.com" "${MAILDIR}/first/new" || \
+		fail "expected first/new directory to not be empty"
+	pass
+
 testcase "destination interpolation out of bounds"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
@@ -219,7 +239,8 @@ testcase "destination interpolation out of bounds"
 			match header "To" /./ move "${MAILDIR}/\1"
 		}
 	EOF
-	mdsort | grep -q '\\1: invalid back-reference in destination' || \
+	mdsort >$TMP2
+	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
 
@@ -235,7 +256,8 @@ testcase "destination interpolation out of range"
 				move "${MAILDIR}/\99999999999999999999"
 		}
 	EOF
-	mdsort | grep -q '9: invalid back-reference in destination' || \
+	mdsort >$TMP2
+	grep -q '9: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
 
@@ -250,7 +272,8 @@ testcase "destination interpolation negative"
 			match header "To" /./ move "${MAILDIR}/\-1"
 		}
 	EOF
-	mdsort | grep -q '\\-1/new: No such file or directory' || \
+	mdsort >$TMP2
+	grep -q '\\-1/new: No such file or directory' $TMP2 || \
 		fail "expected back-reference to be ignored"
 	pass
 
@@ -265,11 +288,12 @@ testcase "destination interpolation non-decimal"
 			match header "To" /(user)/ move "${MAILDIR}/\0x1"
 		}
 	EOF
-	mdsort | grep -q 'userx1/new: No such file or directory' || \
+	mdsort >$TMP2
+	grep -q 'userx1/new: No such file or directory' $TMP2 || \
 		fail "expected back-reference to be ignored"
 	pass
 
-testcase -e "destination interpolation too long"
+testcase "destination interpolation too long"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 		To: user@$(randstr 1024 alnum).com
@@ -280,6 +304,7 @@ testcase -e "destination interpolation too long"
 			match header "To" /(.+)/ move "${MAILDIR}/\1"
 		}
 	EOF
-	mdsort | grep -q '\\1: destination too long' || \
+	mdsort >$TMP2
+	grep -q '\\1: destination too long' $TMP2 || \
 		fail "expected destination to be too long"
 	pass

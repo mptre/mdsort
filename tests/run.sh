@@ -14,7 +14,7 @@ atexit() {
 }
 
 fail() {
-	printf 'FAIL: %s: %s\n' "$TCDESC" "$@"
+	printf 'FAIL: %s: %s\n' "$TCDESC" "$@" 1>&2
 	TCFAIL=1
 	NERR=$((NERR + 1))
 }
@@ -45,6 +45,7 @@ mdsort() {
 	env "$ENV" "$MDSORT" -f mdsort.conf "$@" >"$TMP1" 2>&1 || _exit=1
 	if [ $TCEXIT -ne $_exit ]; then
 		fail "exits ${TCEXIT} != ${_exit}"
+		cat "$TMP1" 1>&2
 	fi
 
 	if [ $_input -eq 0 ]; then
