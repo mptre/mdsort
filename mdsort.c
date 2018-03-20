@@ -19,7 +19,7 @@ static int verbose;
 int
 main(int argc, char *argv[])
 {
-	struct config_list *config;
+	const struct config_list *config;
 	struct config *conf;
 	struct maildir *dst, *md;
 	struct message *msg;

@@ -169,7 +169,7 @@ action		: MOVE STRING {
 
 %%
 
-struct config_list *
+const struct config_list *
 parse_config(const char *path)
 {
 	fh = fopen(path, "r");

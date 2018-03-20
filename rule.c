@@ -135,9 +135,9 @@ rule_eval(struct rule *rl, const struct message *msg)
 			break; /* no match, short-circuit AND */
 		}
 	}
-	if (res == 0)
-		return &rl->match;
-	return NULL;
+	if (res)
+		return NULL;
+	return &rl->match;
 }
 
 void

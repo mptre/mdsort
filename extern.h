@@ -66,7 +66,7 @@ struct message *message_parse(const char *path);
 void message_free(struct message *msg);
 
 /*
- * Returns the corresponding value for given header if present.
+ * Returns the corresponding value for the given header if present.
  * Otherwise, NULL is returned.
  */
 const char *message_get_header(const struct message *msg, const char *header);
@@ -114,7 +114,7 @@ const char *rule_get_dest(const struct rule *rl);
 struct rule_match *rule_eval(struct rule *rl, const struct message *msg);
 
 /*
- * Free matches.
+ * Free match.
  */
 void rule_match_free(struct rule_match *match);
 
@@ -165,8 +165,7 @@ struct config {
 };
 
 /* XXX */
-/* XXX const? */
-struct config_list *parse_config(const char *path);
+const struct config_list *parse_config(const char *path);
 
 /* XXX */
 void log_debug(const char *fmt, ...)
