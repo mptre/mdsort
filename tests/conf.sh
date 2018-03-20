@@ -116,6 +116,15 @@ testcase -e "string too long"
 	mdsort.conf:1: syntax error
 	EOF
 
+testcase -e "string unterminated"
+	cat <<-EOF >$CONF
+	maildir "
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:1: unterminated string
+	mdsort.conf:1: syntax error
+	EOF
+
 testcase -e "pattern too long"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
@@ -125,6 +134,17 @@ testcase -e "pattern too long"
 	EOF
 	mdsort - -n <<-EOF
 	mdsort.conf:2: pattern too long
+	mdsort.conf:2: syntax error
+	EOF
+
+testcase -e "pattern unterminated"
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/test1" {
+		match header "From" /
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:2: unterminated pattern
 	mdsort.conf:2: syntax error
 	EOF
 

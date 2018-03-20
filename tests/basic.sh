@@ -52,6 +52,27 @@ testcase "match header negate"
 		fail "expected dst/new directory to not be empty"
 	pass
 
+testcase "match header escape slash"
+	mkmd "${MAILDIR}/dst"
+	mkmd "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+		Subject: foo/bar
+
+	EOF
+	cat <<-EOF >$CONF
+		maildir "${MAILDIR}/src" {
+			match header "Subject" /foo\/bar/ move "${MAILDIR}/dst"
+		}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null && \
+		fail "expected dst/new directory to not be empty"
+	grep -Rq "Subject: foo/bar" "${MAILDIR}/dst/new" || \
+		fail "expected dst/new directory to not be empty"
+	pass
+
 testcase "match many headers"
 	mkmd "${MAILDIR}/dst"
 	mkmd "${MAILDIR}/src"

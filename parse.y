@@ -218,7 +218,7 @@ yylex(void)
 	};
 	static char lexeme[BUFSIZ], kw[16];
 	char *buf;
-	int c, i;
+	int c, i, lineno_save;
 
 	buf = yylval.s = lexeme;
 
@@ -242,6 +242,8 @@ again:
 			goto again;
 		yyungetc(c);
 	}
+	/* Used for more accurate error messages. */
+	lineno_save = lineno;
 
 	if (c == '#') {
 		for (;;) {
@@ -273,8 +275,11 @@ again:
 			if (yypeek('"'))
 				break;
 			c = yygetc();
-			if (c == EOF)
+			if (c == EOF) {
+				lineno = lineno_save;
+				yyerror("unterminated string");
 				return 0;
+			}
 
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("string too long");
@@ -291,8 +296,11 @@ again:
 			if (yypeek('/'))
 				break;
 			c = yygetc();
-			if (c == EOF)
+			if (c == EOF) {
+				lineno = lineno_save;
+				yyerror("unterminated pattern");
 				return 0;
+			}
 
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("pattern too long");
