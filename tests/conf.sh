@@ -75,15 +75,14 @@ testcase -e "missing file"
 	mdsort: missing.conf: No such file or directory
 	EOF
 
-testcase -e "invalid regex"
+testcase -e "invalid pattern"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /(/ move "~/Maildir/test2"
 	}
 	EOF
-	mdsort - -n <<-EOF
-	mdsort.conf:2: parentheses not balanced
-	EOF
+	mdsort >/dev/null
+	pass
 
 testcase -e "missing header name"
 	cat <<-EOF >$CONF
@@ -100,7 +99,7 @@ testcase -e "missing header name"
 testcase -e "keyword too long"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
-		$(randstr 1024 lower)
+		$(randstr $BUFSIZ lower)
 	}
 	EOF
 	mdsort - -n <<-EOF
@@ -110,7 +109,7 @@ testcase -e "keyword too long"
 
 testcase -e "string too long"
 	cat <<-EOF >$CONF
-	maildir "$(randstr 1024 alnum)" {}
+	maildir "$(randstr $BUFSIZ alnum)" {}
 	EOF
 	mdsort - -n <<-EOF
 	mdsort.conf:1: string too long
@@ -120,7 +119,7 @@ testcase -e "string too long"
 testcase -e "pattern too long"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
-		match header "From" /$(randstr 1024 alnum)/ \
+		match header "From" /$(randstr $BUFSIZ alnum)/ \
 			move "~/Maildir/test2"
 	}
 	EOF
@@ -131,7 +130,7 @@ testcase -e "pattern too long"
 
 testcase -e "maildir path too long after tilde expansion"
 	cat <<-EOF >$CONF
-	maildir "~/$(randstr 1012 alnum)" {}
+	maildir "~/$(randstr $((PATH_MAX - 10))  alnum)" {}
 	EOF
 	HOME=/home/user mdsort - -n <<-EOF
 	mdsort.conf:1: path too long
@@ -140,7 +139,7 @@ testcase -e "maildir path too long after tilde expansion"
 testcase -e "destination path too long after tilde expansion"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
-		match header "From" /./ move "~/$(randstr 1012 alnum)"
+		match header "From" /./ move "~/$(randstr $((PATH_MAX - 10)) alnum)"
 	}
 	EOF
 	HOME=/home/user mdsort - -n <<-EOF

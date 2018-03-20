@@ -1,14 +1,19 @@
 %{
 
+#include "config.h"
+
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "extern.h"
 
 static int expandtilde(char *);
+static void yyerror(const char *);
 static int yygetc(void);
+static int yylex(void);
 static int yypeek(int);
 static void yyungetc(int);
 
@@ -111,10 +116,10 @@ expr1		: HEADER {
 		} headers PATTERN flags {
 			const char *errstr;
 
-			if (expr_set_header_pattern($2, $4, $5, &errstr))
+			if (expr_set_header_pattern($<e>2, $4, $5, &errstr))
 				yyerror(errstr);
 			flags = 0;
-			$$ = $2;
+			$$ = $<e>2;
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW);
@@ -149,6 +154,7 @@ strings		: /* empty */
 
 flags		: /* empty */ {
 			flags = 1;
+			$$ = 0;
 		}
 		| flags flag {
 			$$ = $1 | $2;

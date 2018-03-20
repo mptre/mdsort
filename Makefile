@@ -1,14 +1,13 @@
+include ${.CURDIR}/Makefile.inc
+
 PROG=	mdsort
 
-SRC=	maildir.c message.c mdsort.c parse.c rule.c
+SRC=	compat-arc4random.c compat-pledge.c compat-reallocarray.c \
+	maildir.c message.c mdsort.c parse.c rule.c
 OBJ=	${SRC:.c=.o}
 DEP=	${SRC:.c=.d}
 
-CFLAGS+=	-Wall -Wextra -MD -MP
 CFLAGS+=	${DEBUG}
-
-# XXX zap
-CFLAGS+=	-Werror
 CPPFLAGS+=	-I${.CURDIR}
 
 all: ${PROG}

@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <err.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -128,15 +130,15 @@ readenv(void)
 	static char confbuf[PATH_MAX], homebuf[PATH_MAX];
 	static char hostbuf[HOST_NAME_MAX + 1];
 	char *p;
+	size_t len;
 	int n;
 
-	if ((p = getenv("HOME")) != NULL && *p != '\0') {
-		if (strlcpy(homebuf, p, PATH_MAX) >= PATH_MAX)
-			errx(1, "%s: buffer too small", __func__);
-	} else {
-		/* XXX */
-		errx(1, "HOME: not defined");
-	}
+	if ((p = getenv("HOME")) == NULL || *p == '\0')
+		errx(1, "HOME: not defined"); /* XXX */
+	else if ((len = strlen(p) + 1) > sizeof(homebuf))
+		errx(1, "%s: buffer too small", __func__);
+	else
+		memcpy(homebuf, p, len);
 	home = homebuf;
 
 	if (gethostname(hostbuf, sizeof(hostbuf)) == -1)

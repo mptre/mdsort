@@ -1,4 +1,10 @@
-#include <sys/queue.h>
+#include "config.h"
+
+#ifdef HAVE_QUEUE
+#  include <sys/queue.h>
+#else
+#  include "compat-queue.h"
+#endif
 
 #include <assert.h>
 #include <err.h>
@@ -166,7 +172,7 @@ rule_match_get(const struct rule_match *match, unsigned long n)
 char *
 rule_match_str(const struct rule_match *match)
 {
-	const char *p;
+	const char *p, *tmp;
 	char *buf;
 	size_t size;
 	int lenval, n, padbeg, padend;
@@ -184,9 +190,14 @@ rule_match_str(const struct rule_match *match)
 	 * Normalize initial padding if the match does not reside on the first
 	 * line.
 	 */
-	p = memrchr(match->val, '\n', match->valbeg);
-	if (p != NULL) {
-		p++; /* consume '\n' */
+	p = match->val;
+	for (;;) {
+		if ((tmp = strchr(p, '\n')) == NULL ||
+		    tmp > match->val + match->valbeg)
+			break;
+		p = tmp + 1;
+	}
+	if (p != match->val) {
 		padbeg = match->valbeg - (p - match->val);
 		for (; *p == '\t'; p++)
 			padbeg += 7;
@@ -235,8 +246,7 @@ expr_set_header_key(struct expr *ex, const char *key)
 	if (hdr == NULL)
 		err(1, NULL);
 	hdr->key = (char *)(hdr + 1);
-	if (strlcpy(hdr->key, key, len) >= len)
-		errx(1, "%s: buffer too small", __func__);
+	memcpy(hdr->key, key, len);
 	TAILQ_INSERT_TAIL(&ex->headers, hdr, entry);
 }
 
@@ -343,8 +353,9 @@ static int expr_header_eval(struct expr *ex, struct rule_match *match,
 	return 1;
 }
 
-static int expr_new_eval(__unused struct expr *ex,
-    __unused struct rule_match *match, const struct message *msg)
+static int expr_new_eval(struct expr *ex __attribute__((__unused__)),
+    struct rule_match *match __attribute__((__unused__)),
+    const struct message *msg)
 {
 	const char *beg, *end, *p, *path;
 

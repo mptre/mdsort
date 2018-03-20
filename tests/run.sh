@@ -25,6 +25,15 @@ pass() {
 	printf 'PASS: %s\n' "$TCDESC"
 }
 
+cppvar() {
+	cpp - <<EOF | grep -v '^$' | tail -1
+#include <limits.h>
+#include <stdio.h>
+
+${1}
+EOF
+}
+
 fcmp() {
 	if ! cmp -s "$1" "$2"; then
 		fail "unexpected output:"
@@ -107,8 +116,8 @@ ENV="MALLOC_OPTIONS=S"
 NERR=0
 NMSG=0
 TCDESC=""
-TCFAIL=0
 TCEXIT=0
+TCFAIL=0
 
 MAILDIR=$(mktemp -d -t mdsort.XXXXXX)
 CONF="${MAILDIR}/mdsort.conf"
@@ -116,6 +125,12 @@ TMP1="${MAILDIR}/tmp1"
 TMP2="${MAILDIR}/tmp2"
 TMP3="${MAILDIR}/tmp3"
 trap "atexit $MAILDIR" EXIT
+
+# Platform specific values.
+PATH_MAX=$(cppvar PATH_MAX)
+: ${PATH_MAX:?}
+BUFSIZ=$(cppvar BUFSIZ)
+: ${BUFSIZ:?}
 
 cd $MAILDIR
 

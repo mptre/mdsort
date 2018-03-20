@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -73,7 +75,6 @@ message_parse(const char *path)
 	message_parse_headers(msg);
 
 	return msg;
-
 err:
 	close(fd);
 	message_free(msg);

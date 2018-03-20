@@ -350,7 +350,7 @@ testcase "destination interpolation non-decimal"
 testcase "destination interpolation too long"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@$(randstr 1024 alnum).com
+		To: user@$(randstr $PATH_MAX alnum).com
 
 	EOF
 	cat <<-EOF >$CONF
