@@ -105,6 +105,7 @@ rule_free(struct rule *rl)
 		free(ex->matches);
 		free(ex);
 	}
+	free(rl->dest);
 	free(rl);
 }
 
@@ -155,8 +156,10 @@ rule_eval(struct rule *rl, const struct message *msg)
 			break; /* no match, short-circuit AND */
 		}
 	}
-	if (res)
+	if (res) {
+		rule_match_free(&rl->match);
 		return NULL;
+	}
 	return &rl->match;
 }
 
