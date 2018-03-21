@@ -14,6 +14,7 @@
 
 struct message {
 	const char *path;
+	const char *body;
 	char *buf;
 
 	struct header *headers;
@@ -25,7 +26,7 @@ struct header {
 	const char *val;
 };
 
-static void message_parse_headers(struct message *);
+static const char *message_parse_headers(struct message *);
 
 static int cmpheader(const void *, const void *);
 static int findheader(char *, char **, char **, char **, char **);
@@ -72,7 +73,7 @@ message_parse(const char *path)
 	msg->buf[msglen] = '\0';
 	close(fd);
 
-	message_parse_headers(msg);
+	msg->body = message_parse_headers(msg);
 
 	return msg;
 err:
@@ -89,6 +90,12 @@ message_free(struct message *msg)
 	free(msg->buf);
 	free(msg->headers);
 	free(msg);
+}
+
+const char *
+message_get_body(const struct message *msg)
+{
+	return msg->body;
 }
 
 const char *
@@ -112,7 +119,7 @@ message_get_path(const struct message *msg)
 	return msg->path;
 }
 
-static void
+static const char *
 message_parse_headers(struct message *msg)
 {
 	char *buf, *keybeg, *keyend, *valbeg, *valend;
@@ -133,6 +140,9 @@ message_parse_headers(struct message *msg)
 		buf = valend + 1;
 	}
 	qsort(msg->headers, msg->nheaders, sizeof(*msg->headers), cmpheader);
+	if (buf[0] == '\0' || buf[1] == '\0')
+		return NULL;
+	return buf + 1;
 }
 
 static int

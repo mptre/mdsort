@@ -65,10 +65,12 @@ mdsort() {
 	fi
 }
 
-# mkmd path
+# mkmd path ...
 mkmd() {
-	for d in cur new tmp; do
-		mkdir -p "${1}/${d}"
+	for p; do
+		for d in cur new tmp; do
+			mkdir -p "${p}/${d}"
+		done
 	done
 }
 

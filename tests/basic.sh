@@ -1,3 +1,59 @@
+testcase "match body"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+		To: user@example.com
+
+		Hello Bob
+	EOF
+	cat <<-EOF >$CONF
+		maildir "${MAILDIR}/src" {
+			match body /Bob/ move "${MAILDIR}/dst"
+		}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	grep -Rq "Bob" "${MAILDIR}/dst/new" || \
+		fail "expected dst/cur directory to not be empty"
+	pass
+
+testcase "match body negate"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+		To: user@example.com
+
+		Hello Alice
+	EOF
+	cat <<-EOF >$CONF
+		maildir "${MAILDIR}/src" {
+			match ! body /Bob/ move "${MAILDIR}/dst"
+		}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	grep -Rq "Alice" "${MAILDIR}/dst/new" || \
+		fail "expected dst/new directory to not be empty"
+	pass
+
+testcase "match body with empty body"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+		To: user@example.com
+
+	EOF
+	cat <<-EOF >$CONF
+		maildir "${MAILDIR}/src" {
+			match body /Bob/ move "${MAILDIR}/dst"
+		}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
+		fail "expected src/new directory to not be empty"
+	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	pass
+
 testcase "match header"
 	mkmd "${MAILDIR}/dst"
 	mkmd "${MAILDIR}/src"
@@ -244,6 +300,24 @@ testcase "match case insensitive"
 		fail "expected dst/new directory to not be empty"
 	pass
 
+testcase "message without blank line after headers"
+	mkmd "${MAILDIR}/dst"
+	mkmd "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+		To: user@example.com
+	EOF
+	cat <<-EOF >$CONF
+		maildir "${MAILDIR}/src" {
+			match header "To" /user/ move "${MAILDIR}/dst"
+		}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+		fail "expected dst/new directory to not be empty"
+	pass
+
 testcase "uniq suffix is preserved"
 	mkmd "${MAILDIR}/dst"
 	mkmd "${MAILDIR}/src"
@@ -263,7 +337,7 @@ testcase "uniq suffix is preserved"
 		fail "expected dst/new directory to not be empty"
 	pass
 
-testcase "destination interpolation"
+testcase "destination interpolation from header"
 	mkmd "${MAILDIR}/example"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
@@ -273,6 +347,26 @@ testcase "destination interpolation"
 	cat <<-EOF >$CONF
 		maildir "${MAILDIR}/src" {
 			match header "To" /user@([^\.]+).com/ \
+				move "${MAILDIR}/\1"
+		}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	grep -Rq "To: user@example.com" "${MAILDIR}/example/new" || \
+		fail "expected example/new directory to not be empty"
+	pass
+
+testcase "destination interpolation from body"
+	mkmd "${MAILDIR}/example" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
+		To: user@example.com
+
+		Hello example
+	EOF
+	cat <<-EOF >$CONF
+		maildir "${MAILDIR}/src" {
+			match body /Hello (example)/ \
 				move "${MAILDIR}/\1"
 		}
 	EOF

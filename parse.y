@@ -32,7 +32,7 @@ static int flags, lineno, newline, parse_errors;
 	struct expr *e;
 }
 
-%token AND HEADER MAILDIR MATCH MOVE NEW OR PATTERN STRING
+%token AND BODY HEADER MAILDIR MATCH MOVE NEW OR PATTERN STRING
 %type <i> AND OR binop flags flag neg
 %type <s> PATTERN STRING action
 %type <e> expr expr1
@@ -111,12 +111,20 @@ expr		: neg expr1 {
 		}
 		;
 
-expr1		: HEADER {
+expr1		: BODY PATTERN flags {
+			const char *errstr;
+
+			$$ = expr_alloc(EXPR_TYPE_BODY);
+			if (expr_set_pattern($$, $2, $3, &errstr))
+				yyerror(errstr);
+			flags = 0;
+		}
+		| HEADER {
 			$<e>$ = expr_alloc(EXPR_TYPE_HEADER);
 		} headers PATTERN flags {
 			const char *errstr;
 
-			if (expr_set_header_pattern($<e>2, $4, $5, &errstr))
+			if (expr_set_pattern($<e>2, $4, $5, &errstr))
 				yyerror(errstr);
 			flags = 0;
 			$$ = $<e>2;
@@ -208,6 +216,7 @@ yylex(void)
 		int type;
 	} keywords[] = {
 		{ "and",	AND },
+		{ "body",	BODY },
 		{ "header",	HEADER },
 		{ "maildir",	MAILDIR },
 		{ "match",	MATCH },

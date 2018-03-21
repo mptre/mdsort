@@ -66,6 +66,12 @@ struct message *message_parse(const char *path);
 void message_free(struct message *msg);
 
 /*
+ * Returns the message body if present.
+ * Otherwise, NULL is returned.
+ */
+const char *message_get_body(const struct message *msg);
+
+/*
  * Returns the corresponding value for the given header if present.
  * Otherwise, NULL is returned.
  */
@@ -132,7 +138,8 @@ const char *rule_match_get(const struct rule_match *match, unsigned long n);
 char *rule_match_str(const struct rule_match *match);
 
 enum expr_type {
-	EXPR_TYPE_HEADER = 1,
+	EXPR_TYPE_BODY = 1,
+	EXPR_TYPE_HEADER,
 	EXPR_TYPE_NEW,
 };
 
@@ -147,11 +154,11 @@ struct expr *expr_alloc(enum expr_type);
 void expr_set_header_key(struct expr *ex, const char *key);
 
 /* XXX */
-int expr_set_header_pattern(struct expr *ex, const char *pattern, int flags,
-    const char **errstr);
+void expr_set_negate(struct expr *ex, int negate);
 
 /* XXX */
-void expr_set_negate(struct expr *ex, int negate);
+int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
+    const char **errstr);
 
 struct config_list {
 	struct config *list;
