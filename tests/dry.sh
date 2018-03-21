@@ -1,6 +1,5 @@
 testcase "match header on first line"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: user@example.com
 
@@ -18,8 +17,7 @@ EOF
 	fcmp $TMP2 $TMP3 && pass
 
 testcase "match header on middle line"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<EOF
 To: admin@example.com,
 	user@example.com,
@@ -40,8 +38,7 @@ EOF
 	fcmp $TMP2 $TMP3 && pass
 
 testcase "match header on last line"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<EOF
 To: admin@example.com,
   user@example.com,
@@ -61,8 +58,7 @@ EOF
 	fcmp $TMP2 $TMP3 && pass
 
 testcase "match header with tab indent"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<EOF
 Cc: admin@example.com,
 	user@example.com
@@ -82,8 +78,7 @@ EOF
 	fcmp $TMP2 $TMP3 && pass
 
 testcase "match header negate"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: admin@example.com,
 

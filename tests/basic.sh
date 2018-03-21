@@ -55,8 +55,7 @@ testcase "match body with empty body"
 	pass
 
 testcase "match header"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: user@example.com
 
@@ -82,8 +81,7 @@ testcase "match header"
 	pass
 
 testcase "match header negate"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: user@example.com
 
@@ -109,8 +107,7 @@ testcase "match header negate"
 	pass
 
 testcase "match header escape slash"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		Subject: foo/bar
 
@@ -130,8 +127,7 @@ testcase "match header escape slash"
 	pass
 
 testcase "match many headers"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: user@example.com
 
@@ -157,8 +153,7 @@ testcase "match many headers"
 	pass
 
 testcase "match many and conditions"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: user@true.com
 		Cc: user@true.com
@@ -183,8 +178,7 @@ testcase "match many and conditions"
 	pass
 
 testcase "match many or conditions"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: user@example.com
 
@@ -209,8 +203,7 @@ testcase "match many or conditions"
 	pass
 
 testcase "match new"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: user@example.com
 
@@ -236,8 +229,7 @@ testcase "match new"
 	pass
 
 testcase "match new negate"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: new@example.com
 
@@ -263,8 +255,7 @@ testcase "match new negate"
 	pass
 
 testcase "header key comparison is case insensitive"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		to: user@example.com
 
@@ -282,8 +273,7 @@ testcase "header key comparison is case insensitive"
 	pass
 
 testcase "match case insensitive"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: UsEr@ExAmPlE.CoM
 
@@ -301,8 +291,7 @@ testcase "match case insensitive"
 	pass
 
 testcase "message without blank line after headers"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 		To: user@example.com
 	EOF
@@ -319,8 +308,7 @@ testcase "message without blank line after headers"
 	pass
 
 testcase "uniq suffix is preserved"
-	mkmd "${MAILDIR}/dst"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 		To: user@example.com
 
@@ -338,8 +326,7 @@ testcase "uniq suffix is preserved"
 	pass
 
 testcase "destination interpolation from header"
-	mkmd "${MAILDIR}/example"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/example" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 		To: user@example.com
 
@@ -378,8 +365,7 @@ testcase "destination interpolation from body"
 	pass
 
 testcase "destination interpolation first match is favored"
-	mkmd "${MAILDIR}/first"
-	mkmd "${MAILDIR}/src"
+	mkmd "${MAILDIR}/first" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 		To: first@last.com
 
