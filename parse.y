@@ -30,13 +30,18 @@ static int flags, lineno, newline, parse_errors;
 	char *s;
 	struct rule *r;
 	struct expr *e;
+	struct {
+		char *s;
+		int i;
+	} p;
 }
 
 %token AND BODY HEADER MAILDIR MATCH MOVE NEW OR PATTERN STRING
 %type <i> AND OR binop flags flag neg
 %type <s> PATTERN STRING action
-%type <e> expr expr1
 %type <r> rule
+%type <e> expr expr1
+%type <p> pattern
 
 %%
 
@@ -111,22 +116,21 @@ expr		: neg expr1 {
 		}
 		;
 
-expr1		: BODY PATTERN flags {
+expr1		: BODY pattern {
 			const char *errstr;
 
 			$$ = expr_alloc(EXPR_TYPE_BODY);
-			if (expr_set_pattern($$, $2, $3, &errstr))
+			if (expr_set_pattern($$, $2.s, $2.i, &errstr))
 				yyerror(errstr);
 			flags = 0;
 		}
 		| HEADER {
 			$<e>$ = expr_alloc(EXPR_TYPE_HEADER);
-		} headers PATTERN flags {
+		} headers pattern {
 			const char *errstr;
 
-			if (expr_set_pattern($<e>2, $4, $5, &errstr))
+			if (expr_set_pattern($<e>2, $4.s, $4.i, &errstr))
 				yyerror(errstr);
-			flags = 0;
 			$$ = $<e>2;
 		}
 		| NEW {
@@ -157,6 +161,13 @@ strings		: /* empty */
 			if (strlen($2) == 0)
 				yyerror("missing header name");
 			expr_set_header_key($<e>0, $2);
+		}
+		;
+
+pattern		: PATTERN flags {
+			flags = 0;
+			$$.s = $1;
+			$$.i = $2;
 		}
 		;
 
