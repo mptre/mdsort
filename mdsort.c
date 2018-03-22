@@ -26,7 +26,7 @@ main(int argc, char *argv[])
 	struct maildir *dst, *md;
 	struct message *msg;
 	struct rule *rl;
-	struct rule_match *match;
+	const struct rule_match *match;
 	const char *path;
 	char *str;
 	size_t i, j;
@@ -98,7 +98,6 @@ main(int argc, char *argv[])
 					maildir_move(md, dst, path);
 				}
 				maildir_close(dst);
-				rule_match_free(match);
 			}
 			message_free(msg);
 		}

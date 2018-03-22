@@ -70,8 +70,10 @@ static int rule_get_type(const struct rule *);
 
 static void rule_match_copy(struct rule_match *, const char *, regmatch_t *,
     size_t);
+static void rule_match_free(struct rule_match *match);
 static char *rule_match_str_body(const struct rule_match *);
 static char *rule_match_str_header(const struct rule_match *);
+
 
 struct rule *
 rule_alloc(void)
@@ -105,6 +107,7 @@ rule_free(struct rule *rl)
 		free(ex->matches);
 		free(ex);
 	}
+	rule_match_free(&rl->match);
 	free(rl->dest);
 	free(rl);
 }
@@ -141,7 +144,7 @@ rule_get_dest(const struct rule *rl)
 	return rl->dest;
 }
 
-struct rule_match *
+const struct rule_match *
 rule_eval(struct rule *rl, const struct message *msg)
 {
 	struct expr *ex;
@@ -161,21 +164,6 @@ rule_eval(struct rule *rl, const struct message *msg)
 		return NULL;
 	}
 	return &rl->match;
-}
-
-void
-rule_match_free(struct rule_match *match)
-{
-	size_t i;
-
-	if (match == NULL)
-		return;
-
-	for (i = 0; i < match->nmatches; i++)
-		free(match->matches[i]);
-	free(match->matches);
-	/* Do not free match since it's stored inside its corresponding rule. */
-	memset(match, 0, sizeof(*match));
 }
 
 const char *
@@ -393,6 +381,21 @@ rule_match_copy(struct rule_match *match, const char *str, regmatch_t *src,
 			err(1, NULL);
 		match->matches[i] = cpy;
 	}
+}
+
+static void
+rule_match_free(struct rule_match *match)
+{
+	size_t i;
+
+	if (match == NULL)
+		return;
+
+	for (i = 0; i < match->nmatches; i++)
+		free(match->matches[i]);
+	free(match->matches);
+	/* Do not free match since it's stored inside its corresponding rule. */
+	memset(match, 0, sizeof(*match));
 }
 
 static char *

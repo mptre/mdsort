@@ -113,16 +113,8 @@ const char *rule_get_dest(const struct rule *rl);
  * Returns the substrings in the given message that matched the first header
  * expression in rule.
  * If none of the expressions in rule matched the message, NULL is returned.
- *
- * The caller is responsible for freeing the returned memory using
- * rule_match_free().
  */
-struct rule_match *rule_eval(struct rule *rl, const struct message *msg);
-
-/*
- * Free match.
- */
-void rule_match_free(struct rule_match *match);
+const struct rule_match *rule_eval(struct rule *rl, const struct message *msg);
 
 /*
  * Returns the nth match if present.
