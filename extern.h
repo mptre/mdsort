@@ -2,6 +2,7 @@
  * Forwards declarations.
  */
 struct expr;
+struct expr_headers;
 struct rule_match;
 
 /*
@@ -142,8 +143,10 @@ enum expr_pattern {
 /* XXX */
 struct expr *expr_alloc(enum expr_type);
 
-/* XXX */
-void expr_set_header_key(struct expr *ex, const char *key);
+/*
+ * Associate the given headers with the expression.
+ */
+void expr_set_headers(struct expr *ex, struct expr_headers *headers);
 
 /* XXX */
 void expr_set_negate(struct expr *ex, int negate);
@@ -151,6 +154,20 @@ void expr_set_negate(struct expr *ex, int negate);
 /* XXX */
 int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
     const char **errstr);
+
+/*
+ * Allocate a list of headers.
+ *
+ * The caller is responsible for associating the returned memory with an
+ * expression using expr_set_headers(). The expression will then take ownership
+ * of the memory and hence free it at an appropriate time.
+ */
+struct expr_headers *expr_headers_alloc(void);
+
+/*
+ * Append the given header key to the list headers.
+ */
+void expr_headers_append(struct expr_headers *headers, const char *key);
 
 struct config_list {
 	struct config *list;

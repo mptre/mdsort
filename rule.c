@@ -42,13 +42,19 @@ struct rule {
 
 struct expr {
 	enum expr_type type;
+
 	int negate;
 	regex_t pattern;
 	regmatch_t *matches;
 	size_t nmatches;
 
-	TAILQ_HEAD(, header) headers;
+	struct expr_headers *headers;
+
 	TAILQ_ENTRY(expr) entry;
+};
+
+struct expr_headers {
+	TAILQ_HEAD(, header) list;
 };
 
 struct header {
@@ -92,6 +98,7 @@ void
 rule_free(struct rule *rl)
 {
 	struct expr *ex;
+	struct expr_headers *headers;
 	struct header *hdr;
 
 	if (rl == NULL)
@@ -99,9 +106,13 @@ rule_free(struct rule *rl)
 
 	while ((ex = TAILQ_FIRST(&rl->expressions)) != NULL) {
 		TAILQ_REMOVE(&rl->expressions, ex, entry);
-		while ((hdr = TAILQ_FIRST(&ex->headers)) != NULL) {
-			TAILQ_REMOVE(&ex->headers, hdr, entry);
-			free(hdr);
+		headers = ex->headers;
+		if (headers != NULL) {
+			while ((hdr = TAILQ_FIRST(&headers->list)) != NULL) {
+				TAILQ_REMOVE(&headers->list, hdr, entry);
+				free(hdr);
+			}
+			free(headers);
 		}
 		regfree(&ex->pattern);
 		free(ex->matches);
@@ -195,25 +206,15 @@ expr_alloc(enum expr_type type)
 	if (ex == NULL)
 		err(1, NULL);
 	ex->type = type;
-	TAILQ_INIT(&ex->headers);
 	return ex;
 }
 
 void
-expr_set_header_key(struct expr *ex, const char *key)
+expr_set_headers(struct expr *ex, struct expr_headers *headers)
 {
-	struct header *hdr;
-	size_t len;
-
 	assert(ex->type == EXPR_TYPE_HEADER);
 
-	len = strlen(key) + 1;
-	hdr = malloc(sizeof(*hdr) + len);
-	if (hdr == NULL)
-		err(1, NULL);
-	hdr->key = (char *)(hdr + 1);
-	memcpy(hdr->key, key, len);
-	TAILQ_INSERT_TAIL(&ex->headers, hdr, entry);
+	ex->headers = headers;
 }
 
 void
@@ -252,6 +253,33 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 		err(1, NULL);
 
 	return 0;
+}
+
+struct expr_headers *
+expr_headers_alloc(void)
+{
+	struct expr_headers *headers;
+
+	headers = malloc(sizeof(*headers));
+	if (headers == NULL)
+		err(1, NULL);
+	TAILQ_INIT(&headers->list);
+	return headers;
+}
+
+void
+expr_headers_append(struct expr_headers *headers, const char *key)
+{
+	struct header *hdr;
+	size_t len;
+
+	len = strlen(key) + 1;
+	hdr = malloc(sizeof(*hdr) + len);
+	if (hdr == NULL)
+		err(1, NULL);
+	hdr->key = (char *)(hdr + 1);
+	memcpy(hdr->key, key, len);
+	TAILQ_INSERT_TAIL(&headers->list, hdr, entry);
 }
 
 static int
@@ -310,9 +338,10 @@ expr_eval_header(struct expr *ex, struct rule_match *match,
 	const char *val;
 	const struct header *hdr;
 
+	assert(ex->headers != NULL);
 	assert(ex->nmatches > 0);
 
-	TAILQ_FOREACH(hdr, &ex->headers, entry) {
+	TAILQ_FOREACH(hdr, &ex->headers->list, entry) {
 		val = message_get_header(msg, hdr->key);
 		if (val == NULL)
 			continue;

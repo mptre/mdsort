@@ -30,6 +30,7 @@ static int flags, lineno, newline, parse_errors;
 	char *s;
 	struct rule *r;
 	struct expr *e;
+	struct expr_headers *h;
 	struct {
 		char *s;
 		int i;
@@ -41,6 +42,7 @@ static int flags, lineno, newline, parse_errors;
 %type <s> PATTERN STRING action
 %type <r> rule
 %type <e> expr expr1
+%type <h> headers strings
 %type <p> pattern
 
 %%
@@ -124,14 +126,13 @@ expr1		: BODY pattern {
 				yyerror(errstr);
 			flags = 0;
 		}
-		| HEADER {
-			$<e>$ = expr_alloc(EXPR_TYPE_HEADER);
-		} headers pattern {
+		| HEADER headers pattern {
 			const char *errstr;
 
-			if (expr_set_pattern($<e>2, $4.s, $4.i, &errstr))
+			$$ = expr_alloc(EXPR_TYPE_HEADER);
+			expr_set_headers($$, $2);
+			if (expr_set_pattern($$, $3.s, $3.i, &errstr))
 				yyerror(errstr);
-			$$ = $<e>2;
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW);
@@ -146,21 +147,26 @@ neg		: /* empty */ {
 		}
 		;
 
-headers		: '{' {
-			$<e>$ = $<e>0;
-		} strings '}'
+headers		: '{' strings '}' {
+			$$ = $2;
+		}
 		| STRING {
 			if (strlen($1) == 0)
 				yyerror("missing header name");
-			expr_set_header_key($<e>0, $1);
+			$$ = expr_headers_alloc();
+			expr_headers_append($$, $1);
 		}
 		;
 
-strings		: /* empty */
+strings		: /* empty */ {
+			$$ = expr_headers_alloc();
+		}
 		| strings STRING {
 			if (strlen($2) == 0)
 				yyerror("missing header name");
-			expr_set_header_key($<e>0, $2);
+
+			$$ = $1;
+			expr_headers_append($$, $2);
 		}
 		;
 
