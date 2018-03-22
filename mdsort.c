@@ -2,6 +2,7 @@
 
 #include <err.h>
 #include <limits.h>
+#include <pwd.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,11 +35,8 @@ main(int argc, char *argv[])
 	int dflag = 0;
 	int nflag = 0;
 
-	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
 		err(1, "pledge");
-
-	/* Extract mandatory data from the current environment. */
-	readenv();
 
 	while ((c = getopt(argc, argv, "dnvf:")) != -1)
 		switch (c) {
@@ -62,6 +60,12 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc > 0)
 		usage();
+
+	/* Extract mandatory data from the current environment. */
+	readenv();
+
+	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+		err(1, "pledge");
 
 	config = parse_config(confpath);
 	if (config == NULL)
@@ -128,17 +132,10 @@ readenv(void)
 {
 	static char confbuf[PATH_MAX], homebuf[PATH_MAX];
 	static char hostbuf[HOST_NAME_MAX + 1];
+	struct passwd *pw;
 	char *p;
 	size_t len;
 	int n;
-
-	if ((p = getenv("HOME")) == NULL || *p == '\0')
-		errx(1, "HOME: not defined"); /* XXX */
-	else if ((len = strlen(p) + 1) > sizeof(homebuf))
-		errx(1, "%s: buffer too small", __func__);
-	else
-		memcpy(homebuf, p, len);
-	home = homebuf;
 
 	if (gethostname(hostbuf, sizeof(hostbuf)) == -1)
 		err(1, "gethostname");
@@ -146,6 +143,21 @@ readenv(void)
 		*p = '\0';
 	hostname = hostbuf;
 
+	if ((p = getenv("HOME")) == NULL || *p == '\0') {
+		log_debug("%s: HOME: unset or empty\n", __func__);
+		pw = getpwuid(getuid());
+		if (pw != NULL)
+			p = pw->pw_dir;
+	}
+	if (p == NULL)
+		errx(1, "%s: cannot find home directory", __func__);
+	if ((len = strlen(p) + 1) > sizeof(homebuf))
+		errx(1, "%s: buffer too small", __func__);
+	memcpy(homebuf, p, len);
+	home = homebuf;
+
+	if (confpath != NULL)
+		return;
 	n = snprintf(confbuf, PATH_MAX, "%s/.mdsort.conf", home);
 	if (n == -1 || n >= PATH_MAX)
 		errx(1, "%s: buffer too small", __func__);
