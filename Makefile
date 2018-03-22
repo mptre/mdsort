@@ -16,7 +16,7 @@ ${PROG}: ${OBJ}
 	${CC} ${DEBUG} -o ${PROG} ${OBJ} ${LDFLAGS}
 
 clean:
-	rm -f ${DEP} ${OBJ} ${PROG}
+	rm -f ${DEP} ${OBJ} ${PROG} parse.c
 .PHONY: clean
 
 test: ${PROG}
