@@ -449,6 +449,7 @@ testcase "destination interpolation non-decimal"
 		fail "expected back-reference to be ignored"
 	pass
 
+if [ $PATH_MAX -gt 0 ]; then
 testcase "destination interpolation too long"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
@@ -464,3 +465,6 @@ testcase "destination interpolation too long"
 	grep -q '\\1: destination too long' $TMP2 || \
 		fail "expected destination to be too long"
 	pass
+else
+	echo "SKIP: destination interpolation too long"
+fi

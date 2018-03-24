@@ -100,6 +100,7 @@ testcase -e "missing header name"
 	mdsort.conf:3: missing header name
 	EOF
 
+if [ $BUFSIZ -gt 0 ]; then
 testcase -e "keyword too long"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
@@ -110,7 +111,11 @@ testcase -e "keyword too long"
 	mdsort.conf:2: keyword too long
 	mdsort.conf:2: syntax error
 	EOF
+else
+	echo "SKIP: keyword too long"
+fi
 
+if [ $BUFSIZ -gt 0 ]; then
 testcase -e "string too long"
 	cat <<-EOF >$CONF
 	maildir "$(randstr $BUFSIZ alnum)" {}
@@ -119,6 +124,9 @@ testcase -e "string too long"
 	mdsort.conf:1: string too long
 	mdsort.conf:1: syntax error
 	EOF
+else
+	echo "SKIP: string too long"
+fi
 
 testcase -e "string unterminated"
 	cat <<-EOF >$CONF
@@ -129,6 +137,7 @@ testcase -e "string unterminated"
 	mdsort.conf:1: syntax error
 	EOF
 
+if [ $BUFSIZ -gt 0 ]; then
 testcase -e "pattern too long"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
@@ -140,6 +149,9 @@ testcase -e "pattern too long"
 	mdsort.conf:2: pattern too long
 	mdsort.conf:2: syntax error
 	EOF
+else
+	echo "SKIP: pattern too long"
+fi
 
 testcase -e "pattern unterminated"
 	cat <<-EOF >$CONF
@@ -152,6 +164,7 @@ testcase -e "pattern unterminated"
 	mdsort.conf:2: syntax error
 	EOF
 
+if [ $PATH_MAX -gt 0 ] && [ $BUFSIZ -le $PATH_MAX ]; then
 testcase -e "maildir path too long after tilde expansion"
 	cat <<-EOF >$CONF
 	maildir "~/$(randstr $((PATH_MAX - 10))  alnum)" {}
@@ -159,7 +172,11 @@ testcase -e "maildir path too long after tilde expansion"
 	HOME=/home/user mdsort - -n <<-EOF
 	mdsort.conf:1: path too long
 	EOF
+else
+	echo "SKIP: maildir path too long after tilde expansion"
+fi
 
+if [ $PATH_MAX -gt 0 ] && [ $BUFSIZ -le $PATH_MAX ]; then
 testcase -e "destination path too long after tilde expansion"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
@@ -169,6 +186,9 @@ testcase -e "destination path too long after tilde expansion"
 	HOME=/home/user mdsort - -n <<-EOF
 	mdsort.conf:2: path too long
 	EOF
+else
+	echo "SKIP: destination path too long after tilde expansion"
+fi
 
 testcase -e "unknown pattern flag"
 	cat <<-EOF >$CONF

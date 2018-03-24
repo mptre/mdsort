@@ -26,12 +26,14 @@ pass() {
 }
 
 cppvar() {
-	cpp - <<EOF | grep -v '^$' | tail -1
-#include <limits.h>
-#include <stdio.h>
+	cpp - <<-EOF >$TMP1 2>/dev/null
+	#include <limits.h>
+	#include <stdio.h>
 
-${1}
-EOF
+	${1}
+	EOF
+
+	grep -v '^$' <$TMP1 | tail -1
 }
 
 fcmp() {
@@ -129,10 +131,8 @@ TMP3="${MAILDIR}/tmp3"
 trap "atexit $MAILDIR" EXIT
 
 # Platform specific values.
-PATH_MAX=$(cppvar PATH_MAX)
-: ${PATH_MAX:?}
-BUFSIZ=$(cppvar BUFSIZ)
-: ${BUFSIZ:?}
+PATH_MAX=$(cppvar PATH_MAX || echo 0)
+BUFSIZ=$(cppvar BUFSIZ || echo 0)
 
 cd $MAILDIR
 
