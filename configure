@@ -71,6 +71,16 @@ check_pledge() {
 	EOF
 }
 
+check_queue() {
+	compile <<-EOF
+	#include <sys/queue.h>
+
+	int main(void) {
+		return 0;
+	}
+	EOF
+}
+
 check_reallocarray() {
 	compile <<-EOF
 	#include <stdlib.h>
@@ -81,12 +91,16 @@ check_reallocarray() {
 	EOF
 }
 
-check_queue() {
+check_stat_mtim() {
 	compile <<-EOF
-	#include <sys/queue.h>
+	#include <sys/stat.h>
 
 	int main(void) {
-		return 0;
+		struct stat st;
+
+		if (stat("/var/empty", &st) == -1)
+			return 1;
+		return !(st.st_mtim.tv_sec > 0);
 	}
 	EOF
 }
@@ -100,6 +114,7 @@ HAVE_DEAD=0
 HAVE_PLEDGE=0
 HAVE_QUEUE=0
 HAVE_REALLOCARRAY=0
+HAVE_STAT_MTIM=0
 
 CC=$(makevar CC)
 CFLAGS=$(makevar CFLAGS)
@@ -130,6 +145,7 @@ check_dead && HAVE_DEAD=1
 check_pledge && HAVE_PLEDGE=1
 check_queue && HAVE_QUEUE=1
 check_reallocarray && HAVE_REALLOCARRAY=1
+check_stat_mtim && HAVE_STAT_MTIM=1
 
 # Headers needed for function prototypes.
 (
@@ -143,8 +159,11 @@ check_reallocarray && HAVE_REALLOCARRAY=1
 [ $HAVE_PLEDGE -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
 [ $HAVE_QUEUE -eq 1 ] && printf '#define HAVE_QUEUE\t1\n'
 [ $HAVE_REALLOCARRAY -eq 1 ] && printf '#define HAVE_REALLOCARRAY\t1\n'
+[ $HAVE_STAT_MTIM -eq 1 ] && printf '#define HAVE_STAT_MTIM\t1\n'
 
 [ $HAVE_DEAD -eq 0 ] && printf '#define __dead\n'
+
+[ $HAVE_STAT_MTIM -eq 0 ] && printf '#define st_mtim st_mtimespec\n'
 
 [ $HAVE_ARC4RANDOM -eq 0 ] && \
 	printf 'uint32_t arc4random(void);\n'
