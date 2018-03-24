@@ -130,9 +130,14 @@ TMP2="${MAILDIR}/tmp2"
 TMP3="${MAILDIR}/tmp3"
 trap "atexit $MAILDIR" EXIT
 
-# Platform specific values.
-PATH_MAX=$(cppvar PATH_MAX || echo 0)
-BUFSIZ=$(cppvar BUFSIZ || echo 0)
+# Platform specific values, skip on macOS.
+if [ "$(uname)" != "Darwin" ]; then
+	BUFSIZ=$(cppvar BUFSIZ || echo 0)
+	PATH_MAX=$(cppvar PATH_MAX || echo 0)
+else
+	BUFSIZ=0
+	PATH_MAX=0
+fi
 
 cd $MAILDIR
 
