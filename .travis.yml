@@ -1,0 +1,33 @@
+sudo: false
+dist: trusty
+language: c
+matrix:
+  include:
+    - os: linux
+      compiler: clang
+      env: BUILD_TYPE=default CFLAGS=-Werror
+    - os: linux
+      compiler: gcc
+      env: BUILD_TYPE=default CFLAGS=-Werror
+    - os: linux
+      compiler: musl-gcc
+      env: BUILD_TYPE=default CFLAGS=-Werror
+      addons:
+        apt:
+          packages:
+            - musl-tools
+    - os: osx
+      compiler: clang
+      env: BUILD_TYPE=default CFLAGS=-Werror
+script:
+  - |
+    (
+    set -ex
+    case $BUILD_TYPE in
+    default)
+      ./configure || true
+      cat config.log
+      make test
+      ;;
+    esac
+    )
