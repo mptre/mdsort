@@ -4,8 +4,15 @@ VERSION=	0.1.0
 
 PROG=	mdsort
 
-SRC=	compat-arc4random.c compat-pledge.c compat-reallocarray.c \
-	maildir.c message.c mdsort.c parse.c rule.c
+SRC=	compat-arc4random.c \
+	compat-pledge.c \
+	compat-reallocarray.c \
+	compat-utimensat.c \
+	maildir.c \
+	message.c \
+	mdsort.c \
+	parse.c \
+	rule.c
 OBJ=	${SRC:.c=.o}
 DEP=	${SRC:.c=.d}
 
@@ -20,6 +27,7 @@ DISTFILES=	GNUmakefile \
 		compat-pledge.c \
 		compat-queue.h \
 		compat-reallocarray.c \
+		compat-utimensat.c \
 		configure \
 		extern.h \
 		maildir.c \
