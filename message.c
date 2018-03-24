@@ -161,7 +161,6 @@ findheader(char *str, char **keybeg, char **keyend, char **valbeg,
 {
 	size_t i = 0;
 
-	/* XXX line feed */
 	for (;;) {
 		if (str[i] == '\n')
 			return 1;
@@ -179,7 +178,6 @@ findheader(char *str, char **keybeg, char **keyend, char **valbeg,
 		continue;
 	*valbeg = str + i;
 
-	/* XXX line feed */
 	for (;; i++) {
 		if (str[i] == '\0')
 			return 1;
