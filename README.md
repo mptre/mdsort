@@ -8,6 +8,7 @@ utility moves messages from one maildir to another according to a set of rules
 expressed in the
 [mdsort.conf(5)][mdsort.conf]
 format.
+
 An example configuration could look as follows:
 
 ```
@@ -35,7 +36,7 @@ with the
 option shows which messages would be moved and why,
 leaving the maildir(s) unchanged:
 
-```sh
+```
 $ mdsort -d
 /home/anton/Maildir/INBOX/new/1521917775.89020_21.host -> /home/anton/Maildir/GitHub/new
 From: Charlie Root <notifications@github.com>
