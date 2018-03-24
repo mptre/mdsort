@@ -95,7 +95,7 @@ testcase() {
 	[ "$1" = "-e" ] && { TCEXIT=1; shift; } || TCEXIT=0
 	TCDESC="$@"
 	TCFAIL=0
-	ls -d $MAILDIR/*/ 2>/dev/null | xargs -r rm -rf
+	ls -d $MAILDIR/*/ 2>/dev/null | xargs rm -rf
 }
 
 # randstr length predicate

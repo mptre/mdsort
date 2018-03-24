@@ -25,6 +25,13 @@ fatal() {
 	return 1
 }
 
+headers() {
+	cat >"$TMP"
+	[ -s "$TMP" ] || return 0
+
+	xargs printf '#include <%s>\n' <"$TMP"
+}
+
 makevar() {
 	make -sf - <<EOF
 all:
@@ -108,7 +115,8 @@ INSTALL=$(makevar INSTALL)
 exec 3>&1 4>&2
 exec 1>config.log 2>&1
 
-trap 'atexit' EXIT
+TMP=$(mktemp -t configure.XXXXXX)
+trap "atexit $TMP" EXIT
 
 # At this point, all variables used must be defined.
 set -u
@@ -128,7 +136,7 @@ check_reallocarray && HAVE_REALLOCARRAY=1
 [ $HAVE_ARC4RANDOM -eq 0 ] && echo stdint.h
 [ $HAVE_PLEDGE -eq 0 ] && echo stdlib.h
 [ $HAVE_REALLOCARRAY -eq 0 ] && echo stdlib.h
-) | sort | uniq | xargs -r printf '#include <%s>\n' >config.h
+) | sort | uniq | headers >config.h
 
 (
 [ $HAVE_ARC4RANDOM -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
