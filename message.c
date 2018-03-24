@@ -175,7 +175,7 @@ findheader(char *str, char **keybeg, char **keyend, char **valbeg,
 	*keyend = str + i;
 
 	/* Skip leading whitespace in value. */
-	for (i++; isspace(str[i]); i++)
+	for (i++; str[i] == ' ' || str[i] == '\t'; i++)
 		continue;
 	*valbeg = str + i;
 

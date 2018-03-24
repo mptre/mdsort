@@ -57,6 +57,7 @@ testcase "match body with empty body"
 testcase "match header"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
+		Subject:
 		To: user@example.com
 
 	EOF
