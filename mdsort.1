@@ -1,0 +1,45 @@
+.Dd $Mdocdate: March 17 2018 $
+.Dt MDSORT 1
+.Os
+.Sh NAME
+.Nm mdsort
+.Nd maildir sort
+.Sh SYNOPSIS
+.Nm
+.Op Fl dnv
+.Op Fl f Ar file
+.Sh DESCRIPTION
+The
+.Nm
+utility
+moves messages from one maildir to another according to a set of rules expressed
+in the
+.Xr mdsort.conf 5
+format.
+.Pp
+The options are as follows:
+.Bl -tag -width "-q query"
+.It Fl d
+Dry run,
+output which messages would be moved with respect to the current rules.
+.It Fl f
+Specify an alternative configuration file.
+.It Fl n
+Check if the configuration file is valid.
+.It Fl v
+Verbose mode.
+Multiple
+.Fl v
+options increases the verbosity.
+.El
+.Sh FILES
+.Bl -tag -width "~/.mdsort.conf"
+.It Pa ~/.mdsort.conf
+The default configuration file.
+.El
+.Sh DIAGNOSTICS
+.Ex -std
+.Sh SEE ALSO
+.Xr mdsort.conf 5
+.Sh AUTHORS
+.An Anton Lindqvist Aq Mt anton.lindqvist@gmail.com

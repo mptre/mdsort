@@ -1,7 +1,138 @@
+.Dd $Mdocdate: March 17 2018 $
+.Dt MDSORT.CONF 5
+.Os
+.Sh NAME
+.Nm mdsort.conf
+.Nd mdsort configuration file
+.Sh DESCRIPTION
+.Nm
+is the configuration file for
+.Xr mdsort 1 .
+.Pp
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq #
+and extend to the end of the current line.
+.Pp
+Each
+.Ic maildir
+section starts with a declaration of the maildir and its corresponding
+.Ar path :
+.Bl -tag -width Ds
+.It Ic maildir Do Ar path Dc Brq ...
+.El
+.Pp
+Followed by a block of rules.
+.Xr mdsort 1
+iterates over each message present in the
+.Pa cur
+and
+.Pa new
+directory rooted in
+.Ar path
+and evaluates each rule in sequential order.
+The first matching rule takes precedence.
+.Pp
+A rule is defined as follows:
+.Bl -tag -width XX
+.It Ic match
+A rule starts with the match keyword followed by one or many conditions and an
+action.
+Each rule spans to the end of the current line but can extended over multiple
+lines using a backslash
+.Pq Sq \e .
+.Pp
+A
+.Ar pattern
+used within a condition is interpreted as an extended regular expression and can
+be made case insensitive using the
+.Ic i
+keyword.
+.Pp
+The conditions are as follows:
+.Bl -tag -width Ds
+.It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op Ic i
+Evaluates to true if the message body matches
+.Ar pattern .
+.It Oo Ic \&! Oc Ic header Do Ar name Dc / Ns Ar pattern Ns / Ns Op Ic i
+Evaluates to true if the header with
+.Ar name
+in message matches
+.Ar pattern .
+Finding the header with
+.Ar name
+in message is done case insensitive.
+.It Oo Ic \&! Oc Ic header No { Do Ar name Dc Ar ... No } / Ns Ar pattern Ns / Ns Op Ic i
+Evaluates to true if any of the headers with
+.Ar name ...
+in message matches
+.Ar pattern .
+Finding the header with
+.Ar name ...
+in message is done case insensitive.
+.It Oo Ic \&! Oc Ic new
+Evaluates to true if the message is not read.
+.El
+.Pp
+A condition may be inverted using the
+.Ic \&!
+keyword.
+Multiple conditions can be chained into a single condition:
+.Bl -tag -width Ds
+.It Ar ... Op Ic and Ar ...
+Evaluates to true if all conditions are true.
+.It Ar ... Op Ic or Ar ...
+Evaluates to true if any of the conditions are true.
+.El
+.Pp
+The
+.Ic and , Ic or
+keywords may not be combined due to the lack of scoping.
+.Pp
+Next comes the action:
+.Bl -tag -width Ds
+.It Ic move Dq path
+If the condition evaluates to true,
+move the message to the maildir located at
+.Ar path .
+The
+.Ar path
+may contain back-references on the form
+.Sq \e#
+where
+.Sq #
+is a digit.
+The digit refers to the nth subexpression of the first matching
+.Ar pattern
+and will be replaced with matched string.
+Using back-references with many
+.Ic or
+conditions is not encouraged since the
+.Ar pattern
+that matches first may vary.
+.El
+.El
+.Sh FILES
+.Bl -tag -width "~/.mdsort.conf"
+.It Pa ~/.mdsort.conf
+The default configuration file.
+.El
+.Sh EXAMPLES
+.Bd -literal
 maildir "~/Maildir/INBOX" {
-	match header "From" "notifications@github.com" move "~/Maildir/github"
+	# Move messages from OpenBSD mailing lists into dedicated directories.
+	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i \e
+		move "~/Maildir/openbsd-\e1"
 
-	match header "To" "ports@openbsd.org"
-	match header { "Cc" "To" } "source-changes@openbsd.org" \
-		move "~/Maildir/openbsd-cvs"
+	# Get rid of potential spam.
+	match header "Received-SPF" /fail/ or header "X-Spam-Score" /[1-9]/ \e
+		move "~/Maildir/Spam"
+
+	# Archive read messages.
+	match ! new move "~/Maildir/Archive"
 }
+.Ed
+.Sh SEE ALSO
+.Xr mdsort 1 ,
+.Xr re_format 7
+.Sh AUTHORS
+.An Anton Lindqvist Aq Mt anton.lindqvist@gmail.com
