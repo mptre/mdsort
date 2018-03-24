@@ -67,9 +67,9 @@ install: all
 	@mkdir -p ${DESTDIR}${PREFIX}/bin
 	${INSTALL} ${PROG} ${DESTDIR}${PREFIX}/bin
 	@mkdir -p ${DESTDIR}${PREFIX}/man/man1
-	${INSTALL} mdsort.1 ${DESTDIR}${PREFIX}/man/man1
+	${INSTALL} ${.CURDIR}/mdsort.1 ${DESTDIR}${PREFIX}/man/man1
 	@mkdir -p ${DESTDIR}${PREFIX}/man/man5
-	${INSTALL} mdsort.conf.5 ${DESTDIR}${PREFIX}/man/man5
+	${INSTALL} ${.CURDIR}/mdsort.conf.5 ${DESTDIR}${PREFIX}/man/man5
 .PHONY: install
 
 test: ${PROG}
