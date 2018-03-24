@@ -61,6 +61,17 @@ check_dead() {
 	EOF
 }
 
+check_host_name_max() {
+	compile <<-EOF
+	#include <limits.h>
+
+	int main(void) {
+		static char hostname[HOST_NAME_MAX + 1];
+		return !(hostname[0] == '\0');
+	}
+	EOF
+}
+
 check_pledge() {
 	compile <<-EOF
 	#include <unistd.h>
@@ -124,6 +135,7 @@ check_yacc() {
 
 HAVE_ARC4RANDOM=0
 HAVE_DEAD=0
+HAVE_HOST_NAME_MAX=0
 HAVE_PLEDGE=0
 HAVE_QUEUE=0
 HAVE_REALLOCARRAY=0
@@ -156,6 +168,7 @@ check_yacc || fatal "cannot find yacc in PATH"
 
 check_arc4random && HAVE_ARC4RANDOM=1
 check_dead && HAVE_DEAD=1
+check_host_name_max && HAVE_HOST_NAME_MAX=1
 check_pledge && HAVE_PLEDGE=1
 check_queue && HAVE_QUEUE=1
 check_reallocarray && HAVE_REALLOCARRAY=1
@@ -179,6 +192,8 @@ check_utimensat && HAVE_UTIMENSAT=1
 [ $HAVE_UTIMENSAT -eq 1 ] && printf '#define HAVE_UTIMENSAT\t1\n'
 
 [ $HAVE_DEAD -eq 0 ] && printf '#define __dead\n'
+
+[ $HAVE_HOST_NAME_MAX -eq 0 ] && printf '#define HOST_NAME_MAX 255\n'
 
 [ $HAVE_STAT_MTIM -eq 0 ] && printf '#define st_mtim st_mtimespec\n'
 
