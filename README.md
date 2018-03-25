@@ -1,7 +1,5 @@
 # mdsort
 
-## Description
-
 The
 [mdsort(1)][mdsort]
 utility moves messages from one maildir to another according to a set of rules
