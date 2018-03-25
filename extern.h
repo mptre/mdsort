@@ -88,16 +88,29 @@ enum rule_type {
 	RULE_TYPE_OR,
 };
 
-/* XXX */
+/*
+ * Allocate a new rule.
+ *
+ * The caller is responsible for freeing the returned memory using
+ * rule_free().
+ */
 struct rule *rule_alloc(void);
 
-/* XXX */
+/*
+ * Free rule.
+ */
 void rule_free(struct rule *rl);
 
-/* XXX */
+/*
+ * Associate the given expression with the rule.
+ */
 void rule_add_expr(struct rule *rl, struct expr *ex);
 
-/* XXX */
+/*
+ * Set the expression type.
+ * Returns zero on success. Otherwise, non-zero is returned if the expression
+ * type is already defined.
+ */
 int rule_set_type(struct rule *rl, enum rule_type type);
 
 /*
@@ -140,18 +153,31 @@ enum expr_pattern {
 	EXPR_PATTERN_ICASE = 0x1,
 };
 
-/* XXX */
-struct expr *expr_alloc(enum expr_type);
+/*
+ * Allocate a new expression with the given type.
+ *
+ * The caller is responsible for associating the returned memory with a rule
+ * using rule_add_expr(). The rule will then take ownership of the memory and
+ * hence free it at an appropriate time.
+ */
+struct expr *expr_alloc(enum expr_type type);
 
 /*
  * Associate the given headers with the expression.
  */
 void expr_set_headers(struct expr *ex, struct expr_headers *headers);
 
-/* XXX */
+/*
+ * Negate the expression if negate is non-zero.
+ */
 void expr_set_negate(struct expr *ex, int negate);
 
-/* XXX */
+/*
+ * Associate the given pattern with the expression.
+ * Returns zero if pattern is successfully compiled into a regular expression.
+ * Otherwise, returns non-zero and if errstr is not NULL it will point to an
+ * explanation on why the compilation failed.
+ */
 int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
     const char **errstr);
 
@@ -180,14 +206,16 @@ struct config {
 	size_t nrules;
 };
 
-/* XXX */
+/*
+ * Parses the configuration located at path and returns a config list on
+ * success.
+ * Otherwise, NULL is returned.
+ */
 const struct config_list *parse_config(const char *path);
 
-/* XXX */
 void log_debug(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 
-/* XXX */
 void log_info(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 
