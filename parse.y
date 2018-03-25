@@ -93,8 +93,7 @@ rule		: MATCH {
 		}
 		;
 
-exprs		: /* empty */
-		| exprs binop expr {
+exprs		: exprs binop expr {
 			if (rule_set_type($<r>0, $2))
 				yyerror("and/or are disjoint");
 			rule_add_expr($<r>0, $3);

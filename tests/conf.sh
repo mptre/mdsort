@@ -202,6 +202,26 @@ testcase -e "unknown pattern flag"
 	mdsort.conf:3: syntax error
 	EOF
 
+testcase -e "missing left-hand expr with and"
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+		match and new move "~/Maildir/Junk"
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:2: syntax error
+	EOF
+
+testcase -e "missing right-hand expr with and"
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+		match new and move "~/Maildir/Junk"
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:2: syntax error
+	EOF
+
 testcase -e "and cannot be followed by or"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
