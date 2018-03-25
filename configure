@@ -102,7 +102,7 @@ check_reallocarray() {
 	EOF
 }
 
-check_stat_mtim() {
+check_stat_tim() {
 	compile <<-EOF
 	#include <sys/stat.h>
 
@@ -139,7 +139,7 @@ HAVE_HOST_NAME_MAX=0
 HAVE_PLEDGE=0
 HAVE_QUEUE=0
 HAVE_REALLOCARRAY=0
-HAVE_STAT_MTIM=0
+HAVE_STAT_TIM=0
 HAVE_UTIMENSAT=0
 
 CC=$(makevar CC)
@@ -172,7 +172,7 @@ check_host_name_max && HAVE_HOST_NAME_MAX=1
 check_pledge && HAVE_PLEDGE=1
 check_queue && HAVE_QUEUE=1
 check_reallocarray && HAVE_REALLOCARRAY=1
-check_stat_mtim && HAVE_STAT_MTIM=1
+check_stat_tim && HAVE_STAT_TIM=1
 check_utimensat && HAVE_UTIMENSAT=1
 
 # Headers needed for function prototypes.
@@ -188,14 +188,17 @@ check_utimensat && HAVE_UTIMENSAT=1
 [ $HAVE_PLEDGE -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
 [ $HAVE_QUEUE -eq 1 ] && printf '#define HAVE_QUEUE\t1\n'
 [ $HAVE_REALLOCARRAY -eq 1 ] && printf '#define HAVE_REALLOCARRAY\t1\n'
-[ $HAVE_STAT_MTIM -eq 1 ] && printf '#define HAVE_STAT_MTIM\t1\n'
 [ $HAVE_UTIMENSAT -eq 1 ] && printf '#define HAVE_UTIMENSAT\t1\n'
 
 [ $HAVE_DEAD -eq 0 ] && printf '#define __dead\n'
 
-[ $HAVE_HOST_NAME_MAX -eq 0 ] && printf '#define HOST_NAME_MAX 255\n'
+[ $HAVE_HOST_NAME_MAX -eq 0 ] && printf '#define HOST_NAME_MAX\t255\n'
 
-[ $HAVE_STAT_MTIM -eq 0 ] && printf '#define st_mtim st_mtimespec\n'
+if [ $HAVE_STAT_TIM -eq 0 ]; then
+	printf '#define st_atim\tst_atimespec\n'
+	printf '#define st_ctim\tst_ctimespec\n'
+	printf '#define st_mtim\tst_mtimespec\n'
+fi
 
 [ $HAVE_UTIMENSAT -eq 0 ] && printf '#define UTIME_OMIT -1L\n'
 
