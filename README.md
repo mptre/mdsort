@@ -9,7 +9,7 @@ expressed in the
 [mdsort.conf(5)][mdsort.conf]
 format.
 
-An example configuration could look as follows:
+Example configuration:
 
 ```
 maildir "~/Maildir/INBOX" {
