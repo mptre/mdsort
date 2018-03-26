@@ -186,7 +186,8 @@ if [ $PATH_MAX -gt 0 ] && [ $BUFSIZ -le $PATH_MAX ]; then
 testcase -e "destination path too long after tilde expansion"
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
-		match header "From" /./ move "~/$(randstr $((PATH_MAX - 10)) alnum)"
+		match header "From" /./ \
+			move "~/$(randstr $((PATH_MAX - 10)) alnum)"
 	}
 	EOF
 	HOME=/home/user mdsort - -n <<-EOF

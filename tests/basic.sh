@@ -1,14 +1,14 @@
 testcase "match body"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
-		Hello Bob
+	Hello Bob
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match body /Bob/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match body /Bob/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -20,14 +20,14 @@ testcase "match body"
 testcase "match body negate"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
-		Hello Alice
+	Hello Alice
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match ! body /Bob/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match ! body /Bob/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -39,13 +39,13 @@ testcase "match body negate"
 testcase "match body with empty body"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match body /Bob/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match body /Bob/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
@@ -57,18 +57,18 @@ testcase "match body with empty body"
 testcase "match header"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		Subject:
-		To: user@example.com
+	Subject:
+	To: user@example.com
 
 	EOF
 	mkmsg "${MAILDIR}/src/cur" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -84,17 +84,17 @@ testcase "match header"
 testcase "match header negate"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: admin@example.com
+	To: admin@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match ! header "To" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match ! header "To" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
@@ -110,13 +110,13 @@ testcase "match header negate"
 testcase "match header escape slash"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		Subject: foo/bar
+	Subject: foo/bar
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "Subject" /foo\/bar/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "Subject" /foo\/bar/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -130,17 +130,17 @@ testcase "match header escape slash"
 testcase "match many headers"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	mkmsg "${MAILDIR}/src/cur" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header { "Cc" "To" } /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header { "Cc" "To" } /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -156,20 +156,20 @@ testcase "match many headers"
 testcase "match many and conditions"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@true.com
-		Cc: user@true.com
-		Bcc: user@true.com
+	To: user@true.com
+	Cc: user@true.com
+	Bcc: user@true.com
 
 	EOF
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@false.com
+	To: user@false.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ and header "Cc" /user/ and \
-				header "Bcc" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ and header "Cc" /user/ and \
+			header "Bcc" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	grep -Rq "To: user@false.com" "${MAILDIR}/src/new" || \
@@ -181,18 +181,18 @@ testcase "match many and conditions"
 testcase "match many or conditions"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		Cc: user@example.com
+	Cc: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ or header "Cc" /user/ \
-				move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ or header "Cc" /user/ \
+			move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -234,17 +234,17 @@ testcase "match many and/or conditions"
 testcase "match new"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	mkmsg "${MAILDIR}/src/cur" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ and new move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ and new move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -260,17 +260,17 @@ testcase "match new"
 testcase "match new negate"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: new@example.com
+	To: new@example.com
 
 	EOF
 	mkmsg "${MAILDIR}/src/cur" <<-EOF
-		To: cur@example.com
+	To: cur@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match ! new move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match ! new move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
@@ -336,13 +336,13 @@ testcase "match negate nested condition"
 testcase "header key comparison is case insensitive"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		to: user@example.com
+	to: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -354,13 +354,13 @@ testcase "header key comparison is case insensitive"
 testcase "match case insensitive"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: UsEr@ExAmPlE.CoM
+	To: UsEr@ExAmPlE.CoM
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/i move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/i move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -372,12 +372,12 @@ testcase "match case insensitive"
 testcase "message without blank line after headers"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -389,13 +389,13 @@ testcase "message without blank line after headers"
 testcase "uniq suffix is preserved"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -407,14 +407,13 @@ testcase "uniq suffix is preserved"
 testcase "destination interpolation from header"
 	mkmd "${MAILDIR}/example" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user@([^\.]+).com/ \
-				move "${MAILDIR}/\1"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user@([^\.]+).com/ move "${MAILDIR}/\1"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -426,15 +425,14 @@ testcase "destination interpolation from header"
 testcase "destination interpolation from body"
 	mkmd "${MAILDIR}/example" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@example.com
+	To: user@example.com
 
-		Hello example
+	Hello example
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match body /Hello (example)/ \
-				move "${MAILDIR}/\1"
-		}
+	maildir "${MAILDIR}/src" {
+		match body /Hello (example)/ move "${MAILDIR}/\1"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -446,14 +444,14 @@ testcase "destination interpolation from body"
 testcase "destination interpolation first match is favored"
 	mkmd "${MAILDIR}/first" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: first@last.com
+	To: first@last.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /(first)/ and header "To" /(last)/ \
-				move "${MAILDIR}/\1"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /(first)/ and header "To" /(last)/ \
+			move "${MAILDIR}/\1"
+	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
@@ -465,13 +463,13 @@ testcase "destination interpolation first match is favored"
 testcase "destination interpolation out of bounds"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /./ move "${MAILDIR}/\1"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /./ move "${MAILDIR}/\1"
+	}
 	EOF
 	mdsort >$TMP2
 	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
@@ -481,14 +479,13 @@ testcase "destination interpolation out of bounds"
 testcase "destination interpolation out of range"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /./ \
-				move "${MAILDIR}/\99999999999999999999"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /./ move "${MAILDIR}/\99999999999999999999"
+	}
 	EOF
 	mdsort >$TMP2
 	grep -q '9: invalid back-reference in destination' $TMP2 || \
@@ -498,13 +495,13 @@ testcase "destination interpolation out of range"
 testcase "destination interpolation negative"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /./ move "${MAILDIR}/\-1"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /./ move "${MAILDIR}/\-1"
+	}
 	EOF
 	mdsort >$TMP2
 	grep -q '\\-1/new: No such file or directory' $TMP2 || \
@@ -514,13 +511,13 @@ testcase "destination interpolation negative"
 testcase "destination interpolation non-decimal"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@example.com
+	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /(user)/ move "${MAILDIR}/\0x1"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /(user)/ move "${MAILDIR}/\0x1"
+	}
 	EOF
 	mdsort >$TMP2
 	grep -q 'userx1/new: No such file or directory' $TMP2 || \
@@ -531,13 +528,13 @@ if [ $PATH_MAX -gt 0 ]; then
 testcase "destination interpolation too long"
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
-		To: user@$(randstr $PATH_MAX alnum).com
+	To: user@$(randstr $PATH_MAX alnum).com
 
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /(.+)/ move "${MAILDIR}/\1"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /(.+)/ move "${MAILDIR}/\1"
+	}
 	EOF
 	mdsort >$TMP2
 	grep -q '\\1: destination too long' $TMP2 || \
