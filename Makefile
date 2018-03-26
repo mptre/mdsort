@@ -83,6 +83,10 @@ install: all
 	${INSTALL} ${.CURDIR}/mdsort.conf.5 ${DESTDIR}${PREFIX}/man/man5
 .PHONY: install
 
+lint:
+	mandoc -Tlint -Wstyle ${.CURDIR}/mdsort.1 ${.CURDIR}/mdsort.conf.5
+.PHONY: lint
+
 test: ${PROG}
 	@${MAKE} -C ${.CURDIR}/tests
 .PHONY: test
