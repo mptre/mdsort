@@ -45,7 +45,8 @@ static int flags, lineno, newline, parse_errors;
 %type <h> headers strings
 %type <p> pattern
 
-%left AND OR NEG
+%left AND OR
+%left NEG
 
 %%
 
