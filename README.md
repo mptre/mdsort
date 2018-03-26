@@ -12,7 +12,7 @@ Example configuration:
 ```
 maildir "~/Maildir/INBOX" {
 	# Move notifications from GitHub.
-	match header "From" /notifications@github.com/ and move "~/Maildir/GitHub"
+	match header "From" /notifications@github.com/ move "~/Maildir/GitHub"
 
 	# Move messages from OpenBSD mailing lists into dedicated directories.
 	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i \
@@ -29,10 +29,8 @@ maildir "~/Maildir/INBOX" {
 
 Invoking
 [mdsort(1)][mdsort]
-with the
-***-d***
-option shows which messages would be moved and why,
-leaving the maildir(s) unchanged:
+with the `-d` option shows which messages would be moved and why, leaving the
+maildir(s) unchanged:
 
 ```
 $ mdsort -d
