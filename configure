@@ -129,10 +129,6 @@ check_utimensat() {
 	EOF
 }
 
-check_yacc() {
-        command -v yacc >/dev/null
-}
-
 HAVE_ARC4RANDOM=0
 HAVE_DEAD=0
 HAVE_HOST_NAME_MAX=0
@@ -147,6 +143,7 @@ CFLAGS=$(makevar CFLAGS)
 CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
 INSTALL=$(makevar INSTALL)
 SHA256=$(command -v sha256sum sha256 2>/dev/null | head -1)
+YACC=$(makevar YACC)
 
 : "${CPPFLAGS:=}"
 : "${DEBUG:=}"
@@ -166,7 +163,7 @@ set -u
 # Enable tracing, will end up in config.log.
 set -x
 
-check_yacc || fatal "cannot find yacc in PATH"
+[ -z "$YACC" ] && fatal "cannot find yacc"
 
 check_arc4random && HAVE_ARC4RANDOM=1
 check_dead && HAVE_DEAD=1
@@ -226,5 +223,6 @@ DEBUG=		$(echo $DEBUG)
 INSTALL=	$(echo $INSTALL)
 LDFLAGS=	$(echo $LDFLAGS)
 SHA256=		$(echo $SHA256)
+YACC=		$(echo $YACC)
 YFLAGS=		$(echo $YFLAGS)
 EOF
