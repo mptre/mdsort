@@ -33,11 +33,9 @@ struct rule_match {
 };
 
 struct rule {
-	enum rule_type type;
 	char *dest;
+	struct expr *expr;
 	struct rule_match match;
-
-	TAILQ_HEAD(, expr) expressions;
 };
 
 TAILQ_HEAD(expr_headers, header);
@@ -45,14 +43,14 @@ TAILQ_HEAD(expr_headers, header);
 struct expr {
 	enum expr_type type;
 
-	int negate;
 	regex_t pattern;
 	regmatch_t *matches;
 	size_t nmatches;
 
 	struct expr_headers *headers;
 
-	TAILQ_ENTRY(expr) entry;
+	struct expr *lhs;
+	struct expr *rhs;
 };
 
 struct header {
@@ -69,8 +67,7 @@ static int expr_eval_header(struct expr *, struct rule_match *,
     const struct message *);
 static int expr_eval_new(struct expr *, struct rule_match *,
     const struct message *);
-
-static int rule_get_type(const struct rule *);
+static void expr_free(struct expr *);
 
 static void rule_match_copy(struct rule_match *, const char *, regmatch_t *,
     size_t);
@@ -80,70 +77,32 @@ static char *rule_match_str_header(const struct rule_match *);
 
 
 struct rule *
-rule_alloc(void)
+rule_alloc(struct expr *ex, const char *dest)
 {
 	struct rule *rl;
 
 	rl = calloc(1, sizeof(*rl));
 	if (rl == NULL)
 		err(1, NULL);
-	rl->type = 0;
-	TAILQ_INIT(&rl->expressions);
+	rl->expr = ex;
+	rl->dest = strdup(dest);
+	if (rl->dest == NULL)
+		err(1, NULL);
 
 	return rl;
 }
 void
 rule_free(struct rule *rl)
 {
-	struct expr *ex;
-	struct header *hdr;
-
 	if (rl == NULL)
 		return;
 
-	while ((ex = TAILQ_FIRST(&rl->expressions)) != NULL) {
-		TAILQ_REMOVE(&rl->expressions, ex, entry);
-		if (ex->headers != NULL) {
-			while ((hdr = TAILQ_FIRST(ex->headers)) != NULL) {
-				TAILQ_REMOVE(ex->headers, hdr, entry);
-				free(hdr);
-			}
-			free(ex->headers);
-		}
-		regfree(&ex->pattern);
-		free(ex->matches);
-		free(ex);
-	}
+	expr_free(rl->expr);
 	rule_match_free(&rl->match);
 	free(rl->dest);
 	free(rl);
 }
 
-
-void
-rule_add_expr(struct rule *rl, struct expr *ex)
-{
-	TAILQ_INSERT_TAIL(&rl->expressions, ex, entry);
-}
-
-
-int
-rule_set_type(struct rule *rl, enum rule_type type)
-{
-	/* Do not allow the type to change if already initialized. */
-	if (rl->type > 0 && rl->type != type)
-		return 1;
-	rl->type = type;
-	return 0;
-}
-
-void
-rule_set_dest(struct rule *rl, const char *path)
-{
-	rl->dest = strdup(path);
-	if (rl->dest == NULL)
-		err(1, NULL);
-}
 
 const char *
 rule_get_dest(const struct rule *rl)
@@ -154,19 +113,8 @@ rule_get_dest(const struct rule *rl)
 const struct rule_match *
 rule_eval(struct rule *rl, const struct message *msg)
 {
-	struct expr *ex;
-	int res = 1;
-
 	rule_match_free(&rl->match);
-	TAILQ_FOREACH(ex, &rl->expressions, entry) {
-		if ((res = expr_eval(ex, &rl->match, msg)) == 0) {
-			if (rule_get_type(rl) == RULE_TYPE_OR)
-				break; /* match, short-circuit OR */
-		} else if (rule_get_type(rl) == RULE_TYPE_AND) {
-			break; /* no match, short-circuit AND */
-		}
-	}
-	if (res) {
+	if (expr_eval(rl->expr, &rl->match, msg)) {
 		rule_match_free(&rl->match);
 		return NULL;
 	}
@@ -194,7 +142,7 @@ rule_match_str(const struct rule_match *match)
 }
 
 struct expr *
-expr_alloc(enum expr_type type)
+expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 {
 	struct expr *ex;
 
@@ -202,6 +150,8 @@ expr_alloc(enum expr_type type)
 	if (ex == NULL)
 		err(1, NULL);
 	ex->type = type;
+	ex->lhs = lhs;
+	ex->rhs = rhs;
 	return ex;
 }
 
@@ -211,12 +161,6 @@ expr_set_headers(struct expr *ex, struct expr_headers *headers)
 	assert(ex->type == EXPR_TYPE_HEADER);
 
 	ex->headers = headers;
-}
-
-void
-expr_set_negate(struct expr *ex, int negate)
-{
-	ex->negate = negate;
 }
 
 int
@@ -284,6 +228,22 @@ expr_eval(struct expr *ex, struct rule_match *match, const struct message *msg)
 	int res = 1;
 
 	switch (ex->type) {
+	case EXPR_TYPE_AND:
+		res = expr_eval(ex->lhs, match, msg);
+		if (res)
+			break; /* no match, short-circuit */
+		res = expr_eval(ex->rhs, match, msg);
+		break;
+	case EXPR_TYPE_OR:
+		res = expr_eval(ex->lhs, match, msg);
+		if (res == 0)
+			break; /* match, short-circuit */
+		res = expr_eval(ex->rhs, match, msg);
+		break;
+	case EXPR_TYPE_NEG:
+		assert(ex->rhs == NULL);
+		res = !expr_eval(ex->lhs, match, msg);
+		break;
 	case EXPR_TYPE_BODY:
 		res = expr_eval_body(ex, match, msg);
 		break;
@@ -294,8 +254,6 @@ expr_eval(struct expr *ex, struct rule_match *match, const struct message *msg)
 		res = expr_eval_new(ex, match, msg);
 		break;
 	}
-	if (ex->negate)
-		res = !res;
 	return res;
 }
 
@@ -379,13 +337,27 @@ expr_eval_new(struct expr *ex __attribute__((__unused__)),
 	return 0;
 }
 
-static int
-rule_get_type(const struct rule *rl)
+static void
+expr_free(struct expr *ex)
 {
-	/* Interpret an uninitialized rule as AND. */
-	if (rl->type == 0)
-		return RULE_TYPE_AND;
-	return rl->type;
+	struct header *hdr;
+
+	if (ex == NULL)
+		return;
+
+	expr_free(ex->lhs);
+	expr_free(ex->rhs);
+
+	if (ex->headers != NULL) {
+		while ((hdr = TAILQ_FIRST(ex->headers)) != NULL) {
+			TAILQ_REMOVE(ex->headers, hdr, entry);
+			free(hdr);
+		}
+		free(ex->headers);
+	}
+	regfree(&ex->pattern);
+	free(ex->matches);
+	free(ex);
 }
 
 static void

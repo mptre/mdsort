@@ -76,17 +76,15 @@ Evaluates to true if the message is not read.
 A condition may be inverted using the
 .Ic \&!
 keyword.
-Multiple conditions may be also specified:
+Multiple and nested conditions may be also specified:
 .Bl -tag -width Ds
 .It Ar ... Op Ic and Ar ...
 Evaluates to true if all conditions are true.
 .It Ar ... Op Ic or Ar ...
 Evaluates to true if any of the conditions are true.
+.It Ic \&! \&( Ar ... Ic \&)
+Evaluates to true if the nested condition is true.
 .El
-.Pp
-The
-.Ic and , Ic or
-keywords may not be combined due to the lack of scoping.
 .Pp
 Next comes the action:
 .Bl -tag -width Ds

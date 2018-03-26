@@ -203,6 +203,34 @@ testcase "match many or conditions"
 		fail "expected dst/new directory to not be empty"
 	pass
 
+testcase "match many and/or conditions"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user1@example.com
+
+	Hello!
+	EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	Cc: user2@example.com
+
+	Hello!
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match body /hello/i and \
+				(header "To" /user1/ or header "Cc" /user2/) \
+			move "${MAILDIR}/dst"
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	grep -Rq "To: user1@example.com" "${MAILDIR}/dst/new" || \
+		fail "expected dst/new directory to not be empty"
+	grep -Rq "Cc: user2@example.com" "${MAILDIR}/dst/new" || \
+		fail "expected dst/new directory to not be empty"
+	pass
+
 testcase "match new"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
@@ -253,6 +281,56 @@ testcase "match new negate"
 		fail "expected dst/cur directory to not be empty"
 	grep -Rq "To: cur@example.com" "${MAILDIR}/dst/cur" || \
 		fail "expected dst/cur directory to not be empty"
+	pass
+
+testcase "match negate binds to the innermost condition"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: admin@example.com
+
+	Hello!
+	EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	Bye!
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match ! body /hello/i or header "To" /user/ \
+			move "${MAILDIR}/dst"
+	}
+	EOF
+	mdsort
+	grep -Rq "To: admin@example.com" "${MAILDIR}/src/new" || \
+		fail "expected dst/new directory to not be empty"
+	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+		fail "expected dst/new directory to not be empty"
+	pass
+
+testcase "match negate nested condition"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: admin@example.com
+
+	Hello!
+	EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	Bye!
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match !(body /hello/i or header "To" /admin/) \
+			move "${MAILDIR}/dst"
+	}
+	EOF
+	mdsort
+	grep -Rq "To: admin@example.com" "${MAILDIR}/src/new" || \
+		fail "expected src/new directory to not be empty"
+	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+		fail "expected dst/new directory to not be empty"
 	pass
 
 testcase "header key comparison is case insensitive"

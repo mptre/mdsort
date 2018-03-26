@@ -19,6 +19,12 @@ testcase "sanity"
 		match body /hello/i move "~/Maildir/Junk"
 
 		match ! body /hello/ move "~/Maildir/Junk"
+
+		match !(new) move "~/Maildir/Junk"
+
+		match (header "To" /user@example.com/ and \
+				(new or ! body /hello/)) \
+			move "~/Maildir/Junk"
 	}
 
 	maildir "~/Maildir/test2" {
@@ -220,26 +226,4 @@ testcase -e "missing right-hand expr with and"
 	EOF
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
-	EOF
-
-testcase -e "and cannot be followed by or"
-	cat <<-EOF >$CONF
-	maildir "~/Maildir/INBOX" {
-		match header "To" /to/ and header "Cc" /cc/ or \
-			header "Bcc" /bcc/ move "~/Maildir/Junk"
-	}
-	EOF
-	mdsort - -n <<-EOF
-	mdsort.conf:2: and/or are disjoint
-	EOF
-
-testcase -e "or cannot be followed by and"
-	cat <<-EOF >$CONF
-	maildir "~/Maildir/INBOX" {
-		match header "To" /to/ or header "Cc" /cc/ and \
-			header "Bcc" /bcc/ move "~/Maildir/Junk"
-	}
-	EOF
-	mdsort - -n <<-EOF
-	mdsort.conf:2: and/or are disjoint
 	EOF

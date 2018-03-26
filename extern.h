@@ -83,40 +83,18 @@ const char *message_get_header(const struct message *msg, const char *header);
  */
 const char *message_get_path(const struct message *msg);
 
-enum rule_type {
-	RULE_TYPE_AND = 1,
-	RULE_TYPE_OR,
-};
-
 /*
  * Allocate a new rule.
  *
  * The caller is responsible for freeing the returned memory using
  * rule_free().
  */
-struct rule *rule_alloc(void);
+struct rule *rule_alloc(struct expr *ex, const char *dest);
 
 /*
  * Free rule.
  */
 void rule_free(struct rule *rl);
-
-/*
- * Associate the given expression with the rule.
- */
-void rule_add_expr(struct rule *rl, struct expr *ex);
-
-/*
- * Set the expression type.
- * Returns zero on success. Otherwise, non-zero is returned if the expression
- * type is already defined.
- */
-int rule_set_type(struct rule *rl, enum rule_type type);
-
-/*
- * Set the destination maildir to the given path.
- */
-void rule_set_dest(struct rule *rl, const char *path);
 
 /*
  * Get the maildir destination path.
@@ -144,7 +122,10 @@ const char *rule_match_get(const struct rule_match *match, unsigned long n);
 char *rule_match_str(const struct rule_match *match);
 
 enum expr_type {
-	EXPR_TYPE_BODY = 1,
+	EXPR_TYPE_AND,
+	EXPR_TYPE_OR,
+	EXPR_TYPE_NEG,
+	EXPR_TYPE_BODY,
 	EXPR_TYPE_HEADER,
 	EXPR_TYPE_NEW,
 };
@@ -157,20 +138,16 @@ enum expr_pattern {
  * Allocate a new expression with the given type.
  *
  * The caller is responsible for associating the returned memory with a rule
- * using rule_add_expr(). The rule will then take ownership of the memory and
- * hence free it at an appropriate time.
+ * using rule_alloc(). The rule will then take ownership of the memory and hence
+ * free it at an appropriate time.
  */
-struct expr *expr_alloc(enum expr_type type);
+struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
+    struct expr *rhs);
 
 /*
  * Associate the given headers with the expression.
  */
 void expr_set_headers(struct expr *ex, struct expr_headers *headers);
-
-/*
- * Negate the expression if negate is non-zero.
- */
-void expr_set_negate(struct expr *ex, int negate);
 
 /*
  * Associate the given pattern with the expression.

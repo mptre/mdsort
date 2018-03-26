@@ -37,13 +37,15 @@ static int flags, lineno, newline, parse_errors;
 	} p;
 }
 
-%token AND BODY HEADER MAILDIR MATCH MOVE NEW OR PATTERN STRING
-%type <i> AND OR binop flags flag neg
+%token BODY HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
+%type <i> flags flag
 %type <s> PATTERN STRING action
 %type <r> rule
-%type <e> expr expr1
+%type <e> exprs expr
 %type <h> headers strings
 %type <p> pattern
+
+%left AND OR NEG
 
 %%
 
@@ -85,64 +87,43 @@ rules		: /* empty */
 		| error '\n'
 		;
 
-rule		: MATCH {
-			$<r>$ = rule_alloc();
-		} exprs action {
-			rule_set_dest($<r>2, $4);
-			$$ = $<r>2;
+rule		: MATCH exprs action {
+			$$ = rule_alloc($2, $3);
 		}
 		;
 
-exprs		: exprs binop expr {
-			if (rule_set_type($<r>0, $2))
-				yyerror("and/or are disjoint");
-			rule_add_expr($<r>0, $3);
+exprs		: exprs AND exprs {
+			$$ = expr_alloc(EXPR_TYPE_AND, $1, $3);
 		}
-		| expr {
-			rule_add_expr($<r>0, $1);
+		| exprs OR exprs {
+			$$ = expr_alloc(EXPR_TYPE_OR, $1, $3);
 		}
+		| NEG exprs {
+			$$ = expr_alloc(EXPR_TYPE_NEG, $2, NULL);
+		}
+		| expr
 		;
 
-binop		: AND {
-			$$ = RULE_TYPE_AND;
-		}
-		| OR {
-			$$ = RULE_TYPE_OR;
-		}
-		;
-
-expr		: neg expr1 {
-			expr_set_negate($2, $1);
-			$$ = $2;
-		}
-		;
-
-expr1		: BODY pattern {
+expr		: BODY pattern {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_BODY);
+			$$ = expr_alloc(EXPR_TYPE_BODY, NULL, NULL);
 			if (expr_set_pattern($$, $2.s, $2.i, &errstr))
 				yyerror(errstr);
-			flags = 0;
 		}
 		| HEADER headers pattern {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_HEADER);
+			$$ = expr_alloc(EXPR_TYPE_HEADER, NULL, NULL);
 			expr_set_headers($$, $2);
 			if (expr_set_pattern($$, $3.s, $3.i, &errstr))
 				yyerror(errstr);
 		}
 		| NEW {
-			$$ = expr_alloc(EXPR_TYPE_NEW);
+			$$ = expr_alloc(EXPR_TYPE_NEW, NULL, NULL);
 		}
-		;
-
-neg		: /* empty */ {
-			$$ = 0;
-		}
-		| '!' {
-			$$ = 1;
+		| '(' exprs ')' {
+			$$ = $2;
 		}
 		;
 
@@ -286,6 +267,9 @@ again:
 	case EOF:
 		return 0;
 	case '!':
+		return NEG;
+	case '(':
+	case ')':
 	case '{':
 	case '}':
 		return c;
