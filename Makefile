@@ -56,6 +56,7 @@ clean:
 .PHONY: clean
 
 dist:
+	set -e; \
 	d=${PROG}-${VERSION}; \
 	mkdir $$d; \
 	for f in ${DISTFILES}; do \
@@ -63,12 +64,14 @@ dist:
 		cp ${.CURDIR}/$$f $$d/$$f; \
 	done; \
 	tar czvf ${.CURDIR}/$$d.tar.gz $$d; \
+	${SHA256} ${.CURDIR}/$$d.tar.gz >${.CURDIR}/$$d.sha256; \
 	rm -r $$d
 .PHONY: dist
 
 distclean: clean
 	rm -f ${.CURDIR}/Makefile.inc ${.CURDIR}/config.h \
-		${.CURDIR}/config.log ${.CURDIR}/${PROG}-${VERSION}.tar.gz
+		${.CURDIR}/config.log ${.CURDIR}/${PROG}-${VERSION}.tar.gz \
+		${.CURDIR}/${PROG}-${VERSION}.sha256
 .PHONY: distclean
 
 install: all
