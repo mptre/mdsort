@@ -18,7 +18,7 @@
 
 #include "extern.h"
 
-enum {
+enum maildir_dirname {
 	MAILDIR_NEW = 1,
 	MAILDIR_CUR,
 };
@@ -26,18 +26,17 @@ enum {
 struct maildir {
 	char *path;
 	DIR *dir;
-	int dirname;
+	enum maildir_dirname dirname;
 
 	/* Internal buffers used to construct directory and file names. */
 	char dbuf[PATH_MAX];
 	char fbuf[PATH_MAX];
 };
 
+static const char *maildir_dirname(const struct maildir *);
 static const char *maildir_genname(const struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
-static const char *basename(const char *);
-static const char *dirname(int);
 static const char *pathexpand(const char *, const struct rule_match *);
 static int pathjoin(char *, const char *, const char *, const char *);
 
@@ -56,7 +55,7 @@ maildir_open(const char *path, int nowalk)
 	if (md->dirname == 0)
 		md->dirname = MAILDIR_NEW;
 
-	if (pathjoin(md->dbuf, md->path, dirname(md->dirname), NULL)) {
+	if (pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL)) {
 		warnx("unknown maildir path");
 		maildir_close(md);
 		return NULL;
@@ -103,7 +102,7 @@ maildir_walk(struct maildir *md)
 			return path;
 
 		md->dirname++;
-		if (pathjoin(md->dbuf, md->path, dirname(md->dirname), NULL))
+		if (pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL))
 			return NULL;
 		if (md->dir != NULL)
 			closedir(md->dir);
@@ -128,8 +127,8 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	int dstfd, srcfd;
 	int doutime = 0;
 
-	srcname = basename(path);
-	if (srcname == NULL) {
+	/* Increment srcname to skip leading '/' */
+	if ((srcname = strrchr(path, '/')) == NULL || strlen(++srcname) == 0) {
 		warnx("%s: could not extract basename", path);
 		return 1;
 	}
@@ -158,6 +157,18 @@ const char *
 maildir_get_path(const struct maildir *md)
 {
 	return md->dbuf;
+}
+
+static const char *
+maildir_dirname(const struct maildir *md)
+{
+	switch (md->dirname) {
+	case MAILDIR_NEW:
+		return "new";
+	case MAILDIR_CUR:
+		return "cur";
+	}
+	return NULL;
 }
 
 static const char *
@@ -209,36 +220,10 @@ maildir_read(struct maildir *md)
 		if (ent->d_type != DT_REG)
 			continue;
 
-		if (pathjoin(md->fbuf, md->path, dirname(md->dirname),
+		if (pathjoin(md->fbuf, md->path, maildir_dirname(md),
 			    ent->d_name))
 			return NULL;
 		return md->fbuf;
-	}
-}
-
-static const char *
-basename(const char *path)
-{
-	const char *p;
-
-	p = strrchr(path, '/');
-	if (p == NULL)
-		return NULL;
-	if (strlen(p + 1) == 0)
-		return NULL;
-	return p + 1;
-}
-
-static const char *
-dirname(int dir)
-{
-	switch (dir) {
-	case MAILDIR_NEW:
-		return "new";
-	case MAILDIR_CUR:
-		return "cur";
-	default:
-		return NULL;
 	}
 }
 
