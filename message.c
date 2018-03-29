@@ -40,16 +40,17 @@ message_parse(const char *path)
 	size_t msgsize = BUFSIZ;
 	int fd;
 
+	fd = open(path, O_RDONLY | O_CLOEXEC);
+	if (fd == -1) {
+		warn("%s", path);
+		return NULL;
+	}
+
 	msg = calloc(1, sizeof(*msg));
 	if (msg == NULL)
 		err(1, NULL);
 	msg->path = path;
 
-	fd = open(path, O_RDONLY | O_CLOEXEC);
-	if (fd == -1) {
-		warn("%s", path);
-		goto err;
-	}
 	for (;;) {
 		if (msglen >= msgsize - 1 || msg->buf == NULL) {
 			msg->buf = reallocarray(msg->buf, 2, msgsize);
@@ -63,7 +64,9 @@ message_parse(const char *path)
 			if (errno == EINTR)
 				continue;
 			warn("%s", path);
-			goto err;
+			close(fd);
+			message_free(msg);
+			return NULL;
 		} else if (n == 0) {
 			break;
 		}
@@ -76,10 +79,6 @@ message_parse(const char *path)
 	msg->body = message_parse_headers(msg);
 
 	return msg;
-err:
-	close(fd);
-	message_free(msg);
-	return NULL;
 }
 
 void
