@@ -51,6 +51,7 @@ maildir_open(const char *path, int nowalk)
 	md->path = strdup(path);
 	if (md->path == NULL)
 		err(1, NULL);
+	md->dir = NULL;
 	md->dirname = nowalk;
 	if (md->dirname == 0)
 		md->dirname = MAILDIR_NEW;
