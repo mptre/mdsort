@@ -27,9 +27,8 @@ main(int argc, char *argv[])
 	struct maildir *dst, *md;
 	struct message *msg;
 	struct rule *rl;
-	const struct rule_match *match;
+	const struct match *match;
 	const char *path;
-	char *str;
 	size_t i, j;
 	int c;
 	int dflag = 0;
@@ -42,7 +41,6 @@ main(int argc, char *argv[])
 		switch (c) {
 		case 'd':
 			dflag = 1;
-			verbose = 2;
 			break;
 		case 'f':
 			confpath = optarg;
@@ -60,6 +58,8 @@ main(int argc, char *argv[])
 	argv += optind;
 	if (argc > 0)
 		usage();
+	if (dflag && verbose < 1)
+		verbose = 1;
 
 	/* Extract mandatory data from the current environment. */
 	readenv();
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 				continue;
 			for (j = 0; j < conf->nrules; j++) {
 				rl = conf->rules[j];
-				if ((match = rule_eval(rl, msg)) == NULL)
+				if (rule_eval(rl, &match, msg))
 					continue;
 
 				dst = maildir_openat(md, rule_get_dest(rl),
@@ -93,14 +93,10 @@ main(int argc, char *argv[])
 					continue;
 				log_info("%s -> %s\n",
 				    path, maildir_get_path(dst));
-				if (dflag) {
-					str = rule_match_str(match);
-					if (str != NULL)
-						log_info("%s", str);
-					free(str);
-				} else {
+				if (dflag)
+					rule_inspect(rl, stdout);
+				else
 					maildir_move(md, dst, path);
-				}
 				maildir_close(dst);
 			}
 			message_free(msg);

@@ -3,7 +3,7 @@
  */
 struct expr;
 struct expr_headers;
-struct rule_match;
+struct match;
 
 /*
  * Open the maildir directory located at path.
@@ -24,7 +24,7 @@ struct maildir *maildir_open(const char *path, int nowalk);
  * maildir_close().
  */
 struct maildir *maildir_openat(const struct maildir *md, const char *path,
-	const struct rule_match *match);
+	const struct match *match);
 
 /*
  * Close and free maildir.
@@ -97,29 +97,29 @@ struct rule *rule_alloc(struct expr *ex, const char *dest);
 void rule_free(struct rule *rl);
 
 /*
+ * Writes a human readable representation of the latest match to fh.
+ */
+void rule_inspect(const struct rule *rl, FILE *fh);
+
+/*
  * Get the maildir destination path.
  */
 const char *rule_get_dest(const struct rule *rl);
 
 /*
- * Returns the substrings in the given message that matched the first header
- * expression in rule.
- * If none of the expressions in rule matched the message, NULL is returned.
+ * Returns zero if the rule matches the given message.
+ * Otherwise, non-zero is returned.
+ * The matches of the first matching expression will be accessible through the
+ * given match.
  */
-const struct rule_match *rule_eval(struct rule *rl, const struct message *msg);
+int rule_eval(struct rule *rl, const struct match **match,
+    const struct message *msg);
 
 /*
  * Returns the nth match if present.
  * Otherwise, NULL is returned.
  */
-const char *rule_match_get(const struct rule_match *match, unsigned long n);
-
-/*
- * Returns a human readable representation of the match.
- *
- * The caller is responsible for freeing the returned memory using free().
- */
-char *rule_match_str(const struct rule_match *match);
+const char *match_get(const struct match *match, unsigned long n);
 
 enum expr_type {
 	EXPR_TYPE_AND,

@@ -37,7 +37,7 @@ static const char *maildir_dirname(const struct maildir *);
 static const char *maildir_genname(const struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
-static const char *pathexpand(const char *, const struct rule_match *);
+static const char *pathexpand(const char *, const struct match *);
 static int pathjoin(char *, const char *, const char *, const char *);
 
 struct maildir *
@@ -73,7 +73,7 @@ maildir_open(const char *path, int nowalk)
 
 struct maildir *
 maildir_openat(const struct maildir *md, const char *path,
-    const struct rule_match *match)
+    const struct match *match)
 {
 	const char *p;
 
@@ -229,7 +229,7 @@ maildir_read(struct maildir *md)
 }
 
 static const char *
-pathexpand(const char *path, const struct rule_match *match)
+pathexpand(const char *path, const struct match *match)
 {
 	static char buf[PATH_MAX];
 	const char *sub;
@@ -243,7 +243,7 @@ pathexpand(const char *path, const struct rule_match *match)
 			errno = 0;
 			mid = strtoul(path + i, &end, 10);
 			if ((errno == ERANGE && mid == ULONG_MAX) ||
-			    ((sub = rule_match_get(match, mid)) == NULL))
+			    ((sub = match_get(match, mid)) == NULL))
 				goto err2;
 			/* Adjust j to remove previously copied backslash. */
 			j--;

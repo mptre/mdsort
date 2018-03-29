@@ -15,17 +15,11 @@
 
 #include "extern.h"
 
-enum rule_match_type {
-	RULE_MATCH_TYPE_BODY = 1,
-	RULE_MATCH_TYPE_HEADER,
-};
-
-struct rule_match {
-	enum rule_match_type type;
+struct match {
 	char **matches;
 	size_t nmatches;
 
-	/* Used by rule_match_str(). */
+	/* Used by rule_inspect(). */
 	const char *key;
 	const char *val;
 	size_t valbeg;
@@ -35,7 +29,6 @@ struct rule_match {
 struct rule {
 	char *dest;
 	struct expr *expr;
-	struct rule_match match;
 };
 
 TAILQ_HEAD(expr_headers, header);
@@ -48,6 +41,7 @@ struct expr {
 	size_t nmatches;
 
 	struct expr_headers *headers;
+	struct match *match;
 
 	struct expr *lhs;
 	struct expr *rhs;
@@ -59,22 +53,22 @@ struct header {
 	TAILQ_ENTRY(header) entry;
 };
 
-static int expr_eval(struct expr *, struct rule_match *,
+static int expr_eval(struct expr *, const struct match **match,
     const struct message *);
-static int expr_eval_body(struct expr *, struct rule_match *,
+static int expr_eval_body(struct expr *, const struct match **match,
     const struct message *);
-static int expr_eval_header(struct expr *, struct rule_match *,
+static int expr_eval_header(struct expr *, const struct match **match,
     const struct message *);
-static int expr_eval_new(struct expr *, struct rule_match *,
+static int expr_eval_new(struct expr *, const struct match **match,
     const struct message *);
 static void expr_free(struct expr *);
+static void expr_inspect(const struct expr *, FILE *);
+static void expr_inspect_body(const struct expr *, FILE *);
+static void expr_inspect_header(const struct expr *, FILE *);
 
-static void rule_match_copy(struct rule_match *, const char *, regmatch_t *,
+static void match_copy(struct match *, const char *, regmatch_t *,
     size_t);
-static void rule_match_free(struct rule_match *match);
-static char *rule_match_str_body(const struct rule_match *);
-static char *rule_match_str_header(const struct rule_match *);
-
+static void match_free(struct match *match);
 
 struct rule *
 rule_alloc(struct expr *ex, const char *dest)
@@ -98,11 +92,15 @@ rule_free(struct rule *rl)
 		return;
 
 	expr_free(rl->expr);
-	rule_match_free(&rl->match);
 	free(rl->dest);
 	free(rl);
 }
 
+void
+rule_inspect(const struct rule *rl, FILE *fh)
+{
+	expr_inspect(rl->expr, fh);
+}
 
 const char *
 rule_get_dest(const struct rule *rl)
@@ -110,35 +108,22 @@ rule_get_dest(const struct rule *rl)
 	return rl->dest;
 }
 
-const struct rule_match *
-rule_eval(struct rule *rl, const struct message *msg)
+int
+rule_eval(struct rule *rl, const struct match **match,
+    const struct message *msg)
 {
-	rule_match_free(&rl->match);
-	if (expr_eval(rl->expr, &rl->match, msg)) {
-		rule_match_free(&rl->match);
-		return NULL;
-	}
-	return &rl->match;
+	*match = NULL;
+	if (expr_eval(rl->expr, match, msg))
+		return 1;
+	return 0;
 }
 
 const char *
-rule_match_get(const struct rule_match *match, unsigned long n)
+match_get(const struct match *match, unsigned long n)
 {
-	if (n >= match->nmatches)
+	if (match == NULL || n >= match->nmatches)
 		return NULL;
 	return match->matches[n];
-}
-
-char *
-rule_match_str(const struct rule_match *match)
-{
-	switch (match->type) {
-	case RULE_MATCH_TYPE_BODY:
-		return rule_match_str_body(match);
-	case RULE_MATCH_TYPE_HEADER:
-		return rule_match_str_header(match);
-	}
-	return NULL;
 }
 
 struct expr *
@@ -152,6 +137,11 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	ex->type = type;
 	ex->lhs = lhs;
 	ex->rhs = rhs;
+	if (ex->type == EXPR_TYPE_BODY || ex->type == EXPR_TYPE_HEADER) {
+		ex->match = calloc(1, sizeof(*ex->match));
+		if (ex->match == NULL)
+			err(1, NULL);
+	}
 	return ex;
 }
 
@@ -223,7 +213,8 @@ expr_headers_append(struct expr_headers *headers, const char *key)
 }
 
 static int
-expr_eval(struct expr *ex, struct rule_match *match, const struct message *msg)
+expr_eval(struct expr *ex, const struct match **match,
+    const struct message *msg)
 {
 	int res = 1;
 
@@ -258,12 +249,15 @@ expr_eval(struct expr *ex, struct rule_match *match, const struct message *msg)
 }
 
 static int
-expr_eval_body(struct expr *ex, struct rule_match *match,
+expr_eval_body(struct expr *ex, const struct match **match,
     const struct message *msg)
 {
 	const char *body;
 
 	assert(ex->nmatches > 0);
+
+	/* Clear old matches. */
+	match_free(ex->match);
 
 	body = message_get_body(msg);
 	if (body == NULL)
@@ -271,22 +265,18 @@ expr_eval_body(struct expr *ex, struct rule_match *match,
 	if (regexec(&ex->pattern, body, ex->nmatches, ex->matches, 0))
 		return 1;
 
-	/* Do not override matches for a previous expression. */
-	if (match->nmatches > 0)
-		return 0;
-
-	match->type = RULE_MATCH_TYPE_BODY;
-	match->key = NULL;
-	match->val = body;
-	match->valbeg = ex->matches[0].rm_so;
-	match->valend = ex->matches[0].rm_eo;
-	rule_match_copy(match, body, ex->matches, ex->nmatches);
-
+	ex->match->key = NULL;
+	ex->match->val = body;
+	ex->match->valbeg = ex->matches[0].rm_so;
+	ex->match->valend = ex->matches[0].rm_eo;
+	match_copy(ex->match, body, ex->matches, ex->nmatches);
+	if (*match == NULL)
+		*match = ex->match; /* first matching expression */
 	return 0;
 }
 
 static int
-expr_eval_header(struct expr *ex, struct rule_match *match,
+expr_eval_header(struct expr *ex, const struct match **match,
     const struct message *msg)
 {
 	const char *val;
@@ -295,6 +285,9 @@ expr_eval_header(struct expr *ex, struct rule_match *match,
 	assert(ex->headers != NULL);
 	assert(ex->nmatches > 0);
 
+	/* Clear old matches. */
+	match_free(ex->match);
+
 	TAILQ_FOREACH(hdr, ex->headers, entry) {
 		val = message_get_header(msg, hdr->key);
 		if (val == NULL)
@@ -302,16 +295,13 @@ expr_eval_header(struct expr *ex, struct rule_match *match,
 		if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
 			continue;
 
-		/* Do not override matches for a previous expression. */
-		if (match->nmatches > 0)
-			return 0;
-
-		match->type = RULE_MATCH_TYPE_HEADER;
-		match->key = hdr->key;
-		match->val = val;
-		match->valbeg = ex->matches[0].rm_so;
-		match->valend = ex->matches[0].rm_eo;
-		rule_match_copy(match, val, ex->matches, ex->nmatches);
+		ex->match->key = hdr->key;
+		ex->match->val = val;
+		ex->match->valbeg = ex->matches[0].rm_so;
+		ex->match->valend = ex->matches[0].rm_eo;
+		match_copy(ex->match, val, ex->matches, ex->nmatches);
+		if (*match == NULL)
+			*match = ex->match; /* first matching expression */
 		return 0;
 	}
 	return 1;
@@ -319,7 +309,7 @@ expr_eval_header(struct expr *ex, struct rule_match *match,
 
 static int
 expr_eval_new(struct expr *ex __attribute__((__unused__)),
-    struct rule_match *match __attribute__((__unused__)),
+    const struct match **match __attribute__((__unused__)),
     const struct message *msg)
 {
 	const char *beg, *end, *p, *path;
@@ -347,7 +337,7 @@ expr_free(struct expr *ex)
 
 	expr_free(ex->lhs);
 	expr_free(ex->rhs);
-
+	regfree(&ex->pattern);
 	if (ex->headers != NULL) {
 		while ((hdr = TAILQ_FIRST(ex->headers)) != NULL) {
 			TAILQ_REMOVE(ex->headers, hdr, entry);
@@ -355,53 +345,45 @@ expr_free(struct expr *ex)
 		}
 		free(ex->headers);
 	}
-	regfree(&ex->pattern);
+	if (ex->type == EXPR_TYPE_BODY || ex->type == EXPR_TYPE_HEADER) {
+		match_free(ex->match);
+		free(ex->match);
+	}
 	free(ex->matches);
 	free(ex);
 }
 
 static void
-rule_match_copy(struct rule_match *match, const char *str, regmatch_t *src,
-    size_t nmemb)
+expr_inspect(const struct expr *ex, FILE *fh)
 {
-	char *cpy;
-	size_t i, len;
-
-	match->matches = reallocarray(NULL, nmemb, sizeof(*match->matches));
-	if (match->matches == NULL)
-		err(1, NULL);
-	match->nmatches = nmemb;
-	for (i = 0; i < nmemb; i++) {
-		len = src[i].rm_eo - src[i].rm_so;
-		cpy = strndup(str + src[i].rm_so, len);
-		if (str == NULL)
-			err(1, NULL);
-		match->matches[i] = cpy;
+	switch (ex->type) {
+	case EXPR_TYPE_AND:
+	case EXPR_TYPE_OR:
+		expr_inspect(ex->lhs, fh);
+		expr_inspect(ex->rhs, fh);
+		break;
+	case EXPR_TYPE_BODY:
+		expr_inspect_body(ex, fh);
+		break;
+	case EXPR_TYPE_HEADER:
+		expr_inspect_header(ex, fh);
+		break;
+	case EXPR_TYPE_NEG:
+	case EXPR_TYPE_NEW:
+		break;
 	}
 }
 
 static void
-rule_match_free(struct rule_match *match)
+expr_inspect_body(const struct expr *ex, FILE *fh)
 {
-	size_t i;
-
-	if (match == NULL)
-		return;
-
-	for (i = 0; i < match->nmatches; i++)
-		free(match->matches[i]);
-	free(match->matches);
-	/* Do not free match since it's stored inside its corresponding rule. */
-	memset(match, 0, sizeof(*match));
-}
-
-static char *
-rule_match_str_body(const struct rule_match *match)
-{
+	const struct match *match;
 	const char *beg, *end, *p;
-	char *buf;
-	size_t size;
-	int len, n, padbeg, padend;
+	int len, padbeg, padend;
+
+	match = ex->match;
+	if (match->nmatches == 0)
+		return;
 
 	beg = match->val;
 	for (;;) {
@@ -414,38 +396,25 @@ rule_match_str_body(const struct rule_match *match)
 		end = match->val + match->valend;
 	/* Do not handle a match spanning over multiple lines for now. */
 	if (match->valend > (size_t)(end - match->val))
-		return NULL;
+		return;
 	padbeg = match->valbeg - (beg - match->val);
 	padend = match->valend - match->valbeg;
 	if (padend >= 2)
 		padend -= 2;
-
 	len = end - beg;
-	/* '\n' + '\0' = 2 */
-	size = 2 * (len + 2);
-	buf = malloc(size);
-	if (buf == NULL)
-		err(1, NULL);
-	n = snprintf(buf, size, "%.*s\n%*s^%*s$\n",
-	    len, beg, padbeg, "", padend, "");
-	if (n == -1 || (size_t)n >= size)
-		errx(1, "%s: buffer too small", __func__);
-	return buf;
+	fprintf(fh, "%.*s\n%*s^%*s$\n", len, beg, padbeg, "", padend, "");
 }
 
-static char *
-rule_match_str_header(const struct rule_match *match)
+void
+expr_inspect_header(const struct expr *ex, FILE *fh)
 {
+	const struct match *match;
 	const char *p, *tmp;
-	char *buf;
-	size_t size;
-	int lenval, n, padbeg, padend;
+	int lenval, padbeg, padend;
 
-	/* ':' + ' ' + '\n' + '\0' = 4 */
-	size = 2 * (strlen(match->key) + strlen(match->val) + 4);
-	buf = malloc(size);
-	if (buf == NULL)
-		err(1, NULL);
+	match = ex->match;
+	if (match->nmatches == 0)
+		return;
 
 	/*
 	 * Normalize initial padding if the match does not reside on the first
@@ -475,10 +444,40 @@ rule_match_str_header(const struct rule_match *match)
 		lenval = (int)(p - match->val);
 	else
 		lenval = strlen(match->val);
-
-	n = snprintf(buf, size, "%s: %.*s\n%*s^%*s$\n",
+	fprintf(fh, "%s: %.*s\n%*s^%*s$\n",
 	    match->key, lenval, match->val, padbeg, "", padend, "");
-	if (n == -1 || (size_t)n >= size)
-		errx(1, "%s: buffer too small", __func__);
-	return buf;
+}
+
+static void
+match_copy(struct match *match, const char *str, regmatch_t *src, size_t nmemb)
+{
+	char *cpy;
+	size_t i, len;
+
+	match->matches = reallocarray(NULL, nmemb, sizeof(*match->matches));
+	if (match->matches == NULL)
+		err(1, NULL);
+	match->nmatches = nmemb;
+	for (i = 0; i < nmemb; i++) {
+		len = src[i].rm_eo - src[i].rm_so;
+		cpy = strndup(str + src[i].rm_so, len);
+		if (str == NULL)
+			err(1, NULL);
+		match->matches[i] = cpy;
+	}
+}
+
+static void
+match_free(struct match *match)
+{
+	size_t i;
+
+	if (match == NULL || match->nmatches == 0)
+		return;
+
+	for (i = 0; i < match->nmatches; i++)
+		free(match->matches[i]);
+	free(match->matches);
+	/* Do not free match since it's owned by its expression. */
+	memset(match, 0, sizeof(*match));
 }

@@ -524,6 +524,22 @@ testcase "destination interpolation non-decimal"
 		fail "expected back-reference to be ignored"
 	pass
 
+testcase "destination interpolation with none body/header"
+	mkmd "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
+	To: user@example.com
+
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match new move "${MAILDIR}/\1"
+	}
+	EOF
+	mdsort >$TMP2
+	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
+		fail "expected back-reference to be invalid"
+	pass
+
 if [ $PATH_MAX -gt 0 ]; then
 testcase "destination interpolation too long"
 	mkmd "${MAILDIR}/src"

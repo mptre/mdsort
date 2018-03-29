@@ -162,3 +162,28 @@ testcase "match body spanning multiple lines"
 	EOF
 	mdsort -d | tail -n +2 >$TMP3
 	fcmp - $TMP3 </dev/null && pass
+
+testcase "match many headers and body"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	Cc: admin@example.com
+	To: user@example.com
+
+	Hello!
+EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match header "Cc" /admin/ and header "To" /user/ \
+			and body /hello/i move "${MAILDIR}/dst"
+	}
+	EOF
+	cat <<EOF >$TMP2
+Cc: admin@example.com
+    ^   $
+To: user@example.com
+    ^  $
+Hello!
+^   $
+EOF
+	mdsort -d | tail -n +2 >$TMP3
+	fcmp $TMP2 $TMP3 && pass
