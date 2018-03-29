@@ -1,10 +1,6 @@
 sudo: false
 dist: trusty
 language: c
-env:
-  global:
-    # COVERITY_SCAN_TOKEN
-    - secure: "yybvOA0pmt2qOORXspWRVYHtmWtZ2b7O4+poncdQGNYOvzp6OJdnjbbKWI0l/JHvBKcHH0+vkHTEDCKnI0IKbPQ9P/5pozgh9NqzMoOjmqPX0bawV3KmpTeiqMQ0HpEUBvaEPF1kLAZc/rfqzQbyK3JrqndP0r2sCxmZMJDi2emI1sFYu2JDHbQXRUH4XjZixx26Fq0aXqWPS+JiBmhQMTHSf0XsgkSBVPqeqNcoNrFv5e/cPKPjF5CTmYRUDjpGGqAf5DAuHFmXWV8NZ8o8wbp18KFmXERKJMFWFqKqoK7TWWe7yvbcjTgezZELIv2QkAaqS8dSPfcuX1JTW6navth8H8CLhG875VXgB558U2ws3+TI5lbTXKaJrXujL5RonpGVZgMdJ96Dve1seJpl93OpgQdjMC83ebPZjxwnBUNaNOO/96m2HhVyGJg1PfcJOxsskAWhowzGBsXxmiUMIvfCGlm9lwwz4scVANpUbH46Yhue+VSYwmRwQCgPDZ4PZIcPFQE6X3ByD901BghFBFmh6zoLxCZdwj8/15MV8betD/Ay7xv9+FAWp/OXnh+cE3A+yGuLnr3izs7us4SdH3TBA/Eijg4eY06kri5C13lpoW/ei7k23lU+BqVQKsz54KTTUuxIqEJutes/tlmGm/MnM9WDpAmkhOROOiWuVF0="
 matrix:
   include:
     - os: linux
@@ -23,19 +19,6 @@ matrix:
     - os: osx
       compiler: clang
       env: BUILD_TYPE=default CFLAGS=-Werror
-    - os: linux
-      compiler: clang
-      env: BUILD_TYPE=coverity
-before_install:
-  - |
-    # Don't trigger Coverity unless it's a coverity build.
-    if [ $BUILD_TYPE != coverity ]; then
-      COVERITY_SCAN_BRANCH_PATTERN='^$'
-    fi
-    # Disable all builds while submitting to Coverity.
-    if [ $TRAVIS_BRANCH = coverity_scan ]; then
-      BUILD_TYPE=unknown
-    fi
 script:
   - |
     (
@@ -48,12 +31,3 @@ script:
       ;;
     esac
     )
-addons:
-  coverity_scan:
-    project:
-      name: mptre/mdsort
-      description: maildir sort
-    notification_email: anton.lindqvist@gmail.com
-    build_command_prepend: ./configure
-    build_command: make
-    branch_pattern: coverity_scan
