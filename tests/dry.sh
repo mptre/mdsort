@@ -1,13 +1,13 @@
 testcase "match header on first line"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: user@example.com
+	To: user@example.com
 
-EOF
+	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /example.com/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /example.com/ move "${MAILDIR}/dst"
+	}
 	EOF
 	cat <<EOF >$TMP2
 To: user@example.com
@@ -25,9 +25,9 @@ To: admin@example.com,
 
 EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	cat <<EOF >$TMP2
 To: admin@example.com,
@@ -45,9 +45,9 @@ To: admin@example.com,
 
 EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "To" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	cat <<EOF >$TMP2
 To: admin@example.com,
@@ -65,9 +65,9 @@ Cc: admin@example.com,
 
 EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match header "Cc" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match header "Cc" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	cat <<EOF >$TMP2
 Cc: admin@example.com,
@@ -80,13 +80,13 @@ EOF
 testcase "match header negate"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
-		To: admin@example.com,
+	To: admin@example.com,
 
-EOF
+	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match ! header "To" /user/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match ! header "To" /user/ move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort -d >$TMP2
 	grep -q '^.*src/new.* -> .*/dst/new$' $TMP2 || fail "expected move line"
@@ -100,9 +100,9 @@ testcase "match body on first line"
 	Hello
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match body /hello/i move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match body /hello/i move "${MAILDIR}/dst"
+	}
 	EOF
 	cat <<-EOF >$TMP2
 	Hello
@@ -115,9 +115,9 @@ testcase "match body on first line no newline"
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	printf 'To: user@example.com\n\nHello' | mkmsg "${MAILDIR}/src/new"
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match body /hello/i move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match body /hello/i move "${MAILDIR}/dst"
+	}
 	EOF
 	cat <<-EOF >$TMP2
 	Hello
@@ -136,9 +136,9 @@ testcase "match body on middle line"
 	Bye
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match body /hello/ move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match body /hello/ move "${MAILDIR}/dst"
+	}
 	EOF
 	cat <<-EOF >$TMP2
 	Hello hello
@@ -156,9 +156,9 @@ testcase "match body spanning multiple lines"
 	llo
 	EOF
 	cat <<-EOF >$CONF
-		maildir "${MAILDIR}/src" {
-			match body /h.*/i move "${MAILDIR}/dst"
-		}
+	maildir "${MAILDIR}/src" {
+		match body /h.*/i move "${MAILDIR}/dst"
+	}
 	EOF
 	mdsort -d | tail -n +2 >$TMP3
 	fcmp - $TMP3 </dev/null && pass
@@ -194,12 +194,12 @@ testcase "matches from previous evaluations are discarded"
 	To: user@example.com
 
 	Bye!
-EOF
+	EOF
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	Cc: admin@example.com
 
 	Hello!
-EOF
+	EOF
 	cat <<-EOF >$CONF
 	maildir "${MAILDIR}/src" {
 		match (header "Cc" /admin/ or header "To" /user/) and \
@@ -221,12 +221,12 @@ testcase "matches from previous evaluations are discarded, inverted"
 	Cc: admin@example.com
 
 	Bye!
-EOF
+	EOF
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
 
 	Hello!
-EOF
+	EOF
 	cat <<-EOF >$CONF
 	maildir "${MAILDIR}/src" {
 		match (header "Cc" /admin/ or header "To" /user/) and \
