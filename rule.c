@@ -15,24 +15,11 @@
 
 #include "extern.h"
 
-struct match {
-	char **matches;
-	size_t nmatches;
-
-	/* Used by rule_inspect(). */
-	const char *key;
-	const char *val;
-	size_t valbeg;
-	size_t valend;
-};
-
 struct rule {
 	char *dest;
 	struct expr *expr;
 	int cookie;
 };
-
-TAILQ_HEAD(expr_headers, header);
 
 struct expr {
 	enum expr_type type;
@@ -49,10 +36,23 @@ struct expr {
 	struct expr *rhs;
 };
 
+TAILQ_HEAD(expr_headers, header);
+
 struct header {
 	char *key;
 
 	TAILQ_ENTRY(header) entry;
+};
+
+struct match {
+	char **matches;
+	size_t nmatches;
+
+	/* Used by rule_inspect(). */
+	const char *key;
+	const char *val;
+	size_t valbeg;
+	size_t valend;
 };
 
 static int expr_eval(struct expr *, const struct match **match,
@@ -352,10 +352,8 @@ expr_free(struct expr *ex)
 		}
 		free(ex->headers);
 	}
-	if (ex->type == EXPR_TYPE_BODY || ex->type == EXPR_TYPE_HEADER) {
-		match_free(ex->match);
-		free(ex->match);
-	}
+	match_free(ex->match);
+	free(ex->match);
 	free(ex->matches);
 	free(ex);
 }
@@ -363,7 +361,7 @@ expr_free(struct expr *ex)
 static void
 expr_inspect(const struct expr *ex, FILE *fh, int cookie)
 {
-	/* Ensure expression was visited during last call to rule_eval() */
+	/* Ensure expression was visited during last call to expr_eval() */
 	if (ex->cookie != cookie)
 		return;
 
