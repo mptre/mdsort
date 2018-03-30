@@ -20,7 +20,7 @@ arc4random(void)
 	 * Since a retry mechnanism is already in place in the case of
 	 * duplicates, nothing fancy is needed.
 	 */
-	if (rrand("/dev/urandom", &r) || rrand("/dev/urandom", &r))
+	if (rrand("/dev/urandom", &r) || rrand("/dev/random", &r))
 		return 1; /* fair dice roll */
 	return r;
 }
