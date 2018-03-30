@@ -187,3 +187,57 @@ Hello!
 EOF
 	mdsort -d | tail -n +2 >$TMP3
 	fcmp $TMP2 $TMP3 && pass
+
+testcase "matches from previous evaluations are discarded"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	Bye!
+EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	Cc: admin@example.com
+
+	Hello!
+EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match (header "Cc" /admin/ or header "To" /user/) and \
+			body /hello/i move "${MAILDIR}/dst"
+	}
+	EOF
+	cat <<EOF >$TMP2
+Cc: admin@example.com
+    ^   $
+Hello!
+^   $
+EOF
+	mdsort -d | tail -n +2 >$TMP3
+	fcmp $TMP2 $TMP3 && pass
+
+testcase "matches from previous evaluations are discarded, inverted"
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	Cc: admin@example.com
+
+	Bye!
+EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	Hello!
+EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match (header "Cc" /admin/ or header "To" /user/) and \
+			body /hello/i move "${MAILDIR}/dst"
+	}
+	EOF
+	cat <<EOF >$TMP2
+To: user@example.com
+    ^  $
+Hello!
+^   $
+EOF
+	mdsort -d | tail -n +2 >$TMP3
+	fcmp $TMP2 $TMP3 && pass

@@ -29,12 +29,14 @@ struct match {
 struct rule {
 	char *dest;
 	struct expr *expr;
+	int cookie;
 };
 
 TAILQ_HEAD(expr_headers, header);
 
 struct expr {
 	enum expr_type type;
+	int cookie;
 
 	regex_t pattern;
 	regmatch_t *matches;
@@ -54,7 +56,7 @@ struct header {
 };
 
 static int expr_eval(struct expr *, const struct match **match,
-    const struct message *);
+    const struct message *, int);
 static int expr_eval_body(struct expr *, const struct match **match,
     const struct message *);
 static int expr_eval_header(struct expr *, const struct match **match,
@@ -62,7 +64,7 @@ static int expr_eval_header(struct expr *, const struct match **match,
 static int expr_eval_new(struct expr *, const struct match **match,
     const struct message *);
 static void expr_free(struct expr *);
-static void expr_inspect(const struct expr *, FILE *);
+static void expr_inspect(const struct expr *, FILE *, int);
 static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
@@ -99,7 +101,7 @@ rule_free(struct rule *rl)
 void
 rule_inspect(const struct rule *rl, FILE *fh)
 {
-	expr_inspect(rl->expr, fh);
+	expr_inspect(rl->expr, fh, rl->cookie);
 }
 
 const char *
@@ -113,7 +115,8 @@ rule_eval(struct rule *rl, const struct match **match,
     const struct message *msg)
 {
 	*match = NULL;
-	if (expr_eval(rl->expr, match, msg))
+	rl->cookie++;
+	if (expr_eval(rl->expr, match, msg, rl->cookie))
 		return 1;
 	return 0;
 }
@@ -214,26 +217,26 @@ expr_headers_append(struct expr_headers *headers, const char *key)
 
 static int
 expr_eval(struct expr *ex, const struct match **match,
-    const struct message *msg)
+    const struct message *msg, int cookie)
 {
 	int res = 1;
 
 	switch (ex->type) {
 	case EXPR_TYPE_AND:
-		res = expr_eval(ex->lhs, match, msg);
+		res = expr_eval(ex->lhs, match, msg, cookie);
 		if (res)
 			break; /* no match, short-circuit */
-		res = expr_eval(ex->rhs, match, msg);
+		res = expr_eval(ex->rhs, match, msg, cookie);
 		break;
 	case EXPR_TYPE_OR:
-		res = expr_eval(ex->lhs, match, msg);
+		res = expr_eval(ex->lhs, match, msg, cookie);
 		if (res == 0)
 			break; /* match, short-circuit */
-		res = expr_eval(ex->rhs, match, msg);
+		res = expr_eval(ex->rhs, match, msg, cookie);
 		break;
 	case EXPR_TYPE_NEG:
 		assert(ex->rhs == NULL);
-		res = !expr_eval(ex->lhs, match, msg);
+		res = !expr_eval(ex->lhs, match, msg, cookie);
 		break;
 	case EXPR_TYPE_BODY:
 		res = expr_eval_body(ex, match, msg);
@@ -245,6 +248,10 @@ expr_eval(struct expr *ex, const struct match **match,
 		res = expr_eval_new(ex, match, msg);
 		break;
 	}
+	/* Mark expression as visited on match. */
+	if (res == 0)
+		ex->cookie = cookie;
+
 	return res;
 }
 
@@ -256,22 +263,22 @@ expr_eval_body(struct expr *ex, const struct match **match,
 
 	assert(ex->nmatches > 0);
 
-	/* Clear old matches. */
-	match_free(ex->match);
-
 	body = message_get_body(msg);
 	if (body == NULL)
 		return 1;
 	if (regexec(&ex->pattern, body, ex->nmatches, ex->matches, 0))
 		return 1;
 
+	match_free(ex->match);
 	ex->match->key = NULL;
 	ex->match->val = body;
 	ex->match->valbeg = ex->matches[0].rm_so;
 	ex->match->valend = ex->matches[0].rm_eo;
-	match_copy(ex->match, body, ex->matches, ex->nmatches);
-	if (*match == NULL)
-		*match = ex->match; /* first matching expression */
+	if (*match == NULL) {
+		/* First matching expression. */
+		match_copy(ex->match, body, ex->matches, ex->nmatches);
+		*match = ex->match;
+	}
 	return 0;
 }
 
@@ -285,9 +292,6 @@ expr_eval_header(struct expr *ex, const struct match **match,
 	assert(ex->headers != NULL);
 	assert(ex->nmatches > 0);
 
-	/* Clear old matches. */
-	match_free(ex->match);
-
 	TAILQ_FOREACH(hdr, ex->headers, entry) {
 		val = message_get_header(msg, hdr->key);
 		if (val == NULL)
@@ -295,13 +299,16 @@ expr_eval_header(struct expr *ex, const struct match **match,
 		if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
 			continue;
 
+		match_free(ex->match);
 		ex->match->key = hdr->key;
 		ex->match->val = val;
 		ex->match->valbeg = ex->matches[0].rm_so;
 		ex->match->valend = ex->matches[0].rm_eo;
-		match_copy(ex->match, val, ex->matches, ex->nmatches);
-		if (*match == NULL)
-			*match = ex->match; /* first matching expression */
+		if (*match == NULL) {
+			/* First matching expression. */
+			match_copy(ex->match, val, ex->matches, ex->nmatches);
+			*match = ex->match;
+		}
 		return 0;
 	}
 	return 1;
@@ -354,13 +361,17 @@ expr_free(struct expr *ex)
 }
 
 static void
-expr_inspect(const struct expr *ex, FILE *fh)
+expr_inspect(const struct expr *ex, FILE *fh, int cookie)
 {
+	/* Ensure expression was visited during last call to rule_eval() */
+	if (ex->cookie != cookie)
+		return;
+
 	switch (ex->type) {
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
-		expr_inspect(ex->lhs, fh);
-		expr_inspect(ex->rhs, fh);
+		expr_inspect(ex->lhs, fh, cookie);
+		expr_inspect(ex->rhs, fh, cookie);
 		break;
 	case EXPR_TYPE_BODY:
 		expr_inspect_body(ex, fh);
@@ -382,9 +393,6 @@ expr_inspect_body(const struct expr *ex, FILE *fh)
 	int len, padbeg, padend;
 
 	match = ex->match;
-	if (match->nmatches == 0)
-		return;
-
 	beg = match->val;
 	for (;;) {
 		if ((p = strchr(beg, '\n')) == NULL ||
@@ -413,8 +421,6 @@ expr_inspect_header(const struct expr *ex, FILE *fh)
 	int lenval, padbeg, padend;
 
 	match = ex->match;
-	if (match->nmatches == 0)
-		return;
 
 	/*
 	 * Normalize initial padding if the match does not reside on the first
@@ -472,7 +478,7 @@ match_free(struct match *match)
 {
 	size_t i;
 
-	if (match == NULL || match->nmatches == 0)
+	if (match == NULL)
 		return;
 
 	for (i = 0; i < match->nmatches; i++)
