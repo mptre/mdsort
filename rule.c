@@ -237,6 +237,9 @@ expr_eval(struct expr *ex, const struct match **match,
 	case EXPR_TYPE_NEG:
 		assert(ex->rhs == NULL);
 		res = !expr_eval(ex->lhs, match, msg, cookie);
+		/* On non-match, invalidate match below expression. */
+		if (res)
+			*match = NULL;
 		break;
 	case EXPR_TYPE_BODY:
 		res = expr_eval_body(ex, match, msg);
