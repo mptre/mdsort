@@ -11,7 +11,7 @@ matrix:
       env: BUILD_TYPE=default CFLAGS=-Werror
     - os: linux
       compiler: musl-gcc
-      env: BUILD_TYPE=default CFLAGS=-Werror
+      env: BUILD_TYPE=default CFLAGS=-Werror TESTFLAGS='-s "tilde expansion"'
       addons:
         apt:
           packages:
