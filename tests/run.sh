@@ -1,7 +1,7 @@
 set -e
 
 usage() {
-	echo "usage: sh run.sh mdsort test-file ..." 1>&2
+	echo "usage: sh run.sh [-s skip] -b binary test-file ..." 1>&2
 	exit 1
 }
 
@@ -98,6 +98,13 @@ testcase() {
 	TCDESC="$@"
 	TCFAIL=0
 	ls -d $MAILDIR/*/ 2>/dev/null | xargs rm -rf
+
+	if echo "$TCDESC" | grep -q -f $SKIP; then
+		echo "SKIP: ${TCDESC}"
+		return 1
+	else
+		return 0
+	fi
 }
 
 # randstr length predicate
@@ -112,10 +119,6 @@ randstr() {
 	cut -b "-${_len}" "$TMP1"
 }
 
-[ $# -lt 2 ] && usage
-
-MDSORT=$1
-
 ENV="MALLOC_OPTIONS=S"
 NERR=0
 NMSG=0
@@ -124,24 +127,32 @@ TCEXIT=0
 TCFAIL=0
 
 MAILDIR=$(mktemp -d -t mdsort.XXXXXX)
+trap "atexit $MAILDIR" EXIT
+
 CONF="${MAILDIR}/mdsort.conf"
 TMP1="${MAILDIR}/tmp1"
 TMP2="${MAILDIR}/tmp2"
 TMP3="${MAILDIR}/tmp3"
-trap "atexit $MAILDIR" EXIT
 
-# Platform specific values, skip on macOS.
-if [ "$(uname)" != "Darwin" ]; then
-	BUFSIZ=$(cppvar BUFSIZ || echo 0)
-	PATH_MAX=$(cppvar PATH_MAX || echo 0)
-else
-	BUFSIZ=0
-	PATH_MAX=0
-fi
+SKIP="${MAILDIR}/skip"
+>$SKIP
+
+while getopts "b:s:" opt; do
+	case "$opt" in
+	b)	MDSORT=$OPTARG;;
+	s)	echo "$OPTARG" >>$SKIP;;
+	*)	usage;;
+	esac
+done
+shift $((OPTIND - 1))
+([ $# -eq 0 ] || [ -z "$MDSORT" ]) && usage
+
+# Platform specific values.
+BUFSIZ=$(cppvar BUFSIZ || echo 0)
+PATH_MAX=$(cppvar PATH_MAX || echo 0)
 
 cd $MAILDIR
 
-shift
 for f; do
 	. "$f"
 done

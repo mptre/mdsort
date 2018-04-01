@@ -1,4 +1,4 @@
-testcase "match body"
+if testcase "match body"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
@@ -16,8 +16,9 @@ testcase "match body"
 	grep -Rq "Bob" "${MAILDIR}/dst/new" || \
 		fail "expected dst/cur directory to not be empty"
 	pass
+fi
 
-testcase "match body negate"
+if testcase "match body negate"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
@@ -35,8 +36,9 @@ testcase "match body negate"
 	grep -Rq "Alice" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "match body with empty body"
+if testcase "match body with empty body"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
@@ -53,8 +55,9 @@ testcase "match body with empty body"
 	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
 	pass
+fi
 
-testcase "match header"
+if testcase "match header"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	Subject:
@@ -80,8 +83,9 @@ testcase "match header"
 	grep -Rq "To: user@example.com" "${MAILDIR}/dst/cur" || \
 		fail "expected dst/cur directory to not be empty"
 	pass
+fi
 
-testcase "match header negate"
+if testcase "match header negate"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
@@ -106,8 +110,9 @@ testcase "match header negate"
 	grep -Rq "To: admin@example.com" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "match header escape slash"
+if testcase "match header escape slash"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	Subject: foo/bar
@@ -126,8 +131,9 @@ testcase "match header escape slash"
 	grep -Rq "Subject: foo/bar" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "match many headers"
+if testcase "match many headers"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
@@ -152,8 +158,9 @@ testcase "match many headers"
 	grep -Rq "To: user@example.com" "${MAILDIR}/dst/cur" || \
 		fail "expected dst/cur directory to not be empty"
 	pass
+fi
 
-testcase "match many and conditions"
+if testcase "match many and conditions"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@true.com
@@ -177,8 +184,9 @@ testcase "match many and conditions"
 	grep -Rq "To: user@true.com" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "match many or conditions"
+if testcase "match many or conditions"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
@@ -202,8 +210,9 @@ testcase "match many or conditions"
 	grep -Rq "Cc: user@example.com" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "match many and/or conditions"
+if testcase "match many and/or conditions"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user1@example.com
@@ -230,8 +239,9 @@ testcase "match many and/or conditions"
 	grep -Rq "Cc: user2@example.com" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "match new"
+if testcase "match new"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
@@ -256,8 +266,9 @@ testcase "match new"
 	grep -Rq "To: user@example.com" "${MAILDIR}/src/cur" || \
 		fail "expected src/cur directory to not be empty"
 	pass
+fi
 
-testcase "match new negate"
+if testcase "match new negate"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: new@example.com
@@ -282,8 +293,9 @@ testcase "match new negate"
 	grep -Rq "To: cur@example.com" "${MAILDIR}/dst/cur" || \
 		fail "expected dst/cur directory to not be empty"
 	pass
+fi
 
-testcase "match negate binds to the innermost condition"
+if testcase "match negate binds to the innermost condition"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: admin@example.com
@@ -307,8 +319,9 @@ testcase "match negate binds to the innermost condition"
 	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "match negate nested condition"
+if testcase "match negate nested condition"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: admin@example.com
@@ -332,8 +345,9 @@ testcase "match negate nested condition"
 	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "header key comparison is case insensitive"
+if testcase "header key comparison is case insensitive"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	to: user@example.com
@@ -350,8 +364,9 @@ testcase "header key comparison is case insensitive"
 	grep -Rq "to: user@example.com" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "match case insensitive"
+if testcase "match case insensitive"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: UsEr@ExAmPlE.CoM
@@ -368,8 +383,9 @@ testcase "match case insensitive"
 	grep -Rq "To: UsEr@ExAmPlE.CoM" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "message without blank line after headers"
+if testcase "message without blank line after headers"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
@@ -385,8 +401,9 @@ testcase "message without blank line after headers"
 	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "uniq suffix is preserved"
+if testcase "uniq suffix is preserved"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -403,8 +420,9 @@ testcase "uniq suffix is preserved"
 	find "${MAILDIR}/dst/new" -type f -name '*:2,' | cmp -s - /dev/null && \
 		fail "expected dst/new directory to not be empty"
 	pass
+fi
 
-testcase "destination interpolation from header"
+if testcase "destination interpolation from header"; then
 	mkmd "${MAILDIR}/example" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -421,8 +439,9 @@ testcase "destination interpolation from header"
 	grep -Rq "To: user@example.com" "${MAILDIR}/example/new" || \
 		fail "expected example/new directory to not be empty"
 	pass
+fi
 
-testcase "destination interpolation from body"
+if testcase "destination interpolation from body"; then
 	mkmd "${MAILDIR}/example" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -440,8 +459,9 @@ testcase "destination interpolation from body"
 	grep -Rq "To: user@example.com" "${MAILDIR}/example/new" || \
 		fail "expected example/new directory to not be empty"
 	pass
+fi
 
-testcase "destination interpolation first match is favored"
+if testcase "destination interpolation first match is favored"; then
 	mkmd "${MAILDIR}/first" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: first@last.com
@@ -459,8 +479,9 @@ testcase "destination interpolation first match is favored"
 	grep -Rq "To: first@last.com" "${MAILDIR}/first/new" || \
 		fail "expected first/new directory to not be empty"
 	pass
+fi
 
-testcase "destination interpolation out of bounds"
+if testcase "destination interpolation out of bounds"; then
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -475,8 +496,9 @@ testcase "destination interpolation out of bounds"
 	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
+fi
 
-testcase "destination interpolation out of range"
+if testcase "destination interpolation out of range"; then
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -491,8 +513,9 @@ testcase "destination interpolation out of range"
 	grep -q '9: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
+fi
 
-testcase "destination interpolation negative"
+if testcase "destination interpolation negative"; then
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -507,8 +530,9 @@ testcase "destination interpolation negative"
 	grep -q '\\-1/new: No such file or directory' $TMP2 || \
 		fail "expected back-reference to be ignored"
 	pass
+fi
 
-testcase "destination interpolation non-decimal"
+if testcase "destination interpolation non-decimal"; then
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -523,8 +547,9 @@ testcase "destination interpolation non-decimal"
 	grep -q 'userx1/new: No such file or directory' $TMP2 || \
 		fail "expected back-reference to be ignored"
 	pass
+fi
 
-testcase "destination interpolation with none body/header"
+if testcase "destination interpolation with none body/header"; then
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -539,8 +564,9 @@ testcase "destination interpolation with none body/header"
 	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
+fi
 
-testcase "destination interpolation with negate"
+if testcase "destination interpolation with negate"; then
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
@@ -555,9 +581,9 @@ testcase "destination interpolation with negate"
 	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
+fi
 
-if [ $PATH_MAX -gt 0 ]; then
-testcase "destination interpolation too long"
+if testcase "destination interpolation too long"; then
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@$(randstr $PATH_MAX alnum).com
@@ -572,6 +598,4 @@ testcase "destination interpolation too long"
 	grep -q '\\1: destination too long' $TMP2 || \
 		fail "expected destination to be too long"
 	pass
-else
-	echo "SKIP: destination interpolation too long"
 fi

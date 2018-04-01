@@ -1,4 +1,4 @@
-testcase "sanity"
+if testcase "sanity"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /user@example.com/ move "~/Maildir/Junk"
@@ -32,12 +32,14 @@ testcase "sanity"
 	}
 	EOF
 	mdsort - -n </dev/null
+fi
 
-testcase "empty"
+if testcase "empty"; then
 	>$CONF
 	mdsort - -n </dev/null
+fi
 
-testcase "comment"
+if testcase "comment"; then
 	cat <<-EOF >$CONF
 	# This is a comment.
 	maildir "~/Maildir/test1" {
@@ -47,22 +49,25 @@ testcase "comment"
 	}
 	EOF
 	mdsort - -n </dev/null
+fi
 
-testcase "escape quote inside string"
+if testcase "escape quote inside string"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir\"" {}
 	EOF
 	mdsort - -n </dev/null
+fi
 
-testcase "escape slash inside pattern"
+if testcase "escape slash inside pattern"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /user\// move "~/Maildir/test2"
 	}
 	EOF
 	mdsort - -n </dev/null
+fi
 
-testcase -e "rule must end with newline"
+if testcase -e "rule must end with newline"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /./ move "~/Maildir/Junk"}
@@ -70,8 +75,9 @@ testcase -e "rule must end with newline"
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
+fi
 
-testcase -e "invalid line continuation"
+if testcase -e "invalid line continuation"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" \ {
 	}
@@ -79,13 +85,15 @@ testcase -e "invalid line continuation"
 	mdsort - -n <<-EOF
 	mdsort.conf:1: syntax error
 	EOF
+fi
 
-testcase -e "missing file"
+if testcase -e "missing file"; then
 	mdsort - -n -f missing.conf <<-EOF
 	mdsort: missing.conf: No such file or directory
 	EOF
+fi
 
-testcase -e "invalid pattern"
+if testcase -e "invalid pattern"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /(/ move "~/Maildir/test2"
@@ -93,8 +101,9 @@ testcase -e "invalid pattern"
 	EOF
 	mdsort >/dev/null
 	pass
+fi
 
-testcase -e "missing header name"
+if testcase -e "missing header name"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "" /./ move "~/Maildir/test2"
@@ -105,9 +114,9 @@ testcase -e "missing header name"
 	mdsort.conf:2: missing header name
 	mdsort.conf:3: missing header name
 	EOF
+fi
 
-if [ $BUFSIZ -gt 0 ]; then
-testcase -e "keyword too long"
+if testcase -e "keyword too long"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		$(randstr $BUFSIZ lower)
@@ -117,12 +126,9 @@ testcase -e "keyword too long"
 	mdsort.conf:2: keyword too long
 	mdsort.conf:2: syntax error
 	EOF
-else
-	echo "SKIP: keyword too long"
 fi
 
-if [ $BUFSIZ -gt 0 ]; then
-testcase -e "string too long"
+if testcase -e "string too long"; then
 	cat <<-EOF >$CONF
 	maildir "$(randstr $BUFSIZ alnum)" {}
 	EOF
@@ -130,11 +136,9 @@ testcase -e "string too long"
 	mdsort.conf:1: string too long
 	mdsort.conf:1: syntax error
 	EOF
-else
-	echo "SKIP: string too long"
 fi
 
-testcase -e "string unterminated"
+if testcase -e "string unterminated"; then
 	cat <<-EOF >$CONF
 	maildir "
 	EOF
@@ -142,9 +146,9 @@ testcase -e "string unterminated"
 	mdsort.conf:1: unterminated string
 	mdsort.conf:1: syntax error
 	EOF
+fi
 
-if [ $BUFSIZ -gt 0 ]; then
-testcase -e "pattern too long"
+if testcase -e "pattern too long"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /$(randstr $BUFSIZ alnum)/ \
@@ -155,11 +159,9 @@ testcase -e "pattern too long"
 	mdsort.conf:2: pattern too long
 	mdsort.conf:2: syntax error
 	EOF
-else
-	echo "SKIP: pattern too long"
 fi
 
-testcase -e "pattern unterminated"
+if testcase -e "pattern unterminated"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /
@@ -169,21 +171,18 @@ testcase -e "pattern unterminated"
 	mdsort.conf:2: unterminated pattern
 	mdsort.conf:2: syntax error
 	EOF
+fi
 
-if [ $PATH_MAX -gt 0 ] && [ $BUFSIZ -le $PATH_MAX ]; then
-testcase -e "maildir path too long after tilde expansion"
+if testcase -e "maildir path too long after tilde expansion"; then
 	cat <<-EOF >$CONF
 	maildir "~/$(randstr $((PATH_MAX - 10))  alnum)" {}
 	EOF
 	HOME=/home/user mdsort - -n <<-EOF
 	mdsort.conf:1: path too long
 	EOF
-else
-	echo "SKIP: maildir path too long after tilde expansion"
 fi
 
-if [ $PATH_MAX -gt 0 ] && [ $BUFSIZ -le $PATH_MAX ]; then
-testcase -e "destination path too long after tilde expansion"
+if testcase -e "destination path too long after tilde expansion"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /./ \
@@ -193,11 +192,9 @@ testcase -e "destination path too long after tilde expansion"
 	HOME=/home/user mdsort - -n <<-EOF
 	mdsort.conf:2: path too long
 	EOF
-else
-	echo "SKIP: destination path too long after tilde expansion"
 fi
 
-testcase -e "unknown pattern flag"
+if testcase -e "unknown pattern flag"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match header "From" /./z move "~/Maildir/Junk"
@@ -208,8 +205,9 @@ testcase -e "unknown pattern flag"
 	mdsort.conf:2: syntax error
 	mdsort.conf:3: syntax error
 	EOF
+fi
 
-testcase -e "missing left-hand expr with and"
+if testcase -e "missing left-hand expr with and"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match and new move "~/Maildir/Junk"
@@ -218,8 +216,9 @@ testcase -e "missing left-hand expr with and"
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
+fi
 
-testcase -e "missing right-hand expr with and"
+if testcase -e "missing right-hand expr with and"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new and move "~/Maildir/Junk"
@@ -228,3 +227,4 @@ testcase -e "missing right-hand expr with and"
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
+fi
