@@ -1,3 +1,9 @@
+#ifdef HAVE_QUEUE
+#  include <sys/queue.h>
+#else
+#  include "compat-queue.h"
+#endif
+
 /*
  * Forwards declarations.
  */
@@ -172,15 +178,21 @@ struct expr_headers *expr_headers_alloc(void);
  */
 void expr_headers_append(struct expr_headers *headers, const char *key);
 
-struct config_list {
-	struct config *list;
-	size_t nmemb;
+struct rule {
+	char *dest;
+	struct expr *expr;
+	int cookie;
+
+	TAILQ_ENTRY(rule) entry;
 };
+
+TAILQ_HEAD(config_list, config);
 
 struct config {
 	char *maildir;
-	struct rule **rules;
-	size_t nrules;
+
+	TAILQ_HEAD(, rule) rules;
+	TAILQ_ENTRY(config) entry;
 };
 
 /*
@@ -188,7 +200,7 @@ struct config {
  * success.
  * Otherwise, NULL is returned.
  */
-const struct config_list *parse_config(const char *path);
+struct config_list *parse_config(const char *path);
 
 void log_debug(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));

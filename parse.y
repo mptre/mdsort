@@ -17,7 +17,7 @@ static int yylex(void);
 static int yypeek(int);
 static void yyungetc(int);
 
-static struct config_list config;
+static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
 static struct config *curconf;
 static FILE *fh;
 static const char *confpath;
@@ -55,22 +55,23 @@ grammar		: /* empty */
 		;
 
 maildir		: MAILDIR STRING {
+			struct config *conf;
 			char *maildir;
 
-			config.list = reallocarray(config.list,
-			    config.nmemb + 1, sizeof(*config.list));
-			if (config.list == NULL)
-				err(1, NULL);
-			curconf = config.list + config.nmemb;
-			config.nmemb++;
 			if (expandtilde($2))
 				YYERROR;
 			maildir = strdup($2);
 			if (maildir == NULL)
 				err(1, NULL);
-			curconf->maildir = maildir;
-			curconf->rules = NULL;
-			curconf->nrules = 0;
+
+			conf = malloc(sizeof(*conf));
+			if (conf == NULL)
+				err(1, NULL);
+			conf->maildir = maildir;
+			TAILQ_INIT(&conf->rules);
+			TAILQ_INSERT_TAIL(&config, conf, entry);
+
+			curconf = conf;
 		} '{' rules '}'
 		;
 
@@ -78,12 +79,7 @@ rules		: /* empty */
 		| rules {
 			newline = 1;
 		} rule '\n' {
-			curconf->rules = reallocarray(curconf->rules,
-			    curconf->nrules + 1, sizeof(*curconf->rules));
-			if (curconf->rules == NULL)
-				err(1, NULL);
-			curconf->rules[curconf->nrules] = $3;
-			curconf->nrules++;
+			TAILQ_INSERT_TAIL(&curconf->rules, $3, entry);
 		}
 		| error '\n'
 		;
@@ -181,7 +177,7 @@ action		: MOVE STRING {
 
 %%
 
-const struct config_list *
+struct config_list *
 parse_config(const char *path)
 {
 	fh = fopen(path, "r");

@@ -22,14 +22,13 @@ static int verbose;
 int
 main(int argc, char *argv[])
 {
-	const struct config_list *config;
+	struct config_list *config;
 	struct config *conf;
 	struct maildir *dst, *md;
 	struct message *msg;
 	struct rule *rl;
 	const struct match *match;
 	const char *path;
-	size_t i, j;
 	int c;
 	int dflag = 0;
 	int nflag = 0;
@@ -73,8 +72,7 @@ main(int argc, char *argv[])
 	if (nflag)
 		return 0;
 
-	for (i = 0; i < config->nmemb; i++) {
-		conf = config->list + i;
+	TAILQ_FOREACH(conf, config, entry) {
 		md = maildir_open(conf->maildir, 0);
 		if (md == NULL)
 			continue;
@@ -82,8 +80,7 @@ main(int argc, char *argv[])
 			msg = message_parse(path);
 			if (msg == NULL)
 				continue;
-			for (j = 0; j < conf->nrules; j++) {
-				rl = conf->rules[j];
+			TAILQ_FOREACH(rl, &conf->rules, entry) {
 				if (rule_eval(rl, &match, msg))
 					continue;
 
@@ -104,14 +101,15 @@ main(int argc, char *argv[])
 		maildir_close(md);
 	}
 
-	for (i = 0; i < config->nmemb; i++) {
-		conf = config->list + i;
+	while ((conf = TAILQ_FIRST(config)) != NULL) {
+		TAILQ_REMOVE(config, conf, entry);
+		while ((rl = TAILQ_FIRST(&conf->rules)) != NULL) {
+			TAILQ_REMOVE(&conf->rules, rl, entry);
+			rule_free(rl);
+		}
 		free(conf->maildir);
-		for (j = 0; j < conf->nrules; j++)
-			rule_free(conf->rules[j]);
-		free(conf->rules);
+		free(conf);
 	}
-	free(config->list);
 
 	return 0;
 }

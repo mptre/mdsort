@@ -1,11 +1,5 @@
 #include "config.h"
 
-#ifdef HAVE_QUEUE
-#  include <sys/queue.h>
-#else
-#  include "compat-queue.h"
-#endif
-
 #include <assert.h>
 #include <err.h>
 #include <regex.h>
@@ -14,12 +8,6 @@
 #include <string.h>
 
 #include "extern.h"
-
-struct rule {
-	char *dest;
-	struct expr *expr;
-	int cookie;
-};
 
 struct expr {
 	enum expr_type type;
