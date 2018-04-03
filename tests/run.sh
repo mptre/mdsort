@@ -1,7 +1,7 @@
 set -e
 
 usage() {
-	echo "usage: sh run.sh [-s skip] -b binary test-file ..." 1>&2
+	echo "usage: sh run.sh [-e env] [-s skip] -b binary test-file ..." 1>&2
 	exit 1
 }
 
@@ -119,7 +119,7 @@ randstr() {
 	cut -b "-${_len}" "$TMP1"
 }
 
-ENV="MALLOC_OPTIONS=S"
+ENV=
 NERR=0
 NMSG=0
 TCDESC=""
@@ -137,9 +137,10 @@ TMP3="${MAILDIR}/tmp3"
 SKIP="${MAILDIR}/skip"
 >$SKIP
 
-while getopts "b:s:" opt; do
+while getopts "b:e:s:" opt; do
 	case "$opt" in
 	b)	MDSORT=$OPTARG;;
+	e)	ENV="${ENV} ${OPTARG}";;
 	s)	echo "$OPTARG" >>$SKIP;;
 	*)	usage;;
 	esac

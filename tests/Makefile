@@ -1,11 +1,10 @@
-MDSORT=		${.CURDIR}/../mdsort
-TESTFLAGS+=	-b ${MDSORT}
+MDSORT=	${.CURDIR}/../mdsort
 
 TESTS=	basic.sh conf.sh dry.sh
 
 .SUFFIXES: .sh .out
 
 .sh.out:
-	sh ${.CURDIR}/run.sh ${TESTFLAGS} ${.CURDIR}/${<}
+	sh ${.CURDIR}/run.sh -b ${MDSORT} ${TESTFLAGS} ${.CURDIR}/${<}
 
 all: ${TESTS:.sh=.out}

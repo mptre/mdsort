@@ -46,6 +46,8 @@ DISTFILES=	GNUmakefile \
 
 PREFIX=	/usr/local
 
+TESTFLAGS+=	-e MALLOC_OPTIONS=${MALLOC_OPTIONS}
+
 all: ${PROG}
 
 ${PROG}: ${OBJ}
@@ -88,7 +90,7 @@ lint:
 .PHONY: lint
 
 test: ${PROG}
-	@${MAKE} -C ${.CURDIR}/tests
+	${MAKE} -C ${.CURDIR}/tests "TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
 
 -include ${DEP}

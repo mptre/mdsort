@@ -72,6 +72,12 @@ check_host_name_max() {
 	EOF
 }
 
+check_malloc_options() {
+	case "$(uname -s)" in
+	OpenBSD)	echo "RS";;
+	esac
+}
+
 check_pledge() {
 	compile <<-EOF
 	#include <unistd.h>
@@ -174,6 +180,8 @@ check_reallocarray && HAVE_REALLOCARRAY=1
 check_stat_tim && HAVE_STAT_TIM=1
 check_utimensat && HAVE_UTIMENSAT=1
 
+MALLOC_OPTIONS=$(check_malloc_options)
+
 # Headers needed for function prototypes.
 (
 [ $HAVE_ARC4RANDOM -eq 0 ] && echo stdint.h
@@ -222,6 +230,7 @@ CPPFLAGS=	$(echo $CPPFLAGS)
 DEBUG=		$(echo $DEBUG)
 INSTALL=	$(echo $INSTALL)
 LDFLAGS=	$(echo $LDFLAGS)
+MALLOC_OPTIONS=	$(echo $MALLOC_OPTIONS)
 SHA256=		$(echo $SHA256)
 YACC=		$(echo $YACC)
 YFLAGS=		$(echo $YFLAGS)
