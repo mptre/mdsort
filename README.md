@@ -44,6 +44,10 @@ Cc: tech@openbsd.org
 
 ## Installation
 
+### OpenBSD
+
+Available in ports under `mail/mdsort`.
+
 ### From source
 
 The installation directory defaults to `/usr/local` and can be altered using the
