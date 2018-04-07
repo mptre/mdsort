@@ -13,7 +13,7 @@ if testcase "match body"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "Bob" "${MAILDIR}/dst/new" || \
+	grep -q "Bob" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/cur directory to not be empty"
 	pass
 fi
@@ -33,7 +33,7 @@ if testcase "match body negate"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "Alice" "${MAILDIR}/dst/new" || \
+	grep -q "Alice" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -76,11 +76,11 @@ if testcase "match header"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	ls "${MAILDIR}/src/cur" | cmp -s - /dev/null || \
 		fail "expected src/cur directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/cur" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/cur/* || \
 		fail "expected dst/cur directory to not be empty"
 	pass
 fi
@@ -103,11 +103,11 @@ if testcase "match header negate"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
 		fail "expected src/new directory to not be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/src/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/src/new/* || \
 		fail "expected src/new directory to not be empty"
 	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null && \
 		fail "expected dst/new directory to not be empty"
-	grep -Rq "To: admin@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: admin@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -128,7 +128,7 @@ if testcase "match header escape slash"; then
 		fail "expected src/new directory to be empty"
 	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null && \
 		fail "expected dst/new directory to not be empty"
-	grep -Rq "Subject: foo/bar" "${MAILDIR}/dst/new" || \
+	grep -q "Subject: foo/bar" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -151,11 +151,11 @@ if testcase "match many headers"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	ls "${MAILDIR}/src/cur" | cmp -s - /dev/null || \
 		fail "expected src/cur directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/cur" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/cur/* || \
 		fail "expected dst/cur directory to not be empty"
 	pass
 fi
@@ -179,9 +179,9 @@ if testcase "match many and conditions"; then
 	}
 	EOF
 	mdsort
-	grep -Rq "To: user@false.com" "${MAILDIR}/src/new" || \
+	grep -q "To: user@false.com" ${MAILDIR}/src/new/* || \
 		fail "expected src/new directory to not be empty"
-	grep -Rq "To: user@true.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user@true.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -205,9 +205,9 @@ if testcase "match many or conditions"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
-	grep -Rq "Cc: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "Cc: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -234,9 +234,9 @@ if testcase "match many and/or conditions"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: user1@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user1@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
-	grep -Rq "Cc: user2@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "Cc: user2@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -259,11 +259,11 @@ if testcase "match new"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	ls "${MAILDIR}/src/cur" | cmp -s - /dev/null && \
 		fail "expected src/cur directory to not be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/src/cur" || \
+	grep -q "To: user@example.com" ${MAILDIR}/src/cur/* || \
 		fail "expected src/cur directory to not be empty"
 	pass
 fi
@@ -286,11 +286,11 @@ if testcase "match new negate"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
 		fail "expected src/new directory to not be empty"
-	grep -Rq "To: new@example.com" "${MAILDIR}/src/new" || \
+	grep -q "To: new@example.com" ${MAILDIR}/src/new/* || \
 		fail "expected src/new directory to not be empty"
 	ls "${MAILDIR}/dst/cur" | cmp -s - /dev/null && \
 		fail "expected dst/cur directory to not be empty"
-	grep -Rq "To: cur@example.com" "${MAILDIR}/dst/cur" || \
+	grep -q "To: cur@example.com" ${MAILDIR}/dst/cur/* || \
 		fail "expected dst/cur directory to not be empty"
 	pass
 fi
@@ -314,9 +314,9 @@ if testcase "match negate binds to the innermost condition"; then
 	}
 	EOF
 	mdsort
-	grep -Rq "To: admin@example.com" "${MAILDIR}/src/new" || \
+	grep -q "To: admin@example.com" ${MAILDIR}/src/new/* || \
 		fail "expected dst/new directory to not be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -340,9 +340,9 @@ if testcase "match negate nested condition"; then
 	}
 	EOF
 	mdsort
-	grep -Rq "To: admin@example.com" "${MAILDIR}/src/new" || \
+	grep -q "To: admin@example.com" ${MAILDIR}/src/new/* || \
 		fail "expected src/new directory to not be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -361,7 +361,7 @@ if testcase "header key comparison is case insensitive"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "to: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "to: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -380,7 +380,7 @@ if testcase "match case insensitive"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: UsEr@ExAmPlE.CoM" "${MAILDIR}/dst/new" || \
+	grep -q "To: UsEr@ExAmPlE.CoM" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -398,7 +398,7 @@ if testcase "message without blank line after headers"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/dst/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi
@@ -436,7 +436,7 @@ if testcase "destination interpolation from header"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/example/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/example/new/* || \
 		fail "expected example/new directory to not be empty"
 	pass
 fi
@@ -456,7 +456,7 @@ if testcase "destination interpolation from body"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: user@example.com" "${MAILDIR}/example/new" || \
+	grep -q "To: user@example.com" ${MAILDIR}/example/new/* || \
 		fail "expected example/new directory to not be empty"
 	pass
 fi
@@ -476,7 +476,7 @@ if testcase "destination interpolation first match is favored"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -Rq "To: first@last.com" "${MAILDIR}/first/new" || \
+	grep -q "To: first@last.com" ${MAILDIR}/first/new/* || \
 		fail "expected first/new directory to not be empty"
 	pass
 fi
