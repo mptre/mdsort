@@ -104,9 +104,7 @@ rule_eval(struct rule *rl, const struct match **match,
 {
 	*match = NULL;
 	rl->cookie++;
-	if (expr_eval(rl->expr, match, msg, rl->cookie))
-		return 1;
-	return 0;
+	return expr_eval(rl->expr, match, msg, rl->cookie);
 }
 
 const char *
