@@ -423,20 +423,20 @@ if testcase "uniq suffix is preserved"; then
 fi
 
 if testcase "destination interpolation from header"; then
-	mkmd "${MAILDIR}/example" "${MAILDIR}/src"
+	mkmd "${MAILDIR}/user-example" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
 	To: user@example.com
 
 	EOF
 	cat <<-EOF >$CONF
 	maildir "${MAILDIR}/src" {
-		match header "To" /user@([^\.]+).com/ move "${MAILDIR}/\1"
+		match header "To" /(user)@([^\.]+).com/ move "${MAILDIR}/\1-\2"
 	}
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	grep -q "To: user@example.com" ${MAILDIR}/example/new/* || \
+	grep -q "To: user@example.com" ${MAILDIR}/user-example/new/* || \
 		fail "expected example/new directory to not be empty"
 	pass
 fi
