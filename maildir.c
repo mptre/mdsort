@@ -63,7 +63,7 @@ maildir_open(const char *path, int nowalk)
 	}
 	md->dir = opendir(md->dbuf);
 	if (md->dir == NULL) {
-		warn("%s", md->dbuf);
+		warn("opendir: %s", md->dbuf);
 		maildir_close(md);
 		return NULL;
 	}
@@ -109,7 +109,7 @@ maildir_walk(struct maildir *md)
 			closedir(md->dir);
 		md->dir = opendir(md->dbuf);
 		if (md->dir == NULL) {
-			warn("%s", md->dbuf);
+			warn("opendir: %s", md->dbuf);
 			return NULL;
 		}
 	}

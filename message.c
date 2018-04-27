@@ -42,7 +42,7 @@ message_parse(const char *path)
 
 	fd = open(path, O_RDONLY | O_CLOEXEC);
 	if (fd == -1) {
-		warn("%s", path);
+		warn("open: %s", path);
 		return NULL;
 	}
 
@@ -63,7 +63,7 @@ message_parse(const char *path)
 		if (n == -1) {
 			if (errno == EINTR)
 				continue;
-			warn("%s", path);
+			warn("read: %s", path);
 			close(fd);
 			message_free(msg);
 			return NULL;
