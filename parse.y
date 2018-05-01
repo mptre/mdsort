@@ -5,13 +5,15 @@
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "extern.h"
 
 static int expandtilde(char *);
-static void yyerror(const char *);
+static void yyerror(const char *, ...)
+	__attribute__((__format__ (printf, 1, 2)));
 static int yygetc(void);
 static int yylex(void);
 static int yypeek(int);
@@ -106,7 +108,7 @@ expr		: BODY pattern {
 
 			$$ = expr_alloc(EXPR_TYPE_BODY, NULL, NULL);
 			if (expr_set_pattern($$, $2.s, $2.i, &errstr))
-				yyerror(errstr);
+				yyerror("invalid pattern: %s", errstr);
 		}
 		| HEADER headers pattern {
 			const char *errstr;
@@ -114,7 +116,7 @@ expr		: BODY pattern {
 			$$ = expr_alloc(EXPR_TYPE_HEADER, NULL, NULL);
 			expr_set_headers($$, $2);
 			if (expr_set_pattern($$, $3.s, $3.i, &errstr))
-				yyerror(errstr);
+				yyerror("invalid pattern: %s", errstr);
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW, NULL, NULL);
@@ -196,9 +198,16 @@ parse_config(const char *path)
 }
 
 void
-yyerror(const char *fmt)
+yyerror(const char *fmt, ...)
 {
-	fprintf(stderr, "%s:%d: %s\n", confpath, lineno, fmt);
+	va_list ap;
+
+	fprintf(stderr, "%s:%d: ", confpath, lineno);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
+
 	parse_errors++;
 }
 
