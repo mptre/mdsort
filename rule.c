@@ -454,7 +454,7 @@ match_copy(struct match *match, const char *str, regmatch_t *src, size_t nmemb)
 	for (i = 0; i < nmemb; i++) {
 		len = src[i].rm_eo - src[i].rm_so;
 		cpy = strndup(str + src[i].rm_so, len);
-		if (str == NULL)
+		if (cpy == NULL)
 			err(1, NULL);
 		match->matches[i] = cpy;
 	}
