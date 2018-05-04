@@ -36,7 +36,6 @@ struct match {
 	char **matches;
 	size_t nmatches;
 
-	/* Used by rule_inspect(). */
 	const char *key;
 	const char *val;
 	size_t valbeg;
@@ -45,19 +44,15 @@ struct match {
 
 static int expr_eval(struct expr *, const struct match **match,
     const struct message *, int);
-static int expr_eval_body(struct expr *, const struct match **match,
-    const struct message *);
-static int expr_eval_header(struct expr *, const struct match **match,
-    const struct message *);
-static int expr_eval_new(struct expr *, const struct match **match,
-    const struct message *);
+static int expr_eval_body(struct expr *, const struct message *);
+static int expr_eval_header(struct expr *, const struct message *);
+static int expr_eval_new(struct expr *, const struct message *);
 static void expr_free(struct expr *);
 static void expr_inspect(const struct expr *, FILE *, int);
 static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
-static void match_copy(struct match *, const char *, regmatch_t *,
-    size_t);
+static void match_copy(struct match *, regmatch_t *, size_t);
 static void match_free(struct match *match);
 
 struct rule *
@@ -75,6 +70,7 @@ rule_alloc(struct expr *ex, const char *dest)
 
 	return rl;
 }
+
 void
 rule_free(struct rule *rl)
 {
@@ -228,25 +224,31 @@ expr_eval(struct expr *ex, const struct match **match,
 			*match = NULL;
 		break;
 	case EXPR_TYPE_BODY:
-		res = expr_eval_body(ex, match, msg);
+		res = expr_eval_body(ex, msg);
 		break;
 	case EXPR_TYPE_HEADER:
-		res = expr_eval_header(ex, match, msg);
+		res = expr_eval_header(ex, msg);
 		break;
 	case EXPR_TYPE_NEW:
-		res = expr_eval_new(ex, match, msg);
+		res = expr_eval_new(ex, msg);
 		break;
 	}
-	/* Mark expression as visited on match. */
-	if (res == 0)
+	if (res == 0) {
+		/* Mark expression as visited on match. */
 		ex->cookie = cookie;
+
+		if (*match == NULL && ex->match != NULL) {
+			/* First matching expression. */
+			match_copy(ex->match, ex->matches, ex->nmatches);
+			*match = ex->match;
+		}
+	}
 
 	return res;
 }
 
 static int
-expr_eval_body(struct expr *ex, const struct match **match,
-    const struct message *msg)
+expr_eval_body(struct expr *ex, const struct message *msg)
 {
 	const char *body;
 
@@ -263,17 +265,11 @@ expr_eval_body(struct expr *ex, const struct match **match,
 	ex->match->val = body;
 	ex->match->valbeg = ex->matches[0].rm_so;
 	ex->match->valend = ex->matches[0].rm_eo;
-	if (*match == NULL) {
-		/* First matching expression. */
-		match_copy(ex->match, body, ex->matches, ex->nmatches);
-		*match = ex->match;
-	}
 	return 0;
 }
 
 static int
-expr_eval_header(struct expr *ex, const struct match **match,
-    const struct message *msg)
+expr_eval_header(struct expr *ex, const struct message *msg)
 {
 	const char *val;
 	const struct header *hdr;
@@ -293,11 +289,6 @@ expr_eval_header(struct expr *ex, const struct match **match,
 		ex->match->val = val;
 		ex->match->valbeg = ex->matches[0].rm_so;
 		ex->match->valend = ex->matches[0].rm_eo;
-		if (*match == NULL) {
-			/* First matching expression. */
-			match_copy(ex->match, val, ex->matches, ex->nmatches);
-			*match = ex->match;
-		}
 		return 0;
 	}
 	return 1;
@@ -305,7 +296,6 @@ expr_eval_header(struct expr *ex, const struct match **match,
 
 static int
 expr_eval_new(struct expr *ex __attribute__((__unused__)),
-    const struct match **match __attribute__((__unused__)),
     const struct message *msg)
 {
 	const char *beg, *end, *p, *path;
@@ -442,7 +432,7 @@ expr_inspect_header(const struct expr *ex, FILE *fh)
 }
 
 static void
-match_copy(struct match *match, const char *str, regmatch_t *src, size_t nmemb)
+match_copy(struct match *match, regmatch_t *src, size_t nmemb)
 {
 	char *cpy;
 	size_t i, len;
@@ -453,7 +443,7 @@ match_copy(struct match *match, const char *str, regmatch_t *src, size_t nmemb)
 	match->nmatches = nmemb;
 	for (i = 0; i < nmemb; i++) {
 		len = src[i].rm_eo - src[i].rm_so;
-		cpy = strndup(str + src[i].rm_so, len);
+		cpy = strndup(match->val + src[i].rm_so, len);
 		if (cpy == NULL)
 			err(1, NULL);
 		match->matches[i] = cpy;
