@@ -23,7 +23,7 @@ static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
 static struct config *curconf;
 static FILE *fh;
 static const char *confpath;
-static int flags, lineno, newline, parse_errors;
+static int flags, lineno, lineno_save, newline, parse_errors;
 
 %}
 
@@ -202,7 +202,7 @@ yyerror(const char *fmt, ...)
 {
 	va_list ap;
 
-	fprintf(stderr, "%s:%d: ", confpath, lineno);
+	fprintf(stderr, "%s:%d: ", confpath, lineno_save);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -230,7 +230,7 @@ yylex(void)
 	};
 	static char lexeme[BUFSIZ], kw[16];
 	char *buf;
-	int c, i, lineno_save;
+	int c, i;
 
 	buf = yylval.s = lexeme;
 
@@ -291,7 +291,6 @@ again:
 				break;
 			c = yygetc();
 			if (c == EOF) {
-				lineno = lineno_save;
 				yyerror("unterminated string");
 				return 0;
 			}
@@ -312,7 +311,6 @@ again:
 				break;
 			c = yygetc();
 			if (c == EOF) {
-				lineno = lineno_save;
 				yyerror("unterminated pattern");
 				return 0;
 			}
