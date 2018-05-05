@@ -53,7 +53,7 @@ if testcase "match body with empty body"; then
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
 		fail "expected src/new directory to not be empty"
 	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null || \
-		fail "expected src/new directory to be empty"
+		fail "expected dst/new directory to be empty"
 	pass
 fi
 
@@ -69,7 +69,7 @@ if testcase "match body with malformed body"; then
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
 		fail "expected src/new directory to not be empty"
 	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null || \
-		fail "expected src/new directory to be empty"
+		fail "expected dst/new directory to be empty"
 	pass
 fi
 
@@ -188,7 +188,7 @@ if testcase "match with empty message"; then
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
 		fail "expected src/new directory to not be empty"
 	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null || \
-		fail "expected src/new directory to be empty"
+		fail "expected dst/new directory to be empty"
 	pass
 fi
 
