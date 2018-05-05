@@ -139,9 +139,10 @@ message_parse_headers(struct message *msg)
 		buf = valend + 1;
 	}
 	qsort(msg->headers, msg->nheaders, sizeof(*msg->headers), cmpheader);
-	if (buf[0] == '\0' || buf[1] == '\0')
-		return NULL;
-	return buf + 1;
+
+	for (; *buf == '\n'; buf++)
+		continue;
+	return buf;
 }
 
 static int
@@ -158,16 +159,11 @@ static int
 findheader(char *str, char **keybeg, char **keyend, char **valbeg,
     char **valend)
 {
-	size_t i = 0;
+	size_t i;
 
-	for (;;) {
-		if (str[i] == '\n')
-			return 1;
+	for (i = 0; str[i] != ':'; i++) {
 		if (str[i] == '\0' || isspace(str[i]))
 			return 1;
-		if (str[i] == ':')
-			break;
-		i++;
 	}
 	*keybeg = str;
 	*keyend = str + i;

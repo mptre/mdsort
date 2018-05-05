@@ -57,6 +57,22 @@ if testcase "match body with empty body"; then
 	pass
 fi
 
+if testcase "match body with malformed body"; then
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	printf 'To: user@example.com\nSubject: foo' | mkmsg "${MAILDIR}/src/new"
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match body /Bob/ move "${MAILDIR}/dst"
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
+		fail "expected src/new directory to not be empty"
+	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	pass
+fi
+
 if testcase "match header"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
