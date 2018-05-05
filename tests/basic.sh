@@ -176,6 +176,22 @@ if testcase "match many headers"; then
 	pass
 fi
 
+if testcase "match with empty message"; then
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" </dev/null
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match body /Bob/ or header "From" /Bob/ move "${MAILDIR}/dst"
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
+		fail "expected src/new directory to not be empty"
+	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	pass
+fi
+
 if testcase "match many and conditions"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" <<-EOF
