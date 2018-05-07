@@ -323,7 +323,6 @@ expr_free(struct expr *ex)
 
 	expr_free(ex->lhs);
 	expr_free(ex->rhs);
-	regfree(&ex->pattern);
 	if (ex->headers != NULL) {
 		while ((hdr = TAILQ_FIRST(ex->headers)) != NULL) {
 			TAILQ_REMOVE(ex->headers, hdr, entry);
@@ -332,6 +331,7 @@ expr_free(struct expr *ex)
 		free(ex->headers);
 	}
 	match_free(ex->match);
+	regfree(&ex->pattern);
 	free(ex->match);
 	free(ex->matches);
 	free(ex);
