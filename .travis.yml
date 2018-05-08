@@ -5,7 +5,7 @@ matrix:
   include:
     - os: linux
       compiler: clang
-      env: BUILD_TYPE=default CFLAGS=-Werror
+      env: BUILD_TYPE=default CFLAGS=-Werror DEBUG='-fsanitize=undefined -fno-sanitize-recover=undefined'
     - os: linux
       compiler: gcc
       env: BUILD_TYPE=default CFLAGS=-Werror
