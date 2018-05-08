@@ -103,6 +103,9 @@ message_get_header(const struct message *msg, const char *header)
 	struct header key;
 	const struct header *found;
 
+	if (msg->nheaders == 0)
+		return NULL;
+
 	key.key = header;
 	key.val = NULL;
 	found = bsearch(&key, msg->headers, msg->nheaders,
@@ -138,7 +141,9 @@ message_parse_headers(struct message *msg)
 
 		buf = valend + 1;
 	}
-	qsort(msg->headers, msg->nheaders, sizeof(*msg->headers), cmpheader);
+	if (msg->nheaders > 0)
+		qsort(msg->headers, msg->nheaders, sizeof(*msg->headers),
+		    cmpheader);
 
 	for (; *buf == '\n'; buf++)
 		continue;
