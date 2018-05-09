@@ -96,6 +96,7 @@ fi
 if testcase -e "invalid pattern"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
+		match body /(/ move "~/Maildir/test2"
 		match header "From" /(/ move "~/Maildir/test2"
 	}
 	EOF

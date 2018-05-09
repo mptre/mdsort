@@ -148,6 +148,8 @@ done
 shift $((OPTIND - 1))
 ([ $# -eq 0 ] || [ -z "$MDSORT" ]) && usage
 
+ls "$MDSORT" >/dev/null || exit 1
+
 # Platform specific values.
 BUFSIZ=$(cppvar BUFSIZ || echo 0)
 PATH_MAX=$(cppvar PATH_MAX || echo 0)

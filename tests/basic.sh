@@ -631,3 +631,15 @@ if testcase "destination interpolation too long"; then
 		fail "expected destination to be too long"
 	pass
 fi
+
+if testcase -e "unknown option"; then
+	mdsort -1 >$TMP2
+	grep -q 'usage' $TMP2 || fail "expected usage output"
+	pass
+fi
+
+if testcase -e "extraneous option"; then
+	mdsort extraneous >$TMP2
+	grep -q 'usage' $TMP2 || fail "expected usage output"
+	pass
+fi
