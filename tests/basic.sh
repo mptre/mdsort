@@ -86,7 +86,7 @@ if testcase "match header"; then
 	EOF
 	cat <<-EOF >$CONF
 	maildir "${MAILDIR}/src" {
-		match header "To" /user/ move "${MAILDIR}/dst"
+		match header "To" /user@example.com/ move "${MAILDIR}/dst"
 	}
 	EOF
 	mdsort
@@ -98,6 +98,26 @@ if testcase "match header"; then
 		fail "expected src/cur directory to be empty"
 	grep -q "To: user@example.com" ${MAILDIR}/dst/cur/* || \
 		fail "expected dst/cur directory to not be empty"
+	pass
+fi
+
+if testcase "match header with continuation"; then
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<EOF
+Subject: foo
+	bar
+
+EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match header "Subject" /foobar/ move "${MAILDIR}/dst"
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null && \
+		fail "expected dst/new directory to not be empty"
 	pass
 fi
 

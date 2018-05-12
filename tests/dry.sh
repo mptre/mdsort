@@ -31,9 +31,8 @@ EOF
 	}
 	EOF
 	cat <<EOF >$TMP2
-To: admin@example.com,
-	user@example.com,
-        ^  $
+To: admin@example.com,user@example.com,no-reply@example.com
+                      ^  $
 EOF
 	mdsort -d | tail -n +2 >$TMP3
 	fcmp $TMP2 $TMP3 && pass
@@ -52,9 +51,8 @@ EOF
 	}
 	EOF
 	cat <<EOF >$TMP2
-To: admin@example.com,
-  user@example.com,
-  ^  $
+To: admin@example.com,user@example.com,
+                      ^  $
 EOF
 	mdsort -d | tail -n +2 >$TMP3
 	fcmp $TMP2 $TMP3 && pass
@@ -69,13 +67,12 @@ Cc: admin@example.com,
 EOF
 	cat <<-EOF >$CONF
 	maildir "${MAILDIR}/src" {
-		match header "Cc" /user/ move "${MAILDIR}/dst"
+		match header "Cc" /user@example.com/ move "${MAILDIR}/dst"
 	}
 	EOF
 	cat <<EOF >$TMP2
-Cc: admin@example.com,
-	user@example.com
-        ^  $
+Cc: admin@example.com,user@example.com
+                      ^              $
 EOF
 	mdsort -d | tail -n +2 >$TMP3
 	fcmp $TMP2 $TMP3 && pass

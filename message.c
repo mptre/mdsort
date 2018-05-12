@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <strings.h>
 #include <unistd.h>
 
@@ -23,12 +24,14 @@ struct message {
 
 struct header {
 	const char *key;
-	const char *val;
+	char *val;
+	int decode;
 };
 
 static const char *message_parse_headers(struct message *);
 
 static int cmpheader(const void *, const void *);
+static char *decodeheader(const char *);
 static int findheader(char *, char **, char **, char **, char **);
 
 struct message *
@@ -84,8 +87,15 @@ message_parse(const char *path)
 void
 message_free(struct message *msg)
 {
+	size_t i;
+
 	if (msg == NULL)
 		return;
+
+	for (i = 0; i < msg->nheaders; i++) {
+		if (msg->headers[i].decode)
+			free(msg->headers[i].val);
+	}
 	free(msg->buf);
 	free(msg->headers);
 	free(msg);
@@ -101,7 +111,7 @@ const char *
 message_get_header(const struct message *msg, const char *header)
 {
 	struct header key;
-	const struct header *found;
+	struct header *found;
 
 	if (msg->nheaders == 0)
 		return NULL;
@@ -112,6 +122,10 @@ message_get_header(const struct message *msg, const char *header)
 	    sizeof(*msg->headers), cmpheader);
 	if (found == NULL)
 		return NULL;
+	if (found->decode == 0) {
+		found->val = decodeheader(found->val);
+		found->decode = 1;
+	}
 	return found->val;
 }
 
@@ -137,6 +151,7 @@ message_parse_headers(struct message *msg)
 			err(1, NULL);
 		msg->headers[msg->nheaders].key = keybeg;
 		msg->headers[msg->nheaders].val = valbeg;
+		msg->headers[msg->nheaders].decode = 0;
 		msg->nheaders++;
 
 		buf = valend + 1;
@@ -158,6 +173,35 @@ cmpheader(const void *p1, const void *p2)
 	h1 = p1;
 	h2 = p2;
 	return strcasecmp(h1->key, h2->key);
+}
+
+static char *
+decodeheader(const char *str)
+{
+	const char *end;
+	char *dec;
+	size_t len;
+	size_t i = 0;
+
+	len = strlen(str);
+	dec = malloc(len + 1);
+	if (dec == NULL)
+		err(1, NULL);
+	for (;;) {
+		if (*str == '\0')
+			break;
+
+		end = strchr(str, '\n');
+		if (end == NULL)
+			end = str + strlen(str);
+		while (str != end)
+			dec[i++] = *str++;
+
+		for (; isspace(*str); str++)
+			continue;
+	}
+	dec[i] = '\0';
+	return dec;
 }
 
 static int

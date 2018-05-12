@@ -394,39 +394,14 @@ void
 expr_inspect_header(const struct expr *ex, FILE *fh)
 {
 	const struct match *match;
-	const char *p, *tmp;
 	int lenval, padbeg, padend;
 
 	match = ex->match;
-
-	/*
-	 * Normalize initial padding if the match does not reside on the first
-	 * line.
-	 */
-	p = match->val;
-	for (;;) {
-		if ((tmp = strchr(p, '\n')) == NULL ||
-		    tmp > match->val + match->valbeg)
-			break;
-		p = tmp + 1;
-	}
-	if (p != match->val) {
-		padbeg = match->valbeg - (p - match->val);
-		for (; *p == '\t'; p++)
-			padbeg += 7;
-	} else {
-		padbeg = strlen(match->key) + 2 + match->valbeg;
-	}
+	lenval = strlen(match->val);
+	padbeg = strlen(match->key) + 2 + match->valbeg;
 	padend = match->valend - match->valbeg;
 	if (padend >= 2)
 		padend -= 2;
-
-	/* Exclude line(s) after the match. */
-	p = strchr(match->val + match->valbeg, '\n');
-	if (p != NULL)
-		lenval = (int)(p - match->val);
-	else
-		lenval = strlen(match->val);
 	fprintf(fh, "%s: %.*s\n%*s^%*s$\n",
 	    match->key, lenval, match->val, padbeg, "", padend, "");
 }
