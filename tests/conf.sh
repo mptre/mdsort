@@ -77,6 +77,16 @@ if testcase -e "rule must end with newline"; then
 	EOF
 fi
 
+if testcase -e "unknown keyword"; then
+	cat <<-EOF >$CONF
+	noway
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:1: unknown keyword: noway
+	mdsort.conf:1: syntax error
+	EOF
+fi
+
 if testcase -e "invalid line continuation"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" \ {
@@ -203,7 +213,9 @@ if testcase -e "unknown pattern flag"; then
 	}
 	EOF
 	mdsort - -n <<-EOF
+	mdsort.conf:2: unknown keyword: z
 	mdsort.conf:2: syntax error
+	mdsort.conf:3: unknown keyword: z
 	mdsort.conf:3: syntax error
 	EOF
 fi

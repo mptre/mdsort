@@ -340,6 +340,7 @@ again:
 		for (i = 0; keywords[i].str != NULL; i++)
 			if (strcmp(kw, keywords[i].str) == 0)
 				return keywords[i].type;
+		yyerror("unknown keyword: %s", kw);
 	}
 
 	return c;
