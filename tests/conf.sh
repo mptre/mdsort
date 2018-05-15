@@ -25,6 +25,12 @@ if testcase "sanity"; then
 		match (header "To" /user@example.com/ and \
 				(new or ! body /hello/)) \
 			move "~/Maildir/Junk"
+
+		match header "To" /user1@example.com/ and body /yes/ {
+			match header "From" /user2@example.com/ or body /no/ {
+				match new move "~/Maildir/Junk"
+			}
+		}
 	}
 
 	maildir "~/Maildir/test2" {
@@ -220,6 +226,17 @@ if testcase -e "unknown pattern flag"; then
 	EOF
 fi
 
+if testcase -e "duplicate pattern flag"; then
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+		match header "From" /./ii move "~/Maildir/Junk"
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:2: duplicate pattern flag: i
+	EOF
+fi
+
 if testcase -e "missing left-hand expr with and"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
@@ -239,5 +256,17 @@ if testcase -e "missing right-hand expr with and"; then
 	EOF
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
+	EOF
+fi
+
+if testcase -e "empty nested match block"; then
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+		match new {
+		}
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:3: empty nested match block
 	EOF
 fi

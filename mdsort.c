@@ -26,9 +26,7 @@ main(int argc, char *argv[])
 	struct config *conf;
 	struct maildir *dst, *md;
 	struct message *msg;
-	struct rule *rl;
-	const struct match *match;
-	const char *path;
+	const char *dstpath, *path;
 	int c;
 	int dflag = 0;
 	int nflag = 0;
@@ -80,22 +78,22 @@ main(int argc, char *argv[])
 			msg = message_parse(path);
 			if (msg == NULL)
 				continue;
-			TAILQ_FOREACH(rl, &conf->rules, entry) {
-				if (rule_eval(rl, &match, msg))
-					continue;
 
-				dst = maildir_openat(md, rule_get_dest(rl),
-				    match);
-				if (dst == NULL)
-					continue;
-				log_info("%s -> %s\n",
-				    path, maildir_get_path(dst));
-				if (dflag)
-					rule_inspect(rl, stdout);
-				else
-					maildir_move(md, dst, path);
-				maildir_close(dst);
-			}
+			dstpath = rule_eval(conf->rule, msg);
+			if (dstpath == NULL)
+				goto next;
+
+			dst = maildir_openat(md, dstpath);
+			if (dst == NULL)
+				goto next;
+			log_info("%s -> %s\n", path, maildir_get_path(dst));
+			if (dflag)
+				rule_inspect(conf->rule, stdout);
+			else
+				maildir_move(md, dst, path);
+			maildir_close(dst);
+
+next:
 			message_free(msg);
 		}
 		maildir_close(md);
@@ -103,10 +101,7 @@ main(int argc, char *argv[])
 
 	while ((conf = TAILQ_FIRST(config)) != NULL) {
 		TAILQ_REMOVE(config, conf, entry);
-		while ((rl = TAILQ_FIRST(&conf->rules)) != NULL) {
-			TAILQ_REMOVE(&conf->rules, rl, entry);
-			rule_free(rl);
-		}
+		rule_free(conf->rule);
 		free(conf->maildir);
 		free(conf);
 	}

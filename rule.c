@@ -1,7 +1,10 @@
 #include "config.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,18 +16,19 @@ struct expr {
 	enum expr_type type;
 	int cookie;
 
+	struct expr_headers *headers;
+
 	regex_t pattern;
 	regmatch_t *matches;
 	size_t nmatches;
 
-	struct expr_headers *headers;
+	char *dest;
+
 	struct match *match;
 
 	struct expr *lhs;
 	struct expr *rhs;
 };
-
-TAILQ_HEAD(expr_headers, header);
 
 struct header {
 	char *key;
@@ -32,7 +36,11 @@ struct header {
 	TAILQ_ENTRY(header) entry;
 };
 
+TAILQ_HEAD(expr_headers, header);
+
 struct match {
+	const char *str;
+
 	char **matches;
 	size_t nmatches;
 
@@ -42,21 +50,28 @@ struct match {
 	size_t valend;
 };
 
-static int expr_eval(struct expr *, const struct match **match,
-    const struct message *, int);
-static int expr_eval_body(struct expr *, const struct message *);
-static int expr_eval_header(struct expr *, const struct message *);
-static int expr_eval_new(struct expr *, const struct message *);
+static int expr_eval(struct expr *, const struct message *,
+    struct match *match, int);
+static int expr_eval_body(struct expr *, const struct message *,
+    struct match *);
+static int expr_eval_header(struct expr *, const struct message *,
+    struct match *);
+static int expr_eval_move(struct expr *, const struct message *,
+    struct match *);
+static int expr_eval_new(struct expr *, const struct message *,
+    struct match *);
 static void expr_free(struct expr *);
 static void expr_inspect(const struct expr *, FILE *, int);
 static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
-static void match_copy(struct match *, regmatch_t *, size_t);
-static void match_free(struct match *match);
+static void match_copy(struct match *, const char *, regmatch_t *, size_t);
+static const char *match_get(const struct match *match, unsigned long n);
+static const char *match_interpolate(const struct match *);
+static void match_reset(struct match *match);
 
 struct rule *
-rule_alloc(struct expr *ex, const char *dest)
+rule_alloc(struct expr *ex)
 {
 	struct rule *rl;
 
@@ -64,9 +79,6 @@ rule_alloc(struct expr *ex, const char *dest)
 	if (rl == NULL)
 		err(1, NULL);
 	rl->expr = ex;
-	rl->dest = strdup(dest);
-	if (rl->dest == NULL)
-		err(1, NULL);
 
 	return rl;
 }
@@ -78,7 +90,6 @@ rule_free(struct rule *rl)
 		return;
 
 	expr_free(rl->expr);
-	free(rl->dest);
 	free(rl);
 }
 
@@ -89,26 +100,20 @@ rule_inspect(const struct rule *rl, FILE *fh)
 }
 
 const char *
-rule_get_dest(const struct rule *rl)
+rule_eval(struct rule *rl, const struct message *msg)
 {
-	return rl->dest;
-}
+	struct match match;
+	const char *path = NULL;
 
-int
-rule_eval(struct rule *rl, const struct match **match,
-    const struct message *msg)
-{
-	*match = NULL;
+	memset(&match, 0, sizeof(match));
 	rl->cookie++;
-	return expr_eval(rl->expr, match, msg, rl->cookie);
-}
+	if (expr_eval(rl->expr, msg, &match, rl->cookie))
+		goto done;
+	path = match_interpolate(&match);
 
-const char *
-match_get(const struct match *match, unsigned long n)
-{
-	if (match == NULL || n >= match->nmatches)
-		return NULL;
-	return match->matches[n];
+done:
+	match_reset(&match);
+	return path;
 }
 
 struct expr *
@@ -122,19 +127,34 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	ex->type = type;
 	ex->lhs = lhs;
 	ex->rhs = rhs;
-	if (ex->type == EXPR_TYPE_BODY || ex->type == EXPR_TYPE_HEADER) {
+	switch (ex->type) {
+	case EXPR_TYPE_BODY:
+	case EXPR_TYPE_HEADER:
 		ex->match = calloc(1, sizeof(*ex->match));
 		if (ex->match == NULL)
 			err(1, NULL);
+		break;
+	case EXPR_TYPE_AND:
+	case EXPR_TYPE_OR:
+	case EXPR_TYPE_NEG:
+	case EXPR_TYPE_MOVE:
+	case EXPR_TYPE_NEW:
+		break;
 	}
 	return ex;
+}
+
+void
+expr_set_dest(struct expr *ex, char *dest)
+{
+	assert(ex->type == EXPR_TYPE_MOVE);
+	ex->dest = dest;
 }
 
 void
 expr_set_headers(struct expr *ex, struct expr_headers *headers)
 {
 	assert(ex->type == EXPR_TYPE_HEADER);
-
 	ex->headers = headers;
 }
 
@@ -183,72 +203,66 @@ expr_headers_alloc(void)
 }
 
 void
-expr_headers_append(struct expr_headers *headers, const char *key)
+expr_headers_append(struct expr_headers *headers, char *key)
 {
 	struct header *hdr;
-	size_t len;
 
-	len = strlen(key) + 1;
-	hdr = malloc(sizeof(*hdr) + len);
+	hdr = malloc(sizeof(*hdr));
 	if (hdr == NULL)
 		err(1, NULL);
-	hdr->key = (char *)(hdr + 1);
-	memcpy(hdr->key, key, len);
+	hdr->key = key;
 	TAILQ_INSERT_TAIL(headers, hdr, entry);
 }
 
 static int
-expr_eval(struct expr *ex, const struct match **match,
-    const struct message *msg, int cookie)
+expr_eval(struct expr *ex, const struct message *msg, struct match *match,
+    int cookie)
 {
 	int res = 1;
 
 	switch (ex->type) {
 	case EXPR_TYPE_AND:
-		res = expr_eval(ex->lhs, match, msg, cookie);
+		res = expr_eval(ex->lhs, msg, match, cookie);
 		if (res)
 			break; /* no match, short-circuit */
-		res = expr_eval(ex->rhs, match, msg, cookie);
+		res = expr_eval(ex->rhs, msg, match, cookie);
 		break;
 	case EXPR_TYPE_OR:
-		res = expr_eval(ex->lhs, match, msg, cookie);
+		res = expr_eval(ex->lhs, msg, match, cookie);
 		if (res == 0)
 			break; /* match, short-circuit */
-		res = expr_eval(ex->rhs, match, msg, cookie);
+		res = expr_eval(ex->rhs, msg, match, cookie);
 		break;
 	case EXPR_TYPE_NEG:
 		assert(ex->rhs == NULL);
-		res = !expr_eval(ex->lhs, match, msg, cookie);
+		res = !expr_eval(ex->lhs, msg, match, cookie);
 		/* On non-match, invalidate match below expression. */
 		if (res)
-			*match = NULL;
+			match_reset(match);
+		break;
+	case EXPR_TYPE_MOVE:
+		res = expr_eval_move(ex, msg, match);
 		break;
 	case EXPR_TYPE_BODY:
-		res = expr_eval_body(ex, msg);
+		res = expr_eval_body(ex, msg, match);
 		break;
 	case EXPR_TYPE_HEADER:
-		res = expr_eval_header(ex, msg);
+		res = expr_eval_header(ex, msg, match);
 		break;
 	case EXPR_TYPE_NEW:
-		res = expr_eval_new(ex, msg);
+		res = expr_eval_new(ex, msg, match);
 		break;
 	}
 	if (res == 0) {
 		/* Mark expression as visited on match. */
 		ex->cookie = cookie;
-
-		if (*match == NULL && ex->match != NULL) {
-			/* First matching expression. */
-			match_copy(ex->match, ex->matches, ex->nmatches);
-			*match = ex->match;
-		}
 	}
 
 	return res;
 }
 
 static int
-expr_eval_body(struct expr *ex, const struct message *msg)
+expr_eval_body(struct expr *ex, const struct message *msg, struct match *match)
 {
 	const char *body;
 
@@ -260,16 +274,18 @@ expr_eval_body(struct expr *ex, const struct message *msg)
 	if (regexec(&ex->pattern, body, ex->nmatches, ex->matches, 0))
 		return 1;
 
-	match_free(ex->match);
+	match_reset(ex->match);
 	ex->match->key = NULL;
 	ex->match->val = body;
 	ex->match->valbeg = ex->matches[0].rm_so;
 	ex->match->valend = ex->matches[0].rm_eo;
+	match_copy(match, body, ex->matches, ex->nmatches);
 	return 0;
 }
 
 static int
-expr_eval_header(struct expr *ex, const struct message *msg)
+expr_eval_header(struct expr *ex, const struct message *msg,
+    struct match *match)
 {
 	const char *val;
 	const struct header *hdr;
@@ -284,19 +300,28 @@ expr_eval_header(struct expr *ex, const struct message *msg)
 		if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
 			continue;
 
-		match_free(ex->match);
+		match_reset(ex->match);
 		ex->match->key = hdr->key;
 		ex->match->val = val;
 		ex->match->valbeg = ex->matches[0].rm_so;
 		ex->match->valend = ex->matches[0].rm_eo;
+		match_copy(match, val, ex->matches, ex->nmatches);
 		return 0;
 	}
 	return 1;
 }
 
 static int
+expr_eval_move(struct expr *ex,
+    const struct message *msg __attribute__((__unused__)), struct match *match)
+{
+	match->str = ex->dest;
+	return 0;
+}
+
+static int
 expr_eval_new(struct expr *ex __attribute__((__unused__)),
-    const struct message *msg)
+    const struct message *msg, struct match *match __attribute__((__unused__)))
 {
 	const char *beg, *end, *p, *path;
 
@@ -326,14 +351,16 @@ expr_free(struct expr *ex)
 	if (ex->headers != NULL) {
 		while ((hdr = TAILQ_FIRST(ex->headers)) != NULL) {
 			TAILQ_REMOVE(ex->headers, hdr, entry);
+			free(hdr->key);
 			free(hdr);
 		}
 		free(ex->headers);
 	}
-	match_free(ex->match);
+	match_reset(ex->match);
 	regfree(&ex->pattern);
 	free(ex->match);
 	free(ex->matches);
+	free(ex->dest);
 	free(ex);
 }
 
@@ -356,6 +383,7 @@ expr_inspect(const struct expr *ex, FILE *fh, int cookie)
 	case EXPR_TYPE_HEADER:
 		expr_inspect_header(ex, fh);
 		break;
+	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_NEG:
 	case EXPR_TYPE_NEW:
 		break;
@@ -407,26 +435,85 @@ expr_inspect_header(const struct expr *ex, FILE *fh)
 }
 
 static void
-match_copy(struct match *match, regmatch_t *src, size_t nmemb)
+match_copy(struct match *match, const char *str, regmatch_t *off, size_t nmemb)
 {
 	char *cpy;
 	size_t i, len;
+
+	if (match->nmatches > 0)
+		return;
 
 	match->matches = reallocarray(NULL, nmemb, sizeof(*match->matches));
 	if (match->matches == NULL)
 		err(1, NULL);
 	match->nmatches = nmemb;
 	for (i = 0; i < nmemb; i++) {
-		len = src[i].rm_eo - src[i].rm_so;
-		cpy = strndup(match->val + src[i].rm_so, len);
+		len = off[i].rm_eo - off[i].rm_so;
+		cpy = strndup(str + off[i].rm_so, len);
 		if (cpy == NULL)
 			err(1, NULL);
 		match->matches[i] = cpy;
 	}
 }
 
+static const char *
+match_get(const struct match *match, unsigned long n)
+{
+	if (match == NULL || n >= match->nmatches)
+		return NULL;
+	return match->matches[n];
+}
+
+static const char *
+match_interpolate(const struct match *match)
+{
+	static char buf[PATH_MAX];
+	const char *path, *sub;
+	char *end;
+	unsigned long mid;
+	size_t i = 0;
+	size_t j = 0;
+
+	assert(match != NULL);
+	assert(match->str != NULL);
+
+	path = match->str;
+	while (path[i] != '\0') {
+		if (i > 0 && path[i - 1] == '\\' && isdigit(path[i])) {
+			errno = 0;
+			mid = strtoul(path + i, &end, 10);
+			if ((errno == ERANGE && mid == ULONG_MAX) ||
+			    ((sub = match_get(match, mid)) == NULL))
+				goto err2;
+			/* Adjust j to remove previously copied backslash. */
+			j--;
+			for (; *sub != '\0'; sub++) {
+				if (j == sizeof(buf) - 1)
+					goto err1;
+				buf[j++] = *sub;
+			}
+			i = end - path;
+			continue;
+		}
+		if (j == sizeof(buf) - 1)
+			goto err1;
+		buf[j++] = path[i++];
+	}
+	assert(j < sizeof(buf));
+	buf[j] = '\0';
+	return buf;
+
+err1:
+	warnx("%s: destination too long", path);
+	return NULL;
+err2:
+	warnx("%s: invalid back-reference in destination", path);
+	return NULL;
+	return 0;
+}
+
 static void
-match_free(struct match *match)
+match_reset(struct match *match)
 {
 	size_t i;
 
@@ -436,6 +523,11 @@ match_free(struct match *match)
 	for (i = 0; i < match->nmatches; i++)
 		free(match->matches[i]);
 	free(match->matches);
-	/* Do not free match since it's owned by its expression. */
-	memset(match, 0, sizeof(*match));
+	/* Reset everything except str. */
+	match->matches = NULL;
+	match->nmatches = 0;
+	match->key = NULL;
+	match->val = NULL;
+	match->valbeg = 0;
+	match->valend = 0;
 }

@@ -18,7 +18,7 @@ Each
 section starts with a declaration of the maildir and its corresponding
 .Ar path :
 .Bl -tag -width Ds
-.It Ic maildir Do Ar path Dc Brq ...
+.It Ic maildir Do Ar path Dc No { Ar rule ... No }
 .El
 .Pp
 Followed by a block of rules.
@@ -30,11 +30,11 @@ and
 directory rooted in
 .Ar path
 and evaluates each rule in sequential order.
-The first matching rule takes precedence.
+The first matching rule is favored.
 .Pp
 A rule is defined as follows:
-.Bl -tag -width XX
-.It Ic match
+.Bl -tag -width XXX
+.It Ic match Ar condition action
 A rule starts with the match keyword followed by one or many conditions and an
 action.
 Each rule spans to the end of the current line but can extended over multiple
@@ -48,7 +48,9 @@ be made case insensitive using the
 .Ic i
 keyword.
 .Pp
-The conditions are as follows:
+The conditions are as follows and may be inverted by prefixing it with the
+.Ic \&!
+keyword:
 .Bl -tag -width Ds
 .It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op Ic i
 Evaluates to true if the message body matches
@@ -73,22 +75,25 @@ in message is done case insensitive.
 Evaluates to true if the message is not read.
 .El
 .Pp
-A condition may be inverted using the
-.Ic \&!
-keyword.
 Multiple and nested conditions may be also specified:
 .Bl -tag -width Ds
-.It Ar ... Op Ic and Ar ...
-Evaluates to true if all conditions are true.
-.It Ar ... Op Ic or Ar ...
-Evaluates to true if any of the conditions are true.
-.It Oo Ic \&! Oc Ic \&( Ar ... Ic \&)
-Evaluates to true if the nested condition is true.
+.It Ar condition Ic and Ar condition
+Evaluates to true if both
+.Ar condition
+are true.
+.It Ar condition Ic or Ar condition
+Evaluates to true if any of the
+.Ar condition
+are true.
+.It Oo Ic \&! Oc Ic \&( Ar condition Ic \&)
+Evaluates to true if the nested
+.Ar condition
+is true.
 .El
 .Pp
 Next comes the action:
 .Bl -tag -width Ds
-.It Ic move Dq path
+.It Ic move Dq Ar path
 If the condition(s) evaluates to true,
 move the message to the maildir located at
 .Ar path .
@@ -108,6 +113,11 @@ conditions is not encouraged since the
 .Ar pattern
 that matches first may vary.
 .El
+.It Ic match Ar condition No { Ar rule ... No }
+The nested block of rules
+is only evaluated if
+.Ar condition
+is true.
 .El
 .Sh FILES
 .Bl -tag -width "~/.mdsort.conf"

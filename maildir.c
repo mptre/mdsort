@@ -4,7 +4,6 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <ctype.h>
 #include <dirent.h>
 #include <err.h>
 #include <errno.h>
@@ -37,7 +36,6 @@ static const char *maildir_dirname(const struct maildir *);
 static const char *maildir_genname(const struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
-static const char *pathexpand(const char *, const struct match *);
 static int pathjoin(char *, const char *, const char *, const char *);
 
 struct maildir *
@@ -72,14 +70,9 @@ maildir_open(const char *path, int nowalk)
 }
 
 struct maildir *
-maildir_openat(const struct maildir *md, const char *path,
-    const struct match *match)
+maildir_openat(const struct maildir *md, const char *path)
 {
-	const char *p;
-
-	if ((p = pathexpand(path, match)) == NULL)
-		return NULL;
-	return maildir_open(p, md->dirname);
+	return maildir_open(path, md->dirname);
 }
 
 void
@@ -226,49 +219,6 @@ maildir_read(struct maildir *md)
 			return NULL;
 		return md->fbuf;
 	}
-}
-
-static const char *
-pathexpand(const char *path, const struct match *match)
-{
-	static char buf[PATH_MAX];
-	const char *sub;
-	char *end;
-	unsigned long mid;
-	size_t i = 0;
-	size_t j = 0;
-
-	while (path[i] != '\0') {
-		if (i > 0 && path[i - 1] == '\\' && isdigit(path[i])) {
-			errno = 0;
-			mid = strtoul(path + i, &end, 10);
-			if ((errno == ERANGE && mid == ULONG_MAX) ||
-			    ((sub = match_get(match, mid)) == NULL))
-				goto err2;
-			/* Adjust j to remove previously copied backslash. */
-			j--;
-			for (; *sub != '\0'; sub++) {
-				if (j == sizeof(buf) - 1)
-					goto err1;
-				buf[j++] = *sub;
-			}
-			i = end - path;
-			continue;
-		}
-		if (j == sizeof(buf) - 1)
-			goto err1;
-		buf[j++] = path[i++];
-	}
-	assert(j < sizeof(buf));
-	buf[j] = '\0';
-	return buf;
-
-err1:
-	warnx("%s: destination too long", path);
-	return NULL;
-err2:
-	warnx("%s: invalid back-reference in destination", path);
-	return NULL;
 }
 
 static int

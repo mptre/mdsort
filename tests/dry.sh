@@ -250,3 +250,34 @@ EOF
 	mdsort -d | tail -n +2 >$TMP3
 	fcmp $TMP2 $TMP3 && pass
 fi
+
+if testcase "match nested rules"; then
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	Cc: admin@example.com
+
+	Bye!
+	EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	Hello!
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match header { "Cc" "To" } /example/ {
+			match body /hello/i move "${MAILDIR}/dst"
+
+			match body /gutentag/i move "${MAILDIR}/dst"
+		}
+	}
+	EOF
+	cat <<EOF >$TMP2
+To: user@example.com
+         ^     $
+Hello!
+^   $
+EOF
+	mdsort -d | tail -n +2 >$TMP3
+	fcmp $TMP2 $TMP3 && pass
+fi

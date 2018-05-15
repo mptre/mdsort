@@ -9,7 +9,6 @@
  */
 struct expr;
 struct expr_headers;
-struct match;
 
 /*
  * Open the maildir directory located at path.
@@ -22,15 +21,13 @@ struct match;
 struct maildir *maildir_open(const char *path, int nowalk);
 
 /*
- * Open the subdirectory as given by the maildir but rooted at path, which must
+ * Open the subdirectory as given by maildir but rooted at path, which must
  * also be a valid maildir.
- * The match is used to interpolate any back-references in path.
  *
  * The caller is responsible for freeing the returned memory using
  * maildir_close().
  */
-struct maildir *maildir_openat(const struct maildir *md, const char *path,
-	const struct match *match);
+struct maildir *maildir_openat(const struct maildir *md, const char *path);
 
 /*
  * Close and free maildir.
@@ -95,7 +92,7 @@ const char *message_get_path(const struct message *msg);
  * The caller is responsible for freeing the returned memory using
  * rule_free().
  */
-struct rule *rule_alloc(struct expr *ex, const char *dest);
+struct rule *rule_alloc(struct expr *ex);
 
 /*
  * Free rule.
@@ -108,24 +105,10 @@ void rule_free(struct rule *rl);
 void rule_inspect(const struct rule *rl, FILE *fh);
 
 /*
- * Get the maildir destination path.
- */
-const char *rule_get_dest(const struct rule *rl);
-
-/*
- * Returns zero if the rule matches the given message.
- * Otherwise, non-zero is returned.
- * The matches of the first matching expression will be accessible through the
- * given match.
- */
-int rule_eval(struct rule *rl, const struct match **match,
-    const struct message *msg);
-
-/*
- * Returns the nth match if present.
+ * Returns the destination path if the rule matches the given message.
  * Otherwise, NULL is returned.
  */
-const char *match_get(const struct match *match, unsigned long n);
+const char *rule_eval(struct rule *rl, const struct message *msg);
 
 enum expr_type {
 	EXPR_TYPE_AND,
@@ -133,6 +116,7 @@ enum expr_type {
 	EXPR_TYPE_NEG,
 	EXPR_TYPE_BODY,
 	EXPR_TYPE_HEADER,
+	EXPR_TYPE_MOVE,
 	EXPR_TYPE_NEW,
 };
 
@@ -149,6 +133,11 @@ enum expr_pattern {
  */
 struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
     struct expr *rhs);
+
+/*
+ * Associate the given destination path with the expression.
+ */
+void expr_set_dest(struct expr *ex, char *dest);
 
 /*
  * Associate the given headers with the expression.
@@ -176,24 +165,21 @@ struct expr_headers *expr_headers_alloc(void);
 /*
  * Append the given header key to the list headers.
  */
-void expr_headers_append(struct expr_headers *headers, const char *key);
+void expr_headers_append(struct expr_headers *headers, char *key);
 
 struct rule {
-	char *dest;
 	struct expr *expr;
 	int cookie;
-
-	TAILQ_ENTRY(rule) entry;
 };
-
-TAILQ_HEAD(config_list, config);
 
 struct config {
 	char *maildir;
+	struct rule *rule;
 
-	TAILQ_HEAD(, rule) rules;
 	TAILQ_ENTRY(config) entry;
 };
+
+TAILQ_HEAD(config_list, config);
 
 /*
  * Parses the configuration located at path and returns a config list on

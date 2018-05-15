@@ -6,11 +6,11 @@ if testcase "match body"; then
 	Hello Bob
 	EOF
 	cat <<-EOF >$CONF
-	maildir "${MAILDIR}/src" {
+	maildir "~/src" {
 		match body /Bob/ move "${MAILDIR}/dst"
 	}
 	EOF
-	mdsort
+	HOME=$MAILDIR mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
 	grep -q "Bob" ${MAILDIR}/dst/new/* || \
@@ -395,6 +395,85 @@ if testcase "match negate nested condition"; then
 	grep -q "To: admin@example.com" ${MAILDIR}/src/new/* || \
 		fail "expected src/new directory to not be empty"
 	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
+		fail "expected dst/new directory to not be empty"
+	pass
+fi
+
+if testcase "match nested"; then
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	Hello!
+	EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	Bye!
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ {
+			match new {
+				match body /Hello/ move "${MAILDIR}/dst"
+			}
+		}
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
+		fail "expected src/new directory to not be empty"
+	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null && \
+		fail "expected dst/new directory to not be empty"
+	pass
+fi
+
+if testcase "match nested without interpolation matches"; then
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match new {
+			match new move "${MAILDIR}/dst"
+		}
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null && \
+		fail "expected dst/new directory to not be empty"
+	pass
+fi
+
+if testcase "match nested with negate"; then
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: user@example.com
+
+	EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: admin@example.com
+
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match new {
+			match ! header "To" /admin/ move "${MAILDIR}/dst"
+		}
+
+		match ! header "To" /user/ {
+			match new move "${MAILDIR}/dst"
+		}
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	ls "${MAILDIR}/dst/new" | cmp -s - /dev/null && \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi

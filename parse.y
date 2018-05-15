@@ -11,7 +11,7 @@
 
 #include "extern.h"
 
-static int expandtilde(char *);
+static char *expandtilde(char *);
 static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 static int yygetc(void);
@@ -20,32 +20,30 @@ static int yypeek(int);
 static void yyungetc(int);
 
 static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
-static struct config *curconf;
 static FILE *fh;
 static const char *confpath;
-static int flags, lineno, lineno_save, newline, parse_errors;
+static int lineno, lineno_save, newline, parse_errors;
 
 %}
 
 %union {
 	int i;
 	char *s;
-	struct rule *r;
-	struct expr *e;
-	struct expr_headers *h;
+
+	struct expr *expr;
+	struct expr_headers *headers;
+
 	struct {
 		char *s;
 		int i;
-	} p;
+	} pattern;
 }
 
 %token BODY HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
-%type <i> flags flag
-%type <s> PATTERN STRING action
-%type <r> rule
-%type <e> exprs expr
-%type <h> headers strings
-%type <p> pattern
+%type <s> STRING move
+%type <expr> expr expr1 expr2 expr3 exprs
+%type <headers> headers strings
+%type <pattern> PATTERN
 
 %left AND OR
 %left NEG
@@ -56,72 +54,88 @@ grammar		: /* empty */
 		| grammar maildir
 		;
 
-maildir		: MAILDIR STRING {
+maildir		: MAILDIR STRING '{' exprs '}' {
 			struct config *conf;
-			char *maildir;
+			char *path;
 
-			if (expandtilde($2))
+			path = expandtilde($2);
+			if (path == NULL)
 				YYERROR;
-			maildir = strdup($2);
-			if (maildir == NULL)
-				err(1, NULL);
 
 			conf = malloc(sizeof(*conf));
 			if (conf == NULL)
 				err(1, NULL);
-			conf->maildir = maildir;
-			TAILQ_INIT(&conf->rules);
+			conf->maildir = path;
+			conf->rule = rule_alloc($4);
 			TAILQ_INSERT_TAIL(&config, conf, entry);
-
-			curconf = conf;
-		} '{' rules '}'
-		;
-
-rules		: /* empty */
-		| rules {
-			newline = 1;
-		} rule '\n' {
-			TAILQ_INSERT_TAIL(&curconf->rules, $3, entry);
-		}
-		| error '\n'
-		;
-
-rule		: MATCH exprs action {
-			$$ = rule_alloc($2, $3);
 		}
 		;
 
-exprs		: exprs AND exprs {
+exprs		: /* empty */ {
+			$$ = NULL;
+		}
+		| exprs expr '\n' {
+			if ($1 == NULL)
+				$$ = $2;
+			else
+				$$ = expr_alloc(EXPR_TYPE_OR, $1, $2);
+		}
+		| error '\n' {
+			$$ = NULL;
+		}
+		;
+
+expr		: MATCH { newline = 1; } expr1 expr2 {
+			$$ = expr_alloc(EXPR_TYPE_AND, $3, $4);
+		}
+		;
+
+expr1		: expr1 AND expr1 {
 			$$ = expr_alloc(EXPR_TYPE_AND, $1, $3);
 		}
-		| exprs OR exprs {
+		| expr1 OR expr1 {
 			$$ = expr_alloc(EXPR_TYPE_OR, $1, $3);
 		}
-		| NEG exprs {
+		| NEG expr1 {
 			$$ = expr_alloc(EXPR_TYPE_NEG, $2, NULL);
 		}
-		| expr
+		| expr3
 		;
 
-expr		: BODY pattern {
+expr2		: move {
+			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
+			expr_set_dest($$, $1);
+		}
+		|  '{' { newline = 0; } exprs '}' {
+			$$ = $3;
+			if ($$ == NULL) {
+				yyerror("empty nested match block");
+				/* Abort, avoids handling NULL upwards. */
+				YYERROR;
+			}
+			newline = 1;
+		}
+		;
+
+expr3		: BODY PATTERN {
 			const char *errstr;
 
 			$$ = expr_alloc(EXPR_TYPE_BODY, NULL, NULL);
 			if (expr_set_pattern($$, $2.s, $2.i, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
-		| HEADER headers pattern {
+		| HEADER headers PATTERN {
 			const char *errstr;
 
 			$$ = expr_alloc(EXPR_TYPE_HEADER, NULL, NULL);
-			expr_set_headers($$, $2);
 			if (expr_set_pattern($$, $3.s, $3.i, &errstr))
 				yyerror("invalid pattern: %s", errstr);
+			expr_set_headers($$, $2);
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW, NULL, NULL);
 		}
-		| '(' exprs ')' {
+		| '(' expr1 ')' {
 			$$ = $2;
 		}
 		;
@@ -132,6 +146,7 @@ headers		: '{' strings '}' {
 		| STRING {
 			if (strlen($1) == 0)
 				yyerror("missing header name");
+
 			$$ = expr_headers_alloc();
 			expr_headers_append($$, $1);
 		}
@@ -149,31 +164,13 @@ strings		: /* empty */ {
 		}
 		;
 
-pattern		: PATTERN flags {
-			flags = 0;
-			$$.s = $1;
-			$$.i = $2;
-		}
-		;
+move		: MOVE STRING {
+			char *path;
 
-flags		: /* empty */ {
-			flags = 1;
-			$$ = 0;
-		}
-		| flags flag {
-			$$ = $1 | $2;
-		}
-		;
-
-flag		: 'i' {
-			$$ = EXPR_PATTERN_ICASE;
-		}
-		;
-
-action		: MOVE STRING {
-			if (expandtilde($2))
+			path = expandtilde($2);
+			if (path == NULL)
 				YYERROR;
-			$$ = $2;
+			$$ = path;
 		}
 		;
 
@@ -230,9 +227,9 @@ yylex(void)
 	};
 	static char lexeme[BUFSIZ], kw[16];
 	char *buf;
-	int c, i;
+	int c, flag, i;
 
-	buf = yylval.s = lexeme;
+	buf = lexeme;
 
 again:
 	for (c = yygetc(); c == ' ' || c == '\t'; c = yygetc())
@@ -279,10 +276,6 @@ again:
 	case '{':
 	case '}':
 		return c;
-	case 'i':
-		if (flags)
-			return c;
-		break;
 	}
 
 	if (c == '"') {
@@ -302,6 +295,9 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
+		yylval.s = strdup(lexeme);
+		if (yylval.s == NULL)
+			err(1, NULL);
 		return STRING;
 	}
 
@@ -322,6 +318,22 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
+		yylval.pattern.s = lexeme;
+
+		yylval.pattern.i = 0;
+		for (;;) {
+			c = yygetc();
+			if (c == 'i') {
+				flag = EXPR_PATTERN_ICASE;
+			} else {
+				yyungetc(c);
+				break;
+			}
+			if (yylval.pattern.i & flag)
+				yyerror("duplicate pattern flag: %c", c);
+			yylval.pattern.i |= flag;
+		}
+
 		return PATTERN;
 	}
 
@@ -346,27 +358,30 @@ again:
 	return c;
 }
 
-static int
+static char *
 expandtilde(char *str)
 {
 	size_t hlen, slen;
 
 	if (*str != '~')
-		return 0;
+		return str;
 
 	hlen = strlen(home);
 	slen = strlen(str);
 	if (hlen + slen - 1 >= PATH_MAX - 1) {
 		yyerror("path too long");
-		return 1;
+		return NULL;
 	}
+	str = realloc(str, hlen + slen + 1);
+	if (str == NULL)
+		err(1, NULL);
 	/*
 	 * Do not copy leading tilde, slen will therefore guarantee
 	 * NUL-termination.
 	 */
 	memmove(str + hlen, str + 1, slen);
 	memcpy(str, home, hlen);
-	return 0;
+	return str;
 }
 
 static int
