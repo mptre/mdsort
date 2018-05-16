@@ -5,20 +5,31 @@ matrix:
   include:
     - os: linux
       compiler: clang
-      env: BUILD_TYPE=default CFLAGS=-Werror DEBUG='-fsanitize=undefined -fno-sanitize-recover=undefined'
+      env:
+        - BUILD_TYPE=default
+        - CFLAGS=-Werror
+        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined'
     - os: linux
       compiler: gcc
-      env: BUILD_TYPE=default CFLAGS=-Werror
+      env:
+        - BUILD_TYPE=default
+        - CFLAGS=-Werror
     - os: linux
       compiler: musl-gcc
-      env: BUILD_TYPE=default CFLAGS=-Werror TESTFLAGS='-s tilde\ expansion'
+      env:
+        - BUILD_TYPE=default
+        - CFLAGS=-Werror
+        - TESTFLAGS='-s tilde\ expansion'
       addons:
         apt:
           packages:
             - musl-tools
     - os: osx
       compiler: clang
-      env: BUILD_TYPE=default CFLAGS=-Werror TESTFLAGS='-s too\ long'
+      env:
+        - BUILD_TYPE=default
+        - CFLAGS=-Werror
+        - TESTFLAGS='-s too\ long'
 script:
   - |
     (
