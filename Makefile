@@ -90,7 +90,9 @@ lint:
 .PHONY: lint
 
 test: ${PROG}
-	${MAKE} -C ${.CURDIR}/tests "TESTFLAGS=${TESTFLAGS}"
+	${MAKE} -C ${.CURDIR}/tests \
+		"MDSORT=${.OBJDIR}/${PROG}" \
+		"TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
 
 -include ${DEP}
