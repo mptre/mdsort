@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <regex.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,6 +41,9 @@ TAILQ_HEAD(expr_headers, header);
 
 struct match {
 	const char *str;
+
+	/* Everything after this field will be zeroed out by match_reset(). */
+	int begzero;
 
 	char **matches;
 	size_t nmatches;
@@ -515,7 +519,7 @@ err2:
 static void
 match_reset(struct match *match)
 {
-	size_t i;
+	size_t i, len;
 
 	if (match == NULL)
 		return;
@@ -523,11 +527,8 @@ match_reset(struct match *match)
 	for (i = 0; i < match->nmatches; i++)
 		free(match->matches[i]);
 	free(match->matches);
-	/* Reset everything except str. */
-	match->matches = NULL;
-	match->nmatches = 0;
-	match->key = NULL;
-	match->val = NULL;
-	match->valbeg = 0;
-	match->valend = 0;
+
+	/* Reset everything after the begzero field inclusively. */
+	len = sizeof(*match) - ((ptrdiff_t)&match->begzero - (ptrdiff_t)match);
+	memset(&match->begzero, 0, len);
 }
