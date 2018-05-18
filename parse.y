@@ -27,20 +27,19 @@ static int lineno, lineno_save, newline, parse_errors;
 %}
 
 %union {
-	int i;
-	char *s;
+	char *str;
 
 	struct expr *expr;
 	struct expr_headers *headers;
 
 	struct {
-		char *s;
-		int i;
+		char *str;
+		int flags;
 	} pattern;
 }
 
 %token BODY HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
-%type <s> STRING move
+%type <str> STRING move
 %type <expr> expr expr1 expr2 expr3 exprs
 %type <headers> headers strings
 %type <pattern> PATTERN
@@ -121,14 +120,14 @@ expr3		: BODY PATTERN {
 			const char *errstr;
 
 			$$ = expr_alloc(EXPR_TYPE_BODY, NULL, NULL);
-			if (expr_set_pattern($$, $2.s, $2.i, &errstr))
+			if (expr_set_pattern($$, $2.str, $2.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
 		| HEADER headers PATTERN {
 			const char *errstr;
 
 			$$ = expr_alloc(EXPR_TYPE_HEADER, NULL, NULL);
-			if (expr_set_pattern($$, $3.s, $3.i, &errstr))
+			if (expr_set_pattern($$, $3.str, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 			expr_set_headers($$, $2);
 		}
@@ -295,8 +294,8 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
-		yylval.s = strdup(lexeme);
-		if (yylval.s == NULL)
+		yylval.str = strdup(lexeme);
+		if (yylval.str == NULL)
 			err(1, NULL);
 		return STRING;
 	}
@@ -318,9 +317,9 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
-		yylval.pattern.s = lexeme;
+		yylval.pattern.str = lexeme;
 
-		yylval.pattern.i = 0;
+		yylval.pattern.flags = 0;
 		for (;;) {
 			c = yygetc();
 			if (c == 'i') {
@@ -329,9 +328,9 @@ again:
 				yyungetc(c);
 				break;
 			}
-			if (yylval.pattern.i & flag)
+			if (yylval.pattern.flags & flag)
 				yyerror("duplicate pattern flag: %c", c);
-			yylval.pattern.i |= flag;
+			yylval.pattern.flags |= flag;
 		}
 
 		return PATTERN;
