@@ -12,22 +12,13 @@ struct expr_headers;
 
 /*
  * Open the maildir directory located at path.
- * The nowalk argument must be 0 in order to traverse all subdirectories in the
- * maildir.
+ * If walk is non-zero, invoking maildir_walk() will traverse all messages
+ * present in the cur and new subdirectories rooted at path.
  *
  * The caller is responsible for freeing the returned memory using
  * maildir_close().
  */
-struct maildir *maildir_open(const char *path, int nowalk);
-
-/*
- * Open the subdirectory as given by maildir but rooted at path, which must
- * also be a valid maildir.
- *
- * The caller is responsible for freeing the returned memory using
- * maildir_close().
- */
-struct maildir *maildir_openat(const struct maildir *md, const char *path);
+struct maildir *maildir_open(const char *path, int walk);
 
 /*
  * Close and free maildir.
@@ -50,11 +41,6 @@ const char *maildir_walk(struct maildir *md);
  */
 int maildir_move(const struct maildir *src, const struct maildir *dst,
     const char *path);
-
-/*
- * Returns the maildir path.
- */
-const char *maildir_get_path(const struct maildir *md);
 
 /*
  * Parse the message located at path.
@@ -85,6 +71,11 @@ const char *message_get_header(const struct message *msg, const char *header);
  * Returns the message path.
  */
 const char *message_get_path(const struct message *msg);
+
+/*
+ * Returns the last directory portion from the message path.
+ */
+const char *message_get_dirname(const struct message *msg);
 
 /*
  * Allocate a new rule.

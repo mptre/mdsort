@@ -33,13 +33,14 @@ struct maildir {
 };
 
 static const char *maildir_dirname(const struct maildir *);
+static int maildir_dirnext(struct maildir *);
 static const char *maildir_genname(const struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
-static int pathjoin(char *, const char *, const char *, const char *);
+static char *pathjoin(char *, const char *, const char *, const char *);
 
 struct maildir *
-maildir_open(const char *path, int nowalk)
+maildir_open(const char *path, int walk)
 {
 	struct maildir *md;
 
@@ -50,29 +51,19 @@ maildir_open(const char *path, int nowalk)
 	if (md->path == NULL)
 		err(1, NULL);
 	md->dir = NULL;
-	md->dirname = nowalk;
-	if (md->dirname == 0)
+	md->dirname = 0;
+	if (walk) {
 		md->dirname = MAILDIR_NEW;
-
-	if (pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL)) {
-		warnx("unknown maildir path");
-		maildir_close(md);
-		return NULL;
+		path = pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL);
 	}
-	md->dir = opendir(md->dbuf);
+	md->dir = opendir(path);
 	if (md->dir == NULL) {
-		warn("opendir: %s", md->dbuf);
+		warn("opendir: %s", path);
 		maildir_close(md);
 		return NULL;
 	}
 
 	return md;
-}
-
-struct maildir *
-maildir_openat(const struct maildir *md, const char *path)
-{
-	return maildir_open(path, md->dirname);
 }
 
 void
@@ -91,18 +82,22 @@ maildir_walk(struct maildir *md)
 {
 	const char *path;
 
+	if (md->dirname == 0)
+		return NULL;
+
 	for (;;) {
-		if ((path = maildir_read(md)) != NULL)
+		path = maildir_read(md);
+		if (path != NULL)
 			return path;
 
-		md->dirname++;
-		if (pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL))
+		if (maildir_dirnext(md))
 			return NULL;
+		path = pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL);
 		if (md->dir != NULL)
 			closedir(md->dir);
-		md->dir = opendir(md->dbuf);
+		md->dir = opendir(path);
 		if (md->dir == NULL) {
-			warn("opendir: %s", md->dbuf);
+			warn("opendir: %s", path);
 			return NULL;
 		}
 	}
@@ -147,12 +142,6 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	return 0;
 }
 
-const char *
-maildir_get_path(const struct maildir *md)
-{
-	return md->dbuf;
-}
-
 static const char *
 maildir_dirname(const struct maildir *md)
 {
@@ -163,6 +152,19 @@ maildir_dirname(const struct maildir *md)
 		return "cur";
 	}
 	return NULL;
+}
+
+static int
+maildir_dirnext(struct maildir *md)
+{
+	switch (md->dirname) {
+	case MAILDIR_NEW:
+		md->dirname = MAILDIR_CUR;
+		return 0;
+	case MAILDIR_CUR:
+		break;
+	}
+	return 1;
 }
 
 static const char *
@@ -214,20 +216,18 @@ maildir_read(struct maildir *md)
 		if (ent->d_type != DT_REG)
 			continue;
 
-		if (pathjoin(md->fbuf, md->path, maildir_dirname(md),
-			    ent->d_name))
-			return NULL;
-		return md->fbuf;
+		return pathjoin(md->fbuf, md->path, maildir_dirname(md),
+		    ent->d_name);
 	}
 }
 
-static int
+static char *
 pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
 {
 	int n;
 
-	if (root == NULL || dirname == NULL)
-		return 1;
+	assert(root != NULL);
+	assert(dirname != NULL);
 
 	if (filename == NULL)
 		n = snprintf(buf, PATH_MAX, "%s/%s", root, dirname);
@@ -235,6 +235,6 @@ pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
 		n = snprintf(buf, PATH_MAX, "%s/%s/%s",
 		    root, dirname, filename);
 	if (n == -1 || n >= PATH_MAX)
-		err(1, "%s: buffer too small", __func__);
-	return 0;
+		errx(1, "%s: buffer too small", __func__);
+	return buf;
 }

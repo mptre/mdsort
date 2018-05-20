@@ -135,6 +135,31 @@ message_get_path(const struct message *msg)
 	return msg->path;
 }
 
+const char *
+message_get_dirname(const struct message *msg)
+{
+	static char buf[4];
+	const char *beg, *end, *tmp;
+	int buflen, len, n;
+
+	beg = end = msg->path;
+	for (;;) {
+		tmp = strchr(end + 1, '/');
+		if (tmp == NULL)
+			break;
+		beg = end + 1;
+		end = tmp;
+	}
+	len = end - beg;
+	if (len == 0)
+		return NULL;
+	buflen = sizeof(buf);
+	n = snprintf(buf, buflen, "%.*s", len, beg);
+	if (n == -1 || n >= buflen)
+		errx(1, "%s: buffer too small", __func__);
+	return buf;
+}
+
 static const char *
 message_parse_headers(struct message *msg)
 {

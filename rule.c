@@ -76,7 +76,8 @@ static void expr_inspect_header(const struct expr *, FILE *);
 
 static void match_copy(struct match *, const char *, regmatch_t *, size_t);
 static const char *match_get(const struct match *match, unsigned long n);
-static const char *match_interpolate(const struct match *);
+static const char *match_interpolate(const struct match *,
+    const struct message *);
 static void match_reset(struct match *match);
 
 struct rule *
@@ -118,7 +119,7 @@ rule_eval(struct rule *rl, const struct message *msg)
 	rl->cookie++;
 	if (expr_eval(rl->expr, msg, &match, rl->cookie))
 		goto done;
-	path = match_interpolate(&match);
+	path = match_interpolate(&match, msg);
 
 done:
 	match_reset(&match);
@@ -474,10 +475,10 @@ match_get(const struct match *match, unsigned long n)
 }
 
 static const char *
-match_interpolate(const struct match *match)
+match_interpolate(const struct match *match, const struct message *msg)
 {
 	static char buf[PATH_MAX];
-	const char *path, *sub;
+	const char *dirname, *path, *sub;
 	char *end;
 	unsigned long mid;
 	size_t i = 0;
@@ -492,33 +493,45 @@ match_interpolate(const struct match *match)
 			errno = 0;
 			mid = strtoul(path + i, &end, 10);
 			if ((errno == ERANGE && mid == ULONG_MAX) ||
-			    ((sub = match_get(match, mid)) == NULL))
-				goto err2;
+			    ((sub = match_get(match, mid)) == NULL)) {
+				warnx("%s: invalid back-reference in "
+				    "destination", path);
+				return NULL;
+			}
 			/* Adjust j to remove previously copied backslash. */
 			j--;
 			for (; *sub != '\0'; sub++) {
 				if (j == sizeof(buf) - 1)
-					goto err1;
+					goto toolong;
 				buf[j++] = *sub;
 			}
 			i = end - path;
 			continue;
 		}
 		if (j == sizeof(buf) - 1)
-			goto err1;
+			goto toolong;
 		buf[j++] = path[i++];
 	}
+
+	dirname = message_get_dirname(msg);
+	if (dirname == NULL) {
+		warnx("%s: dirname not found", message_get_path(msg));
+		return NULL;
+	}
+	buf[j++] = '/';
+	for (i = 0; dirname[i] != '\0'; i++) {
+		if (j == sizeof(buf) - 1)
+			goto toolong;
+		buf[j++] = dirname[i];
+	}
+
 	assert(j < sizeof(buf));
 	buf[j] = '\0';
 	return buf;
 
-err1:
+toolong:
 	warnx("%s: destination too long", path);
 	return NULL;
-err2:
-	warnx("%s: invalid back-reference in destination", path);
-	return NULL;
-	return 0;
 }
 
 static void

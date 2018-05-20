@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 		return 0;
 
 	TAILQ_FOREACH(conf, config, entry) {
-		md = maildir_open(conf->maildir, 0);
+		md = maildir_open(conf->maildir, 1);
 		if (md == NULL)
 			continue;
 		while ((path = maildir_walk(md)) != NULL) {
@@ -83,10 +83,10 @@ main(int argc, char *argv[])
 			if (dstpath == NULL)
 				goto next;
 
-			dst = maildir_openat(md, dstpath);
+			dst = maildir_open(dstpath, 0);
 			if (dst == NULL)
 				goto next;
-			log_info("%s -> %s\n", path, maildir_get_path(dst));
+			log_info("%s -> %s\n", path, dstpath);
 			if (dflag)
 				rule_inspect(conf->rule, stdout);
 			else
