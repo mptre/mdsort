@@ -167,11 +167,6 @@ struct expr_headers *expr_headers_alloc(void);
  */
 void expr_headers_append(struct expr_headers *headers, char *key);
 
-struct rule {
-	struct expr *expr;
-	int cookie;
-};
-
 struct config {
 	char *maildir;
 	struct rule *rule;

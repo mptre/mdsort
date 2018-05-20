@@ -13,6 +13,11 @@
 
 #include "extern.h"
 
+struct rule {
+	struct expr *expr;
+	int cookie;
+};
+
 struct expr {
 	enum expr_type type;
 	int cookie;
