@@ -227,10 +227,12 @@ yylex(void)
 	static char lexeme[BUFSIZ], kw[16];
 	char *buf;
 	int c, flag, i;
+	int ntries = 0;
 
 	buf = lexeme;
 
 again:
+	ntries++;
 	for (c = yygetc(); c == ' ' || c == '\t'; c = yygetc())
 		continue;
 	if (c == '\n') {
@@ -238,7 +240,13 @@ again:
 		for (; c == '\n'; c = yygetc())
 			continue;
 		yyungetc(c);
-		if (newline) {
+		/*
+		 * Ugly hack: do not emit a newline token after more than 2
+		 * retries, this implies that a continuation followed by one or
+		 * more lines that only consists of optional leading whitespace
+		 * followed by a comment is being read.
+		 */
+		if (newline && ntries <= 2) {
 			newline = 0;
 			return '\n';
 		}
