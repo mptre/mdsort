@@ -480,7 +480,7 @@ match_interpolate(const struct match *match, const struct message *msg)
 	static char buf[PATH_MAX];
 	const char *dirname, *path, *sub;
 	char *end;
-	unsigned long mid;
+	unsigned long bf;
 	size_t i = 0;
 	size_t j = 0;
 
@@ -491,9 +491,9 @@ match_interpolate(const struct match *match, const struct message *msg)
 	while (path[i] != '\0') {
 		if (i > 0 && path[i - 1] == '\\' && isdigit(path[i])) {
 			errno = 0;
-			mid = strtoul(path + i, &end, 10);
-			if ((errno == ERANGE && mid == ULONG_MAX) ||
-			    ((sub = match_get(match, mid)) == NULL)) {
+			bf = strtoul(path + i, &end, 10);
+			if ((errno == ERANGE && bf == ULONG_MAX) ||
+			    ((sub = match_get(match, bf)) == NULL)) {
 				warnx("%s: invalid back-reference in "
 				    "destination", path);
 				return NULL;
