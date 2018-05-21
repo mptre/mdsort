@@ -469,7 +469,7 @@ match_copy(struct match *match, const char *str, regmatch_t *off, size_t nmemb)
 static const char *
 match_get(const struct match *match, unsigned long n)
 {
-	if (match == NULL || n >= match->nmatches)
+	if (n >= match->nmatches)
 		return NULL;
 	return match->matches[n];
 }
