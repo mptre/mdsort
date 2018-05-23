@@ -53,7 +53,7 @@ mdsort() {
 		shift
 	fi
 
-	env "$ENV" "$MDSORT" -f mdsort.conf "$@" >"$TMP1" 2>&1 || _exit=1
+	env $ENV "$MDSORT" -f mdsort.conf "$@" >"$TMP1" 2>&1 || _exit=1
 	if [ $TCEXIT -ne $_exit ]; then
 		fail "exits ${TCEXIT} != ${_exit}"
 		cat "$TMP1" 1>&2
