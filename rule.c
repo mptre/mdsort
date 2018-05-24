@@ -489,17 +489,15 @@ match_interpolate(const struct match *match, const struct message *msg)
 
 	path = match->str;
 	while (path[i] != '\0') {
-		if (i > 0 && path[i - 1] == '\\' && isdigit(path[i])) {
+		if (path[i] == '\\' && isdigit(path[i + 1])) {
 			errno = 0;
-			bf = strtoul(path + i, &end, 10);
+			bf = strtoul(path + i + 1, &end, 10);
 			if ((errno == ERANGE && bf == ULONG_MAX) ||
 			    ((sub = match_get(match, bf)) == NULL)) {
 				warnx("%s: invalid back-reference in "
 				    "destination", path);
 				return NULL;
 			}
-			/* Adjust j to remove previously copied backslash. */
-			j--;
 			for (; *sub != '\0'; sub++) {
 				if (j == sizeof(buf) - 1)
 					goto toolong;
