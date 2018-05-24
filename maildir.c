@@ -26,12 +26,14 @@ struct maildir {
 	char *path;
 	DIR *dir;
 	enum maildir_dirname dirname;
+	int flags;
 
 	/* Internal buffers used to construct directory and file names. */
 	char dbuf[PATH_MAX];
 	char fbuf[PATH_MAX];
 };
 
+static int maildir_create(struct maildir *);
 static const char *maildir_dirname(const struct maildir *);
 static int maildir_dirnext(struct maildir *);
 static const char *maildir_genname(const struct maildir *, const char *);
@@ -40,7 +42,7 @@ static const char *maildir_read(struct maildir *);
 static char *pathjoin(char *, const char *, const char *, const char *);
 
 struct maildir *
-maildir_open(const char *path, int walk)
+maildir_open(const char *path, int flags)
 {
 	struct maildir *md;
 
@@ -52,7 +54,12 @@ maildir_open(const char *path, int walk)
 		err(1, NULL);
 	md->dir = NULL;
 	md->dirname = 0;
-	if (walk) {
+	md->flags = flags;
+	if (maildir_create(md)) {
+		maildir_close(md);
+		return NULL;
+	}
+	if (flags & MAILDIR_WALK) {
 		md->dirname = MAILDIR_NEW;
 		path = pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL);
 	}
@@ -140,6 +147,36 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		return 1;
 	}
 	return 0;
+}
+
+static int
+maildir_create(struct maildir *md)
+{
+	const char *path;
+
+	if ((md->flags & MAILDIR_CREATE) == 0)
+		return 0;
+
+	path = md->path;
+	if (mkdir(path, 0700) == -1 && errno != EEXIST)
+		goto err;
+
+	if (md->flags & MAILDIR_WALK) {
+		path = pathjoin(md->dbuf, md->path, "cur", NULL);
+		if (mkdir(path, 0700) == -1 && errno != EEXIST)
+			goto err;
+		path = pathjoin(md->dbuf, md->path, "new", NULL);
+		if (mkdir(path, 0700) == -1 && errno != EEXIST)
+			goto err;
+		path = pathjoin(md->dbuf, md->path, "tmp", NULL);
+		if (mkdir(path, 0700) == -1 && errno != EEXIST)
+			goto err;
+	}
+	return 0;
+
+err:
+	warn("mkdir: %s", path);
+	return 1;
 }
 
 static const char *

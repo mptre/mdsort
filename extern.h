@@ -10,15 +10,24 @@
 struct expr;
 struct expr_headers;
 
+#define MAILDIR_WALK	0x1
+#define MAILDIR_CREATE	0x2
+
 /*
  * Open the maildir directory located at path.
- * If walk is non-zero, invoking maildir_walk() will traverse all messages
- * present in the cur and new subdirectories rooted at path.
+ *
+ * The flags may be any combination of the following values:
+ *
+ *     MAILDIR_WALK      Invoking maildir_walk() will traverse all messages
+ *                       present in the cur and new subdirectories rooted at
+ *                       path.
+ *
+ *     MAILDIR_CREATE    Create the maildir and subdirectories if missing.
  *
  * The caller is responsible for freeing the returned memory using
  * maildir_close().
  */
-struct maildir *maildir_open(const char *path, int walk);
+struct maildir *maildir_open(const char *path, int flags);
 
 /*
  * Close and free maildir.

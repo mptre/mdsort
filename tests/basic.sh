@@ -742,3 +742,47 @@ if testcase -e "extraneous option"; then
 	grep -q 'usage' $TMP2 || fail "expected usage output"
 	pass
 fi
+
+if testcase "create maildir"; then
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match new move "${MAILDIR}/dst"
+	}
+	EOF
+	[ -d "${MAILDIR}/src/cur" ] && fail "expected cur to be missing"
+	[ -d "${MAILDIR}/src/new" ] && fail "expected new to be missing"
+	[ -d "${MAILDIR}/src/tmp" ] && fail "expected tmp to be missing"
+	mdsort
+	[ -d "${MAILDIR}/src/cur" ] || fail "expected cur to be created"
+	[ -d "${MAILDIR}/src/new" ] || fail "expected new to be created"
+	[ -d "${MAILDIR}/src/tmp" ] || fail "expected tmp to be created"
+	pass
+fi
+
+if testcase "create maildir subdirectory"; then
+	mkdir -p "${MAILDIR}/src/cur"
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match new move "${MAILDIR}/dst"
+	}
+	EOF
+	[ -d "${MAILDIR}/src/cur" ] || fail "expected cur to be present"
+	[ -d "${MAILDIR}/src/new" ] && fail "expected new to be missing"
+	[ -d "${MAILDIR}/src/tmp" ] && fail "expected tmp to be missing"
+	mdsort
+	[ -d "${MAILDIR}/src/new" ] || fail "expected new to be created"
+	[ -d "${MAILDIR}/src/tmp" ] || fail "expected tmp to be created"
+	pass
+fi
+
+if testcase "do not create maildir"; then
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match new move "${MAILDIR}/dst"
+	}
+	EOF
+	mdsort -C >$TMP2
+	grep -q "opendir: ${MAILDIR}/src/new" $TMP2 || \
+		fail "expected opendir error output"
+	pass
+fi
