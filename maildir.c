@@ -40,6 +40,7 @@ static const char *maildir_genname(const struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
 static char *pathjoin(char *, const char *, const char *, const char *);
+static const char *xbasename(const char *);
 
 struct maildir *
 maildir_open(const char *path, int flags)
@@ -123,8 +124,8 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	int dstfd, srcfd;
 	int doutime = 0;
 
-	/* Increment srcname to skip leading '/' */
-	if ((srcname = strrchr(path, '/')) == NULL || strlen(++srcname) == 0) {
+	srcname = xbasename(path);
+	if (srcname == NULL) {
 		warnx("%s: could not extract basename", path);
 		return 1;
 	}
@@ -274,4 +275,15 @@ pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
 	if (n == -1 || n >= PATH_MAX)
 		errx(1, "%s: buffer too small", __func__);
 	return buf;
+}
+
+static const char *
+xbasename(const char *path)
+{
+       const char *p;
+
+       p = strrchr(path, '/');
+       if (p == NULL || p[1] == '\0')
+               return NULL;
+       return p + 1;
 }
