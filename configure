@@ -33,7 +33,7 @@ headers() {
 }
 
 makevar() {
-	env -i make -sf - <<EOF
+	make -sf - <<EOF
 all:
 	@echo \${${1}}
 EOF
