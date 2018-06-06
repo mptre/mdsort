@@ -37,7 +37,7 @@ rrand(const char *path, uint32_t *r)
 	len = sizeof(*r);
 	n = read(fd, r, len);
 	close(fd);
-	if (n == -1 || n != len)
+	if (n != len)
 		return 1;
 	return 0;
 }
