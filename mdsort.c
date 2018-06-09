@@ -11,7 +11,8 @@
 
 #include "extern.h"
 
-const char *home, *hostname;
+const char *home = NULL;
+const char *hostname = NULL;
 
 static void readenv(void);
 static __dead void usage(void);
