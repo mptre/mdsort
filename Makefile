@@ -4,7 +4,7 @@ VERSION=	1.0.1
 
 PROG=	mdsort
 
-SRC=	compat-arc4random.c \
+SRCS=	compat-arc4random.c \
 	compat-pledge.c \
 	compat-reallocarray.c \
 	compat-utimensat.c \
@@ -13,8 +13,8 @@ SRC=	compat-arc4random.c \
 	mdsort.c \
 	parse.c \
 	rule.c
-OBJ=	${SRC:.c=.o}
-DEP=	${SRC:.c=.d}
+OBJS=	${SRCS:.c=.o}
+DEPS=	${SRCS:.c=.d}
 
 CFLAGS+=	${DEBUG}
 CPPFLAGS+=	-I${.CURDIR}
@@ -50,11 +50,11 @@ TESTFLAGS+=	-e MALLOC_OPTIONS=${MALLOC_OPTIONS}
 
 all: ${PROG}
 
-${PROG}: ${OBJ}
-	${CC} ${DEBUG} -o ${PROG} ${OBJ} ${LDFLAGS}
+${PROG}: ${OBJS}
+	${CC} ${DEBUG} -o ${PROG} ${OBJS} ${LDFLAGS}
 
 clean:
-	rm -f ${DEP} ${OBJ} ${PROG} parse.c
+	rm -f ${DEPS} ${OBJS} ${PROG} parse.c
 .PHONY: clean
 
 dist:
@@ -95,4 +95,4 @@ test: ${PROG}
 		"TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
 
--include ${DEP}
+-include ${DEPS}
