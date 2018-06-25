@@ -159,7 +159,7 @@ maildir_create(struct maildir *md)
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
 		goto err;
 
-	if (md->flags & MAILDIR_WALK) {
+	if ((md->flags & MAILDIR_WALK)) {
 		path = pathjoin(md->dbuf, md->path, "cur", NULL);
 		if (mkdir(path, 0700) == -1 && errno != EEXIST)
 			goto err;
