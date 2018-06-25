@@ -56,11 +56,11 @@ maildir_open(const char *path, int flags)
 	md->dir = NULL;
 	md->dirname = 0;
 	md->flags = flags;
-	if (maildir_create(md)) {
+	if ((md->flags & MAILDIR_CREATE) && maildir_create(md)) {
 		maildir_close(md);
 		return NULL;
 	}
-	if (flags & MAILDIR_WALK) {
+	if ((md->flags & MAILDIR_WALK)) {
 		md->dirname = MAILDIR_NEW;
 		path = pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL);
 	}
@@ -154,9 +154,6 @@ static int
 maildir_create(struct maildir *md)
 {
 	const char *path;
-
-	if ((md->flags & MAILDIR_CREATE) == 0)
-		return 0;
 
 	path = md->path;
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
