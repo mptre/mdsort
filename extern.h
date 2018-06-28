@@ -10,9 +10,6 @@
 struct expr;
 struct expr_headers;
 
-#define MAILDIR_WALK	0x1
-#define MAILDIR_CREATE	0x2
-
 /*
  * Open the maildir directory located at path.
  *
@@ -28,6 +25,9 @@ struct expr_headers;
  * maildir_close().
  */
 struct maildir *maildir_open(const char *path, int flags);
+
+#define MAILDIR_WALK	0x1
+#define MAILDIR_CREATE	0x2
 
 /*
  * Close and free maildir.
@@ -120,10 +120,6 @@ enum expr_type {
 	EXPR_TYPE_NEW,
 };
 
-enum expr_pattern {
-	EXPR_PATTERN_ICASE = 0x1,
-};
-
 /*
  * Allocate a new expression with the given type.
  *
@@ -146,12 +142,19 @@ void expr_set_headers(struct expr *ex, struct expr_headers *headers);
 
 /*
  * Associate the given pattern with the expression.
+ *
+ * The flags may be any combination of the following values:
+ *
+ *     EXPR_PATTERN_ICASE    Ignore case.
+ *
  * Returns zero if pattern is successfully compiled into a regular expression.
  * Otherwise, returns non-zero and if errstr is not NULL it will point to an
  * explanation on why the compilation failed.
  */
 int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
     const char **errstr);
+
+#define EXPR_PATTERN_ICASE	0x1
 
 /*
  * Allocate a list of headers.
