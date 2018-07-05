@@ -333,17 +333,10 @@ static int
 expr_eval_new(struct expr *ex __attribute__((__unused__)),
     const struct message *msg, struct match *match __attribute__((__unused__)))
 {
-	const char *beg, *end, *p, *path;
+	const char *dirname;
 
-	path = message_get_path(msg);
-	beg = end = path;
-	for (;;) {
-		if ((p = strchr(end, '/')) == NULL)
-			break;
-		beg = end;
-		end = p + 1;
-	}
-	if (strncmp(beg, "new/", 4))
+	dirname = message_get_dirname(msg);
+	if (dirname == NULL || strcmp(dirname, "new"))
 		return 1;
 	return 0;
 }
