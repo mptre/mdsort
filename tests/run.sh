@@ -26,14 +26,14 @@ pass() {
 }
 
 cppvar() {
-	cpp - <<-EOF >$TMP1 2>/dev/null
+	cpp - <<-EOF >$_TMP1 2>/dev/null
 	#include <limits.h>
 	#include <stdio.h>
 
 	${1}
 	EOF
 
-	grep -v '^$' <$TMP1 | tail -1
+	grep -v '^$' <$_TMP1 | tail -1
 }
 
 fcmp() {
@@ -49,21 +49,22 @@ mdsort() {
 	local _input=0 _exit=0
 
 	if [ "$1" = "-" ]; then
+		cat >$_TMP2
 		_input=1
 		shift
 	fi
 
-	env $ENV "$MDSORT" -f mdsort.conf "$@" >"$TMP1" 2>&1 || _exit=1
+	env $ENV "$MDSORT" -f mdsort.conf "$@" >$_TMP1 2>&1 || _exit=1
 	if [ $TCEXIT -ne $_exit ]; then
 		fail "exits ${TCEXIT} != ${_exit}"
-		cat "$TMP1" 1>&2
+		cat "$_TMP1" 1>&2
 	fi
 
 	if [ $_input -eq 0 ]; then
-		cat "$TMP1"
+		cat "$_TMP1"
 		return 0
 	else
-		fcmp - "$TMP1" && pass
+		fcmp "$_TMP2" "$_TMP1" && pass
 	fi
 }
 
@@ -111,12 +112,12 @@ testcase() {
 randstr() {
 	local _len=$1 _pred=$2
 
-	>"$TMP1"
-	while [ $(wc -c "$TMP1" | xargs | cut -d ' ' -f 1) -lt "$_len" ]; do
+	>$_TMP1
+	while [ $(wc -c "$_TMP1" | xargs | cut -d ' ' -f 1) -lt "$_len" ]; do
 		dd if=/dev/urandom of=/dev/stdout "bs=${_len}" count=1 \
-			2>/dev/null | tr -cd "[:${_pred}:]" >>"$TMP1"
+			2>/dev/null | tr -cd "[:${_pred}:]" >>$_TMP1
 	done
-	cut -b "-${_len}" "$TMP1"
+	cut -b "-${_len}" "$_TMP1"
 }
 
 ENV=
@@ -130,9 +131,16 @@ MAILDIR=$(mktemp -d -t mdsort.XXXXXX)
 trap "atexit $MAILDIR" EXIT
 
 CONF="${MAILDIR}/mdsort.conf"
+
+# Temporary files used in tests.
 TMP1="${MAILDIR}/tmp1"
 TMP2="${MAILDIR}/tmp2"
 TMP3="${MAILDIR}/tmp3"
+
+# Temporary files used internally.
+_TMP1="${MAILDIR}/_tmp1"
+_TMP2="${MAILDIR}/_tmp2"
+_TMP3="${MAILDIR}/_tmp3"
 
 SKIP="${MAILDIR}/skip"
 >$SKIP
