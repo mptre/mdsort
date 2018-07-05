@@ -57,6 +57,9 @@ maildir		: MAILDIR STRING '{' exprs '}' {
 			struct config *conf;
 			char *path;
 
+			if (strlen($2) == 0)
+				yyerror("empty maildir path");
+
 			path = expandtilde($2);
 			if (path == NULL)
 				YYERROR;

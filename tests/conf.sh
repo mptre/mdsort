@@ -86,6 +86,15 @@ if testcase -e "rule must end with newline"; then
 	EOF
 fi
 
+if testcase -e "empty maildir path"; then
+	cat <<-EOF >$CONF
+	maildir "" {}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:1: empty maildir path
+	EOF
+fi
+
 if testcase -e "unknown keyword"; then
 	cat <<-EOF >$CONF
 	noway
