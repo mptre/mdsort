@@ -624,7 +624,7 @@ if testcase "destination interpolation out of bounds"; then
 	}
 	EOF
 	mdsort >$TMP2
-	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
+	grep -q '\\1/new: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
 fi
@@ -641,7 +641,7 @@ if testcase "destination interpolation out of range"; then
 	}
 	EOF
 	mdsort >$TMP2
-	grep -q '9: invalid back-reference in destination' $TMP2 || \
+	grep -q '9/new: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
 fi
@@ -692,7 +692,7 @@ if testcase "destination interpolation with none body/header"; then
 	}
 	EOF
 	mdsort >$TMP2
-	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
+	grep -q '\\1/new: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
 fi
@@ -709,7 +709,7 @@ if testcase "destination interpolation with negate"; then
 	}
 	EOF
 	mdsort >$TMP2
-	grep -q '\\1: invalid back-reference in destination' $TMP2 || \
+	grep -q '\\1/new: invalid back-reference in destination' $TMP2 || \
 		fail "expected back-reference to be invalid"
 	pass
 fi
@@ -726,7 +726,7 @@ if testcase "destination interpolation too long"; then
 	}
 	EOF
 	mdsort >$TMP2
-	grep -q '\\1: destination too long' $TMP2 || \
+	grep -q '\\1/new: destination too long' $TMP2 || \
 		fail "expected destination to be too long"
 	pass
 fi

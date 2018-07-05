@@ -39,7 +39,6 @@ static int maildir_dirnext(struct maildir *);
 static const char *maildir_genname(const struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
-static char *pathjoin(char *, const char *, const char *, const char *);
 static const char *xbasename(const char *);
 
 struct maildir *
@@ -254,24 +253,6 @@ maildir_read(struct maildir *md)
 		return pathjoin(md->fbuf, md->path, maildir_dirname(md),
 		    ent->d_name);
 	}
-}
-
-static char *
-pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
-{
-	int n;
-
-	assert(root != NULL);
-	assert(dirname != NULL);
-
-	if (filename == NULL)
-		n = snprintf(buf, PATH_MAX, "%s/%s", root, dirname);
-	else
-		n = snprintf(buf, PATH_MAX, "%s/%s/%s",
-		    root, dirname, filename);
-	if (n == -1 || n >= PATH_MAX)
-		errx(1, "%s: buffer too small", __func__);
-	return buf;
 }
 
 static const char *

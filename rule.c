@@ -45,7 +45,7 @@ struct header {
 TAILQ_HEAD(expr_headers, header);
 
 struct match {
-	const char *str;
+	const char *dest;
 
 	/* Everything after this field will be zeroed out by match_reset(). */
 	int begzero;
@@ -325,7 +325,7 @@ static int
 expr_eval_move(struct expr *ex,
     const struct message *msg __attribute__((__unused__)), struct match *match)
 {
-	match->str = ex->dest;
+	match->dest = ex->dest;
 	return 0;
 }
 
@@ -478,16 +478,22 @@ static const char *
 match_interpolate(const struct match *match, const struct message *msg)
 {
 	static char buf[PATH_MAX];
-	const char *dirname, *path, *sub;
+	char path[PATH_MAX];
+	const char *dirname, *sub;
 	char *end;
 	unsigned long bf;
 	size_t i = 0;
 	size_t j = 0;
 
 	assert(match != NULL);
-	assert(match->str != NULL);
 
-	path = match->str;
+	dirname = message_get_dirname(msg);
+	if (dirname == NULL) {
+		warnx("%s: dirname not found", message_get_path(msg));
+		return NULL;
+	}
+	pathjoin(path, match->dest, dirname, NULL);
+
 	while (path[i] != '\0') {
 		if (path[i] == '\\' && isdigit(path[i + 1])) {
 			errno = 0;
@@ -510,19 +516,6 @@ match_interpolate(const struct match *match, const struct message *msg)
 			goto toolong;
 		buf[j++] = path[i++];
 	}
-
-	dirname = message_get_dirname(msg);
-	if (dirname == NULL) {
-		warnx("%s: dirname not found", message_get_path(msg));
-		return NULL;
-	}
-	buf[j++] = '/';
-	for (i = 0; dirname[i] != '\0'; i++) {
-		if (j == sizeof(buf) - 1)
-			goto toolong;
-		buf[j++] = dirname[i];
-	}
-
 	assert(j < sizeof(buf));
 	buf[j] = '\0';
 	return buf;

@@ -186,6 +186,14 @@ TAILQ_HEAD(config_list, config);
  */
 struct config_list *parse_config(const char *path);
 
+/*
+ * Join root, dirname and filename into a path written to buf which must be of
+ * size PATH_MAX.
+ * The filename may optionally be NULL.
+ */
+char *pathjoin(char *buf, const char *root, const char *dirname,
+    const char *filename);
+
 void log_debug(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 
