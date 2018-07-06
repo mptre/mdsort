@@ -74,7 +74,8 @@ static void expr_inspect(const struct expr *, FILE *, int);
 static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
-static void match_copy(struct match *, const char *, regmatch_t *, size_t);
+static void match_copy(struct match *, const char *, const regmatch_t *,
+    size_t);
 static const char *match_get(const struct match *match, unsigned long n);
 static const char *match_interpolate(const struct match *,
     const struct message *);
@@ -438,7 +439,8 @@ expr_inspect_header(const struct expr *ex, FILE *fh)
 }
 
 static void
-match_copy(struct match *match, const char *str, regmatch_t *off, size_t nmemb)
+match_copy(struct match *match, const char *str, const regmatch_t *off,
+    size_t nmemb)
 {
 	char *cpy;
 	size_t i, len;
