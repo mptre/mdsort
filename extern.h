@@ -201,3 +201,4 @@ void log_info(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 
 extern const char *home, *hostname;
+extern int verbose;

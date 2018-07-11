@@ -12,7 +12,8 @@ SRCS=	compat-arc4random.c \
 	message.c \
 	mdsort.c \
 	parse.c \
-	rule.c
+	rule.c \
+	util.c
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
 
@@ -42,7 +43,8 @@ DISTFILES=	GNUmakefile \
 		tests/basic.sh \
 		tests/conf.sh \
 		tests/dry.sh \
-		tests/run.sh
+		tests/run.sh \
+		util.c
 
 PREFIX=	/usr/local
 
