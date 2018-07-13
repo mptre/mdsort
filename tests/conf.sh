@@ -50,7 +50,6 @@ if testcase "comments"; then
 	# This is a comment.
 	maildir "~/Maildir/test1" {
 		match header "From" /user1@example.com/ \\
-			# move "~/Maildir/user2"
 			move "~/Maildir/user1" # comment
 			# move "~/Maildir/user2"
 		# Next rule...
@@ -101,7 +100,6 @@ if testcase -e "unknown keyword"; then
 	EOF
 	mdsort - -n <<-EOF
 	mdsort.conf:1: unknown keyword: noway
-	mdsort.conf:1: syntax error
 	EOF
 fi
 

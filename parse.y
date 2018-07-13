@@ -22,7 +22,7 @@ static void yyungetc(int);
 static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
 static FILE *fh;
 static const char *confpath;
-static int lineno, lineno_save, newline, parse_errors;
+static int lineno, lineno_save, parse_errors;
 
 %}
 
@@ -40,7 +40,7 @@ static int lineno, lineno_save, newline, parse_errors;
 
 %token BODY HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
 %type <str> STRING move
-%type <expr> expr expr1 expr2 expr3 exprs
+%type <expr> expr expr1 expr2 expr3 exprblock exprs
 %type <headers> headers strings
 %type <pattern> PATTERN
 
@@ -50,10 +50,11 @@ static int lineno, lineno_save, newline, parse_errors;
 %%
 
 grammar		: /* empty */
-		| grammar maildir
+		| grammar nl
+		| grammar maildir nl
 		;
 
-maildir		: MAILDIR STRING '{' exprs '}' {
+maildir		: MAILDIR STRING exprblock {
 			struct config *conf;
 			char *path;
 
@@ -68,27 +69,32 @@ maildir		: MAILDIR STRING '{' exprs '}' {
 			if (conf == NULL)
 				err(1, NULL);
 			conf->maildir = path;
-			conf->rule = rule_alloc($4);
+			conf->rule = rule_alloc($3);
 			TAILQ_INSERT_TAIL(&config, conf, entry);
+		}
+		;
+
+exprblock	: '{' optnl exprs optnl '}' {
+			$$ = $3;
 		}
 		;
 
 exprs		: /* empty */ {
 			$$ = NULL;
 		}
-		| exprs expr '\n' {
+		| exprs expr nl {
 			if ($1 == NULL)
 				$$ = $2;
 			else
 				$$ = expr_alloc(EXPR_TYPE_OR, $1, $2);
 		}
-		| error '\n' {
+		| error nl {
 			$$ = NULL;
 		}
 		;
 
-expr		: MATCH { newline = 1; } expr1 expr2 {
-			$$ = expr_alloc(EXPR_TYPE_AND, $3, $4);
+expr		: MATCH expr1 expr2 {
+			$$ = expr_alloc(EXPR_TYPE_AND, $2, $3);
 		}
 		;
 
@@ -108,14 +114,13 @@ expr2		: move {
 			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
 			expr_set_dest($$, $1);
 		}
-		|  '{' { newline = 0; } exprs '}' {
-			$$ = $3;
+		| exprblock {
+			$$ = $1;
 			if ($$ == NULL) {
 				yyerror("empty nested match block");
 				/* Abort, avoids handling NULL upwards. */
 				YYERROR;
 			}
-			newline = 1;
 		}
 		;
 
@@ -176,6 +181,13 @@ move		: MOVE STRING {
 		}
 		;
 
+optnl		: /* empty */
+		| '\n' optnl
+		;
+
+nl		: '\n' optnl
+		;
+
 %%
 
 struct config_list *
@@ -230,37 +242,15 @@ yylex(void)
 	static char lexeme[BUFSIZ], kw[16];
 	char *buf;
 	int c, flag, i;
-	int ntries = 0;
 
 	buf = lexeme;
 
 again:
-	ntries++;
 	for (c = yygetc(); c == ' ' || c == '\t'; c = yygetc())
 		continue;
-	if (c == '\n') {
-		/* Munge newlines. */
-		for (; c == '\n'; c = yygetc())
-			continue;
-		yyungetc(c);
-		/*
-		 * Ugly hack: do not emit a newline token after more than 2
-		 * retries, this implies that a continuation followed by one or
-		 * more lines that only consists of optional leading whitespace
-		 * followed by a comment is being read.
-		 */
-		if (newline && ntries <= 2) {
-			newline = 0;
-			return '\n';
-		}
+	if (c == '\\' && yypeek('\n'))
 		goto again;
-	} else if (c == '\\' && newline) {
-		/* Allow line continuation if newline is allowed. */
-		c = yygetc();
-		if (c == '\n')
-			goto again;
-		yyungetc(c);
-	}
+
 	/* Used for more accurate error messages. */
 	lineno_save = lineno;
 
@@ -281,6 +271,7 @@ again:
 		return 0;
 	case '!':
 		return NEG;
+	case '\n':
 	case '(':
 	case ')':
 	case '{':
