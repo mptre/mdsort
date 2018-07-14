@@ -254,7 +254,11 @@ again:
 	/* Used for more accurate error messages. */
 	lineno_save = lineno;
 
-	if (c == '#') {
+	if (c == EOF) {
+		return 0;
+	} else if (c == '!') {
+		return NEG;
+	} else if (c == '#') {
 		for (;;) {
 			c = yygetc();
 			if (c == '\n') {
@@ -264,22 +268,7 @@ again:
 			if (c == EOF)
 				return 0;
 		}
-	}
-
-	switch (c) {
-	case EOF:
-		return 0;
-	case '!':
-		return NEG;
-	case '\n':
-	case '(':
-	case ')':
-	case '{':
-	case '}':
-		return c;
-	}
-
-	if (c == '"') {
+	} else if (c == '"') {
 		for (;;) {
 			if (yypeek('"'))
 				break;
@@ -300,9 +289,7 @@ again:
 		if (yylval.str == NULL)
 			err(1, NULL);
 		return STRING;
-	}
-
-	if (c == '/') {
+	} else if (c == '/') {
 		for (;;) {
 			if (yypeek('/'))
 				break;
@@ -336,9 +323,7 @@ again:
 		}
 
 		return PATTERN;
-	}
-
-	if (islower(c)) {
+	} else if (islower(c)) {
 		buf = kw;
 		for (; islower(c); c = yygetc()) {
 			if (buf == kw + sizeof(kw) - 1) {
