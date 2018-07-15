@@ -75,7 +75,8 @@ main(int argc, char *argv[])
 		return 0;
 
 	TAILQ_FOREACH(conf, config, entry) {
-		md = maildir_open(conf->maildir, mdflags | MAILDIR_WALK);
+		md = maildir_open(conf->maildir,
+		    mdflags | MAILDIR_WALK | MAILDIR_ROOT);
 		if (md == NULL)
 			continue;
 		while ((path = maildir_walk(md)) != NULL) {

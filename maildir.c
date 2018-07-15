@@ -38,6 +38,7 @@ static const char *maildir_dirname(const struct maildir *);
 static int maildir_dirnext(struct maildir *);
 static const char *maildir_genname(const struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
+static const char *maildir_root(struct maildir *);
 
 static const char *xbasename(const char *);
 
@@ -152,23 +153,30 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 static int
 maildir_create(struct maildir *md)
 {
-	const char *path;
+	const char *path, *root;
 
-	path = md->path;
+	root = maildir_root(md);
+	if (root == NULL) {
+		warnx("%s: could not find maildir root", md->path);
+		return 1;
+	}
+
+	path = root;
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
 		goto err;
 
-	if ((md->flags & MAILDIR_WALK)) {
-		path = pathjoin(md->dbuf, md->path, "cur", NULL);
-		if (mkdir(path, 0700) == -1 && errno != EEXIST)
-			goto err;
-		path = pathjoin(md->dbuf, md->path, "new", NULL);
-		if (mkdir(path, 0700) == -1 && errno != EEXIST)
-			goto err;
-		path = pathjoin(md->dbuf, md->path, "tmp", NULL);
-		if (mkdir(path, 0700) == -1 && errno != EEXIST)
-			goto err;
-	}
+	path = pathjoin(md->dbuf, root, "cur", NULL);
+	if (mkdir(path, 0700) == -1 && errno != EEXIST)
+		goto err;
+
+	path = pathjoin(md->dbuf, root, "new", NULL);
+	if (mkdir(path, 0700) == -1 && errno != EEXIST)
+		goto err;
+
+	path = pathjoin(md->dbuf, root, "tmp", NULL);
+	if (mkdir(path, 0700) == -1 && errno != EEXIST)
+		goto err;
+
 	return 0;
 
 err:
@@ -253,6 +261,27 @@ maildir_read(struct maildir *md)
 		return pathjoin(md->fbuf, md->path, maildir_dirname(md),
 		    ent->d_name);
 	}
+}
+
+static const char *
+maildir_root(struct maildir *md)
+{
+	const char *base;
+	int len, n, size;
+
+	if ((md->flags & MAILDIR_ROOT))
+		return md->path;
+
+	base = xbasename(md->path);
+	if (base == NULL)
+		return NULL;
+	assert(base > md->path);
+	len = (base - md->path) - 1;
+	size = sizeof(md->fbuf);
+	n = snprintf(md->fbuf, size, "%.*s", len, md->path);
+	if (n == -1 || n >= size)
+		errx(1, "%s: buffer too small", __func__);
+	return md->fbuf;
 }
 
 static const char *

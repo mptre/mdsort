@@ -648,7 +648,7 @@ fi
 
 if testcase "destination interpolation negative"; then
 	mkmd "${MAILDIR}/src"
-	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
 
 	EOF
@@ -657,15 +657,17 @@ if testcase "destination interpolation negative"; then
 		match header "To" /./ move "${MAILDIR}/\-1"
 	}
 	EOF
-	mdsort >$TMP2
-	grep -q '\\-1/new: No such file or directory' $TMP2 || \
-		fail "expected back-reference to be ignored"
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	ls "${MAILDIR}/\-1/new" | cmp -s - /dev/null && \
+		fail "expected \-1/new directory to not be empty"
 	pass
 fi
 
 if testcase "destination interpolation non-decimal"; then
 	mkmd "${MAILDIR}/src"
-	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
+	mkmsg "${MAILDIR}/src/new" <<-EOF
 	To: user@example.com
 
 	EOF
@@ -674,9 +676,11 @@ if testcase "destination interpolation non-decimal"; then
 		match header "To" /(user)/ move "${MAILDIR}/\0x1"
 	}
 	EOF
-	mdsort >$TMP2
-	grep -q 'userx1/new: No such file or directory' $TMP2 || \
-		fail "expected back-reference to be ignored"
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	ls "${MAILDIR}/userx1/new" | cmp -s - /dev/null && \
+		fail "expected userx1/new directory to not be empty"
 	pass
 fi
 
@@ -772,6 +776,29 @@ if testcase "create maildir subdirectory"; then
 	mdsort
 	[ -d "${MAILDIR}/src/new" ] || fail "expected new to be created"
 	[ -d "${MAILDIR}/src/tmp" ] || fail "expected tmp to be created"
+	pass
+fi
+
+if testcase "create maildir with destination interpolation"; then
+	mkmd "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" <<-EOF
+	To: missing@example.com
+
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match header "To" /([^@]+)/ move "${MAILDIR}/\1"
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	ls "${MAILDIR}/missing/new" | cmp -s - /dev/null && \
+		fail "expected missing/new directory to not be empty"
+	for d in cur new tmp; do
+		[ -d "${MAILDIR}/missing/${d}" ] || \
+			fail "expected missing/${d} to be created"
+	done
 	pass
 fi
 

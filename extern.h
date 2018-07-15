@@ -21,6 +21,9 @@ struct expr_headers;
  *
  *     MAILDIR_CREATE    Create the maildir and subdirectories if missing.
  *
+ *     MAILDIR_ROOT      The given path refers to a maildir root, as opposed of
+ *                       referencing a subdirectory (cur, new or tmp).
+ *
  * The caller is responsible for freeing the returned memory using
  * maildir_close().
  */
@@ -28,6 +31,7 @@ struct maildir *maildir_open(const char *path, int flags);
 
 #define MAILDIR_WALK	0x1
 #define MAILDIR_CREATE	0x2
+#define MAILDIR_ROOT	0x4
 
 /*
  * Close and free maildir.
