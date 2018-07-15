@@ -50,8 +50,8 @@ static int lineno, lineno_save, parse_errors;
 %%
 
 grammar		: /* empty */
-		| grammar nl
-		| grammar maildir nl
+		| grammar '\n'
+		| grammar maildir '\n'
 		;
 
 maildir		: MAILDIR STRING exprblock {
@@ -74,7 +74,7 @@ maildir		: MAILDIR STRING exprblock {
 		}
 		;
 
-exprblock	: '{' optnl exprs optnl '}' {
+exprblock	: '{' optnl exprs '}' {
 			$$ = $3;
 		}
 		;
