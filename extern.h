@@ -4,9 +4,7 @@
 #  include "compat-queue.h"
 #endif
 
-/*
- * Forwards declarations.
- */
+/* Forward declarations. */
 struct expr;
 struct expr_headers;
 
