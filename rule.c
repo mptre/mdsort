@@ -193,6 +193,19 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 	return 0;
 }
 
+int
+expr_count(const struct expr *ex, enum expr_type type)
+{
+	int acc = 0;
+
+	if (ex == NULL)
+		return 0;
+
+	if (ex->type == type)
+		acc = 1;
+	return acc + expr_count(ex->lhs, type) + expr_count(ex->rhs, type);
+}
+
 static int
 expr_eval(struct expr *ex, const struct message *msg, struct match *match,
     int cookie)

@@ -39,8 +39,8 @@ static int lineno, lineno_save, parse_errors;
 }
 
 %token BODY HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
-%type <str> STRING move
-%type <expr> expr expr1 expr2 expr3 exprblock exprs
+%type <str> STRING
+%type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
 %type <strings> stringblock strings
 %type <pattern> PATTERN
 
@@ -107,9 +107,9 @@ expr1		: expr1 AND expr1 {
 		| expr3
 		;
 
-expr2		: move {
-			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
-			expr_set_dest($$, $1);
+expr2		: expractions {
+			if (expr_count($1, EXPR_TYPE_MOVE) == 0)
+				yyerror("missing action");
 		}
 		| exprblock {
 			$$ = $1;
@@ -144,6 +144,32 @@ expr3		: BODY PATTERN {
 		}
 		;
 
+expractions	: /* empty */ {
+			$$ = NULL;
+		}
+		| expractions expraction {
+			if ($1 == NULL) {
+				$$ = $2;
+			} else {
+				$$ = expr_alloc(EXPR_TYPE_AND, $1, $2);
+				if (expr_count($$, EXPR_TYPE_MOVE) > 1)
+					yyerror("move action already defined");
+			}
+		}
+		;
+
+expraction	: MOVE STRING {
+			char *path;
+
+			path = expandtilde($2);
+			if (path == NULL)
+				YYERROR;
+			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
+			expr_set_dest($$, path);
+		}
+		;
+
+
 strings		: '{' stringblock '}' {
 			$$ = $2;
 		}
@@ -159,16 +185,6 @@ stringblock	: /* empty */ {
 		| stringblock STRING {
 			$$ = $1;
 			strings_append($$, $2);
-		}
-		;
-
-move		: MOVE STRING {
-			char *path;
-
-			path = expandtilde($2);
-			if (path == NULL)
-				YYERROR;
-			$$ = path;
 		}
 		;
 

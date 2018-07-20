@@ -291,3 +291,25 @@ if testcase -e "empty nested match block"; then
 	mdsort.conf:3: empty nested match block
 	EOF
 fi
+
+if testcase -e "missing action"; then
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+		match new
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:3: missing action
+	EOF
+fi
+
+if testcase -e "duplicate move actions"; then
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+		match new move "~/Maildir/one" move "~/Maildir/two"
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:2: move action already defined
+	EOF
+fi

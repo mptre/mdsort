@@ -158,6 +158,11 @@ int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 
 #define EXPR_PATTERN_ICASE	0x1
 
+/*
+ * Returns the number of expressions with the given type.
+ */
+int expr_count(const struct expr *ex, enum expr_type type);
+
 struct string {
 	char *val;
 
