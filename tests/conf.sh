@@ -90,7 +90,7 @@ if testcase -e "empty maildir path"; then
 	maildir "" {}
 	EOF
 	mdsort - -n <<-EOF
-	mdsort.conf:1: empty maildir path
+	mdsort.conf:1: empty string
 	EOF
 fi
 
@@ -138,8 +138,19 @@ if testcase -e "missing header name"; then
 	}
 	EOF
 	mdsort - -n <<-EOF
-	mdsort.conf:2: missing header name
-	mdsort.conf:3: missing header name
+	mdsort.conf:2: empty string
+	mdsort.conf:3: empty string
+	EOF
+fi
+
+if testcase -e "empty move destination"; then
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/test1" {
+		match new move ""
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:2: empty string
 	EOF
 fi
 

@@ -58,9 +58,6 @@ maildir		: MAILDIR STRING exprblock {
 			struct config *conf;
 			char *path;
 
-			if (strlen($2) == 0)
-				yyerror("empty maildir path");
-
 			path = expandtilde($2);
 			if (path == NULL)
 				YYERROR;
@@ -151,9 +148,6 @@ headers		: '{' strings '}' {
 			$$ = $2;
 		}
 		| STRING {
-			if (strlen($1) == 0)
-				yyerror("missing header name");
-
 			$$ = expr_headers_alloc();
 			expr_headers_append($$, $1);
 		}
@@ -163,9 +157,6 @@ strings		: /* empty */ {
 			$$ = expr_headers_alloc();
 		}
 		| strings STRING {
-			if (strlen($2) == 0)
-				yyerror("missing header name");
-
 			$$ = $1;
 			expr_headers_append($$, $2);
 		}
@@ -288,6 +279,8 @@ again:
 		yylval.str = strdup(lexeme);
 		if (yylval.str == NULL)
 			err(1, NULL);
+		if (strlen(yylval.str) == 0)
+			yyerror("empty string");
 		return STRING;
 	} else if (c == '/') {
 		for (;;) {
