@@ -140,8 +140,8 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
 	case EXPR_TYPE_NEG:
-	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_NEW:
+	case EXPR_TYPE_MOVE:
 		break;
 	}
 	return ex;
@@ -232,9 +232,6 @@ expr_eval(struct expr *ex, const struct message *msg, struct match *match,
 		if (res)
 			match_reset(match);
 		break;
-	case EXPR_TYPE_MOVE:
-		res = expr_eval_move(ex, msg, match);
-		break;
 	case EXPR_TYPE_BODY:
 		res = expr_eval_body(ex, msg, match);
 		break;
@@ -243,6 +240,9 @@ expr_eval(struct expr *ex, const struct message *msg, struct match *match,
 		break;
 	case EXPR_TYPE_NEW:
 		res = expr_eval_new(ex, msg, match);
+		break;
+	case EXPR_TYPE_MOVE:
+		res = expr_eval_move(ex, msg, match);
 		break;
 	}
 	if (res == 0) {
@@ -359,9 +359,9 @@ expr_inspect(const struct expr *ex, FILE *fh, int cookie)
 	case EXPR_TYPE_HEADER:
 		expr_inspect_header(ex, fh);
 		break;
-	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_NEG:
 	case EXPR_TYPE_NEW:
+	case EXPR_TYPE_MOVE:
 		break;
 	}
 }
