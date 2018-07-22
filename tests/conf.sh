@@ -235,21 +235,6 @@ if testcase -e "destination path too long after tilde expansion"; then
 	EOF
 fi
 
-if testcase -e "unknown pattern flag"; then
-	cat <<-EOF >$CONF
-	maildir "~/Maildir/INBOX" {
-		match header "From" /./z move "~/Maildir/Junk"
-		match header "From" /./iz move "~/Maildir/Junk"
-	}
-	EOF
-	mdsort - -n <<-EOF
-	mdsort.conf:2: unknown keyword: z
-	mdsort.conf:2: syntax error
-	mdsort.conf:3: unknown keyword: z
-	mdsort.conf:3: syntax error
-	EOF
-fi
-
 if testcase -e "duplicate pattern flag"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
