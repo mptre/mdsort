@@ -31,6 +31,7 @@ strings_free(struct string_list *strings)
 
 	while ((str = TAILQ_FIRST(strings)) != NULL) {
 		TAILQ_REMOVE(strings, str, entry);
+		free(str->val);
 		free(str);
 	}
 	free(strings);

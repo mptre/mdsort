@@ -204,9 +204,11 @@ stringblock	: /* empty */ {
 
 flag		: optneg NEW {
 			if ($1)
-				$$ = "cur";
+				$$ = strdup("cur");
 			else
-				$$ = "new";
+				$$ = strdup("new");
+			if ($$ == NULL)
+				err(1, NULL);
 		}
 		;
 
