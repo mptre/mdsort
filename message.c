@@ -15,6 +15,7 @@
 
 struct message {
 	const char *path;
+	const char *maildir;
 	const char *body;
 	char *buf;
 
@@ -35,7 +36,7 @@ static char *decodeheader(const char *);
 static int findheader(char *, char **, char **, char **, char **);
 
 struct message *
-message_parse(const char *path)
+message_parse(const char *path, const char *maildir)
 {
 	struct message *msg;
 	ssize_t n;
@@ -53,6 +54,7 @@ message_parse(const char *path)
 	if (msg == NULL)
 		err(1, NULL);
 	msg->path = path;
+	msg->maildir = maildir;
 
 	for (;;) {
 		if (msglen >= msgsize - 1 || msg->buf == NULL) {
@@ -127,6 +129,12 @@ message_get_header(const struct message *msg, const char *header)
 		found->decode = 1;
 	}
 	return found->val;
+}
+
+const char *
+message_get_maildir(const struct message *msg)
+{
+	return msg->maildir;
 }
 
 const char *

@@ -54,6 +54,8 @@ static int expr_eval(struct expr *, const struct message *,
     struct match *match, int);
 static int expr_eval_body(struct expr *, const struct message *,
     struct match *);
+static int expr_eval_flag(struct expr *, const struct message *,
+    struct match *);
 static int expr_eval_header(struct expr *, const struct message *,
     struct match *);
 static int expr_eval_move(struct expr *, const struct message *,
@@ -140,6 +142,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_NEG:
 	case EXPR_TYPE_NEW:
 	case EXPR_TYPE_MOVE:
+	case EXPR_TYPE_FLAG:
 		break;
 	}
 	return ex;
@@ -148,7 +151,6 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 void
 expr_set_strings(struct expr *ex, struct string_list *strings)
 {
-	assert(ex->type == EXPR_TYPE_HEADER || ex->type == EXPR_TYPE_MOVE);
 	ex->strings = strings;
 }
 
@@ -235,6 +237,9 @@ expr_eval(struct expr *ex, const struct message *msg, struct match *match,
 	case EXPR_TYPE_MOVE:
 		res = expr_eval_move(ex, msg, match);
 		break;
+	case EXPR_TYPE_FLAG:
+		res = expr_eval_flag(ex, msg, match);
+		break;
 	}
 	if (res == 0) {
 		/* Mark expression as visited on match. */
@@ -263,6 +268,21 @@ expr_eval_body(struct expr *ex, const struct message *msg, struct match *match)
 	ex->match->valbeg = ex->matches[0].rm_so;
 	ex->match->valend = ex->matches[0].rm_eo;
 	match_copy(match, body, ex->matches, ex->nmatches);
+	return 0;
+}
+
+static int
+expr_eval_flag(struct expr *ex, const struct message *msg, struct match *match)
+{
+	struct string *str;
+
+	str = TAILQ_FIRST(ex->strings);
+	match->dirname = str->val;
+
+	/* A move action might be missing. */
+	if (match->maildir == NULL)
+		match->maildir = message_get_maildir(msg);
+
 	return 0;
 }
 
@@ -301,7 +321,11 @@ expr_eval_move(struct expr *ex, const struct message *msg, struct match *match)
 
 	str = TAILQ_FIRST(ex->strings);
 	match->maildir = str->val;
-	match->dirname = message_get_dirname(msg);
+
+	/* A flag action might already have been evaluted. */
+	if (match->dirname == NULL)
+		match->dirname = message_get_dirname(msg);
+
 	return 0;
 }
 
@@ -355,6 +379,7 @@ expr_inspect(const struct expr *ex, FILE *fh, int cookie)
 	case EXPR_TYPE_NEG:
 	case EXPR_TYPE_NEW:
 	case EXPR_TYPE_MOVE:
+	case EXPR_TYPE_FLAG:
 		break;
 	}
 }

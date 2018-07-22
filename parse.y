@@ -28,6 +28,7 @@ static int lineno, lineno_save, parse_errors;
 
 %union {
 	char *str;
+	int i;
 
 	struct expr *expr;
 	struct string_list *strings;
@@ -38,8 +39,9 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token BODY HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
-%type <str> STRING
+%token BODY FLAG HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
+%type <str> STRING flag
+%type <i> optneg
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
 %type <strings> stringblock strings
 %type <pattern> PATTERN
@@ -108,7 +110,8 @@ expr1		: expr1 AND expr1 {
 		;
 
 expr2		: expractions {
-			if (expr_count($1, EXPR_TYPE_MOVE) == 0)
+			if (expr_count($1, EXPR_TYPE_MOVE) == 0 &&
+			    expr_count($1, EXPR_TYPE_FLAG) == 0)
 				yyerror("missing action");
 		}
 		| exprblock {
@@ -170,6 +173,14 @@ expraction	: MOVE STRING {
 			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
 			expr_set_strings($$, strings);
 		}
+		| FLAG flag {
+			struct string_list *strings;
+
+			strings = strings_alloc();
+			strings_append(strings, $2);
+			$$ = expr_alloc(EXPR_TYPE_FLAG, NULL, NULL);
+			expr_set_strings($$, strings);
+		}
 		;
 
 
@@ -188,6 +199,22 @@ stringblock	: /* empty */ {
 		| stringblock STRING {
 			$$ = $1;
 			strings_append($$, $2);
+		}
+		;
+
+flag		: optneg NEW {
+			if ($1)
+				$$ = "cur";
+			else
+				$$ = "new";
+		}
+		;
+
+optneg		: /* empty */ {
+			$$ = 0;
+		}
+		| NEG {
+			$$ = 1;
 		}
 		;
 
@@ -241,6 +268,7 @@ yylex(void)
 	} keywords[] = {
 		{ "and",	AND },
 		{ "body",	BODY },
+		{ "flag",	FLAG },
 		{ "header",	HEADER },
 		{ "maildir",	MAILDIR },
 		{ "match",	MATCH },

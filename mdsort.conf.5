@@ -89,7 +89,7 @@ Evaluates to true if the nested
 is true.
 .El
 .Pp
-Next comes the action:
+Next comes one or many actions:
 .Bl -tag -width Ds
 .It Ic move Dq Ar path
 If the condition(s) evaluates to true,
@@ -110,6 +110,12 @@ Using back-references with many
 conditions is not encouraged since the
 .Ar pattern
 that matches first may vary.
+.Pp
+Only one
+.Ic move
+action may be defined per rule.
+.It Ic flag Oo Ic \&! Oc Ic new
+Flag the message as read or not.
 .El
 .It Ic match Ar condition No { Ar rule ... No }
 The nested block of rules

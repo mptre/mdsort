@@ -1,6 +1,6 @@
 MDSORT=	${.CURDIR}/../mdsort
 
-TESTS=	basic.sh conf.sh dry.sh
+TESTS=	basic.sh conf.sh dry.sh flag.sh
 
 .SUFFIXES: .sh .out
 

@@ -43,6 +43,7 @@ DISTFILES=	GNUmakefile \
 		tests/basic.sh \
 		tests/conf.sh \
 		tests/dry.sh \
+		tests/flag.sh \
 		tests/run.sh \
 		util.c
 

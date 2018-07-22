@@ -59,7 +59,7 @@ int maildir_move(const struct maildir *src, const struct maildir *dst,
  * The caller is responsible for freeing the returned memory using
  * message_free().
  */
-struct message *message_parse(const char *path);
+struct message *message_parse(const char *path, const char *maildir);
 
 /*
  * Free message.
@@ -77,6 +77,11 @@ const char *message_get_body(const struct message *msg);
  * Otherwise, NULL is returned.
  */
 const char *message_get_header(const struct message *msg, const char *header);
+
+/*
+ * Returns the maildir path that message resides in.
+ */
+const char *message_get_maildir(const struct message *msg);
 
 /*
  * Returns the last directory portion from the message path.
@@ -115,6 +120,7 @@ enum expr_type {
 	EXPR_TYPE_HEADER,
 	EXPR_TYPE_NEW,
 	EXPR_TYPE_MOVE,
+	EXPR_TYPE_FLAG,
 };
 
 /*
