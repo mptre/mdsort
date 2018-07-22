@@ -130,12 +130,6 @@ message_get_header(const struct message *msg, const char *header)
 }
 
 const char *
-message_get_path(const struct message *msg)
-{
-	return msg->path;
-}
-
-const char *
 message_get_dirname(const struct message *msg)
 {
 	static char buf[4];
@@ -151,8 +145,10 @@ message_get_dirname(const struct message *msg)
 		end = tmp;
 	}
 	len = end - beg;
-	if (len == 0)
+	if (len == 0) {
+		warnx("%s: %s: could not find dirname", __func__, msg->path);
 		return NULL;
+	}
 	buflen = sizeof(buf);
 	n = snprintf(buf, buflen, "%.*s", len, beg);
 	if (n == -1 || n >= buflen)

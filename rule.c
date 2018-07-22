@@ -35,7 +35,8 @@ struct expr {
 };
 
 struct match {
-	const char *dest;
+	const char *maildir;
+	const char *dirname;
 
 	/* Everything after this field will be zeroed out by match_reset(). */
 	int begzero;
@@ -67,8 +68,7 @@ static void expr_inspect_header(const struct expr *, FILE *);
 static void match_copy(struct match *, const char *, const regmatch_t *,
     size_t);
 static const char *match_get(const struct match *match, unsigned long n);
-static const char *match_interpolate(const struct match *,
-    const struct message *);
+static const char *match_interpolate(const struct match *);
 static void match_reset(struct match *match);
 
 struct rule *
@@ -110,7 +110,7 @@ rule_eval(struct rule *rl, const struct message *msg)
 	rl->cookie++;
 	if (expr_eval(rl->expr, msg, &match, rl->cookie))
 		goto done;
-	path = match_interpolate(&match, msg);
+	path = match_interpolate(&match);
 
 done:
 	match_reset(&match);
@@ -295,13 +295,13 @@ expr_eval_header(struct expr *ex, const struct message *msg,
 }
 
 static int
-expr_eval_move(struct expr *ex,
-    const struct message *msg __attribute__((__unused__)), struct match *match)
+expr_eval_move(struct expr *ex, const struct message *msg, struct match *match)
 {
 	struct string *str;
 
 	str = TAILQ_FIRST(ex->strings);
-	match->dest = str->val;
+	match->maildir = str->val;
+	match->dirname = message_get_dirname(msg);
 	return 0;
 }
 
@@ -435,11 +435,11 @@ match_get(const struct match *match, unsigned long n)
 }
 
 static const char *
-match_interpolate(const struct match *match, const struct message *msg)
+match_interpolate(const struct match *match)
 {
 	static char buf[PATH_MAX];
 	char path[PATH_MAX];
-	const char *dirname, *sub;
+	const char *sub;
 	char *end;
 	unsigned long bf;
 	size_t i = 0;
@@ -447,12 +447,7 @@ match_interpolate(const struct match *match, const struct message *msg)
 
 	assert(match != NULL);
 
-	dirname = message_get_dirname(msg);
-	if (dirname == NULL) {
-		warnx("%s: dirname not found", message_get_path(msg));
-		return NULL;
-	}
-	pathjoin(path, match->dest, dirname, NULL);
+	pathjoin(path, match->maildir, match->dirname, NULL);
 
 	while (path[i] != '\0') {
 		if (path[i] == '\\' && isdigit(path[i + 1])) {

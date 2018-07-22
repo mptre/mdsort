@@ -79,11 +79,6 @@ const char *message_get_body(const struct message *msg);
 const char *message_get_header(const struct message *msg, const char *header);
 
 /*
- * Returns the message path.
- */
-const char *message_get_path(const struct message *msg);
-
-/*
  * Returns the last directory portion from the message path.
  */
 const char *message_get_dirname(const struct message *msg);
