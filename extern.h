@@ -133,11 +133,6 @@ struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
     struct expr *rhs);
 
 /*
- * Associate the given destination path with the expression.
- */
-void expr_set_dest(struct expr *ex, char *dest);
-
-/*
  * Associate the given string list with the expression.
  */
 void expr_set_strings(struct expr *ex, struct string_list *strings);

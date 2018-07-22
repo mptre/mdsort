@@ -28,8 +28,6 @@ struct expr {
 	regmatch_t *matches;
 	size_t nmatches;
 
-	char *dest;
-
 	struct match *match;
 
 	struct expr *lhs;
@@ -148,16 +146,9 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 }
 
 void
-expr_set_dest(struct expr *ex, char *dest)
-{
-	assert(ex->type == EXPR_TYPE_MOVE);
-	ex->dest = dest;
-}
-
-void
 expr_set_strings(struct expr *ex, struct string_list *strings)
 {
-	assert(ex->type == EXPR_TYPE_HEADER);
+	assert(ex->type == EXPR_TYPE_HEADER || ex->type == EXPR_TYPE_MOVE);
 	ex->strings = strings;
 }
 
@@ -307,7 +298,10 @@ static int
 expr_eval_move(struct expr *ex,
     const struct message *msg __attribute__((__unused__)), struct match *match)
 {
-	match->dest = ex->dest;
+	struct string *str;
+
+	str = TAILQ_FIRST(ex->strings);
+	match->dest = str->val;
 	return 0;
 }
 
@@ -336,7 +330,6 @@ expr_free(struct expr *ex)
 	regfree(&ex->pattern);
 	free(ex->match);
 	free(ex->matches);
-	free(ex->dest);
 	free(ex);
 }
 

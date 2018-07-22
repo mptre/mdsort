@@ -159,13 +159,16 @@ expractions	: /* empty */ {
 		;
 
 expraction	: MOVE STRING {
+			struct string_list *strings;
 			char *path;
 
 			path = expandtilde($2);
 			if (path == NULL)
 				YYERROR;
+			strings = strings_alloc();
+			strings_append(strings, path);
 			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
-			expr_set_dest($$, path);
+			expr_set_strings($$, strings);
 		}
 		;
 
