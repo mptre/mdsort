@@ -22,7 +22,7 @@ struct expr {
 	enum expr_type type;
 	int cookie;
 
-	struct expr_headers *headers;
+	struct string_list *strings;
 
 	regex_t pattern;
 	regmatch_t *matches;
@@ -35,14 +35,6 @@ struct expr {
 	struct expr *lhs;
 	struct expr *rhs;
 };
-
-struct header {
-	char *key;
-
-	TAILQ_ENTRY(header) entry;
-};
-
-TAILQ_HEAD(expr_headers, header);
 
 struct match {
 	const char *dest;
@@ -163,10 +155,10 @@ expr_set_dest(struct expr *ex, char *dest)
 }
 
 void
-expr_set_headers(struct expr *ex, struct expr_headers *headers)
+expr_set_strings(struct expr *ex, struct string_list *strings)
 {
 	assert(ex->type == EXPR_TYPE_HEADER);
-	ex->headers = headers;
+	ex->strings = strings;
 }
 
 int
@@ -199,30 +191,6 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 		err(1, NULL);
 
 	return 0;
-}
-
-struct expr_headers *
-expr_headers_alloc(void)
-{
-	struct expr_headers *headers;
-
-	headers = malloc(sizeof(*headers));
-	if (headers == NULL)
-		err(1, NULL);
-	TAILQ_INIT(headers);
-	return headers;
-}
-
-void
-expr_headers_append(struct expr_headers *headers, char *key)
-{
-	struct header *hdr;
-
-	hdr = malloc(sizeof(*hdr));
-	if (hdr == NULL)
-		err(1, NULL);
-	hdr->key = key;
-	TAILQ_INSERT_TAIL(headers, hdr, entry);
 }
 
 static int
@@ -299,20 +267,20 @@ expr_eval_header(struct expr *ex, const struct message *msg,
     struct match *match)
 {
 	const char *val;
-	const struct header *hdr;
+	const struct string *str;
 
-	assert(ex->headers != NULL);
+	assert(ex->strings != NULL);
 	assert(ex->nmatches > 0);
 
-	TAILQ_FOREACH(hdr, ex->headers, entry) {
-		val = message_get_header(msg, hdr->key);
+	TAILQ_FOREACH(str, ex->strings, entry) {
+		val = message_get_header(msg, str->val);
 		if (val == NULL)
 			continue;
 		if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
 			continue;
 
 		match_reset(ex->match);
-		ex->match->key = hdr->key;
+		ex->match->key = str->val;
 		ex->match->val = val;
 		ex->match->valbeg = ex->matches[0].rm_so;
 		ex->match->valend = ex->matches[0].rm_eo;
@@ -345,21 +313,12 @@ expr_eval_new(struct expr *ex __attribute__((__unused__)),
 static void
 expr_free(struct expr *ex)
 {
-	struct header *hdr;
-
 	if (ex == NULL)
 		return;
 
 	expr_free(ex->lhs);
 	expr_free(ex->rhs);
-	if (ex->headers != NULL) {
-		while ((hdr = TAILQ_FIRST(ex->headers)) != NULL) {
-			TAILQ_REMOVE(ex->headers, hdr, entry);
-			free(hdr->key);
-			free(hdr);
-		}
-		free(ex->headers);
-	}
+	strings_free(ex->strings);
 	match_reset(ex->match);
 	regfree(&ex->pattern);
 	free(ex->match);

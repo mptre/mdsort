@@ -30,7 +30,7 @@ static int lineno, lineno_save, parse_errors;
 	char *str;
 
 	struct expr *expr;
-	struct expr_headers *headers;
+	struct string_list *strings;
 
 	struct {
 		char *str;
@@ -41,7 +41,7 @@ static int lineno, lineno_save, parse_errors;
 %token BODY HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
 %type <str> STRING move
 %type <expr> expr expr1 expr2 expr3 exprblock exprs
-%type <headers> headers strings
+%type <strings> stringblock strings
 %type <pattern> PATTERN
 
 %left AND OR
@@ -128,13 +128,13 @@ expr3		: BODY PATTERN {
 			if (expr_set_pattern($$, $2.str, $2.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
-		| HEADER headers PATTERN {
+		| HEADER strings PATTERN {
 			const char *errstr;
 
 			$$ = expr_alloc(EXPR_TYPE_HEADER, NULL, NULL);
 			if (expr_set_pattern($$, $3.str, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
-			expr_set_headers($$, $2);
+			expr_set_strings($$, $2);
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW, NULL, NULL);
@@ -144,21 +144,21 @@ expr3		: BODY PATTERN {
 		}
 		;
 
-headers		: '{' strings '}' {
+strings		: '{' stringblock '}' {
 			$$ = $2;
 		}
 		| STRING {
-			$$ = expr_headers_alloc();
-			expr_headers_append($$, $1);
+			$$ = strings_alloc();
+			strings_append($$, $1);
 		}
 		;
 
-strings		: /* empty */ {
-			$$ = expr_headers_alloc();
+stringblock	: /* empty */ {
+			$$ = strings_alloc();
 		}
-		| strings STRING {
+		| stringblock STRING {
 			$$ = $1;
-			expr_headers_append($$, $2);
+			strings_append($$, $2);
 		}
 		;
 

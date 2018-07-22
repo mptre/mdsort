@@ -6,7 +6,7 @@
 
 /* Forward declarations. */
 struct expr;
-struct expr_headers;
+struct string_list;
 
 /*
  * Open the maildir directory located at path.
@@ -138,9 +138,9 @@ struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
 void expr_set_dest(struct expr *ex, char *dest);
 
 /*
- * Associate the given headers with the expression.
+ * Associate the given string list with the expression.
  */
-void expr_set_headers(struct expr *ex, struct expr_headers *headers);
+void expr_set_strings(struct expr *ex, struct string_list *strings);
 
 /*
  * Associate the given pattern with the expression.
@@ -158,19 +158,31 @@ int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 
 #define EXPR_PATTERN_ICASE	0x1
 
-/*
- * Allocate a list of headers.
- *
- * The caller is responsible for associating the returned memory with an
- * expression using expr_set_headers(). The expression will then take ownership
- * of the memory and hence free it at an appropriate time.
- */
-struct expr_headers *expr_headers_alloc(void);
+struct string {
+	char *val;
+
+	TAILQ_ENTRY(string) entry;
+};
+
+TAILQ_HEAD(string_list, string);
 
 /*
- * Append the given header key to the list headers.
+ * Allocate a list of strings.
+ *
+ * The caller is responsible for freeing the returned memory using
+ * strings_free().
  */
-void expr_headers_append(struct expr_headers *headers, char *key);
+struct string_list *strings_alloc(void);
+
+/*
+ * Free list of strings.
+ */
+void strings_free(struct string_list *strings);
+
+/*
+ * Append to given string to the list of strings.
+ */
+void strings_append(struct string_list *strings, char *val);
 
 struct config {
 	char *maildir;

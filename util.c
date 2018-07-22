@@ -5,8 +5,48 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "extern.h"
+
+struct string_list *
+strings_alloc(void)
+{
+	struct string_list *strings;
+
+	strings = malloc(sizeof(*strings));
+	if (strings == NULL)
+		err(1, NULL);
+	TAILQ_INIT(strings);
+	return strings;
+}
+
+void
+strings_free(struct string_list *strings)
+{
+	struct string *str;
+
+	if (strings == NULL)
+		return;
+
+	while ((str = TAILQ_FIRST(strings)) != NULL) {
+		TAILQ_REMOVE(strings, str, entry);
+		free(str);
+	}
+	free(strings);
+}
+
+void
+strings_append(struct string_list *strings, char *val)
+{
+	struct string *str;
+
+	str = malloc(sizeof(*str));
+	if (str == NULL)
+		err(1, NULL);
+	str->val = val;
+	TAILQ_INSERT_TAIL(strings, str, entry);
+}
 
 char *
 pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
