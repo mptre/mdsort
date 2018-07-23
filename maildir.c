@@ -37,8 +37,8 @@ static const char *maildir_genname(const struct maildir *,
 static int maildir_read(struct maildir *, char *);
 static const char *maildir_root(struct maildir *);
 
-int subdir_parse(const char *, enum subdir *);
-const char *subdir_str(enum subdir);
+int parsesubdir(const char *, enum subdir *);
+const char *strsubdir(enum subdir);
 
 static const char *xbasename(const char *);
 
@@ -57,7 +57,7 @@ maildir_open(const char *path, int flags)
 	md->flags = flags;
 	if ((md->flags & MAILDIR_WALK)) {
 		md->subdir = SUBDIR_NEW;
-	} else if (subdir_parse(path, &md->subdir)) {
+	} else if (parsesubdir(path, &md->subdir)) {
 		maildir_close(md);
 		return NULL;
 	}
@@ -67,8 +67,7 @@ maildir_open(const char *path, int flags)
 	}
 
 	if ((md->flags & MAILDIR_WALK))
-		path = pathjoin(md->buf, md->path, subdir_str(md->subdir),
-		    NULL);
+		path = pathjoin(md->buf, md->path, strsubdir(md->subdir), NULL);
 	md->dir = opendir(path);
 	if (md->dir == NULL) {
 		warn("opendir: %s", path);
@@ -104,8 +103,7 @@ maildir_walk(struct maildir *md, char *buf)
 
 		if (maildir_next(md))
 			return 0;
-		path = pathjoin(md->buf, md->path, subdir_str(md->subdir),
-		    NULL);
+		path = pathjoin(md->buf, md->path, strsubdir(md->subdir), NULL);
 		if (md->dir != NULL)
 			closedir(md->dir);
 		md->dir = opendir(path);
@@ -255,7 +253,7 @@ maildir_read(struct maildir *md, char *path)
 		if (ent->d_type != DT_REG)
 			continue;
 
-		pathjoin(path, md->path, subdir_str(md->subdir), ent->d_name);
+		pathjoin(path, md->path, strsubdir(md->subdir), ent->d_name);
 		return 1;
 	}
 }
@@ -269,7 +267,7 @@ maildir_root(struct maildir *md)
 	if ((md->flags & MAILDIR_ROOT))
 		return md->path;
 
-	subdir = subdir_str(md->subdir);
+	subdir = strsubdir(md->subdir);
 	if (subdir == NULL)
 		errx(0, "%s: %s: invalid subdir", __func__, md->path);
 	len = strlen(md->path) - strlen(subdir) - 1;
@@ -281,7 +279,7 @@ maildir_root(struct maildir *md)
 }
 
 int
-subdir_parse(const char *path, enum subdir *subdir)
+parsesubdir(const char *path, enum subdir *subdir)
 {
 	const char *name;
 
@@ -304,7 +302,7 @@ err:
 }
 
 const char *
-subdir_str(enum subdir subdir)
+strsubdir(enum subdir subdir)
 {
 	switch (subdir) {
 	case SUBDIR_NEW:
