@@ -22,11 +22,12 @@ static const char *confpath;
 int
 main(int argc, char *argv[])
 {
+	char path[PATH_MAX];
 	struct config_list *config;
 	struct config *conf;
 	struct maildir *dst, *md;
 	struct message *msg;
-	const char *dstpath, *path;
+	const char *dstpath;
 	int c;
 	int dflag = 0;
 	int mdflags = MAILDIR_CREATE;
@@ -79,7 +80,7 @@ main(int argc, char *argv[])
 		    mdflags | MAILDIR_WALK | MAILDIR_ROOT);
 		if (md == NULL)
 			continue;
-		while ((path = maildir_walk(md)) != NULL) {
+		while (maildir_walk(md, path)) {
 			msg = message_parse(path, conf->maildir);
 			if (msg == NULL)
 				continue;

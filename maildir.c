@@ -27,17 +27,14 @@ struct maildir {
 	DIR *dir;
 	enum subdir subdir;
 	int flags;
-
-	/* Internal buffers used to construct directory and file names. */
-	char dbuf[PATH_MAX];
-	char fbuf[PATH_MAX];
+	char buf[PATH_MAX];
 };
 
 static int maildir_create(struct maildir *);
 static int maildir_next(struct maildir *);
 static const char *maildir_genname(const struct maildir *,
     const struct maildir *, struct message *);
-static const char *maildir_read(struct maildir *);
+static int maildir_read(struct maildir *, char *);
 static const char *maildir_root(struct maildir *);
 
 int subdir_parse(const char *, enum subdir *);
@@ -70,7 +67,7 @@ maildir_open(const char *path, int flags)
 	}
 
 	if ((md->flags & MAILDIR_WALK))
-		path = pathjoin(md->dbuf, md->path, subdir_str(md->subdir),
+		path = pathjoin(md->buf, md->path, subdir_str(md->subdir),
 		    NULL);
 	md->dir = opendir(path);
 	if (md->dir == NULL) {
@@ -93,29 +90,28 @@ maildir_close(struct maildir *md)
 	free(md);
 }
 
-const char *
-maildir_walk(struct maildir *md)
+int
+maildir_walk(struct maildir *md, char *buf)
 {
 	const char *path;
 
 	if ((md->flags & MAILDIR_WALK) == 0)
-		return NULL;
+		return 0;
 
 	for (;;) {
-		path = maildir_read(md);
-		if (path != NULL)
-			return path;
+		if (maildir_read(md, buf))
+			return 1;
 
 		if (maildir_next(md))
-			return NULL;
-		path = pathjoin(md->dbuf, md->path, subdir_str(md->subdir),
+			return 0;
+		path = pathjoin(md->buf, md->path, subdir_str(md->subdir),
 		    NULL);
 		if (md->dir != NULL)
 			closedir(md->dir);
 		md->dir = opendir(path);
 		if (md->dir == NULL) {
 			warn("opendir: %s", path);
-			return NULL;
+			return 0;
 		}
 	}
 }
@@ -163,6 +159,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 static int
 maildir_create(struct maildir *md)
 {
+	char buf[PATH_MAX];
 	const char *path, *root;
 
 	root = maildir_root(md);
@@ -175,15 +172,15 @@ maildir_create(struct maildir *md)
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
 		goto err;
 
-	path = pathjoin(md->dbuf, root, "cur", NULL);
+	path = pathjoin(buf, root, "cur", NULL);
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
 		goto err;
 
-	path = pathjoin(md->dbuf, root, "new", NULL);
+	path = pathjoin(buf, root, "new", NULL);
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
 		goto err;
 
-	path = pathjoin(md->dbuf, root, "tmp", NULL);
+	path = pathjoin(buf, root, "tmp", NULL);
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
 		goto err;
 
@@ -244,8 +241,8 @@ maildir_genname(const struct maildir *src, const struct maildir *dst,
 	}
 }
 
-static const char *
-maildir_read(struct maildir *md)
+static int
+maildir_read(struct maildir *md, char *path)
 {
 	struct dirent *ent;
 
@@ -254,12 +251,12 @@ maildir_read(struct maildir *md)
 	for (;;) {
 		ent = readdir(md->dir);
 		if (ent == NULL)
-			return NULL;
+			return 0;
 		if (ent->d_type != DT_REG)
 			continue;
 
-		return pathjoin(md->fbuf, md->path, subdir_str(md->subdir),
-		    ent->d_name);
+		pathjoin(path, md->path, subdir_str(md->subdir), ent->d_name);
+		return 1;
 	}
 }
 
@@ -276,11 +273,11 @@ maildir_root(struct maildir *md)
 	if (subdir == NULL)
 		errx(0, "%s: %s: invalid subdir", __func__, md->path);
 	len = strlen(md->path) - strlen(subdir) - 1;
-	size = sizeof(md->fbuf);
-	n = snprintf(md->fbuf, size, "%.*s", len, md->path);
+	size = sizeof(md->buf);
+	n = snprintf(md->buf, size, "%.*s", len, md->path);
 	if (n == -1 || n >= size)
 		errx(1, "%s: buffer too small", __func__);
-	return md->fbuf;
+	return md->buf;
 }
 
 int
