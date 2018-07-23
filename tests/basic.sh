@@ -534,9 +534,9 @@ if testcase "message without blank line after headers"; then
 	pass
 fi
 
-if testcase "uniq suffix is preserved"; then
+if testcase "unique suffix is preserved when valid"; then
 	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
-	mkmsg "${MAILDIR}/src/new" ":2," <<-EOF
+	mkmsg "${MAILDIR}/src/new" ":2,S" <<-EOF
 	To: user@example.com
 
 	EOF
@@ -548,7 +548,26 @@ if testcase "uniq suffix is preserved"; then
 	mdsort
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
-	find "${MAILDIR}/dst/new" -type f -name '*:2,' | cmp -s - /dev/null && \
+	find "${MAILDIR}/dst/new" -type f -name '*:2,S' | cmp -s - /dev/null && \
+		fail "expected dst/new directory to not be empty"
+	pass
+fi
+
+if testcase "unique suffix is preserved when invalid"; then
+	mkmd "${MAILDIR}/dst" "${MAILDIR}/src"
+	mkmsg "${MAILDIR}/src/new" ":1,S" <<-EOF
+	To: user@example.com
+
+	EOF
+	cat <<-EOF >$CONF
+	maildir "${MAILDIR}/src" {
+		match header "To" /user/ move "${MAILDIR}/dst"
+	}
+	EOF
+	mdsort
+	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
+		fail "expected src/new directory to be empty"
+	find "${MAILDIR}/dst/new" -type f -name '*:1,S' | cmp -s - /dev/null && \
 		fail "expected dst/new directory to not be empty"
 	pass
 fi

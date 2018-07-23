@@ -6,6 +6,7 @@
 
 /* Forward declarations. */
 struct expr;
+struct message;
 struct string_list;
 
 /*
@@ -46,12 +47,12 @@ void maildir_close(struct maildir *md);
 const char *maildir_walk(struct maildir *md);
 
 /*
- * Move the message located at path inside src to dst.
+ * Move the message located in src to dst.
  *
  * Returns zero on success, non-zero otherwise.
  */
 int maildir_move(const struct maildir *src, const struct maildir *dst,
-    const char *path);
+    struct message *msg);
 
 /*
  * Parse the message located at path.
@@ -78,15 +79,15 @@ const char *message_get_body(const struct message *msg);
  */
 const char *message_get_header(const struct message *msg, const char *header);
 
-/*
- * Returns the maildir path that message resides in.
- */
 const char *message_get_maildir(const struct message *msg);
 
-/*
- * Returns the last directory portion from the message path.
- */
-const char *message_get_dirname(const struct message *msg);
+const char *message_get_subdir(const struct message *msg);
+
+const char *message_get_path(const struct message *msg);
+
+const char *message_get_flags(const struct message *msg);
+
+void message_set_flags(struct message *msg, unsigned char flag);
 
 /*
  * Allocate a new rule.

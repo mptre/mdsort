@@ -13,11 +13,16 @@
 
 #include "extern.h"
 
+#define FLAG(c)	(1 << ((c) - 'A'))
+
 struct message {
 	const char *path;
 	const char *maildir;
 	const char *body;
 	char *buf;
+
+	unsigned int flags;
+	int nflags;
 
 	struct header *headers;
 	size_t nheaders;
@@ -29,6 +34,7 @@ struct header {
 	int decode;
 };
 
+static void message_parse_flags(struct message *);
 static const char *message_parse_headers(struct message *);
 
 static int cmpheader(const void *, const void *);
@@ -82,6 +88,8 @@ message_parse(const char *path, const char *maildir)
 	close(fd);
 
 	msg->body = message_parse_headers(msg);
+
+	message_parse_flags(msg);
 
 	return msg;
 }
@@ -138,7 +146,7 @@ message_get_maildir(const struct message *msg)
 }
 
 const char *
-message_get_dirname(const struct message *msg)
+message_get_subdir(const struct message *msg)
 {
 	static char buf[4];
 	const char *beg, *end, *tmp;
@@ -154,7 +162,7 @@ message_get_dirname(const struct message *msg)
 	}
 	len = end - beg;
 	if (len == 0) {
-		warnx("%s: %s: could not find dirname", __func__, msg->path);
+		warnx("%s: %s: could not find subdir", __func__, msg->path);
 		return NULL;
 	}
 	buflen = sizeof(buf);
@@ -162,6 +170,81 @@ message_get_dirname(const struct message *msg)
 	if (n == -1 || n >= buflen)
 		errx(1, "%s: buffer too small", __func__);
 	return buf;
+}
+
+const char *
+message_get_path(const struct message *msg)
+{
+	return msg->path;
+}
+
+const char *
+message_get_flags(const struct message *msg)
+{
+	static char buf[32];
+	const char *p;
+	unsigned int flags;
+	unsigned int shift = 0;
+	int i = 0;
+
+	if (msg->nflags == 0) {
+		/*
+		 * Parsing of the flags could have failed, just give back the
+		 * flags in its original form.
+		 */
+		p = strrchr(msg->path, ':');
+		if (p == NULL)
+			return "";
+		return p;
+	}
+
+	buf[i++] = ':';
+	buf[i++] = '2';
+	buf[i++] = ',';
+	for (flags = msg->flags; flags > 0; flags >>= 1) {
+		if ((flags & 0x1))
+			buf[i++] = 'A' + shift;
+		shift++;
+	}
+	buf[i] = '\0';
+
+	return buf;
+}
+
+void
+message_set_flags(struct message *msg, unsigned char flag)
+{
+	assert(isupper(flag));
+
+	if (msg->nflags == 0)
+		return;
+
+	msg->flags |= FLAG(flag);
+}
+
+static void
+message_parse_flags(struct message *msg)
+{
+	const char *p;
+
+	p = strrchr(msg->path, ':');
+	if (p == NULL) {
+		/* No flags is fine. */
+		msg->nflags = 1;
+		return;
+	} else if (p[1] != '2' || p[2] != ',') {
+		return;
+	}
+
+	for (p += 3; *p != '\0'; p++) {
+		if (isupper(*p)) {
+			msg->flags |= FLAG(*p);
+		} else {
+			log_debug("%s: %s: invalid flags", __func__, msg->path);
+			return;
+		}
+	}
+	msg->nflags = 1;
 }
 
 static const char *

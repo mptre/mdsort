@@ -17,15 +17,15 @@
 
 #include "extern.h"
 
-enum maildir_dirname {
-	MAILDIR_NEW = 1,
-	MAILDIR_CUR,
+enum subdir {
+	SUBDIR_NEW,
+	SUBDIR_CUR,
 };
 
 struct maildir {
 	char *path;
 	DIR *dir;
-	enum maildir_dirname dirname;
+	enum subdir subdir;
 	int flags;
 
 	/* Internal buffers used to construct directory and file names. */
@@ -34,11 +34,14 @@ struct maildir {
 };
 
 static int maildir_create(struct maildir *);
-static const char *maildir_dirname(const struct maildir *);
-static int maildir_dirnext(struct maildir *);
-static const char *maildir_genname(const struct maildir *, const char *);
+static int maildir_next(struct maildir *);
+static const char *maildir_genname(const struct maildir *,
+    const struct maildir *, struct message *);
 static const char *maildir_read(struct maildir *);
 static const char *maildir_root(struct maildir *);
+
+int subdir_parse(const char *, enum subdir *);
+const char *subdir_str(enum subdir);
 
 static const char *xbasename(const char *);
 
@@ -54,16 +57,21 @@ maildir_open(const char *path, int flags)
 	if (md->path == NULL)
 		err(1, NULL);
 	md->dir = NULL;
-	md->dirname = 0;
 	md->flags = flags;
+	if ((md->flags & MAILDIR_WALK)) {
+		md->subdir = SUBDIR_NEW;
+	} else if (subdir_parse(path, &md->subdir)) {
+		maildir_close(md);
+		return NULL;
+	}
 	if ((md->flags & MAILDIR_CREATE) && maildir_create(md)) {
 		maildir_close(md);
 		return NULL;
 	}
-	if ((md->flags & MAILDIR_WALK)) {
-		md->dirname = MAILDIR_NEW;
-		path = pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL);
-	}
+
+	if ((md->flags & MAILDIR_WALK))
+		path = pathjoin(md->dbuf, md->path, subdir_str(md->subdir),
+		    NULL);
 	md->dir = opendir(path);
 	if (md->dir == NULL) {
 		warn("opendir: %s", path);
@@ -90,7 +98,7 @@ maildir_walk(struct maildir *md)
 {
 	const char *path;
 
-	if (md->dirname == 0)
+	if ((md->flags & MAILDIR_WALK) == 0)
 		return NULL;
 
 	for (;;) {
@@ -98,9 +106,10 @@ maildir_walk(struct maildir *md)
 		if (path != NULL)
 			return path;
 
-		if (maildir_dirnext(md))
+		if (maildir_next(md))
 			return NULL;
-		path = pathjoin(md->dbuf, md->path, maildir_dirname(md), NULL);
+		path = pathjoin(md->dbuf, md->path, subdir_str(md->subdir),
+		    NULL);
 		if (md->dir != NULL)
 			closedir(md->dir);
 		md->dir = opendir(path);
@@ -113,17 +122,18 @@ maildir_walk(struct maildir *md)
 
 int
 maildir_move(const struct maildir *src, const struct maildir *dst,
-    const char *path)
+    struct message *msg)
 {
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT, },
 		{ 0,	0 }
 	};
 	struct stat st;
-	const char *dstname, *srcname;
+	const char *dstname, *path, *srcname;
 	int dstfd, srcfd;
 	int doutime = 0;
 
+	path = message_get_path(msg);
 	srcname = xbasename(path);
 	if (srcname == NULL) {
 		warnx("%s: could not extract basename", path);
@@ -137,7 +147,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		warn("fstatat");
 	}
 
-	dstname = maildir_genname(dst, srcname);
+	dstname = maildir_genname(src, dst, msg);
 	dstfd = dirfd(dst->dir);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
@@ -184,33 +194,22 @@ err:
 	return 1;
 }
 
-static const char *
-maildir_dirname(const struct maildir *md)
-{
-	switch (md->dirname) {
-	case MAILDIR_NEW:
-		return "new";
-	case MAILDIR_CUR:
-		return "cur";
-	}
-	return NULL;
-}
-
 static int
-maildir_dirnext(struct maildir *md)
+maildir_next(struct maildir *md)
 {
-	switch (md->dirname) {
-	case MAILDIR_NEW:
-		md->dirname = MAILDIR_CUR;
+	switch (md->subdir) {
+	case SUBDIR_NEW:
+		md->subdir = SUBDIR_CUR;
 		return 0;
-	case MAILDIR_CUR:
+	case SUBDIR_CUR:
 		break;
 	}
 	return 1;
 }
 
 static const char *
-maildir_genname(const struct maildir *md, const char *from)
+maildir_genname(const struct maildir *src, const struct maildir *dst,
+    struct message *msg)
 {
 	static char fname[NAME_MAX];
 	const char *flags;
@@ -218,8 +217,9 @@ maildir_genname(const struct maildir *md, const char *from)
 	int fd, n;
 	int count;
 
-	if ((flags = strchr(from, ':')) == NULL || flags[1] == '\0')
-		flags = "";
+	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR)
+		message_set_flags(msg, 'S');
+	flags = message_get_flags(msg);
 
 	count = arc4random() % 128;
 	for (;;) {
@@ -229,7 +229,7 @@ maildir_genname(const struct maildir *md, const char *from)
 		    ts, getpid(), count, hostname, flags);
 		if (n == -1 || n >= NAME_MAX)
 			errx(1, "%s: buffer too small", __func__);
-		fd = openat(dirfd(md->dir), fname, O_WRONLY | O_CREAT | O_EXCL,
+		fd = openat(dirfd(dst->dir), fname, O_WRONLY | O_CREAT | O_EXCL,
 		    0666);
 		if (fd == -1) {
 			if (errno == EEXIST) {
@@ -258,7 +258,7 @@ maildir_read(struct maildir *md)
 		if (ent->d_type != DT_REG)
 			continue;
 
-		return pathjoin(md->fbuf, md->path, maildir_dirname(md),
+		return pathjoin(md->fbuf, md->path, subdir_str(md->subdir),
 		    ent->d_name);
 	}
 }
@@ -266,22 +266,56 @@ maildir_read(struct maildir *md)
 static const char *
 maildir_root(struct maildir *md)
 {
-	const char *base;
+	const char *subdir;
 	int len, n, size;
 
 	if ((md->flags & MAILDIR_ROOT))
 		return md->path;
 
-	base = xbasename(md->path);
-	if (base == NULL)
-		return NULL;
-	assert(base > md->path);
-	len = (base - md->path) - 1;
+	subdir = subdir_str(md->subdir);
+	if (subdir == NULL)
+		errx(0, "%s: %s: invalid subdir", __func__, md->path);
+	len = strlen(md->path) - strlen(subdir) - 1;
 	size = sizeof(md->fbuf);
 	n = snprintf(md->fbuf, size, "%.*s", len, md->path);
 	if (n == -1 || n >= size)
 		errx(1, "%s: buffer too small", __func__);
 	return md->fbuf;
+}
+
+int
+subdir_parse(const char *path, enum subdir *subdir)
+{
+	const char *name;
+
+	name = xbasename(path);
+	if (name == NULL)
+		goto err;
+
+	if (strcmp(name, "new") == 0) {
+		*subdir = SUBDIR_NEW;
+		return 0;
+	}
+	if (strcmp(name, "cur") == 0) {
+		*subdir = SUBDIR_CUR;
+		return 0;
+	}
+
+err:
+	warnx("%s: %s: could not find subdir", __func__, path);
+	return 1;
+}
+
+const char *
+subdir_str(enum subdir subdir)
+{
+	switch (subdir) {
+	case SUBDIR_NEW:
+		return "new";
+	case SUBDIR_CUR:
+		return "cur";
+	}
+	return NULL;
 }
 
 static const char *

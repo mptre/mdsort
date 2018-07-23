@@ -36,7 +36,7 @@ struct expr {
 
 struct match {
 	const char *maildir;
-	const char *dirname;
+	const char *subdir;
 
 	/* Everything after this field will be zeroed out by match_reset(). */
 	int begzero;
@@ -277,7 +277,7 @@ expr_eval_flag(struct expr *ex, const struct message *msg, struct match *match)
 	struct string *str;
 
 	str = TAILQ_FIRST(ex->strings);
-	match->dirname = str->val;
+	match->subdir = str->val;
 
 	/* A move action might be missing. */
 	if (match->maildir == NULL)
@@ -323,8 +323,8 @@ expr_eval_move(struct expr *ex, const struct message *msg, struct match *match)
 	match->maildir = str->val;
 
 	/* A flag action might already have been evaluted. */
-	if (match->dirname == NULL)
-		match->dirname = message_get_dirname(msg);
+	if (match->subdir == NULL)
+		match->subdir = message_get_subdir(msg);
 
 	return 0;
 }
@@ -333,10 +333,10 @@ static int
 expr_eval_new(struct expr *ex __attribute__((__unused__)),
     const struct message *msg, struct match *match __attribute__((__unused__)))
 {
-	const char *dirname;
+	const char *subdir;
 
-	dirname = message_get_dirname(msg);
-	if (dirname == NULL || strcmp(dirname, "new"))
+	subdir = message_get_subdir(msg);
+	if (subdir == NULL || strcmp(subdir, "new"))
 		return 1;
 	return 0;
 }
@@ -472,7 +472,7 @@ match_interpolate(const struct match *match)
 
 	assert(match != NULL);
 
-	pathjoin(path, match->maildir, match->dirname, NULL);
+	pathjoin(path, match->maildir, match->subdir, NULL);
 
 	while (path[i] != '\0') {
 		if (path[i] == '\\' && isdigit(path[i + 1])) {

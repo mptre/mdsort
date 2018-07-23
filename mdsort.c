@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 			if (dflag)
 				rule_inspect(conf->rule, stdout);
 			else
-				maildir_move(md, dst, path);
+				maildir_move(md, dst, msg);
 			maildir_close(dst);
 
 next:
