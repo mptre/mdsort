@@ -32,9 +32,6 @@ struct maildir *maildir_open(const char *path, int flags);
 #define MAILDIR_CREATE	0x2
 #define MAILDIR_ROOT	0x4
 
-/*
- * Close and free maildir.
- */
 void maildir_close(struct maildir *md);
 
 /*
@@ -62,21 +59,10 @@ int maildir_move(const struct maildir *src, const struct maildir *dst,
  */
 struct message *message_parse(const char *path, const char *maildir);
 
-/*
- * Free message.
- */
 void message_free(struct message *msg);
 
-/*
- * Returns the message body if present.
- * Otherwise, NULL is returned.
- */
 const char *message_get_body(const struct message *msg);
 
-/*
- * Returns the corresponding value for the given header if present.
- * Otherwise, NULL is returned.
- */
 const char *message_get_header(const struct message *msg, const char *header);
 
 const char *message_get_maildir(const struct message *msg);
@@ -97,9 +83,6 @@ void message_set_flags(struct message *msg, unsigned char flag);
  */
 struct rule *rule_alloc(struct expr *ex);
 
-/*
- * Free rule.
- */
 void rule_free(struct rule *rl);
 
 /*
@@ -176,14 +159,8 @@ TAILQ_HEAD(string_list, string);
  */
 struct string_list *strings_alloc(void);
 
-/*
- * Free list of strings.
- */
 void strings_free(struct string_list *strings);
 
-/*
- * Append to given string to the list of strings.
- */
 void strings_append(struct string_list *strings, char *val);
 
 struct config {
