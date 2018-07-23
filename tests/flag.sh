@@ -131,7 +131,6 @@ if testcase "flag as not new when path flags already present"; then
 	pass
 fi
 
-# :2,R
 if testcase "flag as not new when path flags valid"; then
 	mkmd "${MAILDIR}/src"
 	mkmsg "${MAILDIR}/src/new" ":2,R" <<-EOF
