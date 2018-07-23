@@ -184,13 +184,13 @@ message_get_flags(const struct message *msg)
 	static char buf[32];
 	const char *p;
 	unsigned int flags;
-	unsigned int shift = 0;
+	int bit = 0;
 	int i = 0;
 
 	if (msg->nflags == 0) {
 		/*
-		 * Parsing of the flags could have failed, just give back the
-		 * flags in its original form.
+		 * Parsing the flags could have failed, just give back the flags
+		 * in its original form.
 		 */
 		p = strrchr(msg->path, ':');
 		if (p == NULL)
@@ -203,8 +203,8 @@ message_get_flags(const struct message *msg)
 	buf[i++] = ',';
 	for (flags = msg->flags; flags > 0; flags >>= 1) {
 		if ((flags & 0x1))
-			buf[i++] = 'A' + shift;
-		shift++;
+			buf[i++] = 'A' + bit;
+		bit++;
 	}
 	buf[i] = '\0';
 
@@ -215,10 +215,6 @@ void
 message_set_flags(struct message *msg, unsigned char flag)
 {
 	assert(isupper(flag));
-
-	if (msg->nflags == 0)
-		return;
-
 	msg->flags |= FLAG(flag);
 }
 
