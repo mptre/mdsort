@@ -187,7 +187,7 @@ message_get_flags(const struct message *msg)
 	int bit = 0;
 	int i = 0;
 
-	if (msg->nflags == 0) {
+	if (msg->nflags <= 0) {
 		/*
 		 * Parsing the flags could have failed, just give back the flags
 		 * in its original form.
@@ -215,7 +215,12 @@ void
 message_set_flags(struct message *msg, unsigned char flag)
 {
 	assert(isupper(flag));
+
+	if (msg->nflags == -1)
+		return;
+
 	msg->flags |= FLAG(flag);
+	msg->nflags = 1;
 }
 
 static void
@@ -225,10 +230,10 @@ message_parse_flags(struct message *msg)
 
 	p = strrchr(msg->path, ':');
 	if (p == NULL) {
-		/* No flags is fine. */
-		msg->nflags = 1;
+		msg->nflags = 0;
 		return;
 	} else if (p[1] != '2' || p[2] != ',') {
+		msg->nflags = -1;
 		return;
 	}
 
