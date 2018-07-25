@@ -14,7 +14,7 @@ if testcase "match body"; then
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
 		fail "expected src/new directory to be empty"
 	grep -q "Bob" ${MAILDIR}/dst/new/* || \
-		fail "expected dst/cur directory to not be empty"
+		fail "expected dst/new directory to not be empty"
 	pass
 fi
 
@@ -367,7 +367,7 @@ if testcase "match negate binds to the innermost condition"; then
 	EOF
 	mdsort
 	grep -q "To: admin@example.com" ${MAILDIR}/src/new/* || \
-		fail "expected dst/new directory to not be empty"
+		fail "expected src/new directory to not be empty"
 	grep -q "To: user@example.com" ${MAILDIR}/dst/new/* || \
 		fail "expected dst/new directory to not be empty"
 	pass
