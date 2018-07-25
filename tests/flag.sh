@@ -11,7 +11,7 @@ if testcase "flag as new"; then
 	EOF
 	mdsort
 	ls "${MAILDIR}/src/cur" | cmp -s - /dev/null || \
-		fail "expected src/new directory to be empty"
+		fail "expected src/cur directory to be empty"
 	ls "${MAILDIR}/src/new" | cmp -s - /dev/null && \
 		fail "expected src/new directory to not be empty"
 	pass
