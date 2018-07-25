@@ -96,7 +96,7 @@ mkmsg() {
 
 testcase() {
 	[ "$1" = "-e" ] && { TCEXIT=1; shift; } || TCEXIT=0
-	TCDESC="$@"
+	TCDESC="${TCFILE}: $@"
 	TCFAIL=0
 	ls -d $MAILDIR/*/ 2>/dev/null | xargs rm -rf
 
@@ -123,6 +123,7 @@ randstr() {
 ENV=
 NERR=0
 NMSG=0
+TCFILE=""
 TCDESC=""
 TCEXIT=0
 TCFAIL=0
@@ -165,5 +166,6 @@ PATH_MAX=$(cppvar PATH_MAX || echo 0)
 cd $MAILDIR
 
 for f; do
+	TCFILE="$(basename "$f")"
 	. "$f"
 done

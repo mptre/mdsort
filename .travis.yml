@@ -30,6 +30,18 @@ matrix:
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - TESTFLAGS='-s too\ long'
+    - os: linux
+      compiler: clang
+      env:
+        - BUILD_TYPE=default
+        - CFLAGS=-Werror
+        - DEBUG-g
+        - TESTFLAGS='-e valgrind -s conf.sh'
+        - VALGRIND_OPTS='--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all'
+      addons:
+        apt:
+          packages:
+            - valgrind
 script:
   - |
     (
