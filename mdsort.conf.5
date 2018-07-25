@@ -48,7 +48,7 @@ be made case insensitive using the
 .Ic i
 keyword.
 .Pp
-The conditions are as follows and all of them may be negated:
+The conditions are as follows and may be negated:
 .Bl -tag -width Ds
 .It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op Ic i
 Evaluates to true if the message body matches
@@ -71,6 +71,8 @@ Finding the header with
 in message is done case insensitive.
 .It Oo Ic \&! Oc Ic new
 Evaluates to true if the message is not read.
+.It Ic all
+Evaluates to true for any message.
 .El
 .Pp
 Multiple and nested conditions may be also specified:

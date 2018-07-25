@@ -52,6 +52,8 @@ struct match {
 
 static int expr_eval(struct expr *, const struct message *,
     struct match *match, int);
+static int expr_eval_all(struct expr *, const struct message *,
+    struct match *);
 static int expr_eval_body(struct expr *, const struct message *,
     struct match *);
 static int expr_eval_flag(struct expr *, const struct message *,
@@ -140,6 +142,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
 	case EXPR_TYPE_NEG:
+	case EXPR_TYPE_ALL:
 	case EXPR_TYPE_NEW:
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
@@ -225,6 +228,9 @@ expr_eval(struct expr *ex, const struct message *msg, struct match *match,
 		if (res)
 			match_reset(match);
 		break;
+	case EXPR_TYPE_ALL:
+		res = expr_eval_all(ex, msg, match);
+		break;
 	case EXPR_TYPE_BODY:
 		res = expr_eval_body(ex, msg, match);
 		break;
@@ -247,6 +253,14 @@ expr_eval(struct expr *ex, const struct message *msg, struct match *match,
 	}
 
 	return res;
+}
+
+static int
+expr_eval_all(struct expr *ex __attribute__((__unused__)),
+    const struct message *msg __attribute__((__unused__)),
+    struct match *match __attribute__((__unused__)))
+{
+	return 0;
 }
 
 static int
@@ -377,6 +391,7 @@ expr_inspect(const struct expr *ex, FILE *fh, int cookie)
 		expr_inspect_header(ex, fh);
 		break;
 	case EXPR_TYPE_NEG:
+	case EXPR_TYPE_ALL:
 	case EXPR_TYPE_NEW:
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
