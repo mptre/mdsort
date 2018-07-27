@@ -1,9 +1,5 @@
 if testcase "all matches any message"; then
-	mkmd "${MAILDIR}/src"
-	mkmsg "${MAILDIR}/src/new" <<-EOF
-	To: user@example.com
-
-	EOF
+	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "${MAILDIR}/src" {
 		match new {
@@ -14,9 +10,7 @@ if testcase "all matches any message"; then
 	}
 	EOF
 	mdsort
-	ls "${MAILDIR}/src/new" | cmp -s - /dev/null || \
-		fail "expected src/new directory to be empty"
-	ls "${MAILDIR}/dst" | cmp -s - /dev/null && \
-		fail "expected dst/new directory to not be empty"
+	assert_empty "src/new"
+	refute_empty "dst/new"
 	pass
 fi

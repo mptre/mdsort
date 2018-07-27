@@ -45,6 +45,10 @@ DISTFILES=	GNUmakefile \
 		tests/dry.sh \
 		tests/flag.sh \
 		tests/match-all.sh \
+		tests/match-body.sh \
+		tests/match-header.sh \
+		tests/match-logical.sh \
+		tests/match-new.sh \
 		tests/run.sh \
 		util.c
 

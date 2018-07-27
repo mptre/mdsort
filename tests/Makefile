@@ -1,6 +1,14 @@
 MDSORT=	${.CURDIR}/../mdsort
 
-TESTS=	basic.sh conf.sh dry.sh flag.sh match-all.sh
+TESTS=	basic.sh \
+	conf.sh \
+	dry.sh \
+	flag.sh \
+	match-all.sh \
+	match-body.sh \
+	match-header.sh \
+	match-logical.sh \
+	match-new.sh
 
 .SUFFIXES: .sh .out
 

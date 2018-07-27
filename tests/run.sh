@@ -25,6 +25,16 @@ pass() {
 	printf 'PASS: %s\n' "$TCDESC"
 }
 
+assert_empty() {
+	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null && return 0
+	fail "expected directory ${1} to be empty"
+}
+
+refute_empty() {
+	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null || return 0
+	fail "expected directory ${1} to not be empty"
+}
+
 cppvar() {
 	cpp - <<-EOF >$_TMP1 2>/dev/null
 	#include <limits.h>
@@ -68,30 +78,33 @@ mdsort() {
 	fi
 }
 
-# mkmd path ...
-mkmd() {
-	for p; do
-		for d in cur new tmp; do
-			mkdir -p "${p}/${d}"
-		done
-	done
-}
-
-# mkmsg directory [suffix]
+# mkmsg directory [-s suffix] [-] [-- headers ...]
 mkmsg() {
-	local _name _path
+	local _dir _headers=0 _name _path _stdin=0 _suffix
 
-	NMSG=$((NMSG + 1))
-	_name=$(printf '%d.%d_%d.hostname%s' "$(date '+%s')" "$$" "$NMSG" "$2")
-	_path="${1}/${_name}"
+	_dir="${MAILDIR}/${1}"; shift
+	mkdir -p "$_dir"
 
-	if ! [ -e "$_path" ]; then
-		mkdir -p "$1"
-		cat >"$_path"
-	else
-		echo "${_path}: message already exists"
-		return 1
+	[ "$1" = "-s" ] && { shift; _suffix=$1; shift; }
+	[ "$1" = "-" ] && { _stdin=1; shift; }
+
+	while :; do
+		_name=$(printf '%d.%d_%d.hostname%s' \
+			"$(date '+%s')" "$$" "$RANDOM" "$_suffix")
+		_path="${_dir}/${_name}"
+		[ -e "$_path" ] || break
+	done
+
+	if [ "$1" = "--" ]; then
+		_headers=1
+		shift
+		while [ $# -gt 0 ]; do
+			echo "${1}: ${2}" >>$_path
+			shift 2
+		done
 	fi
+	[ $_headers -eq 1 ] && echo >>$_path || true
+	[ $_stdin -eq 1 ] && cat >>$_path || true
 }
 
 testcase() {
@@ -122,7 +135,6 @@ randstr() {
 
 ENV=
 NERR=0
-NMSG=0
 TCFILE=""
 TCDESC=""
 TCEXIT=0
@@ -136,12 +148,10 @@ CONF="${MAILDIR}/mdsort.conf"
 # Temporary files used in tests.
 TMP1="${MAILDIR}/tmp1"
 TMP2="${MAILDIR}/tmp2"
-TMP3="${MAILDIR}/tmp3"
 
 # Temporary files used internally.
 _TMP1="${MAILDIR}/_tmp1"
 _TMP2="${MAILDIR}/_tmp2"
-_TMP3="${MAILDIR}/_tmp3"
 
 SKIP="${MAILDIR}/skip"
 >$SKIP
