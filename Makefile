@@ -74,7 +74,7 @@ dist:
 		cp ${.CURDIR}/$$f $$d/$$f; \
 	done; \
 	tar czvf ${.CURDIR}/$$d.tar.gz $$d; \
-	${SHA256} ${.CURDIR}/$$d.tar.gz >${.CURDIR}/$$d.sha256; \
+	(cd ${.CURDIR}; ${SHA256} $$d.tar.gz >$$d.sha256); \
 	rm -r $$d
 .PHONY: dist
 
