@@ -50,8 +50,8 @@ struct match {
 	size_t valend;
 };
 
-static int expr_eval(struct expr *, const struct message *,
-    struct match *match, int);
+static int expr_eval(struct expr *, const struct message *, struct match *,
+    int);
 static int expr_eval_all(struct expr *, const struct message *,
     struct match *);
 static int expr_eval_body(struct expr *, const struct message *,
@@ -71,9 +71,9 @@ static void expr_inspect_header(const struct expr *, FILE *);
 
 static void match_copy(struct match *, const char *, const regmatch_t *,
     size_t);
-static const char *match_get(const struct match *match, unsigned long n);
+static const char *match_get(const struct match *, unsigned long n);
 static const char *match_interpolate(const struct match *);
-static void match_reset(struct match *match);
+static void match_reset(struct match *);
 
 struct rule *
 rule_alloc(struct expr *ex)
