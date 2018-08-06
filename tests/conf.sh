@@ -235,17 +235,6 @@ if testcase -e "destination path too long after tilde expansion"; then
 	EOF
 fi
 
-if testcase -e "duplicate pattern flag"; then
-	cat <<-EOF >$CONF
-	maildir "~/Maildir/INBOX" {
-		match header "From" /./ii move "~/Maildir/Junk"
-	}
-	EOF
-	mdsort - -n <<-EOF
-	mdsort.conf:2: duplicate pattern flag: i
-	EOF
-fi
-
 if testcase -e "missing left-hand expr with and"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {

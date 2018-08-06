@@ -285,7 +285,7 @@ yylex(void)
 	};
 	static char lexeme[BUFSIZ], kw[16];
 	char *buf;
-	int c, flag, i;
+	int c, i;
 
 	buf = lexeme;
 
@@ -355,18 +355,11 @@ again:
 		yylval.pattern.str = lexeme;
 
 		yylval.pattern.flags = 0;
-		for (;;) {
-			c = yygetc();
-			if (c == 'i') {
-				flag = EXPR_PATTERN_ICASE;
-			} else {
-				yyungetc(c);
-				break;
-			}
-			if (yylval.pattern.flags & flag)
-				yyerror("duplicate pattern flag: %c", c);
-			yylval.pattern.flags |= flag;
-		}
+		c = yygetc();
+		if (c == 'i')
+			yylval.pattern.flags = EXPR_PATTERN_ICASE;
+		else
+			yyungetc(c);
 
 		return PATTERN;
 	} else if (islower(c)) {
