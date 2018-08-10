@@ -427,7 +427,7 @@ expr_inspect_body(const struct expr *ex, FILE *fh)
 	fprintf(fh, "%.*s\n%*s^%*s$\n", len, beg, padbeg, "", padend, "");
 }
 
-void
+static void
 expr_inspect_header(const struct expr *ex, FILE *fh)
 {
 	const struct match *match;

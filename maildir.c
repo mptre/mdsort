@@ -37,8 +37,8 @@ static const char *maildir_genname(const struct maildir *,
 static int maildir_read(struct maildir *, char *);
 static const char *maildir_root(struct maildir *);
 
-int parsesubdir(const char *, enum subdir *);
-const char *strsubdir(enum subdir);
+static int parsesubdir(const char *, enum subdir *);
+static const char *strsubdir(enum subdir);
 
 static const char *xbasename(const char *);
 
@@ -278,7 +278,7 @@ maildir_root(struct maildir *md)
 	return md->buf;
 }
 
-int
+static int
 parsesubdir(const char *path, enum subdir *subdir)
 {
 	const char *name;
@@ -301,7 +301,7 @@ err:
 	return 1;
 }
 
-const char *
+static const char *
 strsubdir(enum subdir subdir)
 {
 	switch (subdir) {
