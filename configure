@@ -122,6 +122,18 @@ check_stat_tim() {
 	EOF
 }
 
+check_strlcpy() {
+	compile <<-EOF
+	#include <string.h>
+
+	int main(void) {
+		char buf[128];
+
+		return !(strlcpy(buf, "strlcpy", sizeof(buf)) < sizeof(buf));
+	}
+	EOF
+}
+
 check_utimensat() {
 	compile <<-EOF
 	#include <sys/time.h>
@@ -142,6 +154,7 @@ HAVE_PLEDGE=0
 HAVE_QUEUE=0
 HAVE_REALLOCARRAY=0
 HAVE_STAT_TIM=0
+HAVE_STRLCPY=0
 HAVE_UTIMENSAT=0
 
 CC=$(makevar CC)
@@ -178,6 +191,7 @@ check_pledge && HAVE_PLEDGE=1
 check_queue && HAVE_QUEUE=1
 check_reallocarray && HAVE_REALLOCARRAY=1
 check_stat_tim && HAVE_STAT_TIM=1
+check_strlcpy && HAVE_STRLCPY=1
 check_utimensat && HAVE_UTIMENSAT=1
 
 MALLOC_OPTIONS=$(check_malloc_options)
@@ -187,6 +201,7 @@ MALLOC_OPTIONS=$(check_malloc_options)
 [ $HAVE_ARC4RANDOM -eq 0 ] && echo stdint.h
 [ $HAVE_PLEDGE -eq 0 ] && echo stdlib.h
 [ $HAVE_REALLOCARRAY -eq 0 ] && echo stdlib.h
+[ $HAVE_STRLCPY -eq 0 ] && echo stdlib.h
 [ $HAVE_UTIMENSAT -eq 0 ] && echo sys/time.h
 ) | sort | uniq | headers >config.h
 
@@ -195,6 +210,7 @@ MALLOC_OPTIONS=$(check_malloc_options)
 [ $HAVE_PLEDGE -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
 [ $HAVE_QUEUE -eq 1 ] && printf '#define HAVE_QUEUE\t1\n'
 [ $HAVE_REALLOCARRAY -eq 1 ] && printf '#define HAVE_REALLOCARRAY\t1\n'
+[ $HAVE_STRLCPY -eq 1 ] && printf '#define HAVE_STRLCPY\t1\n'
 [ $HAVE_UTIMENSAT -eq 1 ] && printf '#define HAVE_UTIMENSAT\t1\n'
 
 [ $HAVE_DEAD -eq 0 ] && printf '#define __dead\n'
@@ -215,6 +231,8 @@ fi
 	printf 'int pledge(const char *, const char *);\n'
 [ $HAVE_REALLOCARRAY -eq 0 ] && \
 	printf 'void *reallocarray(void *, size_t, size_t);\n'
+[ $HAVE_STRLCPY -eq 0 ] && \
+	printf 'size_t strlcpy(char *, const char *, size_t);\n'
 [ $HAVE_UTIMENSAT -eq 0 ] && \
 	printf 'int utimensat(int, const char *, const struct timespec [2], int);\n'
 

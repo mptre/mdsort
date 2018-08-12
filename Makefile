@@ -7,6 +7,7 @@ PROG=	mdsort
 SRCS=	compat-arc4random.c \
 	compat-pledge.c \
 	compat-reallocarray.c \
+	compat-strlcpy.c \
 	compat-utimensat.c \
 	maildir.c \
 	message.c \
@@ -28,6 +29,7 @@ DISTFILES=	GNUmakefile \
 		compat-pledge.c \
 		compat-queue.h \
 		compat-reallocarray.c \
+		compat-strlcpy.c \
 		compat-utimensat.c \
 		configure \
 		extern.h \
