@@ -6,6 +6,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "extern.h"
 
@@ -64,6 +65,47 @@ pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
 		    root, dirname, filename);
 	if (n == -1 || n >= PATH_MAX)
 		errx(1, "%s: buffer too small", __func__);
+	return buf;
+}
+
+char *
+pathslice(const char *path, char *buf, int beg, int end)
+{
+	const char *p;
+	char *bp;
+	int docopy, i, ncomps;
+	int range = 1;
+
+	ncomps = 0;
+	for (p = path; (p = strchr(p, '/')) != NULL; p++)
+		ncomps++;
+
+	if (end - beg == 0)
+		range = 0;
+
+	if (end < 0)
+		end = ncomps + end - range;
+	if (beg < 0)
+		beg = ncomps + beg - range;
+	if (beg < 0 || beg > end || end < 0 || end >= ncomps)
+		return NULL;
+
+	p = path;
+	bp = buf;
+	for (i = 0; i < ncomps; i++) {
+		if (*p == '\0')
+			break;
+
+		docopy = i >= beg && i <= end;
+		if (docopy && range)
+			*bp++ = '/';
+		for (p++; *p != '/' && *p != '\0'; p++) {
+			if (docopy)
+				*bp++ = *p;
+		}
+	}
+	*bp = '\0';
+
 	return buf;
 }
 

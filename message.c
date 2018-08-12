@@ -5,6 +5,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -142,34 +143,17 @@ message_get_header(const struct message *msg, const char *header)
 const char *
 message_get_maildir(const struct message *msg)
 {
-	return msg->maildir;
+	static char buf[PATH_MAX];
+
+	return pathslice(msg->path, buf, 0, -2);
 }
 
 const char *
 message_get_subdir(const struct message *msg)
 {
-	static char buf[4];
-	const char *beg, *end, *tmp;
-	int buflen, len, n;
+	static char buf[NAME_MAX];
 
-	beg = end = msg->path;
-	for (;;) {
-		tmp = strchr(end + 1, '/');
-		if (tmp == NULL)
-			break;
-		beg = end + 1;
-		end = tmp;
-	}
-	len = end - beg;
-	if (len == 0) {
-		warnx("%s: %s: could not find subdir", __func__, msg->path);
-		return NULL;
-	}
-	buflen = sizeof(buf);
-	n = snprintf(buf, buflen, "%.*s", len, beg);
-	if (n == -1 || n >= buflen)
-		errx(1, "%s: buffer too small", __func__);
-	return buf;
+	return pathslice(msg->path, buf, -2, -2);
 }
 
 const char *

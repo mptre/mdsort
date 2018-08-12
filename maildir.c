@@ -40,8 +40,6 @@ static const char *maildir_root(struct maildir *);
 static int parsesubdir(const char *, enum subdir *);
 static const char *strsubdir(enum subdir);
 
-static const char *xbasename(const char *);
-
 struct maildir *
 maildir_open(const char *path, int flags)
 {
@@ -118,6 +116,7 @@ int
 maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg)
 {
+	char buf[NAME_MAX];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT, },
 		{ 0,	0 }
@@ -128,7 +127,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	int doutime = 0;
 
 	path = message_get_path(msg);
-	srcname = xbasename(path);
+	srcname = pathslice(path, buf, -1, -1);
 	if (srcname == NULL) {
 		warnx("%s: could not extract basename", path);
 		return 1;
@@ -261,29 +260,19 @@ maildir_read(struct maildir *md, char *path)
 static const char *
 maildir_root(struct maildir *md)
 {
-	const char *subdir;
-	int len, n, size;
-
 	if ((md->flags & MAILDIR_ROOT))
 		return md->path;
 
-	subdir = strsubdir(md->subdir);
-	if (subdir == NULL)
-		errx(0, "%s: %s: invalid subdir", __func__, md->path);
-	len = strlen(md->path) - strlen(subdir) - 1;
-	size = sizeof(md->buf);
-	n = snprintf(md->buf, size, "%.*s", len, md->path);
-	if (n == -1 || n >= size)
-		errx(1, "%s: buffer too small", __func__);
-	return md->buf;
+	return pathslice(md->path, md->buf, 0, -1);
 }
 
 static int
 parsesubdir(const char *path, enum subdir *subdir)
 {
+	char buf[NAME_MAX];
 	const char *name;
 
-	name = xbasename(path);
+	name = pathslice(path, buf, -1, -1);
 	if (name == NULL)
 		goto err;
 
@@ -311,15 +300,4 @@ strsubdir(enum subdir subdir)
 		return "cur";
 	}
 	return NULL;
-}
-
-static const char *
-xbasename(const char *path)
-{
-       const char *p;
-
-       p = strrchr(path, '/');
-       if (p == NULL || p[1] == '\0')
-               return NULL;
-       return p + 1;
 }
