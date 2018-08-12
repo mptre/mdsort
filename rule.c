@@ -35,8 +35,8 @@ struct expr {
 };
 
 struct match {
-	const char *maildir;
-	const char *subdir;
+	char maildir[PATH_MAX];
+	char subdir[NAME_MAX];
 
 	/* Everything after this field will be zeroed out by match_reset(). */
 	int begzero;
@@ -289,13 +289,19 @@ static int
 expr_eval_flag(struct expr *ex, const struct message *msg, struct match *match)
 {
 	struct string *str;
+	const char *path;
+	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
-	match->subdir = str->val;
+	len = sizeof(match->subdir);
+	if (strlcpy(match->subdir, str->val, len) >= len)
+		errx(1, "%s: buffer too small", __func__);
 
 	/* A move action might be missing. */
-	if (match->maildir == NULL)
-		match->maildir = message_get_maildir(msg);
+	if (strlen(match->maildir) == 0) {
+		path = message_get_path(msg);
+		pathslice(path, match->maildir, 0, -2);
+	}
 
 	return 0;
 }
@@ -332,13 +338,19 @@ static int
 expr_eval_move(struct expr *ex, const struct message *msg, struct match *match)
 {
 	struct string *str;
+	const char *path;
+	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
-	match->maildir = str->val;
+	len = sizeof(match->maildir);
+	if (strlcpy(match->maildir, str->val, len) >= len)
+		errx(1, "%s: buffer too small", __func__);
 
 	/* A flag action might already have been evaluted. */
-	if (match->subdir == NULL)
-		match->subdir = message_get_subdir(msg);
+	if (strlen(match->subdir) == 0) {
+		path = message_get_path(msg);
+		pathslice(path, match->subdir, -2, -2);
+	}
 
 	return 0;
 }
@@ -347,9 +359,11 @@ static int
 expr_eval_new(struct expr *ex __attribute__((__unused__)),
     const struct message *msg, struct match *match __attribute__((__unused__)))
 {
-	const char *subdir;
+	char buf[NAME_MAX];
+	const char *path, *subdir;
 
-	subdir = message_get_subdir(msg);
+	path = message_get_path(msg);
+	subdir = pathslice(path, buf, -2, -2);
 	if (subdir == NULL || strcmp(subdir, "new"))
 		return 1;
 	return 0;

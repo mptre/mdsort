@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 		if (md == NULL)
 			continue;
 		while (maildir_walk(md, path)) {
-			msg = message_parse(path, conf->maildir);
+			msg = message_parse(path);
 			if (msg == NULL)
 				continue;
 

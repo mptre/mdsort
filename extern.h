@@ -56,17 +56,13 @@ int maildir_move(const struct maildir *src, const struct maildir *dst,
  * The caller is responsible for freeing the returned memory using
  * message_free().
  */
-struct message *message_parse(const char *path, const char *maildir);
+struct message *message_parse(const char *path);
 
 void message_free(struct message *msg);
 
 const char *message_get_body(const struct message *msg);
 
 const char *message_get_header(const struct message *msg, const char *header);
-
-const char *message_get_maildir(const struct message *msg);
-
-const char *message_get_subdir(const struct message *msg);
 
 const char *message_get_path(const struct message *msg);
 
