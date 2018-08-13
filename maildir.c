@@ -129,7 +129,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	path = message_get_path(msg);
 	srcname = pathslice(path, buf, -1, -1);
 	if (srcname == NULL) {
-		warnx("%s: could not extract basename", path);
+		warnx("%s: basename not found", path);
 		return 1;
 	}
 	srcfd = dirfd(src->dir);
@@ -161,7 +161,7 @@ maildir_create(struct maildir *md)
 
 	root = maildir_root(md);
 	if (root == NULL) {
-		warnx("%s: could not find maildir root", md->path);
+		warnx("%s: maildir not found", md->path);
 		return 1;
 	}
 
@@ -286,7 +286,7 @@ parsesubdir(const char *path, enum subdir *subdir)
 	}
 
 err:
-	warnx("%s: %s: could not find subdir", __func__, path);
+	warnx("%s: %s: subdir not found", __func__, path);
 	return 1;
 }
 
