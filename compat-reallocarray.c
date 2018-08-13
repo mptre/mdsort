@@ -1,9 +1,3 @@
-#include "config.h"
-
-int unused;
-
-#ifndef HAVE_REALLOCARRAY
-
 /*	$OpenBSD: reallocarray.c,v 1.3 2015/09/13 08:31:47 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
@@ -20,6 +14,12 @@ int unused;
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "config.h"
+
+int unused;
+
+#ifndef HAVE_REALLOCARRAY
 
 #include <sys/types.h>
 #include <errno.h>
