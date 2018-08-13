@@ -73,20 +73,25 @@ pathslice(const char *path, char *buf, int beg, int end)
 {
 	const char *p;
 	char *bp;
-	int docopy, i, ncomps;
-	int range = 1;
+	int docopy, i;
+	int isabs = 0;
+	int isrange = 1;
+	int ncomps = 0;
 
-	ncomps = 0;
+	if (*path == '/')
+		isabs = 1;
+	if (!isabs)
+		ncomps = 1;	/* compensate for missing leading slash */
 	for (p = path; (p = strchr(p, '/')) != NULL; p++)
 		ncomps++;
 
 	if (end - beg == 0)
-		range = 0;
+		isrange = 0;
 
 	if (end < 0)
-		end = ncomps + end - range;
+		end = ncomps + end - isrange;
 	if (beg < 0)
-		beg = ncomps + beg - range;
+		beg = ncomps + beg - isrange;
 	if (beg < 0 || beg > end || end < 0 || end >= ncomps)
 		return NULL;
 
@@ -97,8 +102,13 @@ pathslice(const char *path, char *buf, int beg, int end)
 			break;
 
 		docopy = i >= beg && i <= end;
-		if (docopy && range)
-			*bp++ = '/';
+		if (docopy) {
+			if (isabs && isrange)
+				*bp++ = '/';
+			else if (!isabs)
+				*bp++ = *p;
+		}
+		isabs = 1;
 		for (p++; *p != '/' && *p != '\0'; p++) {
 			if (docopy)
 				*bp++ = *p;
