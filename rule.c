@@ -300,7 +300,8 @@ expr_eval_flag(struct expr *ex, const struct message *msg, struct match *match)
 	/* A move action might be missing. */
 	if (strlen(match->maildir) == 0) {
 		path = message_get_path(msg);
-		pathslice(path, match->maildir, 0, -2);
+		if (pathslice(path, match->maildir, 0, -2) == NULL)
+			err(1, "%s: %s: no maildir found", __func__, path);
 	}
 
 	return 0;
@@ -349,7 +350,8 @@ expr_eval_move(struct expr *ex, const struct message *msg, struct match *match)
 	/* A flag action might already have been evaluted. */
 	if (strlen(match->subdir) == 0) {
 		path = message_get_path(msg);
-		pathslice(path, match->subdir, -2, -2);
+		if (pathslice(path, match->subdir, -2, -2) == NULL)
+			err(1, "%s: %s: no subdir found", __func__, path);
 	}
 
 	return 0;
