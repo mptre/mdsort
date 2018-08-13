@@ -2,8 +2,8 @@ if testcase "basic"; then
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/cur" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
-	maildir "${MAILDIR}/src" {
-		match new move "${MAILDIR}/dst"
+	maildir "src" {
+		match new move "dst"
 	}
 	EOF
 	mdsort
@@ -18,8 +18,8 @@ if testcase "negate"; then
 	mkmsg "src/new" -- "To" "new@example.com"
 	mkmsg "src/cur" -- "To" "cur@example.com"
 	cat <<-EOF >$CONF
-	maildir "${MAILDIR}/src" {
-		match ! new move "${MAILDIR}/dst"
+	maildir "src" {
+		match ! new move "dst"
 	}
 	EOF
 	mdsort
