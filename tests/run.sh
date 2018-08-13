@@ -14,7 +14,7 @@ atexit() {
 }
 
 fail() {
-	printf 'FAIL: %s: %s\n' "$TCDESC" "$@" 1>&2
+	printf 'FAIL: %s:\n\t%s\n' "$TCDESC" "$@" 1>&2
 	TCFAIL=1
 	NERR=$((NERR + 1))
 }
