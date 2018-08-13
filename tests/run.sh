@@ -8,6 +8,8 @@ usage() {
 atexit() {
 	local _err=$?
 
+	assert_pass
+
 	rm -rf "$@"
 	([ $_err -ne 0 ] || [ $NERR -gt 0 ]) && exit 1
 	exit 0
@@ -22,7 +24,8 @@ fail() {
 pass() {
 	[ $TCFAIL -eq 1 ] && return 0
 
-	printf 'PASS: %s\n' "$TCDESC"
+	TCFAIL=0
+	printf '%s: %s\n' "${1:-PASS}" "$TCDESC"
 }
 
 assert_empty() {
@@ -33,6 +36,12 @@ assert_empty() {
 refute_empty() {
 	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null || return 0
 	fail "expected directory ${1} to not be empty"
+}
+
+assert_pass() {
+	if [ $TCFAIL -lt 0 ]; then
+		fail "pass never called"
+	fi
 }
 
 cppvar() {
@@ -108,13 +117,15 @@ mkmsg() {
 }
 
 testcase() {
+	assert_pass
+
 	[ "$1" = "-e" ] && { TCEXIT=1; shift; } || TCEXIT=0
 	TCDESC="${TCFILE}: $@"
-	TCFAIL=0
+	TCFAIL=-1
 	ls -d $MAILDIR/*/ 2>/dev/null | xargs rm -rf
 
 	if echo "$TCDESC" | grep -q -f $SKIP; then
-		echo "SKIP: ${TCDESC}"
+		pass "SKIP"
 		return 1
 	else
 		return 0
