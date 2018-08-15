@@ -234,20 +234,19 @@ nl		: '\n' optnl
 %%
 
 struct config_list *
-parse_config(const char *path, const struct environment *arg)
+parse_config(const char *path, const struct environment *envp)
 {
-	env = arg;
 	fh = fopen(path, "r");
 	if (fh == NULL) {
 		warn("%s", path);
 		return NULL;
 	}
 	confpath = path;
+	env = envp;
 
 	lineno = 1;
 	yyparse();
 	fclose(fh);
-	env = NULL;
 	if (parse_errors > 0)
 		return NULL;
 	return &config;
