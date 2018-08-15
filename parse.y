@@ -20,6 +20,7 @@ static int yypeek(int);
 static void yyungetc(int);
 
 static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
+static const struct environment *env;
 static FILE *fh;
 static const char *confpath;
 static int lineno, lineno_save, parse_errors;
@@ -233,8 +234,9 @@ nl		: '\n' optnl
 %%
 
 struct config_list *
-parse_config(const char *path)
+parse_config(const char *path, const struct environment *arg)
 {
+	env = arg;
 	fh = fopen(path, "r");
 	if (fh == NULL) {
 		warn("%s", path);
@@ -245,6 +247,7 @@ parse_config(const char *path)
 	lineno = 1;
 	yyparse();
 	fclose(fh);
+	env = NULL;
 	if (parse_errors > 0)
 		return NULL;
 	return &config;
@@ -386,27 +389,21 @@ again:
 static char *
 expandtilde(char *str)
 {
-	size_t hlen, slen;
+	char *buf;
+	int len, n;
 
 	if (*str != '~')
 		return str;
 
-	hlen = strlen(home);
-	slen = strlen(str);
-	if (hlen + slen - 1 >= PATH_MAX - 1) {
-		yyerror("path too long");
-		return NULL;
-	}
-	str = realloc(str, hlen + slen + 1);
-	if (str == NULL)
+	len = PATH_MAX;
+	buf = malloc(len);
+	if (buf == NULL)
 		err(1, NULL);
-	/*
-	 * Do not copy leading tilde, slen will therefore guarantee
-	 * NUL-termination.
-	 */
-	memmove(str + hlen, str + 1, slen);
-	memcpy(str, home, hlen);
-	return str;
+	n = snprintf(buf, len, "%s%s", env->home, str + 1);
+	if (n == -1 || n >= len)
+		yyerror("path too long");
+	free(str);
+	return buf;
 }
 
 static int

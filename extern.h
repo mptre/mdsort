@@ -5,6 +5,7 @@
 #endif
 
 /* Forward declarations. */
+struct environment;
 struct expr;
 struct message;
 struct string_list;
@@ -48,7 +49,7 @@ int maildir_walk(struct maildir *md, char *buf);
  * Returns zero on success, non-zero otherwise.
  */
 int maildir_move(const struct maildir *src, const struct maildir *dst,
-    struct message *msg);
+    struct message *msg, const struct environment *env);
 
 /*
  * Parse the message located at path.
@@ -168,12 +169,18 @@ struct config {
 
 TAILQ_HEAD(config_list, config);
 
+struct environment {
+	char home[PATH_MAX];
+	char hostname[HOST_NAME_MAX + 1];
+};
+
 /*
  * Parses the configuration located at path and returns a config list on
  * success.
  * Otherwise, NULL is returned.
  */
-struct config_list *parse_config(const char *path);
+struct config_list *parse_config(const char *path,
+    const struct environment *env);
 
 /*
  * Join root, dirname and filename into a path written to buf which must be at
@@ -198,5 +205,4 @@ void log_debug(const char *fmt, ...)
 void log_info(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 
-extern const char *home, *hostname;
 extern int verbose;

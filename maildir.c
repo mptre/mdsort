@@ -33,7 +33,7 @@ struct maildir {
 static int maildir_create(struct maildir *);
 static int maildir_next(struct maildir *);
 static const char *maildir_genname(const struct maildir *,
-    const struct maildir *, struct message *);
+    const struct maildir *, struct message *, const struct environment *);
 static int maildir_read(struct maildir *, char *);
 static const char *maildir_root(struct maildir *);
 
@@ -114,7 +114,7 @@ maildir_walk(struct maildir *md, char *buf)
 
 int
 maildir_move(const struct maildir *src, const struct maildir *dst,
-    struct message *msg)
+    struct message *msg, const struct environment *env)
 {
 	char buf[NAME_MAX];
 	struct timespec times[2] = {
@@ -140,7 +140,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		warn("fstatat");
 	}
 
-	dstname = maildir_genname(src, dst, msg);
+	dstname = maildir_genname(src, dst, msg, env);
 	dstfd = dirfd(dst->dir);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
@@ -203,7 +203,7 @@ maildir_next(struct maildir *md)
 
 static const char *
 maildir_genname(const struct maildir *src, const struct maildir *dst,
-    struct message *msg)
+    struct message *msg, const struct environment *env)
 {
 	static char fname[NAME_MAX];
 	const char *flags;
@@ -220,7 +220,7 @@ maildir_genname(const struct maildir *src, const struct maildir *dst,
 		count++;
 		ts = time(NULL);
 		n = snprintf(fname, NAME_MAX, "%lld.%d_%d.%s%s",
-		    ts, getpid(), count, hostname, flags);
+		    ts, getpid(), count, env->hostname, flags);
 		if (n == -1 || n >= NAME_MAX)
 			errx(1, "%s: buffer too small", __func__);
 		fd = openat(dirfd(dst->dir), fname, O_WRONLY | O_CREAT | O_EXCL,
