@@ -116,6 +116,17 @@ if testcase -e "invalid line continuation"; then
 	EOF
 fi
 
+if testcase "default path"; then
+	cat <<-EOF >.mdsort.conf
+	maildir "~/Maildir/test1" {
+		match new move "~/Maildir/test2"
+	}
+	EOF
+	HOME=$MAILDIR mdsort -D -n
+	rm -f .mdsort.conf
+	pass
+fi
+
 if testcase -e "missing file"; then
 	mdsort - -n -f missing.conf <<-EOF
 	mdsort: missing.conf: No such file or directory

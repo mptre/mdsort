@@ -63,17 +63,22 @@ fcmp() {
 	return 0
 }
 
-# mdsort [-] [mdsort-argument ...]
+# mdsort [- | -D] [mdsort-argument ...]
 mdsort() {
-	local _input=0 _exit=0
+	local _args="-f mdsort.conf" _input=0 _exit=0
 
-	if [ "$1" = "-" ]; then
-		cat >$_TMP2
-		_input=1
+	while :; do
+		case "$1" in
+		-)	cat >$_TMP2
+			_input=1
+			;;
+		-D)	_args=;;
+		*)	break;;
+		esac
 		shift
-	fi
+	done
 
-	env $ENV "$MDSORT" -f mdsort.conf "$@" >$_TMP1 2>&1 || _exit=1
+	env $ENV "$MDSORT" $_args "$@" >$_TMP1 2>&1 || _exit=1
 	if [ $TCEXIT -ne $_exit ]; then
 		fail "exits ${TCEXIT} != ${_exit}"
 		cat "$_TMP1" 1>&2
