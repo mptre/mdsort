@@ -20,12 +20,13 @@ int
 main(int argc, char *argv[])
 {
 	char path[PATH_MAX];
+	struct environment env;
 	struct config_list *config;
 	struct config *conf;
-	struct environment env;
 	struct maildir *dst, *md;
 	struct message *msg;
-	const char *confpath, *dstpath;
+	const char *dstpath;
+	const char *confpath = NULL;
 	int c;
 	int dflag = 0;
 	int mdflags = MAILDIR_CREATE;
