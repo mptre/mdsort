@@ -87,20 +87,22 @@ main(int argc, char *argv[])
 				continue;
 
 			dstpath = rule_eval(conf->rule, msg);
-			if (dstpath == NULL)
-				goto next;
+			if (dstpath == NULL) {
+				message_free(msg);
+				continue;
+			}
 
 			dst = maildir_open(dstpath, mdflags);
-			if (dst == NULL)
-				goto next;
+			if (dst == NULL) {
+				message_free(msg);
+				continue;
+			}
 			log_info("%s -> %s\n", path, dstpath);
 			if (dflag)
 				rule_inspect(conf->rule, stdout);
 			else
 				maildir_move(md, dst, msg, &env);
 			maildir_close(dst);
-
-next:
 			message_free(msg);
 		}
 		maildir_close(md);
