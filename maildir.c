@@ -118,7 +118,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 {
 	char buf[NAME_MAX];
 	struct timespec times[2] = {
-		{ 0,	UTIME_OMIT, },
+		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
 	};
 	struct stat st;
