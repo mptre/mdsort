@@ -9,11 +9,26 @@ matrix:
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined'
+
     - os: linux
       compiler: gcc
       env:
         - BUILD_TYPE=default
         - CFLAGS=-Werror
+
+    - os: linux
+      compiler: gcc-8
+      env:
+        - BUILD_TYPE=default
+        - CFLAGS=-Werror
+        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined  -fuse-ld=gold'
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-8
+
     - os: linux
       compiler: musl-gcc
       env:
@@ -24,12 +39,14 @@ matrix:
         apt:
           packages:
             - musl-tools
+
     - os: osx
       compiler: clang
       env:
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - TESTFLAGS='-s too\ long'
+
     - os: linux
       compiler: clang
       env:
@@ -42,6 +59,7 @@ matrix:
         apt:
           packages:
             - valgrind
+
 script:
   - |
     (
