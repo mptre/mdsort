@@ -311,26 +311,30 @@ static int
 expr_eval_header(struct expr *ex, const struct message *msg,
     struct match *match)
 {
-	const char *val;
-	const struct string *str;
+	const struct string_list *values;
+	const struct string *key, *val;
 
 	assert(ex->strings != NULL);
 	assert(ex->nmatches > 0);
 
-	TAILQ_FOREACH(str, ex->strings, entry) {
-		val = message_get_header(msg, str->val);
-		if (val == NULL)
-			continue;
-		if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
+	TAILQ_FOREACH(key, ex->strings, entry) {
+		values = message_get_header(msg, key->val);
+		if (values == NULL)
 			continue;
 
-		match_reset(ex->match);
-		ex->match->key = str->val;
-		ex->match->val = val;
-		ex->match->valbeg = ex->matches[0].rm_so;
-		ex->match->valend = ex->matches[0].rm_eo;
-		match_copy(match, val, ex->matches, ex->nmatches);
-		return 0;
+		TAILQ_FOREACH(val, values, entry) {
+			if (regexec(&ex->pattern, val->val, ex->nmatches,
+				    ex->matches, 0))
+				continue;
+
+			match_reset(ex->match);
+			ex->match->key = key->val;
+			ex->match->val = val->val;
+			ex->match->valbeg = ex->matches[0].rm_so;
+			ex->match->valend = ex->matches[0].rm_eo;
+			match_copy(match, val->val, ex->matches, ex->nmatches);
+			return 0;
+		}
 	}
 	return 1;
 }

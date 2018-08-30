@@ -60,6 +60,28 @@ if testcase "many headers"; then
 	pass
 fi
 
+if testcase "duplicate headers"; then
+	mkmsg "src/new" -- "To" "user@example.com" "To" "foo@example.com" \
+		"To" "bar@example.com"
+	mkmsg "src/new" -- "To" "foo@example.com" "To" "admin@example.com" \
+		"To" "bar@example.com"
+	mkmsg "src/new" -- "To" "foo@example.com" "To" "bar@example.com" \
+		"To" "root@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /user/ move "user"
+		match header "To" /admin/ move "admin"
+		match header "To" /root/ move "root"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "user/new"
+	refute_empty "admin/new"
+	refute_empty "root/new"
+	pass
+fi
+
 if testcase "no blank line after headers"; then
 	echo "To: user@example.com" | mkmsg "src/new" -
 	cat <<-EOF >$CONF

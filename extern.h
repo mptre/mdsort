@@ -63,7 +63,8 @@ void message_free(struct message *msg);
 
 const char *message_get_body(const struct message *msg);
 
-const char *message_get_header(const struct message *msg, const char *header);
+const struct string_list *message_get_header(const struct message *msg,
+    const char *header);
 
 const char *message_get_path(const struct message *msg);
 

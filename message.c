@@ -32,7 +32,7 @@ struct message {
 struct header {
 	const char *key;
 	char *val;
-	int decode;
+	struct string_list *values;	/* list of all values for key */
 };
 
 static void message_parse_flags(struct message *);
@@ -41,7 +41,8 @@ static const char *message_parse_headers(struct message *);
 static int cmpheader(const void *, const void *);
 static char *decodeheader(const char *);
 static int findheader(char *, char **, char **, char **, char **);
-static long searchheader(const struct header *, size_t, const char *);
+static ssize_t searchheader(const struct header *, size_t, const char *,
+    size_t *);
 
 struct message *
 message_parse(const char *path)
@@ -103,10 +104,8 @@ message_free(struct message *msg)
 	if (msg == NULL)
 		return;
 
-	for (i = 0; i < msg->nheaders; i++) {
-		if (msg->headers[i].decode)
-			free(msg->headers[i].val);
-	}
+	for (i = 0; i < msg->nheaders; i++)
+		strings_free(msg->headers[i].values);
 	free(msg->buf);
 	free(msg->headers);
 	free(msg);
@@ -118,22 +117,27 @@ message_get_body(const struct message *msg)
 	return msg->body;
 }
 
-const char *
+const struct string_list *
 message_get_header(const struct message *msg, const char *header)
 {
-	struct header *found;
-	long idx;
+	struct header *hdr, *tmp;
+	char *val;
+	ssize_t idx;
+	size_t i, nfound;
 
-	idx = searchheader(msg->headers, msg->nheaders, header);
+	idx = searchheader(msg->headers, msg->nheaders, header, &nfound);
 	if (idx == -1)
 		return NULL;
 
-	found = msg->headers + idx;
-	if (found->decode == 0) {
-		found->val = decodeheader(found->val);
-		found->decode = 1;
+	hdr = msg->headers + idx;
+	if (hdr->values == NULL) {
+		hdr->values = strings_alloc();
+		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
+			val = decodeheader(tmp->val);
+			strings_append(hdr->values, val);
+		}
 	}
-	return found->val;
+	return hdr->values;
 }
 
 const char *
@@ -228,7 +232,7 @@ message_parse_headers(struct message *msg)
 			err(1, NULL);
 		msg->headers[msg->nheaders].key = keybeg;
 		msg->headers[msg->nheaders].val = valbeg;
-		msg->headers[msg->nheaders].decode = 0;
+		msg->headers[msg->nheaders].values = NULL;
 		msg->nheaders++;
 
 		buf = valend + 1;
@@ -314,12 +318,16 @@ findheader(char *str, char **keybeg, char **keyend, char **valbeg,
 	return 0;
 }
 
-static long
-searchheader(const struct header *headers, size_t nmemb, const char *key)
+static ssize_t
+searchheader(const struct header *headers, size_t nmemb, const char *key,
+    size_t *nfound)
 {
 	struct header needle;
-	long hi, mi, lo;
+	ssize_t hi, mi, lo;
+	size_t i;
 	int cmp;
+
+	*nfound = 0;
 
 	if (nmemb == 0)
 		return -1;
@@ -331,8 +339,17 @@ searchheader(const struct header *headers, size_t nmemb, const char *key)
 	while (lo <= hi) {
 		mi = lo + (hi - lo)/2;
 		cmp = cmpheader(&needle, headers + mi);
-		if (cmp == 0)
+		if (cmp == 0) {
+			/* Move backwards to the first matching element. */
+			for (; mi > 0; mi--)
+				if (cmpheader(&needle, headers + mi - 1))
+					break;
+			for (i = mi; i < nmemb; i++)
+				if (cmpheader(&needle, headers + i))
+					break;
+			*nfound = i - mi;
 			return mi;
+		}
 		if (cmp > 0)
 			lo = mi + 1;
 		else
