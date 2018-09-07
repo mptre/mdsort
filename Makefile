@@ -42,10 +42,10 @@ DISTFILES=	GNUmakefile \
 		rule.c \
 		tests/GNUmakefile \
 		tests/Makefile \
+		tests/action-flag.sh \
 		tests/basic.sh \
 		tests/conf.sh \
 		tests/dry.sh \
-		tests/flag.sh \
 		tests/match-all.sh \
 		tests/match-body.sh \
 		tests/match-header.sh \

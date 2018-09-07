@@ -1,9 +1,9 @@
 MDSORT=	${.CURDIR}/../mdsort
 
-TESTS=	basic.sh \
+TESTS=	action-flag.sh \
+	basic.sh \
 	conf.sh \
 	dry.sh \
-	flag.sh \
 	match-all.sh \
 	match-body.sh \
 	match-header.sh \
