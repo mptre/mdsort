@@ -169,20 +169,20 @@ expraction	: MOVE STRING {
 			struct string_list *strings;
 			char *path;
 
+			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
 			path = expandtilde($2);
 			if (path == NULL)
 				YYERROR;
 			strings = strings_alloc();
 			strings_append(strings, path);
-			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
 			expr_set_strings($$, strings);
 		}
 		| FLAG flag {
 			struct string_list *strings;
 
+			$$ = expr_alloc(EXPR_TYPE_FLAG, NULL, NULL);
 			strings = strings_alloc();
 			strings_append(strings, $2);
-			$$ = expr_alloc(EXPR_TYPE_FLAG, NULL, NULL);
 			expr_set_strings($$, strings);
 		}
 		;
