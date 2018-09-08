@@ -35,8 +35,10 @@ The first matching rule is favored.
 A rule is defined as follows:
 .Bl -tag -width XXX
 .It Ic match Ar condition action
-A rule starts with the match keyword followed by one or many conditions and an
-action.
+A rule starts with the
+.Ic match
+keyword followed conditions and actions.
+The actions will only be performed if the conditions evaluates to true.
 Each rule spans to the end of the current line but can extended over multiple
 lines using a backslash
 .Pq Sq \e .
@@ -93,9 +95,10 @@ is true.
 .Pp
 Next comes one or many actions:
 .Bl -tag -width Ds
+.It Ic flag Oo Ic \&! Oc Ic new
+Flag the message as read or not.
 .It Ic move Dq Ar path
-If the condition(s) evaluates to true,
-move the message to the maildir located at
+Move the message to the maildir located at
 .Ar path .
 The
 .Ar path
@@ -107,7 +110,7 @@ is a digit.
 The digit refers to the nth subexpression of the first matching
 .Ar pattern
 and will be replaced with matched string.
-Using back-references with many
+Note, using back-references with many
 .Ic or
 conditions is not encouraged since the
 .Ar pattern
@@ -115,9 +118,7 @@ that matches first may vary.
 .Pp
 Only one
 .Ic move
-action may be defined per rule.
-.It Ic flag Oo Ic \&! Oc Ic new
-Flag the message as read or not.
+action can be defined per rule.
 .El
 .It Ic match Ar condition No { Ar rule ... No }
 The nested block of rules
