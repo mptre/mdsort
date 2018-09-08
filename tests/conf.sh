@@ -41,11 +41,13 @@ if testcase "sanity"; then
 	}
 	EOF
 	mdsort - -n </dev/null
+	pass
 fi
 
 if testcase "empty"; then
 	>$CONF
 	mdsort - -n </dev/null
+	pass
 fi
 
 if testcase "comments"; then
@@ -60,6 +62,7 @@ if testcase "comments"; then
 	}
 	EOF
 	mdsort - -n </dev/null
+	pass
 fi
 
 if testcase "escape quote inside string"; then
@@ -67,6 +70,7 @@ if testcase "escape quote inside string"; then
 	maildir "~/Maildir\"" {}
 	EOF
 	mdsort - -n </dev/null
+	pass
 fi
 
 if testcase "escape slash inside pattern"; then
@@ -76,6 +80,7 @@ if testcase "escape slash inside pattern"; then
 	}
 	EOF
 	mdsort - -n </dev/null
+	pass
 fi
 
 if testcase -e "rule must end with newline"; then
@@ -86,6 +91,7 @@ if testcase -e "rule must end with newline"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
+	pass
 fi
 
 if testcase -e "empty maildir path"; then
@@ -95,6 +101,7 @@ if testcase -e "empty maildir path"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:1: empty string
 	EOF
+	pass
 fi
 
 if testcase -e "unknown keyword"; then
@@ -104,6 +111,7 @@ if testcase -e "unknown keyword"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:1: unknown keyword: noway
 	EOF
+	pass
 fi
 
 if testcase -e "invalid line continuation"; then
@@ -114,6 +122,7 @@ if testcase -e "invalid line continuation"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:1: syntax error
 	EOF
+	pass
 fi
 
 if testcase "default path"; then
@@ -131,6 +140,7 @@ if testcase -e "missing file"; then
 	mdsort - -n -f missing.conf <<-EOF
 	mdsort: missing.conf: No such file or directory
 	EOF
+	pass
 fi
 
 if testcase -e "invalid pattern"; then
@@ -155,6 +165,7 @@ if testcase -e "missing header name"; then
 	mdsort.conf:2: empty string
 	mdsort.conf:3: empty string
 	EOF
+	pass
 fi
 
 if testcase -e "empty move destination"; then
@@ -166,6 +177,7 @@ if testcase -e "empty move destination"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:2: empty string
 	EOF
+	pass
 fi
 
 if testcase -e "keyword too long"; then
@@ -178,6 +190,7 @@ if testcase -e "keyword too long"; then
 	mdsort.conf:2: keyword too long
 	mdsort.conf:2: syntax error
 	EOF
+	pass
 fi
 
 if testcase -e "string too long"; then
@@ -188,6 +201,7 @@ if testcase -e "string too long"; then
 	mdsort.conf:1: string too long
 	mdsort.conf:1: syntax error
 	EOF
+	pass
 fi
 
 if testcase -e "string unterminated"; then
@@ -198,6 +212,7 @@ if testcase -e "string unterminated"; then
 	mdsort.conf:1: unterminated string
 	mdsort.conf:1: syntax error
 	EOF
+	pass
 fi
 
 if testcase -e "pattern too long"; then
@@ -211,6 +226,7 @@ if testcase -e "pattern too long"; then
 	mdsort.conf:2: pattern too long
 	mdsort.conf:2: syntax error
 	EOF
+	pass
 fi
 
 if testcase -e "pattern unterminated"; then
@@ -223,6 +239,7 @@ if testcase -e "pattern unterminated"; then
 	mdsort.conf:2: unterminated pattern
 	mdsort.conf:2: syntax error
 	EOF
+	pass
 fi
 
 if testcase -e "maildir path too long after tilde expansion"; then
@@ -232,6 +249,7 @@ if testcase -e "maildir path too long after tilde expansion"; then
 	HOME=/home/user mdsort - -n <<-EOF
 	mdsort.conf:1: path too long
 	EOF
+	pass
 fi
 
 if testcase -e "destination path too long after tilde expansion"; then
@@ -244,6 +262,7 @@ if testcase -e "destination path too long after tilde expansion"; then
 	HOME=/home/user mdsort - -n <<-EOF
 	mdsort.conf:2: path too long
 	EOF
+	pass
 fi
 
 if testcase -e "missing left-hand expr with and"; then
@@ -255,6 +274,7 @@ if testcase -e "missing left-hand expr with and"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
+	pass
 fi
 
 if testcase -e "missing right-hand expr with and"; then
@@ -266,6 +286,7 @@ if testcase -e "missing right-hand expr with and"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
+	pass
 fi
 
 if testcase -e "empty nested match block"; then
@@ -278,6 +299,7 @@ if testcase -e "empty nested match block"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:3: empty nested match block
 	EOF
+	pass
 fi
 
 if testcase -e "missing action"; then
@@ -289,6 +311,7 @@ if testcase -e "missing action"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:3: missing action
 	EOF
+	pass
 fi
 
 if testcase -e "duplicate move actions"; then
@@ -300,4 +323,5 @@ if testcase -e "duplicate move actions"; then
 	mdsort - -n <<-EOF
 	mdsort.conf:2: move action already defined
 	EOF
+	pass
 fi
