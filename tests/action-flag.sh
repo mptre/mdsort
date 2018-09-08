@@ -1,5 +1,5 @@
 if testcase "flag as new"; then
-	mkmsg "src/cur" -- "To" "user@example.com"
+	mkmsg "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match !new flag new
@@ -12,7 +12,7 @@ if testcase "flag as new"; then
 fi
 
 if testcase "flag as not new"; then
-	mkmsg "src/new" -- "To" "user@example.com"
+	mkmsg "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new flag !new
@@ -25,7 +25,7 @@ if testcase "flag as not new"; then
 fi
 
 if testcase "flag and move"; then
-	mkmsg "src/new" -- "To" "user@example.com"
+	mkmsg "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new move "dst" flag !new
@@ -38,7 +38,7 @@ if testcase "flag and move"; then
 fi
 
 if testcase "move and flag"; then
-	mkmsg "src/new" -- "To" "user@example.com"
+	mkmsg "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new flag !new move "dst"
@@ -51,7 +51,7 @@ if testcase "move and flag"; then
 fi
 
 if testcase "flag as not new when path flags are missing"; then
-	mkmsg "src/new" -- "To" "user@example.com"
+	mkmsg "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new flag !new
@@ -66,7 +66,7 @@ if testcase "flag as not new when path flags are missing"; then
 fi
 
 if testcase "flag as not new when path flags are invalid"; then
-	mkmsg "src/new" -s ":1,S" -- "To" "user@example.com"
+	mkmsg  -s ":1,S" "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new flag !new
@@ -81,7 +81,7 @@ if testcase "flag as not new when path flags are invalid"; then
 fi
 
 if testcase "flag as not new when path flags are already present"; then
-	mkmsg "src/new" -s ":2,S" -- "To" "user@example.com"
+	mkmsg -s ":2,S" "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new flag !new
@@ -96,7 +96,7 @@ if testcase "flag as not new when path flags are already present"; then
 fi
 
 if testcase "flag as not new when path flags are valid"; then
-	mkmsg "src/new" -s ":2,R" -- "To" "user@example.com"
+	mkmsg -s ":2,R" "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new flag !new

@@ -1,6 +1,6 @@
 if testcase "basic"; then
-	mkmsg "src/new" -- "To" "user@example.com"
-	mkmsg "src/cur" -- "To" "user@example.com"
+	mkmsg "src/new"
+	mkmsg "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new move "dst"
@@ -15,8 +15,8 @@ if testcase "basic"; then
 fi
 
 if testcase "negate"; then
-	mkmsg "src/new" -- "To" "new@example.com"
-	mkmsg "src/cur" -- "To" "cur@example.com"
+	mkmsg "src/new"
+	mkmsg "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match ! new move "dst"

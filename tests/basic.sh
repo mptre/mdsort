@@ -1,5 +1,5 @@
 if testcase "tilde expansion"; then
-	echo "Hello Bob" | mkmsg "src/new" - -- "To" "user@example.com"
+	echo "Hello Bob" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "~/src" {
 		match body /Bob/ move "~/dst"
@@ -25,8 +25,8 @@ if testcase "escape slash in pattern"; then
 fi
 
 if testcase "match negate binds to the innermost condition"; then
-	echo "Hello!" | mkmsg "src/new" - -- "To" "admin@example.com"
-	echo "Bye!" | mkmsg "src/new" - -- "To" "user@example.com"
+	echo "Hello!" | mkmsg -b "src/new" -- "To" "admin@example.com"
+	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match ! body /hello/i or header "To" /user/ move "dst"
@@ -39,8 +39,8 @@ if testcase "match negate binds to the innermost condition"; then
 fi
 
 if testcase "match negate nested condition"; then
-	echo "Hello!" | mkmsg "src/new" - -- "To" "admin@example.com"
-	echo "Bye!" | mkmsg "src/new" - -- "To" "user@example.com"
+	echo "Hello!" | mkmsg -b "src/new" -- "To" "admin@example.com"
+	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match !(body /hello/i or header "To" /admin/) move "dst"
@@ -53,8 +53,8 @@ if testcase "match negate nested condition"; then
 fi
 
 if testcase "match nested"; then
-	echo "Hello!" | mkmsg "src/new" - -- "To" "user@example.com"
-	echo "Bye!" | mkmsg "src/new" - -- "To" "user@example.com"
+	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
+	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /user/ {
@@ -119,7 +119,7 @@ if testcase "match case insensitive"; then
 fi
 
 if testcase "unique suffix is preserved when valid"; then
-	mkmsg "src/new" -s ":2,S" -- "To" "user@example.com"
+	mkmsg -s ":2,S" "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /user/ move "dst"
@@ -134,7 +134,7 @@ if testcase "unique suffix is preserved when valid"; then
 fi
 
 if testcase "unique suffix is preserved when invalid"; then
-	mkmsg "src/new" -s ":1,S" -- "To" "user@example.com"
+	mkmsg -s ":1,S" "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /user/ move "dst"

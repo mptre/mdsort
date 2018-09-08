@@ -30,8 +30,8 @@ if testcase "many or conditions"; then
 fi
 
 if testcase "many and/or conditions"; then
-	echo "Hello!" | mkmsg "src/new" - -- "To" "user1@example.com"
-	echo "Hello!" | mkmsg "src/new" - -- "Cc" "user2@example.com"
+	echo "Hello!" | mkmsg -b "src/new" -- "To" "user1@example.com"
+	echo "Hello!" | mkmsg -b "src/new" -- "Cc" "user2@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match body /hello/i and \

@@ -14,58 +14,32 @@ EOF
 fi
 
 if testcase "match header on middle line"; then
-	mkmsg "src/new" - <<EOF
-To: admin@example.com,
-	user@example.com,
-	no-reply@example.com
-
-EOF
+	mkmsg "src/new" -- "To" \
+		"$(printf 'admin@a.com,\n\tuser@a.com,\n\tno-reply@a.com')"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /user/ move "dst"
 	}
 	EOF
 	cat <<EOF >$TMP1
-To: admin@example.com,user@example.com,no-reply@example.com
-                      ^  $
+To: admin@a.com,user@a.com,no-reply@a.com
+                ^  $
 EOF
 	mdsort -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
 if testcase "match header on last line"; then
-	mkmsg "src/new" - <<EOF
-To: admin@example.com,
-  user@example.com,
-
-EOF
+	mkmsg "src/new" -- "To" \
+		"$(printf 'admin@example.com,\n\tuser@example.com')"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /user/ move "dst"
 	}
 	EOF
 	cat <<EOF >$TMP1
-To: admin@example.com,user@example.com,
+To: admin@example.com,user@example.com
                       ^  $
-EOF
-	mdsort -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2 && pass
-fi
-
-if testcase "match header with tab indent"; then
-	mkmsg "src/new" - <<EOF
-Cc: admin@example.com,
-	user@example.com
-
-EOF
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match header "Cc" /user@example.com/ move "dst"
-	}
-	EOF
-	cat <<EOF >$TMP1
-Cc: admin@example.com,user@example.com
-                      ^              $
 EOF
 	mdsort -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -84,7 +58,7 @@ if testcase "match header negate"; then
 fi
 
 if testcase "match body on first line"; then
-	echo "Hello" | mkmsg "src/new" - -- "To" "user@example.com"
+	echo "Hello" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match body /hello/i move "dst"
@@ -99,7 +73,7 @@ if testcase "match body on first line"; then
 fi
 
 if testcase "match body on first line no newline"; then
-	printf 'To: user@example.com\n\nHello' | mkmsg "src/new" -
+	printf 'To: user@example.com\n\nHello' | mkmsg -b "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match body /hello/i move "dst"
@@ -114,7 +88,7 @@ if testcase "match body on first line no newline"; then
 fi
 
 if testcase "match body on middle line"; then
-	mkmsg "src/new" - <<-EOF
+	mkmsg -b "src/new" <<-EOF
 	To: user@example.com
 
 	Hi,
@@ -135,7 +109,7 @@ if testcase "match body on middle line"; then
 fi
 
 if testcase "match body spanning multiple lines"; then
-	mkmsg "src/new" - -- "To" "user@example.com" <<-EOF
+	mkmsg -b "src/new" -- "To" "user@example.com" <<-EOF
 	He
 	llo
 	EOF
@@ -149,7 +123,7 @@ if testcase "match body spanning multiple lines"; then
 fi
 
 if testcase "match many headers and body"; then
-	echo "Hello!" | mkmsg "src/new" - -- \
+	echo "Hello!" | mkmsg -b "src/new" -- \
 		"Cc" "admin@example.com" "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -170,8 +144,8 @@ EOF
 fi
 
 if testcase "matches from previous evaluations are discarded"; then
-	echo "Bye!" | mkmsg "src/new" - -- "To" "user@example.com"
-	echo "Hello!" | mkmsg "src/new" - -- "Cc" "admin@example.com"
+	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
+	echo "Hello!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match (header "Cc" /admin/ or header "To" /user/) and \
@@ -189,8 +163,8 @@ EOF
 fi
 
 if testcase "matches from previous evaluations are discarded, inverted"; then
-	echo "Bye!" | mkmsg "src/new" - -- "Cc" "admin@example.com"
-	echo "Hello!" | mkmsg "src/new" - -- "To" "user@example.com"
+	echo "Bye!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
+	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match (header "Cc" /admin/ or header "To" /user/) and \
@@ -208,8 +182,8 @@ EOF
 fi
 
 if testcase "match nested rules"; then
-	echo "Bye!" | mkmsg "src/new" - -- "Cc" "admin@example.com"
-	echo "Hello!" | mkmsg "src/new" - -- "To" "user@example.com"
+	echo "Bye!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
+	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header { "Cc" "To" } /example/ {

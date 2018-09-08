@@ -16,7 +16,7 @@ atexit() {
 }
 
 fail() {
-	printf 'FAIL: %s:\n\t%s\n' "$TCDESC" "$@" 1>&2
+	printf 'FAIL: %s\n\t%s\n' "$TCDESC" "$@" 1>&2
 	TCFAIL=1
 	NERR=$((NERR + 1))
 }
@@ -92,15 +92,25 @@ mdsort() {
 	fi
 }
 
-# mkmsg directory [-s suffix] [-] [-- headers ...]
+# mkmsg [-H] [-b] [-s suffix] [-- headers ...]
 mkmsg() {
-	local _dir _headers=0 _name _path _stdin=0 _suffix
+	local _body=0 _dir _headers=1 _name _path _suffix
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-b)	_body=1;;
+		-H)	_headers=0;;
+		-s)
+			shift
+			_suffix="$1"
+			;;
+		*)	break
+		esac
+		shift
+	done
 
 	_dir="${MAILDIR}/${1}"; shift
 	mkdir -p "$_dir"
-
-	[ "$1" = "-s" ] && { shift; _suffix=$1; shift; }
-	[ "$1" = "-" ] && { _stdin=1; shift; }
 
 	while :; do
 		_name=$(printf '%d.%d_%d.hostname%s' \
@@ -111,15 +121,14 @@ mkmsg() {
 	touch "$_path"
 
 	if [ "$1" = "--" ]; then
-		_headers=1
 		shift
 		while [ $# -gt 0 ]; do
 			echo "${1}: ${2}" >>$_path
 			shift 2
 		done
 	fi
-	[ $_headers -eq 1 ] && echo >>$_path || true
-	[ $_stdin -eq 1 ] && cat >>$_path || true
+	[ $_headers -eq 1 ] && printf 'Content-Type: text/plain\n\n' >>$_path
+	[ $_body -eq 1 ] && cat >>$_path || true
 }
 
 testcase() {

@@ -28,11 +28,7 @@ if testcase "negate"; then
 fi
 
 if testcase "line continuation"; then
-	mkmsg "src/new" - <<EOF
-Subject: foo
-	bar
-
-EOF
+	mkmsg "src/new" -- "Subject" "$(printf 'foo\n\tbar')"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "Subject" /foobar/ move "dst"
@@ -83,7 +79,7 @@ if testcase "duplicate headers"; then
 fi
 
 if testcase "no blank line after headers"; then
-	echo "To: user@example.com" | mkmsg "src/new" -
+	echo "To: user@example.com" | mkmsg -H -b "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /user/ move "dst"
