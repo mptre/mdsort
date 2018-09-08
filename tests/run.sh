@@ -108,6 +108,7 @@ mkmsg() {
 		_path="${_dir}/${_name}"
 		[ -e "$_path" ] || break
 	done
+	touch "$_path"
 
 	if [ "$1" = "--" ]; then
 		_headers=1
