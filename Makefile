@@ -21,7 +21,8 @@ DEPS=	${SRCS:.c=.d}
 CFLAGS+=	${DEBUG}
 CPPFLAGS+=	-I${.CURDIR}
 
-DISTFILES=	GNUmakefile \
+DISTFILES=	CHANGELOG.md \
+		GNUmakefile \
 		LICENSE \
 		Makefile \
 		README.md \
