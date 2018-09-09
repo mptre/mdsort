@@ -34,7 +34,7 @@ matrix:
       env:
         - BUILD_TYPE=default
         - CFLAGS=-Werror
-        - TESTFLAGS='-s tilde\ expansion'
+        - TESTFLAGS='-i tilde\ expansion'
       addons:
         apt:
           packages:
@@ -45,7 +45,7 @@ matrix:
       env:
         - BUILD_TYPE=default
         - CFLAGS=-Werror
-        - TESTFLAGS='-s too\ long'
+        - TESTFLAGS='-i too\ long'
 
     - os: linux
       compiler: clang
@@ -53,7 +53,7 @@ matrix:
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - DEBUG-g
-        - TESTFLAGS='-e valgrind -s conf.sh'
+        - TESTFLAGS='-e valgrind -i conf.sh'
         - VALGRIND_OPTS='--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all'
       addons:
         apt:

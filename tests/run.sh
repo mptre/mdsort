@@ -1,7 +1,14 @@
 set -e
 
 usage() {
-	echo "usage: sh run.sh [-e env] [-s skip] -b binary test-file ..." 1>&2
+	cat <<-EOF | xargs 1>&2
+	usage: sh run.sh
+		[-e env]
+		[-f filter-test]
+		[-i ignore-test]
+		-b binary
+		test-file ...
+	EOF
 	exit 1
 }
 
@@ -139,12 +146,13 @@ testcase() {
 	TCFAIL=-1
 	ls -d $MAILDIR/*/ 2>/dev/null | xargs rm -rf
 
-	if echo "$TCDESC" | grep -q -f $SKIP; then
-		pass "SKIP"
-		return 1
-	else
+	if [ -s "$FILTER" ]; then
+		echo "$TCDESC" | grep -q -f "$FILTER" && return 0
+	elif ! echo "$TCDESC" | grep -q -f $IGNORE; then
 		return 0
 	fi
+	pass "SKIP"
+	return 1
 }
 
 # randstr length predicate
@@ -179,14 +187,18 @@ TMP2="${MAILDIR}/tmp2"
 _TMP1="${MAILDIR}/_tmp1"
 _TMP2="${MAILDIR}/_tmp2"
 
-SKIP="${MAILDIR}/skip"
->$SKIP
+FILTER="${MAILDIR}/include"
+>$FILTER
 
-while getopts "b:e:s:" opt; do
+IGNORE="${MAILDIR}/ignore"
+>$IGNORE
+
+while getopts "b:e:f:i:" opt; do
 	case "$opt" in
 	b)	MDSORT=$OPTARG;;
 	e)	ENV="${ENV} ${OPTARG}";;
-	s)	echo "$OPTARG" >>$SKIP;;
+	f)	echo "$OPTARG" >>$FILTER;;
+	i)	echo "$OPTARG" >>$IGNORE;;
 	*)	usage;;
 	esac
 done
