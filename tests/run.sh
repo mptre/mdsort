@@ -187,7 +187,7 @@ TMP2="${MAILDIR}/tmp2"
 _TMP1="${MAILDIR}/_tmp1"
 _TMP2="${MAILDIR}/_tmp2"
 
-FILTER="${MAILDIR}/include"
+FILTER="${MAILDIR}/filter"
 >$FILTER
 
 IGNORE="${MAILDIR}/ignore"
