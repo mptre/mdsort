@@ -52,6 +52,7 @@ DISTFILES=	CHANGELOG.md \
 		tests/match-header.sh \
 		tests/match-logical.sh \
 		tests/match-new.sh \
+		tests/match-old.sh \
 		tests/run.sh \
 		util.c
 

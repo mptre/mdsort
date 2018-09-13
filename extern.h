@@ -70,6 +70,8 @@ const char *message_get_path(const struct message *msg);
 
 const char *message_get_flags(const struct message *msg);
 
+int message_has_flags(const struct message *msg, unsigned char flag);
+
 void message_set_flags(struct message *msg, unsigned char flag);
 
 /*
@@ -101,6 +103,7 @@ enum expr_type {
 	EXPR_TYPE_BODY,
 	EXPR_TYPE_HEADER,
 	EXPR_TYPE_NEW,
+	EXPR_TYPE_OLD,
 	EXPR_TYPE_MOVE,
 	EXPR_TYPE_FLAG,
 };

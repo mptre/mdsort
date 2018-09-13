@@ -64,6 +64,8 @@ static int expr_eval_move(struct expr *, const struct message *,
     struct match *);
 static int expr_eval_new(struct expr *, const struct message *,
     struct match *);
+static int expr_eval_old(struct expr *, const struct message *,
+    struct match *);
 static void expr_free(struct expr *);
 static void expr_inspect(const struct expr *, FILE *, int);
 static void expr_inspect_body(const struct expr *, FILE *);
@@ -144,6 +146,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_NEG:
 	case EXPR_TYPE_ALL:
 	case EXPR_TYPE_NEW:
+	case EXPR_TYPE_OLD:
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
 		break;
@@ -239,6 +242,9 @@ expr_eval(struct expr *ex, const struct message *msg, struct match *match,
 		break;
 	case EXPR_TYPE_NEW:
 		res = expr_eval_new(ex, msg, match);
+		break;
+	case EXPR_TYPE_OLD:
+		res = expr_eval_old(ex, msg, match);
 		break;
 	case EXPR_TYPE_MOVE:
 		res = expr_eval_move(ex, msg, match);
@@ -374,6 +380,21 @@ expr_eval_new(struct expr *ex __attribute__((__unused__)),
 	return 0;
 }
 
+static int
+expr_eval_old(struct expr *ex __attribute__((__unused__)),
+    const struct message *msg, struct match *match __attribute__((__unused__)))
+{
+	char buf[NAME_MAX];
+	const char *path;
+
+	if (message_has_flags(msg, 'S'))
+		return 1;
+	path = message_get_path(msg);
+	if (pathslice(path, buf, -2, -2) == NULL || strcmp(buf, "cur"))
+		return 1;
+	return 0;
+}
+
 static void
 expr_free(struct expr *ex)
 {
@@ -412,6 +433,7 @@ expr_inspect(const struct expr *ex, FILE *fh, int cookie)
 	case EXPR_TYPE_NEG:
 	case EXPR_TYPE_ALL:
 	case EXPR_TYPE_NEW:
+	case EXPR_TYPE_OLD:
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
 		break;

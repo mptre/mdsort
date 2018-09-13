@@ -40,7 +40,7 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL BODY FLAG HEADER MAILDIR MATCH MOVE NEW PATTERN STRING
+%token ALL BODY FLAG HEADER MAILDIR MATCH MOVE NEW OLD PATTERN STRING
 %type <str> STRING flag
 %type <i> optneg
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
@@ -142,6 +142,9 @@ expr3		: BODY PATTERN {
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW, NULL, NULL);
+		}
+		| OLD {
+			$$ = expr_alloc(EXPR_TYPE_OLD, NULL, NULL);
 		}
 		| ALL {
 			$$ = expr_alloc(EXPR_TYPE_ALL, NULL, NULL);
@@ -282,6 +285,7 @@ yylex(void)
 		{ "match",	MATCH },
 		{ "move",	MOVE },
 		{ "new",	NEW },
+		{ "old",	OLD },
 		{ "or",		OR },
 		{ NULL,		0 },
 	};

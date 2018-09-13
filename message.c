@@ -179,6 +179,14 @@ message_get_flags(const struct message *msg)
 	return buf;
 }
 
+int
+message_has_flags(const struct message *msg, unsigned char flag)
+{
+	assert(isupper(flag));
+
+	return msg->flags & FLAG(flag);
+}
+
 void
 message_set_flags(struct message *msg, unsigned char flag)
 {

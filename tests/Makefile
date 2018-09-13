@@ -8,7 +8,8 @@ TESTS=	action-flag.sh \
 	match-body.sh \
 	match-header.sh \
 	match-logical.sh \
-	match-new.sh
+	match-new.sh \
+	match-old.sh
 
 .SUFFIXES: .sh .out
 
