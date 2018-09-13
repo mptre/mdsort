@@ -366,11 +366,10 @@ expr_eval_new(struct expr *ex __attribute__((__unused__)),
     const struct message *msg, struct match *match __attribute__((__unused__)))
 {
 	char buf[NAME_MAX];
-	const char *path, *subdir;
+	const char *path;
 
 	path = message_get_path(msg);
-	subdir = pathslice(path, buf, -2, -2);
-	if (subdir == NULL || strcmp(subdir, "new"))
+	if (pathslice(path, buf, -2, -2) == NULL || strcmp(buf, "new"))
 		return 1;
 	return 0;
 }
