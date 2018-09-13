@@ -99,7 +99,7 @@ mdsort() {
 	fi
 }
 
-# mkmsg [-H] [-b] [-s suffix] [-- headers ...]
+# mkmsg [-H] [-b] [-s suffix] dir [-- headers ...]
 mkmsg() {
 	local _body=0 _dir _headers=1 _name _path _suffix
 
