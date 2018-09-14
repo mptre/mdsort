@@ -56,6 +56,7 @@ maildir_open(const char *path, int flags)
 	if ((md->flags & MAILDIR_WALK)) {
 		md->subdir = SUBDIR_NEW;
 	} else if (parsesubdir(path, &md->subdir)) {
+		warnx("%s: subdir not found", path);
 		maildir_close(md);
 		return NULL;
 	}
@@ -270,23 +271,16 @@ static int
 parsesubdir(const char *path, enum subdir *subdir)
 {
 	char buf[NAME_MAX];
-	const char *name;
 
-	name = pathslice(path, buf, -1, -1);
-	if (name == NULL)
-		goto err;
-
-	if (strcmp(name, "new") == 0) {
+	if (pathslice(path, buf, -1, -1) == NULL) {
+		return 1;
+	} else if (strcmp(buf, "new") == 0) {
 		*subdir = SUBDIR_NEW;
 		return 0;
-	}
-	if (strcmp(name, "cur") == 0) {
+	} else if (strcmp(buf, "cur") == 0) {
 		*subdir = SUBDIR_CUR;
 		return 0;
 	}
-
-err:
-	warnx("%s: %s: subdir not found", __func__, path);
 	return 1;
 }
 
