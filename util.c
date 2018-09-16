@@ -10,6 +10,8 @@
 
 #include "extern.h"
 
+static int verbose;
+
 struct string_list *
 strings_alloc(void)
 {
@@ -117,6 +119,12 @@ pathslice(const char *path, char *buf, int beg, int end)
 	*bp = '\0';
 
 	return buf;
+}
+
+void
+log_init(int v)
+{
+	verbose = v;
 }
 
 void

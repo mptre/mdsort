@@ -203,10 +203,10 @@ char *pathjoin(char *buf, const char *root, const char *dirname,
  */
 char *pathslice(const char *path, char *buf, int beg, int end);
 
+void log_init(int v);
+
 void log_debug(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 
 void log_info(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
-
-extern int verbose;

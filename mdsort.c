@@ -10,8 +10,6 @@
 
 #include "extern.h"
 
-int verbose = 0;
-
 static const char *defaultconf(const struct environment *);
 static void readenv(struct environment *);
 static __dead void usage(void);
@@ -31,6 +29,7 @@ main(int argc, char *argv[])
 	int dflag = 0;
 	int mdflags = MAILDIR_CREATE;
 	int nflag = 0;
+	int verbose = 0;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
 		err(1, "pledge");
@@ -61,6 +60,7 @@ main(int argc, char *argv[])
 		usage();
 	if (dflag && verbose < 1)
 		verbose = 1;
+	log_init(verbose);
 
 	/* Extract mandatory data from the current environment. */
 	readenv(&env);
