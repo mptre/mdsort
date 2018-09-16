@@ -111,8 +111,7 @@ expr1		: expr1 AND expr1 {
 		;
 
 expr2		: expractions {
-			if (expr_count($1, EXPR_TYPE_MOVE) == 0 &&
-			    expr_count($1, EXPR_TYPE_FLAG) == 0)
+			if ($$ == NULL)
 				yyerror("missing action");
 		}
 		| exprblock {
