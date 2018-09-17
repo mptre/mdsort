@@ -155,15 +155,17 @@ message_get_flags(const struct message *msg)
 	int bit = 0;
 	int i = 0;
 
-	if (msg->nflags <= 0) {
+	if (msg->nflags == -1) {
 		/*
-		 * Parsing the flags could have failed, just give back the flags
-		 * in its original form.
+		 * Parsing the flags failed, just give back the flags in its
+		 * original form.
 		 */
 		p = strrchr(msg->path, ':');
 		if (p == NULL)
 			return "";
 		return p;
+	} else if (msg->nflags == 0) {
+		return "";
 	}
 
 	buf[i++] = ':';
@@ -188,15 +190,26 @@ message_has_flags(const struct message *msg, unsigned char flag)
 }
 
 void
-message_set_flags(struct message *msg, unsigned char flag)
+message_set_flags(struct message *msg, unsigned char flag, int add)
 {
 	assert(isupper(flag));
 
 	if (msg->nflags == -1)
 		return;
 
-	msg->flags |= FLAG(flag);
-	msg->nflags = 1;
+	if (add) {
+		if (msg->flags & FLAG(flag))
+			return;
+
+		msg->flags |= FLAG(flag);
+		msg->nflags++;
+	} else {
+		if ((msg->flags & FLAG(flag)) == 0)
+			return;
+
+		msg->flags &= ~FLAG(flag);
+		msg->nflags--;
+	}
 }
 
 static void
@@ -215,13 +228,12 @@ message_parse_flags(struct message *msg)
 
 	for (p += 3; *p != '\0'; p++) {
 		if (isupper(*p)) {
-			msg->flags |= FLAG(*p);
+			message_set_flags(msg, *p, 1);
 		} else {
 			log_debug("%s: %s: invalid flags", __func__, msg->path);
 			return;
 		}
 	}
-	msg->nflags = 1;
 }
 
 static const char *

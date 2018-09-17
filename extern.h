@@ -72,7 +72,7 @@ const char *message_get_flags(const struct message *msg);
 
 int message_has_flags(const struct message *msg, unsigned char flag);
 
-void message_set_flags(struct message *msg, unsigned char flag);
+void message_set_flags(struct message *msg, unsigned char flag, int add);
 
 /*
  * Allocate a new rule.

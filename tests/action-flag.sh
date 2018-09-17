@@ -108,3 +108,18 @@ if testcase "flag as not new when path flags are valid"; then
 		fail "expected flags to be present"
 	pass
 fi
+
+if testcase "flag as new when seen flag is already present"; then
+	mkmsg -s ":2,S" "src/cur"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all flag new
+	}
+	EOF
+	mdsort
+	assert_empty "src/cur"
+	refute_empty "src/new"
+	find "src/new" -type f -name '*:2,S' | cmp -s - /dev/null || \
+		fail "expected flags to not be present"
+	pass
+fi

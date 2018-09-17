@@ -213,7 +213,9 @@ maildir_genname(const struct maildir *src, const struct maildir *dst,
 	int count;
 
 	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR)
-		message_set_flags(msg, 'S');
+		message_set_flags(msg, 'S', 1);
+	else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW)
+		message_set_flags(msg, 'S', 0);
 	flags = message_get_flags(msg);
 
 	count = arc4random() % 128;
