@@ -14,7 +14,8 @@
 
 #include "extern.h"
 
-#define FLAG(c)	(1 << ((c) - 'A'))
+#define FLAG(c)		(1 << ((c) - 'A'))
+#define FLAGS_BAD	((unsigned int)-1)
 
 struct message {
 	const char *path;
@@ -23,7 +24,6 @@ struct message {
 	char *buf;
 
 	unsigned int flags;
-	int nflags;
 
 	struct header *headers;
 	size_t nheaders;
@@ -155,7 +155,7 @@ message_get_flags(const struct message *msg)
 	int bit = 0;
 	int i = 0;
 
-	if (msg->nflags == -1) {
+	if (msg->flags == FLAGS_BAD) {
 		/*
 		 * Parsing the flags failed, just give back the flags in its
 		 * original form.
@@ -164,7 +164,7 @@ message_get_flags(const struct message *msg)
 		if (p == NULL)
 			return "";
 		return p;
-	} else if (msg->nflags == 0) {
+	} else if (msg->flags == 0) {
 		return "";
 	}
 
@@ -194,22 +194,13 @@ message_set_flags(struct message *msg, unsigned char flag, int add)
 {
 	assert(isupper(flag));
 
-	if (msg->nflags == -1)
+	if (msg->flags == FLAGS_BAD)
 		return;
 
-	if (add) {
-		if (msg->flags & FLAG(flag))
-			return;
-
+	if (add)
 		msg->flags |= FLAG(flag);
-		msg->nflags++;
-	} else {
-		if ((msg->flags & FLAG(flag)) == 0)
-			return;
-
+	else
 		msg->flags &= ~FLAG(flag);
-		msg->nflags--;
-	}
 }
 
 static void
@@ -219,10 +210,10 @@ message_parse_flags(struct message *msg)
 
 	p = strrchr(msg->path, ':');
 	if (p == NULL) {
-		msg->nflags = 0;
+		msg->flags = 0;
 		return;
 	} else if (p[1] != '2' || p[2] != ',') {
-		msg->nflags = -1;
+		msg->flags = FLAGS_BAD;
 		return;
 	}
 
@@ -230,6 +221,7 @@ message_parse_flags(struct message *msg)
 		if (isupper(*p)) {
 			message_set_flags(msg, *p, 1);
 		} else {
+			msg->flags = FLAGS_BAD;
 			log_debug("%s: %s: invalid flags", __func__, msg->path);
 			return;
 		}

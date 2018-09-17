@@ -67,6 +67,7 @@ fi
 
 if testcase "flag as not new when path flags are invalid"; then
 	mkmsg  -s ":1,S" "src/new"
+	mkmsg  -s ":2,s" "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match new flag !new
@@ -76,6 +77,8 @@ if testcase "flag as not new when path flags are invalid"; then
 	assert_empty "src/new"
 	refute_empty "src/cur"
 	find "src/cur" -type f -name '*:1,S' | cmp -s - /dev/null && \
+		fail "expected flags to be present"
+	find "src/cur" -type f -name '*:2,s' | cmp -s - /dev/null && \
 		fail "expected flags to be present"
 	pass
 fi
