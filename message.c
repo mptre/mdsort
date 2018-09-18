@@ -14,7 +14,7 @@
 
 #include "extern.h"
 
-#define FLAG(c)		(1 << ((c) - 'A'))
+#define FLAG(c)		(isupper(c) ? 1 << ((c) - 'A') : 0)
 #define FLAGS_BAD	((unsigned int)-1)
 
 struct message {
@@ -184,16 +184,16 @@ message_get_flags(const struct message *msg)
 int
 message_has_flags(const struct message *msg, unsigned char flag)
 {
-	assert(isupper(flag));
-
-	return msg->flags & FLAG(flag);
+	if (msg->flags == FLAGS_BAD)
+		return -1;
+	if (msg->flags & FLAG(flag))
+		return 1;
+	return 0;
 }
 
 void
 message_set_flags(struct message *msg, unsigned char flag, int add)
 {
-	assert(isupper(flag));
-
 	if (msg->flags == FLAGS_BAD)
 		return;
 
