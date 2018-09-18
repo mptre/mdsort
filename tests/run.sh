@@ -36,38 +36,28 @@ pass() {
 	printf '%s: %s\n' "${1:-PASS}" "$TCDESC"
 }
 
+_assert_empty() {
+	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null
+}
+
 assert_empty() {
-	local _assert=1 _empty=0
-
-	[ "$1" = "-r" ] && { _assert=0; shift; }
-
-	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null && _empty=1
-	if [ $_assert -eq 1 ] && [ $_empty -eq 0 ]; then
-		fail "expected directory ${1} to be empty"
-	elif [ $_assert -eq 0 ] && [ $_empty -eq 1 ]; then
-		fail "expected directory ${1} to not be empty"
-	fi
+	_assert_empty $@ || fail "expected ${1} to be empty"
 }
 
 refute_empty() {
-	assert_empty -r "$@"
+	_assert_empty $@ && fail "expected ${1} to not be empty"
+}
+
+_assert_find() {
+	! find "${MAILDIR}/${1}" -type f -name "$2" | cmp -s - /dev/null
 }
 
 assert_find() {
-	local _assert=1 _empty=0
-
-	[ "$1" = "-r" ] && { _assert=0; shift; }
-
-	find "$1" -type f -name "$2" | cmp -s - /dev/null && _empty=1
-	if [ $_assert -eq 1 ] && [ $_empty -eq 1 ]; then
-		fail "expected ${1}/${2} to be present"
-	elif [ $_assert -eq 0 ] && [ $_empty -eq 0 ]; then
-		fail "expected ${1}/${2} to not be present"
-	fi
+	_assert_find $@ || fail "expected ${1}/${2} to not be empty"
 }
 
 refute_find() {
-	assert_find -r "$@"
+	_assert_find $@ && fail "expected ${1}/${2} to be empty"
 }
 
 assert_pass() {
