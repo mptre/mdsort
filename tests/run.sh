@@ -36,13 +36,37 @@ pass() {
 }
 
 assert_empty() {
-	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null && return 0
-	fail "expected directory ${1} to be empty"
+	local _assert=1 _empty=0
+
+	[ "$1" = "-r" ] && { _assert=0; shift; }
+
+	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null && _empty=1
+	if [ $_assert -eq 1 ] && [ $_empty -eq 0 ]; then
+		fail "expected directory ${1} to be empty"
+	elif [ $_assert -eq 0 ] && [ $_empty -eq 1 ]; then
+		fail "expected directory ${1} to not be empty"
+	fi
 }
 
 refute_empty() {
-	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null || return 0
-	fail "expected directory ${1} to not be empty"
+	assert_empty -r "$@"
+}
+
+assert_find() {
+	local _assert=1 _empty=0
+
+	[ "$1" = "-r" ] && { _assert=0; shift; }
+
+	find "$1" -type f -name "$2" | cmp -s - /dev/null && _empty=1
+	if [ $_assert -eq 1 ] && [ $_empty -eq 1 ]; then
+		fail "expected ${1}/${2} to be present"
+	elif [ $_assert -eq 0 ] && [ $_empty -eq 0 ]; then
+		fail "expected ${1}/${2} to not be present"
+	fi
+}
+
+refute_find() {
+	assert_find -r "$@"
 }
 
 assert_pass() {

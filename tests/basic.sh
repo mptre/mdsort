@@ -128,23 +128,7 @@ if testcase "unique suffix is preserved when valid"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	find "dst/new" -type f -name '*:2,S' | cmp -s - /dev/null && \
-		fail "expected suffix to be preserved"
-	pass
-fi
-
-if testcase "unique suffix is preserved when invalid"; then
-	mkmsg -s ":1,S" "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match header "To" /user/ move "dst"
-	}
-	EOF
-	mdsort
-	assert_empty "src/new"
-	refute_empty "dst/new"
-	find "dst/new" -type f -name '*:1,S' | cmp -s - /dev/null && \
-		fail "expected suffix to be preserved"
+	assert_find "dst/new" "*:2,S"
 	pass
 fi
 
