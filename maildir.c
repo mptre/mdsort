@@ -31,9 +31,10 @@ struct maildir {
 };
 
 static int maildir_create(struct maildir *);
-static int maildir_next(struct maildir *);
 static const char *maildir_genname(const struct maildir *,
     const struct maildir *, struct message *, const struct environment *);
+static int maildir_next(struct maildir *);
+static int maildir_opendir(struct maildir *, const char *);
 static int maildir_read(struct maildir *, char *);
 static const char *maildir_root(struct maildir *);
 
@@ -67,9 +68,7 @@ maildir_open(const char *path, int flags)
 
 	if ((md->flags & MAILDIR_WALK))
 		path = pathjoin(md->buf, md->path, strsubdir(md->subdir), NULL);
-	md->dir = opendir(path);
-	if (md->dir == NULL) {
-		warn("opendir: %s", path);
+	if (maildir_opendir(md, path)) {
 		maildir_close(md);
 		return NULL;
 	}
@@ -103,13 +102,8 @@ maildir_walk(struct maildir *md, char *buf)
 		if (maildir_next(md))
 			return 0;
 		path = pathjoin(md->buf, md->path, strsubdir(md->subdir), NULL);
-		if (md->dir != NULL)
-			closedir(md->dir);
-		md->dir = opendir(path);
-		if (md->dir == NULL) {
-			warn("opendir: %s", path);
+		if (maildir_opendir(md, path))
 			return 0;
-		}
 	}
 }
 
@@ -200,6 +194,22 @@ maildir_next(struct maildir *md)
 		break;
 	}
 	return 1;
+}
+
+static int
+maildir_opendir(struct maildir *md, const char *path)
+{
+	if (md->dir != NULL)
+		closedir(md->dir);
+
+	log_debug("%s: %s\n", __func__, path);
+
+	md->dir = opendir(path);
+	if (md->dir == NULL) {
+		warn("opendir: %s", path);
+		return 1;
+	}
+	return 0;
 }
 
 static const char *
