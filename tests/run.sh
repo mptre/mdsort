@@ -41,11 +41,15 @@ _assert_empty() {
 }
 
 assert_empty() {
-	_assert_empty $@ || fail "expected ${1} to be empty"
+	if ! _assert_empty $@; then
+		fail "expected ${1} to be empty"
+	fi
 }
 
 refute_empty() {
-	_assert_empty $@ && fail "expected ${1} to not be empty"
+	if _assert_empty $@; then
+		fail "expected ${1} to not be empty"
+	fi
 }
 
 _assert_find() {
@@ -53,11 +57,15 @@ _assert_find() {
 }
 
 assert_find() {
-	_assert_find $@ || fail "expected ${1}/${2} to not be empty"
+	if ! _assert_find $@; then
+		fail "expected ${1}/${2} to not be empty"
+	fi
 }
 
 refute_find() {
-	_assert_find $@ && fail "expected ${1}/${2} to be empty"
+	if _assert_find $@; then
+		fail "expected ${1}/${2} to be empty"
+	fi
 }
 
 assert_pass() {
