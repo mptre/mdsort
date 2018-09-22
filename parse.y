@@ -69,7 +69,7 @@ maildir		: MAILDIR STRING exprblock {
 			if (conf == NULL)
 				err(1, NULL);
 			conf->maildir = path;
-			conf->rule = rule_alloc($3);
+			conf->expr = expr_alloc(EXPR_TYPE_ROOT, $3, NULL);
 			TAILQ_INSERT_TAIL(&config, conf, entry);
 		}
 		;

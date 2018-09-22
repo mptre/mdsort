@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 			if (msg == NULL)
 				continue;
 
-			dstpath = rule_eval(conf->rule, msg);
+			dstpath = expr_eval(conf->expr, msg);
 			if (dstpath == NULL) {
 				message_free(msg);
 				continue;
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 			}
 			log_info("%s -> %s\n", path, dstpath);
 			if (dflag)
-				rule_inspect(conf->rule, stdout);
+				expr_inspect(conf->expr, stdout);
 			else
 				maildir_move(md, dst, msg, &env);
 			maildir_close(dst);
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 
 	while ((conf = TAILQ_FIRST(config)) != NULL) {
 		TAILQ_REMOVE(config, conf, entry);
-		rule_free(conf->rule);
+		expr_free(conf->expr);
 		free(conf->maildir);
 		free(conf);
 	}

@@ -74,28 +74,8 @@ int message_has_flags(const struct message *msg, unsigned char flag);
 
 void message_set_flags(struct message *msg, unsigned char flag, int add);
 
-/*
- * Allocate a new rule.
- *
- * The caller is responsible for freeing the returned memory using
- * rule_free().
- */
-struct rule *rule_alloc(struct expr *ex);
-
-void rule_free(struct rule *rl);
-
-/*
- * Writes a human readable representation of the latest match to fh.
- */
-void rule_inspect(const struct rule *rl, FILE *fh);
-
-/*
- * Returns the destination path if the rule matches the given message.
- * Otherwise, NULL is returned.
- */
-const char *rule_eval(struct rule *rl, const struct message *msg);
-
 enum expr_type {
+	EXPR_TYPE_ROOT,
 	EXPR_TYPE_AND,
 	EXPR_TYPE_OR,
 	EXPR_TYPE_NEG,
@@ -111,12 +91,13 @@ enum expr_type {
 /*
  * Allocate a new expression with the given type.
  *
- * The caller is responsible for associating the returned memory with a rule
- * using rule_alloc(). The rule will then take ownership of the memory and hence
- * free it at an appropriate time.
+ * The caller is responsible for freeing the returned memory using
+ * expr_free().
  */
 struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
     struct expr *rhs);
+
+void expr_free(struct expr *ex);
 
 /*
  * Associate the given string list with the expression.
@@ -144,6 +125,17 @@ int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
  */
 int expr_count(const struct expr *ex, enum expr_type type);
 
+/*
+ * Returns the destination path if the expression matches the given message.
+ * Otherwise, NULL is returned.
+ */
+const char *expr_eval(struct expr *ex, const struct message *msg);
+
+/*
+ * Writes a human readable representation of the latest match to fh.
+ */
+void expr_inspect(const struct expr *ex, FILE *fh);
+
 struct string {
 	char *val;
 
@@ -166,7 +158,7 @@ void strings_append(struct string_list *strings, char *val);
 
 struct config {
 	char *maildir;
-	struct rule *rule;
+	struct expr *expr;
 
 	TAILQ_ENTRY(config) entry;
 };

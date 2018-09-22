@@ -13,11 +13,6 @@
 
 #include "extern.h"
 
-struct rule {
-	struct expr *expr;
-	int cookie;
-};
-
 struct expr {
 	enum expr_type type;
 	int cookie;
@@ -50,24 +45,16 @@ struct match {
 	size_t valend;
 };
 
-static int expr_eval(struct expr *, const struct message *, struct match *,
-    int);
-static int expr_eval_all(struct expr *, const struct message *,
-    struct match *);
-static int expr_eval_body(struct expr *, const struct message *,
-    struct match *);
-static int expr_eval_flag(struct expr *, const struct message *,
-    struct match *);
-static int expr_eval_header(struct expr *, const struct message *,
-    struct match *);
-static int expr_eval_move(struct expr *, const struct message *,
-    struct match *);
-static int expr_eval_new(struct expr *, const struct message *,
-    struct match *);
-static int expr_eval_old(struct expr *, const struct message *,
-    struct match *);
-static void expr_free(struct expr *);
-static void expr_inspect(const struct expr *, FILE *, int);
+static int expr_eval1(struct expr *, struct expr *, const struct message *);
+static int expr_eval_all(struct expr *, struct expr *, const struct message *);
+static int expr_eval_body(struct expr *, struct expr *, const struct message *);
+static int expr_eval_flag(struct expr *, struct expr *, const struct message *);
+static int expr_eval_header(struct expr *, struct expr *,
+    const struct message *);
+static int expr_eval_move(struct expr *, struct expr *, const struct message *);
+static int expr_eval_new(struct expr *, struct expr *, const struct message *);
+static int expr_eval_old(struct expr *, struct expr *, const struct message *);
+static void expr_inspect1(const struct expr *, const struct expr *, FILE *);
 static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
@@ -76,52 +63,6 @@ static void match_copy(struct match *, const char *, const regmatch_t *,
 static const char *match_get(const struct match *, unsigned long n);
 static const char *match_interpolate(const struct match *);
 static void match_reset(struct match *);
-
-struct rule *
-rule_alloc(struct expr *ex)
-{
-	struct rule *rl;
-
-	rl = calloc(1, sizeof(*rl));
-	if (rl == NULL)
-		err(1, NULL);
-	rl->expr = ex;
-
-	return rl;
-}
-
-void
-rule_free(struct rule *rl)
-{
-	if (rl == NULL)
-		return;
-
-	expr_free(rl->expr);
-	free(rl);
-}
-
-void
-rule_inspect(const struct rule *rl, FILE *fh)
-{
-	expr_inspect(rl->expr, fh, rl->cookie);
-}
-
-const char *
-rule_eval(struct rule *rl, const struct message *msg)
-{
-	struct match match;
-	const char *path = NULL;
-
-	memset(&match, 0, sizeof(match));
-	rl->cookie++;
-	if (expr_eval(rl->expr, msg, &match, rl->cookie))
-		goto done;
-	path = match_interpolate(&match);
-
-done:
-	match_reset(&match);
-	return path;
-}
 
 struct expr *
 expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
@@ -135,6 +76,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	ex->lhs = lhs;
 	ex->rhs = rhs;
 	switch (ex->type) {
+	case EXPR_TYPE_ROOT:
 	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_HEADER:
 		ex->match = calloc(1, sizeof(*ex->match));
@@ -152,6 +94,22 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 		break;
 	}
 	return ex;
+}
+
+void
+expr_free(struct expr *ex)
+{
+	if (ex == NULL)
+		return;
+
+	expr_free(ex->lhs);
+	expr_free(ex->rhs);
+	strings_free(ex->strings);
+	match_reset(ex->match);
+	regfree(&ex->pattern);
+	free(ex->match);
+	free(ex->matches);
+	free(ex);
 }
 
 void
@@ -192,6 +150,22 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 	return 0;
 }
 
+const char *
+expr_eval(struct expr *ex, const struct message *msg)
+{
+	const char *path = NULL;
+
+	memset(ex->match, 0, sizeof(*ex->match));
+	ex->cookie++;
+	if (expr_eval1(ex, ex, msg))
+		goto done;
+	path = match_interpolate(ex->match);
+
+done:
+	match_reset(ex->match);
+	return path;
+}
+
 int
 expr_count(const struct expr *ex, enum expr_type type)
 {
@@ -205,72 +179,80 @@ expr_count(const struct expr *ex, enum expr_type type)
 	return acc + expr_count(ex->lhs, type) + expr_count(ex->rhs, type);
 }
 
+void
+expr_inspect(const struct expr *ex, FILE *fh)
+{
+	expr_inspect1(ex, ex, fh);
+}
+
 static int
-expr_eval(struct expr *ex, const struct message *msg, struct match *match,
-    int cookie)
+expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	int res = 1;
 
 	switch (ex->type) {
+	case EXPR_TYPE_ROOT:
+		res = expr_eval1(root, ex->lhs, msg);
+		break;
 	case EXPR_TYPE_AND:
-		res = expr_eval(ex->lhs, msg, match, cookie);
+		res = expr_eval1(root, ex->lhs, msg);
 		if (res)
 			break; /* no match, short-circuit */
-		res = expr_eval(ex->rhs, msg, match, cookie);
+		res = expr_eval1(root, ex->rhs, msg);
 		break;
 	case EXPR_TYPE_OR:
-		res = expr_eval(ex->lhs, msg, match, cookie);
+		res = expr_eval1(root, ex->lhs, msg);
 		if (res == 0)
 			break; /* match, short-circuit */
-		res = expr_eval(ex->rhs, msg, match, cookie);
+		res = expr_eval1(root, ex->rhs, msg);
 		break;
 	case EXPR_TYPE_NEG:
 		assert(ex->rhs == NULL);
-		res = !expr_eval(ex->lhs, msg, match, cookie);
+		res = !expr_eval1(root, ex->lhs, msg);
 		/* On non-match, invalidate match below expression. */
 		if (res)
-			match_reset(match);
+			match_reset(root->match);
 		break;
 	case EXPR_TYPE_ALL:
-		res = expr_eval_all(ex, msg, match);
+		res = expr_eval_all(root, ex, msg);
 		break;
 	case EXPR_TYPE_BODY:
-		res = expr_eval_body(ex, msg, match);
+		res = expr_eval_body(root, ex, msg);
 		break;
 	case EXPR_TYPE_HEADER:
-		res = expr_eval_header(ex, msg, match);
+		res = expr_eval_header(root, ex, msg);
 		break;
 	case EXPR_TYPE_NEW:
-		res = expr_eval_new(ex, msg, match);
+		res = expr_eval_new(root, ex, msg);
 		break;
 	case EXPR_TYPE_OLD:
-		res = expr_eval_old(ex, msg, match);
+		res = expr_eval_old(root, ex, msg);
 		break;
 	case EXPR_TYPE_MOVE:
-		res = expr_eval_move(ex, msg, match);
+		res = expr_eval_move(root, ex, msg);
 		break;
 	case EXPR_TYPE_FLAG:
-		res = expr_eval_flag(ex, msg, match);
+		res = expr_eval_flag(root, ex, msg);
 		break;
 	}
 	if (res == 0) {
 		/* Mark expression as visited on match. */
-		ex->cookie = cookie;
+		ex->cookie = root->cookie;
 	}
 
 	return res;
 }
 
 static int
-expr_eval_all(struct expr *ex __attribute__((__unused__)),
-    const struct message *msg __attribute__((__unused__)),
-    struct match *match __attribute__((__unused__)))
+expr_eval_all(struct expr *root __attribute__((__unused__)),
+    struct expr *ex __attribute__((__unused__)),
+    const struct message *msg __attribute__((__unused__)))
 {
 	return 0;
 }
 
 static int
-expr_eval_body(struct expr *ex, const struct message *msg, struct match *match)
+expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	const char *body;
 
@@ -287,26 +269,26 @@ expr_eval_body(struct expr *ex, const struct message *msg, struct match *match)
 	ex->match->val = body;
 	ex->match->valbeg = ex->matches[0].rm_so;
 	ex->match->valend = ex->matches[0].rm_eo;
-	match_copy(match, body, ex->matches, ex->nmatches);
+	match_copy(root->match, body, ex->matches, ex->nmatches);
 	return 0;
 }
 
 static int
-expr_eval_flag(struct expr *ex, const struct message *msg, struct match *match)
+expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	struct string *str;
 	const char *path;
 	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
-	len = sizeof(match->subdir);
-	if (strlcpy(match->subdir, str->val, len) >= len)
+	len = sizeof(root->match->subdir);
+	if (strlcpy(root->match->subdir, str->val, len) >= len)
 		errx(1, "%s: buffer too small", __func__);
 
 	/* A move action might be missing. */
-	if (strlen(match->maildir) == 0) {
+	if (strlen(root->match->maildir) == 0) {
 		path = message_get_path(msg);
-		if (pathslice(path, match->maildir, 0, -2) == NULL)
+		if (pathslice(path, root->match->maildir, 0, -2) == NULL)
 			errx(1, "%s: %s: maildir not found", __func__, path);
 	}
 
@@ -314,8 +296,7 @@ expr_eval_flag(struct expr *ex, const struct message *msg, struct match *match)
 }
 
 static int
-expr_eval_header(struct expr *ex, const struct message *msg,
-    struct match *match)
+expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	const struct string_list *values;
 	const struct string *key, *val;
@@ -338,7 +319,8 @@ expr_eval_header(struct expr *ex, const struct message *msg,
 			ex->match->val = val->val;
 			ex->match->valbeg = ex->matches[0].rm_so;
 			ex->match->valend = ex->matches[0].rm_eo;
-			match_copy(match, val->val, ex->matches, ex->nmatches);
+			match_copy(root->match, val->val, ex->matches,
+			    ex->nmatches);
 			return 0;
 		}
 	}
@@ -346,21 +328,21 @@ expr_eval_header(struct expr *ex, const struct message *msg,
 }
 
 static int
-expr_eval_move(struct expr *ex, const struct message *msg, struct match *match)
+expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	struct string *str;
 	const char *path;
 	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
-	len = sizeof(match->maildir);
-	if (strlcpy(match->maildir, str->val, len) >= len)
+	len = sizeof(root->match->maildir);
+	if (strlcpy(root->match->maildir, str->val, len) >= len)
 		errx(1, "%s: buffer too small", __func__);
 
 	/* A flag action might already have been evaluted. */
-	if (strlen(match->subdir) == 0) {
+	if (strlen(root->match->subdir) == 0) {
 		path = message_get_path(msg);
-		if (pathslice(path, match->subdir, -2, -2) == NULL)
+		if (pathslice(path, root->match->subdir, -2, -2) == NULL)
 			errx(1, "%s: %s: subdir not found", __func__, path);
 	}
 
@@ -368,8 +350,8 @@ expr_eval_move(struct expr *ex, const struct message *msg, struct match *match)
 }
 
 static int
-expr_eval_new(struct expr *ex __attribute__((__unused__)),
-    const struct message *msg, struct match *match __attribute__((__unused__)))
+expr_eval_new(struct expr *root __attribute__((__unused__)),
+    struct expr *ex __attribute__((__unused__)), const struct message *msg)
 {
 	char buf[NAME_MAX];
 	const char *path;
@@ -381,8 +363,8 @@ expr_eval_new(struct expr *ex __attribute__((__unused__)),
 }
 
 static int
-expr_eval_old(struct expr *ex __attribute__((__unused__)),
-    const struct message *msg, struct match *match __attribute__((__unused__)))
+expr_eval_old(struct expr *root __attribute__((__unused__)),
+    struct expr *ex __attribute__((__unused__)), const struct message *msg)
 {
 	char buf[NAME_MAX];
 	const char *path;
@@ -396,33 +378,20 @@ expr_eval_old(struct expr *ex __attribute__((__unused__)),
 }
 
 static void
-expr_free(struct expr *ex)
+expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 {
-	if (ex == NULL)
-		return;
-
-	expr_free(ex->lhs);
-	expr_free(ex->rhs);
-	strings_free(ex->strings);
-	match_reset(ex->match);
-	regfree(&ex->pattern);
-	free(ex->match);
-	free(ex->matches);
-	free(ex);
-}
-
-static void
-expr_inspect(const struct expr *ex, FILE *fh, int cookie)
-{
-	/* Ensure expression was visited during last call to expr_eval() */
-	if (ex->cookie != cookie)
+	/* Ensure expression was visited during last call to expr_eval(). */
+	if (root->cookie != ex->cookie)
 		return;
 
 	switch (ex->type) {
+	case EXPR_TYPE_ROOT:
+		expr_inspect1(root, ex->lhs, fh);
+		break;
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
-		expr_inspect(ex->lhs, fh, cookie);
-		expr_inspect(ex->rhs, fh, cookie);
+		expr_inspect1(root, ex->lhs, fh);
+		expr_inspect1(root, ex->rhs, fh);
 		break;
 	case EXPR_TYPE_BODY:
 		expr_inspect_body(ex, fh);

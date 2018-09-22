@@ -9,11 +9,11 @@ SRCS=	compat-arc4random.c \
 	compat-reallocarray.c \
 	compat-strlcpy.c \
 	compat-utimensat.c \
+	expr.c \
 	maildir.c \
-	message.c \
 	mdsort.c \
+	message.c \
 	parse.c \
-	rule.c \
 	util.c
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
@@ -33,6 +33,7 @@ DISTFILES=	CHANGELOG.md \
 		compat-strlcpy.c \
 		compat-utimensat.c \
 		configure \
+		expr.c \
 		extern.h \
 		maildir.c \
 		mdsort.1 \
@@ -40,7 +41,6 @@ DISTFILES=	CHANGELOG.md \
 		mdsort.conf.5 \
 		message.c \
 		parse.y \
-		rule.c \
 		tests/GNUmakefile \
 		tests/Makefile \
 		tests/action-flag.sh \
