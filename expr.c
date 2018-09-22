@@ -61,7 +61,7 @@ static void expr_inspect_header(const struct expr *, FILE *);
 static void match_copy(struct match *, const char *, const regmatch_t *,
     size_t);
 static const char *match_get(const struct match *, unsigned long n);
-static const char *match_interpolate(const struct match *);
+static char *match_interpolate(const struct match *, char *, size_t);
 static void match_reset(struct match *);
 
 struct expr *
@@ -153,13 +153,14 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 const char *
 expr_eval(struct expr *ex, const struct message *msg)
 {
+	static char buf[PATH_MAX];
 	const char *path = NULL;
 
 	memset(ex->match, 0, sizeof(*ex->match));
 	ex->cookie++;
 	if (expr_eval1(ex, ex, msg))
 		goto done;
-	path = match_interpolate(ex->match);
+	path = match_interpolate(ex->match, buf, sizeof(buf));
 
 done:
 	match_reset(ex->match);
@@ -484,10 +485,9 @@ match_get(const struct match *match, unsigned long n)
 	return match->matches[n];
 }
 
-static const char *
-match_interpolate(const struct match *match)
+static char *
+match_interpolate(const struct match *match, char *buf, size_t size)
 {
-	static char buf[PATH_MAX];
 	char path[PATH_MAX];
 	const char *sub;
 	char *end;
@@ -510,18 +510,18 @@ match_interpolate(const struct match *match)
 				return NULL;
 			}
 			for (; *sub != '\0'; sub++) {
-				if (j == sizeof(buf) - 1)
+				if (j == size - 1)
 					goto toolong;
 				buf[j++] = *sub;
 			}
 			i = end - path;
 			continue;
 		}
-		if (j == sizeof(buf) - 1)
+		if (j == size - 1)
 			goto toolong;
 		buf[j++] = path[i++];
 	}
-	assert(j < sizeof(buf));
+	assert(j < size);
 	buf[j] = '\0';
 	return buf;
 
