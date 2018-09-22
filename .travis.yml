@@ -69,6 +69,10 @@ script:
       ./configure || true
       cat config.log
       make test
+      # Ensure assertions are free from side effects.
+      env CPPFLAGS=-DNDEBUG ./configure || true
+      cat config.log
+      make test
       ;;
     esac
     )
