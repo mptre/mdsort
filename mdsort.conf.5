@@ -52,6 +52,8 @@ keyword.
 .Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
+.It Ic all
+Evaluates to true for any message.
 .It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op Ic i
 Evaluates to true if the message body matches
 .Ar pattern .
@@ -76,8 +78,6 @@ Evaluates to true if the message is not read.
 .It Oo Ic \&! Oc Ic old
 Evaluates to true if the message is old.
 Meaning, a message that has been read but later flagged as not read.
-.It Ic all
-Evaluates to true for any message.
 .El
 .Pp
 Multiple and nested conditions may be also specified:
