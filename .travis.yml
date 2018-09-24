@@ -6,6 +6,7 @@ matrix:
     - os: linux
       compiler: clang
       env:
+        - T=linux-clang-ubsan
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined'
@@ -13,12 +14,14 @@ matrix:
     - os: linux
       compiler: gcc
       env:
+        - T=linux-gcc
         - BUILD_TYPE=default
         - CFLAGS=-Werror
 
     - os: linux
       compiler: gcc-8
       env:
+        - T=linux-gcc-ubsan
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined  -fuse-ld=gold'
@@ -32,6 +35,7 @@ matrix:
     - os: linux
       compiler: musl-gcc
       env:
+        - T=linux-musl
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - TESTFLAGS='-i tilde\ expansion'
@@ -43,6 +47,7 @@ matrix:
     - os: osx
       compiler: clang
       env:
+        - T=macos-clang
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - TESTFLAGS='-i too\ long'
@@ -50,6 +55,7 @@ matrix:
     - os: linux
       compiler: clang
       env:
+        - T=linux-valgrind
         - BUILD_TYPE=default
         - CFLAGS=-Werror
         - DEBUG-g
