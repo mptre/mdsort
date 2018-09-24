@@ -5,8 +5,7 @@ int unused;
 #ifndef HAVE_PLEDGE
 
 int
-pledge(const char *promises __attribute__((__unused__)),
-    const char *execpromises __attribute__((__unused__)))
+pledge(const char *promises __unused, const char *execpromises __unused)
 {
 	return 0;
 }

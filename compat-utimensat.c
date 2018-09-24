@@ -12,8 +12,8 @@ int unused;
 #include <unistd.h>
 
 int
-utimensat(int fd, const char *path __attribute__((__unused__)),
-    const struct timespec times[2], int flags __attribute__((__unused__)))
+utimensat(int fd, const char *path __unused, const struct timespec times[2],
+    int flags __unused)
 {
 	struct stat st;
 	struct timeval tv[2];

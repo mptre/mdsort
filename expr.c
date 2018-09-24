@@ -244,9 +244,8 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
 }
 
 static int
-expr_eval_all(struct expr *root __attribute__((__unused__)),
-    struct expr *ex __attribute__((__unused__)),
-    const struct message *msg __attribute__((__unused__)))
+expr_eval_all(struct expr *root __unused, struct expr *ex __unused,
+    const struct message *msg __unused)
 {
 	return 0;
 }
@@ -350,8 +349,8 @@ expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 }
 
 static int
-expr_eval_new(struct expr *root __attribute__((__unused__)),
-    struct expr *ex __attribute__((__unused__)), const struct message *msg)
+expr_eval_new(struct expr *root __unused, struct expr *ex __unused,
+    const struct message *msg)
 {
 	char buf[NAME_MAX];
 	const char *path;
@@ -363,8 +362,8 @@ expr_eval_new(struct expr *root __attribute__((__unused__)),
 }
 
 static int
-expr_eval_old(struct expr *root __attribute__((__unused__)),
-    struct expr *ex __attribute__((__unused__)), const struct message *msg)
+expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
+    const struct message *msg)
 {
 	char buf[NAME_MAX];
 	const char *path;
