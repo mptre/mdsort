@@ -1,5 +1,3 @@
-#include "config.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -12,6 +10,7 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "extern.h"
 
 #define FLAG(c)		(isupper(c) ? 1 << ((c) - 'A') : 0)

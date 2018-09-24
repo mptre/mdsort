@@ -1,5 +1,3 @@
-#include "config.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -11,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "extern.h"
 
 struct expr {

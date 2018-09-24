@@ -1,7 +1,5 @@
 %{
 
-#include "config.h"
-
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
@@ -9,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
 #include "extern.h"
 
 static char *expandtilde(char *);
