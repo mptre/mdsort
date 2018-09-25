@@ -1,4 +1,5 @@
 if testcase "basic"; then
+	mkmd "src" "dst"
 	echo "Hello Bob" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -12,6 +13,7 @@ if testcase "basic"; then
 fi
 
 if testcase "negate"; then
+	mkmd "src" "dst"
 	echo "Hello Alice" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -25,6 +27,7 @@ if testcase "negate"; then
 fi
 
 if testcase "empty body"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -38,6 +41,7 @@ if testcase "empty body"; then
 fi
 
 if testcase "malformed body"; then
+	mkmd "src" "dst"
 	printf 'To: user@example.com\nSubject: foo' | mkmsg "src/new" -
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -51,6 +55,7 @@ if testcase "malformed body"; then
 fi
 
 if testcase "empty message"; then
+	mkmd "src" "dst"
 	mkmsg -b "src/new" </dev/null
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -64,6 +69,7 @@ if testcase "empty message"; then
 fi
 
 if testcase "destination interpolation"; then
+	mkmd "src" "example"
 	echo "Hello example" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {

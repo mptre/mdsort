@@ -1,4 +1,5 @@
 if testcase "old"; then
+	mkmd "src" "dst"
 	mkmsg "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -12,6 +13,7 @@ if testcase "old"; then
 fi
 
 if testcase "negate"; then
+	mkmd "src" "dst"
 	mkmsg "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -25,6 +27,7 @@ if testcase "negate"; then
 fi
 
 if testcase "seen flag present"; then
+	mkmd "src" "dst"
 	mkmsg -s ":2,S" "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -38,6 +41,7 @@ if testcase "seen flag present"; then
 fi
 
 if testcase "invalid flags"; then
+	mkmd "src" "dst"
 	mkmsg -s ":1," "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {

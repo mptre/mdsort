@@ -1,4 +1,5 @@
 if testcase "tilde expansion"; then
+	mkmd "src" "dst"
 	echo "Hello Bob" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "~/src" {
@@ -12,6 +13,7 @@ if testcase "tilde expansion"; then
 fi
 
 if testcase "escape slash in pattern"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "foo/bar"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -25,6 +27,7 @@ if testcase "escape slash in pattern"; then
 fi
 
 if testcase "match negate binds to the innermost condition"; then
+	mkmd "src" "dst"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "admin@example.com"
 	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
@@ -39,6 +42,7 @@ if testcase "match negate binds to the innermost condition"; then
 fi
 
 if testcase "match negate nested condition"; then
+	mkmd "src" "dst"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "admin@example.com"
 	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
@@ -53,6 +57,7 @@ if testcase "match negate nested condition"; then
 fi
 
 if testcase "match nested"; then
+	mkmd "src" "dst"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
@@ -71,6 +76,7 @@ if testcase "match nested"; then
 fi
 
 if testcase "match nested without interpolation matches"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -86,6 +92,7 @@ if testcase "match nested without interpolation matches"; then
 fi
 
 if testcase "match nested with negate"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/new" -- "To" "admin@example.com"
 	cat <<-EOF >$CONF
@@ -106,6 +113,7 @@ if testcase "match nested with negate"; then
 fi
 
 if testcase "match case insensitive"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "UsEr@ExAmPlE.CoM"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -119,6 +127,7 @@ if testcase "match case insensitive"; then
 fi
 
 if testcase "unique suffix is preserved when valid"; then
+	mkmd "src" "dst"
 	mkmsg -s ":2,S" "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -133,6 +142,7 @@ if testcase "unique suffix is preserved when valid"; then
 fi
 
 if testcase "destination interpolation first match is favored"; then
+	mkmd "src" "first"
 	mkmsg "src/new" -- "To" "first@last.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -146,6 +156,7 @@ if testcase "destination interpolation first match is favored"; then
 fi
 
 if testcase "destination interpolation out of bounds"; then
+	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -159,6 +170,7 @@ if testcase "destination interpolation out of bounds"; then
 fi
 
 if testcase "destination interpolation out of range"; then
+	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -172,6 +184,7 @@ if testcase "destination interpolation out of range"; then
 fi
 
 if testcase "destination interpolation negative"; then
+	mkmd "src" "\-1"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -185,6 +198,7 @@ if testcase "destination interpolation negative"; then
 fi
 
 if testcase "destination interpolation non-decimal"; then
+	mkmd "src" "userx1"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -198,6 +212,7 @@ if testcase "destination interpolation non-decimal"; then
 fi
 
 if testcase "destination interpolation with none body/header"; then
+	mkmd "src" ""
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -211,6 +226,7 @@ if testcase "destination interpolation with none body/header"; then
 fi
 
 if testcase "destination interpolation with negate"; then
+	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -224,6 +240,7 @@ if testcase "destination interpolation with negate"; then
 fi
 
 if testcase "destination interpolation too long"; then
+	mkmd "src"
 	mkmsg "src/new" -- "To" "user@$(randstr $PATH_MAX alnum).com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -245,66 +262,5 @@ fi
 if testcase -e "extraneous option"; then
 	mdsort extraneous >$TMP1
 	grep -q 'usage' $TMP1 || fail "expected usage output"
-	pass
-fi
-
-if testcase "create maildir"; then
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match new move "dst"
-	}
-	EOF
-	[ -d "src/cur" ] && fail "expected src/cur to be missing"
-	[ -d "src/new" ] && fail "expected src/new to be missing"
-	[ -d "src/tmp" ] && fail "expected src/tmp to be missing"
-	mdsort
-	[ -d "src/cur" ] || fail "expected src/cur to be created"
-	[ -d "src/new" ] || fail "expected src/new to be created"
-	[ -d "src/tmp" ] || fail "expected src/tmp to be created"
-	pass
-fi
-
-if testcase "create maildir subdirectory"; then
-	mkdir -p "src/cur"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match new move "dst"
-	}
-	EOF
-	[ -d "src/cur" ] || fail "expected src/cur to be present"
-	[ -d "src/new" ] && fail "expected src/new to be missing"
-	[ -d "src/tmp" ] && fail "expected src/tmp to be missing"
-	mdsort
-	[ -d "src/new" ] || fail "expected src/new to be created"
-	[ -d "src/tmp" ] || fail "expected src/tmp to be created"
-	pass
-fi
-
-if testcase "create maildir with destination interpolation"; then
-	mkmsg "src/new" -- "To" "missing@example.com"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match header "To" /([^@]+)/ move "\1"
-	}
-	EOF
-	mdsort
-	assert_empty "src/new"
-	refute_empty "missing/new"
-	for d in cur new tmp; do
-		[ -d "missing/${d}" ] || \
-			fail "expected missing/${d} to be created"
-	done
-	pass
-fi
-
-if testcase "do not create maildir"; then
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match new move "dst"
-	}
-	EOF
-	mdsort -C >$TMP1
-	grep -q "opendir: src/new" $TMP1 || \
-		fail "expected opendir error output"
 	pass
 fi

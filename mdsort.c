@@ -26,18 +26,14 @@ main(int argc, char *argv[])
 	const char *confpath = NULL;
 	int c;
 	int dflag = 0;
-	int mdflags = MAILDIR_CREATE;
 	int nflag = 0;
 	int verbose = 0;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "Cdnvf:")) != -1)
+	while ((c = getopt(argc, argv, "dnvf:")) != -1)
 		switch (c) {
-		case 'C':
-			mdflags &= ~(MAILDIR_CREATE);
-			break;
 		case 'd':
 			dflag = 1;
 			break;
@@ -76,8 +72,7 @@ main(int argc, char *argv[])
 		return 0;
 
 	TAILQ_FOREACH(conf, config, entry) {
-		md = maildir_open(conf->maildir,
-		    mdflags | MAILDIR_WALK | MAILDIR_ROOT);
+		md = maildir_open(conf->maildir, MAILDIR_WALK | MAILDIR_ROOT);
 		if (md == NULL)
 			continue;
 		while (maildir_walk(md, path)) {
@@ -92,7 +87,7 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			dst = maildir_open(dstpath, mdflags);
+			dst = maildir_open(dstpath, 0);
 			if (dst == NULL) {
 				message_free(msg);
 				continue;
@@ -121,7 +116,7 @@ main(int argc, char *argv[])
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: mdsort [-Cdnv] [-f file]\n");
+	fprintf(stderr, "usage: mdsort [-dnv] [-f file]\n");
 	exit(1);
 }
 

@@ -1,4 +1,5 @@
 if testcase "all matches any message"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {

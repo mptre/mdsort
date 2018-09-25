@@ -1,4 +1,5 @@
 if testcase "basic"; then
+	mkmd "src" "dst"
 	mkmsg "src/new"
 	mkmsg "src/cur"
 	cat <<-EOF >$CONF
@@ -15,6 +16,7 @@ if testcase "basic"; then
 fi
 
 if testcase "negate"; then
+	mkmd "src" "dst"
 	mkmsg "src/new"
 	mkmsg "src/cur"
 	cat <<-EOF >$CONF

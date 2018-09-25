@@ -29,13 +29,11 @@ struct maildir {
 	char buf[PATH_MAX];
 };
 
-static int maildir_create(struct maildir *);
 static const char *maildir_genname(const struct maildir *,
     const struct maildir *, struct message *, const struct environment *);
 static int maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_read(struct maildir *, char *);
-static const char *maildir_root(struct maildir *);
 
 static int parsesubdir(const char *, enum subdir *);
 static const char *strsubdir(enum subdir);
@@ -57,10 +55,6 @@ maildir_open(const char *path, int flags)
 		md->subdir = SUBDIR_NEW;
 	} else if (parsesubdir(path, &md->subdir)) {
 		warnx("%s: subdir not found", path);
-		maildir_close(md);
-		return NULL;
-	}
-	if ((md->flags & MAILDIR_CREATE) && maildir_create(md)) {
 		maildir_close(md);
 		return NULL;
 	}
@@ -148,41 +142,6 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 }
 
 static int
-maildir_create(struct maildir *md)
-{
-	char buf[PATH_MAX];
-	const char *path, *root;
-
-	root = maildir_root(md);
-	if (root == NULL) {
-		warnx("%s: maildir not found", md->path);
-		return 1;
-	}
-
-	path = root;
-	if (mkdir(path, 0700) == -1 && errno != EEXIST)
-		goto err;
-
-	path = pathjoin(buf, root, "cur", NULL);
-	if (mkdir(path, 0700) == -1 && errno != EEXIST)
-		goto err;
-
-	path = pathjoin(buf, root, "new", NULL);
-	if (mkdir(path, 0700) == -1 && errno != EEXIST)
-		goto err;
-
-	path = pathjoin(buf, root, "tmp", NULL);
-	if (mkdir(path, 0700) == -1 && errno != EEXIST)
-		goto err;
-
-	return 0;
-
-err:
-	warn("mkdir: %s", path);
-	return 1;
-}
-
-static int
 maildir_next(struct maildir *md)
 {
 	switch (md->subdir) {
@@ -267,15 +226,6 @@ maildir_read(struct maildir *md, char *path)
 		pathjoin(path, md->path, strsubdir(md->subdir), ent->d_name);
 		return 1;
 	}
-}
-
-static const char *
-maildir_root(struct maildir *md)
-{
-	if ((md->flags & MAILDIR_ROOT))
-		return md->path;
-
-	return pathslice(md->path, md->buf, 0, -1);
 }
 
 static int

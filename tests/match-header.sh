@@ -1,4 +1,5 @@
 if testcase "basic"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/cur" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
@@ -15,6 +16,7 @@ if testcase "basic"; then
 fi
 
 if testcase "negate"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "admin@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -28,6 +30,7 @@ if testcase "negate"; then
 fi
 
 if testcase "line continuation"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "$(printf 'foo\n\tbar')"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -41,6 +44,7 @@ if testcase "line continuation"; then
 fi
 
 if testcase "many headers"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/cur" -- "Cc" "user@example.com"
 	cat <<-EOF >$CONF
@@ -57,6 +61,7 @@ if testcase "many headers"; then
 fi
 
 if testcase "duplicate headers"; then
+	mkmd "src" "user" "admin" "root"
 	mkmsg "src/new" -- "To" "user@example.com" "To" "foo@example.com" \
 		"To" "bar@example.com"
 	mkmsg "src/new" -- "To" "foo@example.com" "To" "admin@example.com" \
@@ -79,6 +84,7 @@ if testcase "duplicate headers"; then
 fi
 
 if testcase "no blank line after headers"; then
+	mkmd "src" "dst"
 	echo "To: user@example.com" | mkmsg -H -b "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -92,6 +98,7 @@ if testcase "no blank line after headers"; then
 fi
 
 if testcase "key comparison is case insensitive"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "to" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -105,6 +112,7 @@ if testcase "key comparison is case insensitive"; then
 fi
 
 if testcase "destination interpolation"; then
+	mkmd "src" "user-example"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {

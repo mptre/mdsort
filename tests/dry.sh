@@ -1,4 +1,5 @@
 if testcase "match header on first line"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -14,6 +15,7 @@ EOF
 fi
 
 if testcase "match header on middle line"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" \
 		"$(printf 'admin@a.com,\n\tuser@a.com,\n\tno-reply@a.com')"
 	cat <<-EOF >$CONF
@@ -30,6 +32,7 @@ EOF
 fi
 
 if testcase "match header on last line"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" \
 		"$(printf 'admin@example.com,\n\tuser@example.com')"
 	cat <<-EOF >$CONF
@@ -46,6 +49,7 @@ EOF
 fi
 
 if testcase "match header negate"; then
+	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "admin@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -58,6 +62,7 @@ if testcase "match header negate"; then
 fi
 
 if testcase "match body on first line"; then
+	mkmd "src" "dst"
 	echo "Hello" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -73,6 +78,7 @@ if testcase "match body on first line"; then
 fi
 
 if testcase "match body on first line no newline"; then
+	mkmd "src" "dst"
 	printf 'To: user@example.com\n\nHello' | mkmsg -b "src/new"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -88,6 +94,7 @@ if testcase "match body on first line no newline"; then
 fi
 
 if testcase "match body on middle line"; then
+	mkmd "src" "dst"
 	mkmsg -b "src/new" <<-EOF
 	To: user@example.com
 
@@ -109,6 +116,7 @@ if testcase "match body on middle line"; then
 fi
 
 if testcase "match body spanning multiple lines"; then
+	mkmd "src" "dst"
 	mkmsg -b "src/new" -- "To" "user@example.com" <<-EOF
 	He
 	llo
@@ -123,6 +131,7 @@ if testcase "match body spanning multiple lines"; then
 fi
 
 if testcase "match many headers and body"; then
+	mkmd "src" "dst"
 	echo "Hello!" | mkmsg -b "src/new" -- \
 		"Cc" "admin@example.com" "To" "user@example.com"
 	cat <<-EOF >$CONF
@@ -144,6 +153,7 @@ EOF
 fi
 
 if testcase "matches from previous evaluations are discarded"; then
+	mkmd "src" "dst"
 	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	echo "Hello!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
 	cat <<-EOF >$CONF
@@ -163,6 +173,7 @@ EOF
 fi
 
 if testcase "matches from previous evaluations are discarded, inverted"; then
+	mkmd "src" "dst"
 	echo "Bye!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
@@ -182,6 +193,7 @@ EOF
 fi
 
 if testcase "match nested rules"; then
+	mkmd "src" "dst"
 	echo "Bye!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF

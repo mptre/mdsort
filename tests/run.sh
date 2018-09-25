@@ -122,6 +122,13 @@ mdsort() {
 	fi
 }
 
+# mkmd dir ...
+mkmd() {
+	for d; do
+		mkdir -p ${MAILDIR}/${d}/{cur,new,tmp}
+	done
+}
+
 # mkmsg [-H] [-b] [-s suffix] dir [-- headers ...]
 mkmsg() {
 	local _body=0 _dir _headers=1 _name _path _suffix
@@ -140,7 +147,6 @@ mkmsg() {
 	done
 
 	_dir="${MAILDIR}/${1}"; shift
-	mkdir -p "$_dir"
 
 	while :; do
 		_name=$(printf '%d.%d_%d.hostname%s' \
