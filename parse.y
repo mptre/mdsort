@@ -64,6 +64,9 @@ maildir		: MAILDIR STRING exprblock {
 			if (path == NULL)
 				YYERROR;
 
+			if ($3 == NULL && parse_errors == 0)
+				yyerror("empty match block");
+
 			conf = malloc(sizeof(*conf));
 			if (conf == NULL)
 				err(1, NULL);

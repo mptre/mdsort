@@ -69,7 +69,9 @@ fi
 
 if testcase "escape quote inside string"; then
 	cat <<-EOF >$CONF
-	maildir "~/Maildir\"" {}
+	maildir "~/Maildir\"" {
+		match all move "dst"
+	}
 	EOF
 	mdsort - -n </dev/null
 	pass
@@ -287,6 +289,17 @@ if testcase -e "missing right-hand expr with and"; then
 	EOF
 	mdsort - -n <<-EOF
 	mdsort.conf:2: syntax error
+	EOF
+	pass
+fi
+
+if testcase -e "empty match block"; then
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+	}
+	EOF
+	mdsort - -n <<-EOF
+	mdsort.conf:2: empty match block
 	EOF
 	pass
 fi
