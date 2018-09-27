@@ -19,8 +19,8 @@ main(int argc, char *argv[])
 	struct config_list *config;
 	struct config *conf;
 	struct maildir *dst, *md;
+	const struct match *match;
 	struct message *msg;
-	const char *dstpath;
 	const char *confpath = NULL;
 	int c;
 	int dflag = 0;
@@ -78,18 +78,18 @@ main(int argc, char *argv[])
 			if (msg == NULL)
 				continue;
 
-			dstpath = expr_eval(conf->expr, msg);
-			if (dstpath == NULL) {
+			match = expr_eval(conf->expr, msg);
+			if (match == NULL) {
 				message_free(msg);
 				continue;
 			}
 
-			dst = maildir_open(dstpath, 0);
+			dst = maildir_open(match->path, 0);
 			if (dst == NULL) {
 				message_free(msg);
 				continue;
 			}
-			log_info("%s -> %s\n", path, dstpath);
+			log_info("%s -> %s\n", path, match->path);
 			if (dflag)
 				expr_inspect(conf->expr, stdout);
 			else

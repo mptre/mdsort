@@ -25,7 +25,7 @@ static void expr_inspect_header(const struct expr *, FILE *);
 static void match_copy(struct match *, const char *, const regmatch_t *,
     size_t);
 static const char *match_get(const struct match *, unsigned long n);
-static char *match_interpolate(const struct match *, char *, size_t);
+static int match_interpolate(struct match *);
 static void match_reset(struct match *);
 
 struct expr *
@@ -114,21 +114,16 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 	return 0;
 }
 
-const char *
+const struct match *
 expr_eval(struct expr *ex, const struct message *msg)
 {
-	static char buf[PATH_MAX];
-	const char *path = NULL;
-
-	memset(ex->match, 0, sizeof(*ex->match));
+	match_reset(ex->match);
 	ex->cookie++;
 	if (expr_eval1(ex, ex, msg))
-		goto done;
-	path = match_interpolate(ex->match, buf, sizeof(buf));
-
-done:
-	match_reset(ex->match);
-	return path;
+		return NULL;
+	if (match_interpolate(ex->match))
+		return NULL;
+	return ex->match;
 }
 
 int
@@ -439,8 +434,8 @@ match_get(const struct match *match, unsigned long n)
 	return match->matches[n];
 }
 
-static char *
-match_interpolate(const struct match *match, char *buf, size_t size)
+static int
+match_interpolate(struct match *match)
 {
 	char path[PATH_MAX];
 	const char *sub;
@@ -461,27 +456,27 @@ match_interpolate(const struct match *match, char *buf, size_t size)
 			    ((sub = match_get(match, bf)) == NULL)) {
 				warnx("%s: invalid back-reference in "
 				    "destination", path);
-				return NULL;
+				return 1;
 			}
 			for (; *sub != '\0'; sub++) {
-				if (j == size - 1)
+				if (j == sizeof(match->path) - 1)
 					goto toolong;
-				buf[j++] = *sub;
+				match->path[j++] = *sub;
 			}
 			i = end - path;
 			continue;
 		}
-		if (j == size - 1)
+		if (j == sizeof(match->path) - 1)
 			goto toolong;
-		buf[j++] = path[i++];
+		match->path[j++] = path[i++];
 	}
-	assert(j < size);
-	buf[j] = '\0';
-	return buf;
+	assert(j < sizeof(match->path));
+	match->path[j] = '\0';
+	return 0;
 
 toolong:
 	warnx("%s: destination too long", path);
-	return NULL;
+	return 1;
 }
 
 static void
@@ -496,8 +491,5 @@ match_reset(struct match *match)
 		free(match->matches[i]);
 	free(match->matches);
 
-	match->key = NULL;
-	match->val = NULL;
-	match->valbeg = 0;
-	match->valend = 0;
+	memset(match, 0, sizeof(*match));
 }

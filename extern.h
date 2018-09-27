@@ -127,6 +127,7 @@ struct expr {
 struct match {
 	char maildir[PATH_MAX];
 	char subdir[NAME_MAX];
+	char path[PATH_MAX];
 
 	char **matches;
 	size_t nmatches;
@@ -175,10 +176,10 @@ int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 int expr_count(const struct expr *ex, enum expr_type type);
 
 /*
- * Returns the destination path if the expression matches the given message.
+ * Returns a match if the expression matches the given message.
  * Otherwise, NULL is returned.
  */
-const char *expr_eval(struct expr *ex, const struct message *msg);
+const struct match *expr_eval(struct expr *ex, const struct message *msg);
 
 /*
  * Writes a human readable representation of the latest match to fh.
