@@ -89,8 +89,10 @@ maildir_walk(struct maildir *md, char *buf)
 		return 0;
 
 	for (;;) {
-		if (maildir_read(md, buf))
+		if (maildir_read(md, buf)) {
+			log_debug("%s: %s\n", __func__, buf);
 			return 1;
+		}
 
 		if (maildir_next(md))
 			return 0;

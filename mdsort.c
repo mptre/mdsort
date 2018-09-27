@@ -76,7 +76,6 @@ main(int argc, char *argv[])
 		if (md == NULL)
 			continue;
 		while (maildir_walk(md, path)) {
-			log_debug("%s: %s\n", __func__, path);
 			msg = message_parse(path);
 			if (msg == NULL)
 				continue;
