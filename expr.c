@@ -291,7 +291,6 @@ static int
 expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	struct string *str;
-	const char *path;
 	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
@@ -302,7 +301,8 @@ expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 	/* A flag action might already have been evaluted. */
 	if (strlen(root->match->subdir) == 0) {
 		if (pathslice(msg->path, root->match->subdir, -2, -2) == NULL)
-			errx(1, "%s: %s: subdir not found", __func__, path);
+			errx(1, "%s: %s: subdir not found",
+			    __func__, msg->path);
 	}
 
 	return 0;
@@ -487,7 +487,7 @@ toolong:
 static void
 match_reset(struct match *match)
 {
-	size_t i, len;
+	unsigned int i;
 
 	if (match == NULL)
 		return;
@@ -496,7 +496,8 @@ match_reset(struct match *match)
 		free(match->matches[i]);
 	free(match->matches);
 
-	/* Reset everything after the begzero field inclusively. */
-	len = sizeof(*match) - ((ptrdiff_t)&match->begzero - (ptrdiff_t)match);
-	memset(&match->begzero, 0, len);
+	match->key = NULL;
+	match->val = NULL;
+	match->valbeg = 0;
+	match->valend = 0;
 }

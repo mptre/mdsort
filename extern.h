@@ -128,9 +128,6 @@ struct match {
 	char maildir[PATH_MAX];
 	char subdir[NAME_MAX];
 
-	/* Everything after this field will be zeroed out by match_reset(). */
-	int begzero;
-
 	char **matches;
 	size_t nmatches;
 
