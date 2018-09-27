@@ -3,8 +3,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -15,18 +13,6 @@
 
 #define FLAG(c)		(isupper(c) ? 1 << ((c) - 'A') : 0)
 #define FLAGS_BAD	((unsigned int)-1)
-
-struct message {
-	const char *path;
-	const char *maildir;
-	const char *body;
-	char *buf;
-
-	unsigned int flags;
-
-	struct header *headers;
-	size_t nheaders;
-};
 
 struct header {
 	const char *key;
@@ -110,12 +96,6 @@ message_free(struct message *msg)
 	free(msg);
 }
 
-const char *
-message_get_body(const struct message *msg)
-{
-	return msg->body;
-}
-
 const struct string_list *
 message_get_header(const struct message *msg, const char *header)
 {
@@ -137,12 +117,6 @@ message_get_header(const struct message *msg, const char *header)
 		}
 	}
 	return hdr->values;
-}
-
-const char *
-message_get_path(const struct message *msg)
-{
-	return msg->path;
 }
 
 const char *

@@ -2,9 +2,7 @@
 
 #include <ctype.h>
 #include <err.h>
-#include <limits.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "config.h"

@@ -4,11 +4,27 @@
 #  include "compat-queue.h"
 #endif
 
+#include <dirent.h>
+#include <limits.h>
+#include <regex.h>
+#include <stdio.h>
+
 /* Forward declarations. */
 struct environment;
-struct expr;
 struct message;
-struct string_list;
+
+enum subdir {
+	SUBDIR_NEW,
+	SUBDIR_CUR,
+};
+
+struct maildir {
+	char *path;
+	DIR *dir;
+	enum subdir subdir;
+	int flags;
+	char buf[PATH_MAX];
+};
 
 /*
  * Open the maildir directory located at path.
@@ -48,6 +64,17 @@ int maildir_walk(struct maildir *md, char *buf);
 int maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env);
 
+struct message {
+	const char *path;
+	const char *body;
+	char *buf;
+
+	unsigned int flags;
+
+	struct header *headers;
+	size_t nheaders;
+};
+
 /*
  * Parse the message located at path.
  *
@@ -58,12 +85,8 @@ struct message *message_parse(const char *path);
 
 void message_free(struct message *msg);
 
-const char *message_get_body(const struct message *msg);
-
 const struct string_list *message_get_header(const struct message *msg,
     const char *header);
-
-const char *message_get_path(const struct message *msg);
 
 const char *message_get_flags(const struct message *msg);
 
@@ -83,6 +106,38 @@ enum expr_type {
 	EXPR_TYPE_OLD,
 	EXPR_TYPE_MOVE,
 	EXPR_TYPE_FLAG,
+};
+
+struct expr {
+	enum expr_type type;
+	int cookie;
+
+	struct string_list *strings;
+
+	regex_t pattern;
+	regmatch_t *matches;
+	size_t nmatches;
+
+	struct match *match;
+
+	struct expr *lhs;
+	struct expr *rhs;
+};
+
+struct match {
+	char maildir[PATH_MAX];
+	char subdir[NAME_MAX];
+
+	/* Everything after this field will be zeroed out by match_reset(). */
+	int begzero;
+
+	char **matches;
+	size_t nmatches;
+
+	const char *key;
+	const char *val;
+	size_t valbeg;
+	size_t valend;
 };
 
 /*

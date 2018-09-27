@@ -2,47 +2,12 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <limits.h>
-#include <regex.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "config.h"
 #include "extern.h"
-
-struct expr {
-	enum expr_type type;
-	int cookie;
-
-	struct string_list *strings;
-
-	regex_t pattern;
-	regmatch_t *matches;
-	size_t nmatches;
-
-	struct match *match;
-
-	struct expr *lhs;
-	struct expr *rhs;
-};
-
-struct match {
-	char maildir[PATH_MAX];
-	char subdir[NAME_MAX];
-
-	/* Everything after this field will be zeroed out by match_reset(). */
-	int begzero;
-
-	char **matches;
-	size_t nmatches;
-
-	const char *key;
-	const char *val;
-	size_t valbeg;
-	size_t valend;
-};
 
 static int expr_eval1(struct expr *, struct expr *, const struct message *);
 static int expr_eval_all(struct expr *, struct expr *, const struct message *);
@@ -253,22 +218,19 @@ expr_eval_all(struct expr *root __unused, struct expr *ex __unused,
 static int
 expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg)
 {
-	const char *body;
-
 	assert(ex->nmatches > 0);
 
-	body = message_get_body(msg);
-	if (body == NULL)
+	if (msg->body == NULL)
 		return 1;
-	if (regexec(&ex->pattern, body, ex->nmatches, ex->matches, 0))
+	if (regexec(&ex->pattern, msg->body, ex->nmatches, ex->matches, 0))
 		return 1;
 
 	match_reset(ex->match);
 	ex->match->key = NULL;
-	ex->match->val = body;
+	ex->match->val = msg->body;
 	ex->match->valbeg = ex->matches[0].rm_so;
 	ex->match->valend = ex->matches[0].rm_eo;
-	match_copy(root->match, body, ex->matches, ex->nmatches);
+	match_copy(root->match, msg->body, ex->matches, ex->nmatches);
 	return 0;
 }
 
@@ -276,7 +238,6 @@ static int
 expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	struct string *str;
-	const char *path;
 	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
@@ -286,9 +247,9 @@ expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg)
 
 	/* A move action might be missing. */
 	if (strlen(root->match->maildir) == 0) {
-		path = message_get_path(msg);
-		if (pathslice(path, root->match->maildir, 0, -2) == NULL)
-			errx(1, "%s: %s: maildir not found", __func__, path);
+		if (pathslice(msg->path, root->match->maildir, 0, -2) == NULL)
+			errx(1, "%s: %s: maildir not found", __func__,
+			    msg->path);
 	}
 
 	return 0;
@@ -340,8 +301,7 @@ expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 
 	/* A flag action might already have been evaluted. */
 	if (strlen(root->match->subdir) == 0) {
-		path = message_get_path(msg);
-		if (pathslice(path, root->match->subdir, -2, -2) == NULL)
+		if (pathslice(msg->path, root->match->subdir, -2, -2) == NULL)
 			errx(1, "%s: %s: subdir not found", __func__, path);
 	}
 
@@ -353,10 +313,8 @@ expr_eval_new(struct expr *root __unused, struct expr *ex __unused,
     const struct message *msg)
 {
 	char buf[NAME_MAX];
-	const char *path;
 
-	path = message_get_path(msg);
-	if (pathslice(path, buf, -2, -2) == NULL || strcmp(buf, "new"))
+	if (pathslice(msg->path, buf, -2, -2) == NULL || strcmp(buf, "new"))
 		return 1;
 	return 0;
 }
@@ -366,12 +324,10 @@ expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
     const struct message *msg)
 {
 	char buf[NAME_MAX];
-	const char *path;
 
 	if (message_has_flags(msg, 'S'))
 		return 1;
-	path = message_get_path(msg);
-	if (pathslice(path, buf, -2, -2) == NULL || strcmp(buf, "cur"))
+	if (pathslice(msg->path, buf, -2, -2) == NULL || strcmp(buf, "cur"))
 		return 1;
 	return 0;
 }

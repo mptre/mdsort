@@ -2,12 +2,9 @@
 #include <sys/types.h>
 
 #include <assert.h>
-#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -15,19 +12,6 @@
 
 #include "config.h"
 #include "extern.h"
-
-enum subdir {
-	SUBDIR_NEW,
-	SUBDIR_CUR,
-};
-
-struct maildir {
-	char *path;
-	DIR *dir;
-	enum subdir subdir;
-	int flags;
-	char buf[PATH_MAX];
-};
 
 static const char *maildir_genname(const struct maildir *,
     const struct maildir *, struct message *, const struct environment *);
@@ -112,14 +96,13 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		{ 0,	0 }
 	};
 	struct stat st;
-	const char *dstname, *path, *srcname;
+	const char *dstname, *srcname;
 	int dstfd, srcfd;
 	int doutime = 0;
 
-	path = message_get_path(msg);
-	srcname = pathslice(path, buf, -1, -1);
+	srcname = pathslice(msg->path, buf, -1, -1);
 	if (srcname == NULL) {
-		warnx("%s: basename not found", path);
+		warnx("%s: basename not found", msg->path);
 		return 1;
 	}
 	srcfd = dirfd(src->dir);
