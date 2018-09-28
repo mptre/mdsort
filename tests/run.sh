@@ -124,8 +124,12 @@ mdsort() {
 
 # mkmd dir ...
 mkmd() {
-	for d; do
-		mkdir -p ${MAILDIR}/${d}/{cur,new,tmp}
+	local _a _b
+
+	for _a; do
+		for _b in cur new tmp; do
+			mkdir -p "${MAILDIR}/${_a}/${_b}"
+		done
 	done
 }
 
