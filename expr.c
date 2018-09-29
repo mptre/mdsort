@@ -11,13 +11,17 @@
 
 static int expr_eval1(struct expr *, struct expr *, const struct message *);
 static int expr_eval_all(struct expr *, struct expr *, const struct message *);
+static int expr_eval_and(struct expr *, struct expr *, const struct message *);
 static int expr_eval_body(struct expr *, struct expr *, const struct message *);
 static int expr_eval_flag(struct expr *, struct expr *, const struct message *);
 static int expr_eval_header(struct expr *, struct expr *,
     const struct message *);
 static int expr_eval_move(struct expr *, struct expr *, const struct message *);
+static int expr_eval_neg(struct expr *, struct expr *, const struct message *);
 static int expr_eval_new(struct expr *, struct expr *, const struct message *);
 static int expr_eval_old(struct expr *, struct expr *, const struct message *);
+static int expr_eval_or(struct expr *, struct expr *, const struct message *);
+static int expr_eval_root(struct expr *, struct expr *, const struct message *);
 static void expr_inspect1(const struct expr *, const struct expr *, FILE *);
 static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
@@ -152,26 +156,16 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
 
 	switch (ex->type) {
 	case EXPR_TYPE_ROOT:
-		res = expr_eval1(root, ex->lhs, msg);
+		res = expr_eval_root(root, ex, msg);
 		break;
 	case EXPR_TYPE_AND:
-		res = expr_eval1(root, ex->lhs, msg);
-		if (res)
-			break; /* no match, short-circuit */
-		res = expr_eval1(root, ex->rhs, msg);
+		res = expr_eval_and(root, ex, msg);
 		break;
 	case EXPR_TYPE_OR:
-		res = expr_eval1(root, ex->lhs, msg);
-		if (res == 0)
-			break; /* match, short-circuit */
-		res = expr_eval1(root, ex->rhs, msg);
+		res = expr_eval_or(root, ex, msg);
 		break;
 	case EXPR_TYPE_NEG:
-		assert(ex->rhs == NULL);
-		res = !expr_eval1(root, ex->lhs, msg);
-		/* On non-match, invalidate match below expression. */
-		if (res)
-			match_reset(root->match);
+		res = expr_eval_neg(root, ex, msg);
 		break;
 	case EXPR_TYPE_ALL:
 		res = expr_eval_all(root, ex, msg);
@@ -208,6 +202,14 @@ expr_eval_all(struct expr *root __unused, struct expr *ex __unused,
     const struct message *msg __unused)
 {
 	return 0;
+}
+
+static int
+expr_eval_and(struct expr *root, struct expr *ex, const struct message *msg)
+{
+	if (expr_eval1(root, ex->lhs, msg))
+		return 1; /* no match, short-circuit */
+	return expr_eval1(root, ex->rhs, msg);
 }
 
 static int
@@ -304,6 +306,19 @@ expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 }
 
 static int
+expr_eval_neg(struct expr *root, struct expr *ex, const struct message *msg)
+{
+	assert(ex->rhs == NULL);
+
+	if (expr_eval1(root, ex->lhs, msg))
+		return 0;
+
+	/* Non-match, invalidate match below expression. */
+	match_reset(root->match);
+	return 1;
+}
+
+static int
 expr_eval_new(struct expr *root __unused, struct expr *ex __unused,
     const struct message *msg)
 {
@@ -325,6 +340,20 @@ expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
 	if (pathslice(msg->path, buf, -2, -2) == NULL || strcmp(buf, "cur"))
 		return 1;
 	return 0;
+}
+
+static int
+expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg)
+{
+	if (expr_eval1(root, ex->lhs, msg) == 0)
+		return 0; /* match, short-circuit */
+	return expr_eval1(root, ex->rhs, msg);
+}
+
+static int
+expr_eval_root(struct expr *root, struct expr *ex, const struct message *msg)
+{
+	return expr_eval1(root, ex->lhs, msg);
 }
 
 static void
