@@ -125,6 +125,23 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	return 0;
 }
 
+int
+maildir_unlink(const struct maildir *md, const struct message *msg)
+{
+	char buf[NAME_MAX];
+
+	if (pathslice(msg->path, buf, -1, -1) == NULL) {
+		warnx("%s: basename not found", msg->path);
+		return 1;
+	}
+
+	if (unlinkat(dirfd(md->dir), buf, 0) == -1) {
+		warn("unlinkat: %s", msg->path);
+		return 1;
+	}
+	return 0;
+}
+
 static int
 maildir_next(struct maildir *md)
 {

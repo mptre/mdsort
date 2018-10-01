@@ -43,6 +43,7 @@ DISTFILES=	CHANGELOG.md \
 		parse.y \
 		tests/GNUmakefile \
 		tests/Makefile \
+		tests/action-discard.sh \
 		tests/action-flag.sh \
 		tests/basic.sh \
 		tests/conf.sh \

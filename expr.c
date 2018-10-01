@@ -13,6 +13,8 @@ static int expr_eval1(struct expr *, struct expr *, const struct message *);
 static int expr_eval_all(struct expr *, struct expr *, const struct message *);
 static int expr_eval_and(struct expr *, struct expr *, const struct message *);
 static int expr_eval_body(struct expr *, struct expr *, const struct message *);
+static int expr_eval_discard(struct expr *, struct expr *,
+    const struct message *);
 static int expr_eval_flag(struct expr *, struct expr *, const struct message *);
 static int expr_eval_header(struct expr *, struct expr *,
     const struct message *);
@@ -59,6 +61,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_OLD:
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
+	case EXPR_TYPE_DISCARD:
 		break;
 	}
 	return ex;
@@ -125,8 +128,15 @@ expr_eval(struct expr *ex, const struct message *msg)
 	ex->cookie++;
 	if (expr_eval1(ex, ex, msg))
 		return NULL;
-	if (match_interpolate(ex->match))
-		return NULL;
+	switch (ex->match->action->type) {
+	case EXPR_TYPE_FLAG:
+	case EXPR_TYPE_MOVE:
+		if (match_interpolate(ex->match))
+			return NULL;
+		break;
+	default:
+		break;
+	}
 	return ex->match;
 }
 
@@ -141,6 +151,34 @@ expr_count(const struct expr *ex, enum expr_type type)
 	if (ex->type == type)
 		acc = 1;
 	return acc + expr_count(ex->lhs, type) + expr_count(ex->rhs, type);
+}
+
+int
+expr_count_actions(const struct expr *ex)
+{
+	int acc = 0;
+
+	if (ex == NULL)
+		return 0;
+
+	switch (ex->type) {
+	case EXPR_TYPE_ROOT:
+	case EXPR_TYPE_AND:
+	case EXPR_TYPE_OR:
+	case EXPR_TYPE_NEG:
+	case EXPR_TYPE_ALL:
+	case EXPR_TYPE_BODY:
+	case EXPR_TYPE_HEADER:
+	case EXPR_TYPE_NEW:
+	case EXPR_TYPE_OLD:
+		break;
+	case EXPR_TYPE_MOVE:
+	case EXPR_TYPE_FLAG:
+	case EXPR_TYPE_DISCARD:
+		acc = 1;
+		break;
+	}
+	return acc + expr_count_actions(ex->lhs) + expr_count_actions(ex->rhs);
 }
 
 void
@@ -188,6 +226,9 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
 	case EXPR_TYPE_FLAG:
 		res = expr_eval_flag(root, ex, msg);
 		break;
+	case EXPR_TYPE_DISCARD:
+		res = expr_eval_discard(root, ex, msg);
+		break;
 	}
 	if (res == 0) {
 		/* Mark expression as visited on match. */
@@ -232,10 +273,28 @@ expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg)
 }
 
 static int
+expr_eval_discard(struct expr *root, struct expr *ex,
+    const struct message *msg __unused)
+{
+	size_t len;
+
+	root->match->action = ex;
+
+	/* Populate the path in case of a dry run. */
+	len = sizeof(root->match->path);
+	if (strlcpy(root->match->path, "/dev/null", len) >= len)
+		errx(1, "%s: buffer too small", __func__);
+
+	return 0;
+}
+
+static int
 expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	struct string *str;
 	size_t len;
+
+	root->match->action = ex;
 
 	str = TAILQ_FIRST(ex->strings);
 	len = sizeof(root->match->subdir);
@@ -289,6 +348,8 @@ expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 {
 	struct string *str;
 	size_t len;
+
+	root->match->action = ex;
 
 	str = TAILQ_FIRST(ex->strings);
 	len = sizeof(root->match->maildir);
@@ -384,6 +445,7 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 	case EXPR_TYPE_OLD:
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
+	case EXPR_TYPE_DISCARD:
 		break;
 	}
 }

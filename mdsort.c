@@ -84,17 +84,28 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			dst = maildir_open(match->path, 0);
-			if (dst == NULL) {
+			log_info("%s -> %s\n", path, match->path);
+			if (dflag) {
+				expr_inspect(conf->expr, stdout);
 				message_free(msg);
 				continue;
 			}
-			log_info("%s -> %s\n", path, match->path);
-			if (dflag)
-				expr_inspect(conf->expr, stdout);
-			else
+
+			switch (match->action->type) {
+			case EXPR_TYPE_FLAG:
+			case EXPR_TYPE_MOVE:
+				dst = maildir_open(match->path, 0);
+				if (dst == NULL)
+					break;
 				(void)maildir_move(md, dst, msg, &env);
-			maildir_close(dst);
+				maildir_close(dst);
+				break;
+			case EXPR_TYPE_DISCARD:
+				(void)maildir_unlink(md, msg);
+				break;
+			default:
+				break;
+			}
 			message_free(msg);
 		}
 		maildir_close(md);

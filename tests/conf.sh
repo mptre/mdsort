@@ -36,6 +36,8 @@ if testcase "sanity"; then
 		match new move "~/Maildir/Junk" flag new flag !new
 
 		match all move "~/Maildir/Junk"
+
+		match new discard
 	}
 
 	maildir "~/Maildir/test2" {

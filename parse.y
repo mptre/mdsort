@@ -37,7 +37,7 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL BODY FLAG HEADER MAILDIR MATCH MOVE NEW OLD PATTERN STRING
+%token ALL BODY DISCARD FLAG HEADER MAILDIR MATCH MOVE NEW OLD PATTERN STRING
 %type <str> STRING flag
 %type <i> optneg
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
@@ -161,6 +161,11 @@ expractions	: /* empty */ {
 				$$ = $2;
 			} else {
 				$$ = expr_alloc(EXPR_TYPE_AND, $1, $2);
+
+				if (expr_count($$, EXPR_TYPE_DISCARD) > 0 &&
+				    expr_count_actions($$) > 1)
+					yyerror("discard cannot be combined "
+					    "with another action");
 				if (expr_count($$, EXPR_TYPE_MOVE) > 1)
 					yyerror("move action already defined");
 			}
@@ -186,6 +191,9 @@ expraction	: MOVE STRING {
 			strings = strings_alloc();
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
+		}
+		| DISCARD {
+			$$ = expr_alloc(EXPR_TYPE_DISCARD, NULL, NULL);
 		}
 		;
 
@@ -278,6 +286,7 @@ yylex(void)
 		{ "all",	ALL },
 		{ "and",	AND },
 		{ "body",	BODY },
+		{ "discard",	DISCARD },
 		{ "flag",	FLAG },
 		{ "header",	HEADER },
 		{ "maildir",	MAILDIR },

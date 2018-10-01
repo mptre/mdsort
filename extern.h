@@ -76,6 +76,13 @@ struct message {
 };
 
 /*
+ * Remove the message located in the given maildir.
+ *
+ * Returns zero on success, non-zero otherwise.
+ */
+int maildir_unlink(const struct maildir *md, const struct message *msg);
+
+/*
  * Parse the message located at path.
  *
  * The caller is responsible for freeing the returned memory using
@@ -106,6 +113,7 @@ enum expr_type {
 	EXPR_TYPE_OLD,
 	EXPR_TYPE_MOVE,
 	EXPR_TYPE_FLAG,
+	EXPR_TYPE_DISCARD,
 };
 
 struct expr {
@@ -128,6 +136,8 @@ struct match {
 	char maildir[PATH_MAX];
 	char subdir[NAME_MAX];
 	char path[PATH_MAX];
+
+	const struct expr *action;
 
 	char **matches;
 	size_t nmatches;
@@ -174,6 +184,11 @@ int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
  * Returns the number of expressions with the given type.
  */
 int expr_count(const struct expr *ex, enum expr_type type);
+
+/*
+ * Returns the number of actions.
+ */
+int expr_count_actions(const struct expr *ex);
 
 /*
  * Returns a match if the expression matches the given message.

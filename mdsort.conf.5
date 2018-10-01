@@ -98,6 +98,9 @@ is true.
 .Pp
 Next comes one or many actions:
 .Bl -tag -width Ds
+.It Ic discard
+Remove the message from the maildir.
+Mutually exclusive with all other actions.
 .It Ic flag Oo Ic \&! Oc Ic new
 Flag the message as read or not.
 .It Ic move Dq Ar path
