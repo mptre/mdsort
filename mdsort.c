@@ -93,7 +93,7 @@ main(int argc, char *argv[])
 			if (dflag)
 				expr_inspect(conf->expr, stdout);
 			else
-				maildir_move(md, dst, msg, &env);
+				(void)maildir_move(md, dst, msg, &env);
 			maildir_close(dst);
 			message_free(msg);
 		}
