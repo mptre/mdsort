@@ -34,10 +34,10 @@ The first matching rule is favored.
 .Pp
 A rule is defined as follows:
 .Bl -tag -width XXX
-.It Ic match Ar condition action
+.It Ic match Ar condition action ...
 A rule starts with the
 .Ic match
-keyword followed by conditions then actions to perform if the conditions
+keyword followed by a condition then actions to perform if the condition
 evaluates to true.
 Each rule spans to the end of the current line but can extended over multiple
 lines using a backslash
