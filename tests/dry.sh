@@ -151,6 +151,26 @@ if testcase "match body spanning multiple lines"; then
 	fcmp - $TMP1 </dev/null && pass
 fi
 
+if testcase "match body many subexpressions"; then
+	mkmd "src" "dst"
+	mkmsg -b "src/new" <<-EOF
+	foo bar
+	EOF
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match body /foo (bar)?/ move "dst"
+	}
+	EOF
+	cat <<-EOF >$TMP1
+	foo bar
+	^     $
+	foo bar
+	    ^ $
+	EOF
+	mdsort -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2 && pass
+fi
+
 if testcase "match many headers and body"; then
 	mkmd "src" "dst"
 	echo "Hello!" | mkmsg -b "src/new" -- \

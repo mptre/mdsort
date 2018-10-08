@@ -144,8 +144,6 @@ struct match {
 
 	const char *key;
 	const char *val;
-	size_t valbeg;
-	size_t valend;
 };
 
 /*

@@ -266,8 +266,6 @@ expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg)
 	match_reset(ex->match);
 	ex->match->key = NULL;
 	ex->match->val = msg->body;
-	ex->match->valbeg = ex->matches[0].rm_so;
-	ex->match->valend = ex->matches[0].rm_eo;
 	match_copy(root->match, msg->body, ex->matches, ex->nmatches);
 	return 0;
 }
@@ -452,28 +450,37 @@ static void
 expr_inspect_body(const struct expr *ex, FILE *fh)
 {
 	const struct match *match;
-	const char *beg, *end, *p;
-	int len, padbeg, padend;
+	const char *lbeg, *lend, *p;
+	unsigned int i;
+	int beg, end, indent, len;
 
 	match = ex->match;
-	beg = match->val;
-	for (;;) {
-		if ((p = strchr(beg, '\n')) == NULL ||
-		    p > match->val + match->valbeg)
-			break;
-		beg = p + 1;
+
+	for (i = 0; i < ex->nmatches; i++) {
+		beg = ex->matches[i].rm_so;
+		end = ex->matches[i].rm_eo;
+
+		lbeg = match->val;
+		for (;;) {
+			if ((p = strchr(lbeg, '\n')) == NULL ||
+			    p > match->val + beg)
+				break;
+			lbeg = p + 1;
+		}
+		lend = strchr(lbeg, '\n');
+		if (lend == NULL)
+			lend = match->val + end;
+		/* Skip matches spanning over multiple lines. */
+		if (match->val + end > lend)
+			continue;
+
+		indent = beg - (lbeg - match->val);
+		len = end - beg;
+		if (len >= 2)
+			len -= 2;
+		fprintf(fh, "%.*s\n%*s^%*s$\n",
+		    (int)(lend - lbeg), lbeg, indent, "", len, "");
 	}
-	if ((end = strchr(beg, '\n')) == NULL)
-		end = match->val + match->valend;
-	/* Do not handle a match spanning over multiple lines for now. */
-	if (match->valend > (size_t)(end - match->val))
-		return;
-	padbeg = match->valbeg - (beg - match->val);
-	padend = match->valend - match->valbeg;
-	if (padend >= 2)
-		padend -= 2;
-	len = end - beg;
-	fprintf(fh, "%.*s\n%*s^%*s$\n", len, beg, padbeg, "", padend, "");
 }
 
 static void
