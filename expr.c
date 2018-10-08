@@ -280,7 +280,7 @@ expr_eval_discard(struct expr *root, struct expr *ex,
 
 	/* Populate the path in case of a dry run. */
 	len = sizeof(root->match->path);
-	if (strlcpy(root->match->path, "/dev/null", len) >= len)
+	if (strlcpy(root->match->path, "<discard>", len) >= len)
 		errx(1, "%s: buffer too small", __func__);
 
 	return 0;

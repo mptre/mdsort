@@ -36,6 +36,6 @@ if testcase "dry run"; then
 	}
 	EOF
 	mdsort -d >$TMP2
-	grep -q ' -> /dev/null$' $TMP2 || fail 'expected move line'
+	grep -q ' -> <discard>$' $TMP2 || fail 'expected move line'
 	pass
 fi
