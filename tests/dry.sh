@@ -61,6 +61,27 @@ if testcase "match header negate"; then
 	pass
 fi
 
+if testcase "match header many subexpressions"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" "user@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /(example).(com)/ move "dst"
+	}
+	EOF
+	cat <<EOF >$TMP1
+To: user@example.com
+         ^         $
+    user@example.com
+         ^     $
+    user@example.com
+                 ^ $
+EOF
+	mdsort -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2 && pass
+	pass
+fi
+
 if testcase "match body on first line"; then
 	mkmd "src" "dst"
 	echo "Hello" | mkmsg -b "src/new" -- "To" "user@example.com"

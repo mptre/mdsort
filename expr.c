@@ -333,8 +333,6 @@ expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg)
 			match_reset(ex->match);
 			ex->match->key = key->val;
 			ex->match->val = val->val;
-			ex->match->valbeg = ex->matches[0].rm_so;
-			ex->match->valend = ex->matches[0].rm_eo;
 			match_copy(root->match, val->val, ex->matches,
 			    ex->nmatches);
 			return 0;
@@ -482,16 +480,25 @@ static void
 expr_inspect_header(const struct expr *ex, FILE *fh)
 {
 	const struct match *match;
-	int lenval, padbeg, padend;
+	unsigned int i;
+	int beg, end, indent, len;
 
 	match = ex->match;
-	lenval = strlen(match->val);
-	padbeg = strlen(match->key) + 2 + match->valbeg;
-	padend = match->valend - match->valbeg;
-	if (padend >= 2)
-		padend -= 2;
-	fprintf(fh, "%s: %.*s\n%*s^%*s$\n",
-	    match->key, lenval, match->val, padbeg, "", padend, "");
+	indent = strlen(match->key) + 2;
+
+	fprintf(fh, "%s: ", match->key);
+	for (i = 0; i < ex->nmatches; i++) {
+		if (i > 0)
+			fprintf(fh, "%*s", indent, "");
+		fprintf(fh, "%s\n", match->val);
+
+		beg = ex->matches[i].rm_so;
+		end = ex->matches[i].rm_eo;
+		len = end - beg;
+		if (len >= 2)
+			len -= 2;
+		fprintf(fh, "%*s^%*s$\n", indent + beg, "", len, "");
+	}
 }
 
 static void
