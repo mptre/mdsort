@@ -78,7 +78,7 @@ To: user@example.com
                  ^ $
 EOF
 	mdsort -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2 && pass
+	fcmp $TMP1 $TMP2
 	pass
 fi
 

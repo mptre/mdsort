@@ -32,6 +32,10 @@ fail() {
 pass() {
 	[ $TCFAIL -eq 1 ] && return 0
 
+	if [ $TCFAIL -ge 0 ]; then
+		fail "pass called twice"
+	fi
+
 	TCFAIL=0
 	printf '%s: %s\n' "${1:-PASS}" "$TCDESC"
 }
