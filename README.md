@@ -34,12 +34,11 @@ maildir(s) unchanged:
 
 ```
 $ mdsort -d
-/home/anton/Maildir/INBOX/new/1521917775.89020_21.host -> /home/anton/Maildir/GitHub/new
+/home/anton/Maildir/INBOX/new/1521917775.89020_21.host -> /home/anton/Maildir/mdsort/new
 From: Charlie Root <notifications@github.com>
                     ^                      $
-/home/anton/Maildir/INBOX/new/1521917295.19872_29.host -> /home/anton/Maildir/openbsd-tech/new
-Cc: tech@openbsd.org
-    ^              $
+Subject: mptre commented on pull request mptre/mdsort#1337
+                                               ^    $
 ```
 
 ## Installation
