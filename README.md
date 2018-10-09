@@ -11,8 +11,9 @@ Example configuration:
 
 ```
 maildir "~/Maildir/INBOX" {
-	# Move notifications from GitHub.
-	match header "From" /notifications@github.com/ move "~/Maildir/GitHub"
+	# Move mdsort notifications from GitHub.
+	match header "From" /notifications@github.com/ and \
+		header "Subject" /mdsort/ move "~/Maildir/mdsort"
 
 	# Move messages from OpenBSD mailing lists into dedicated directories.
 	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i \
