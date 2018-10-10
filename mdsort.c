@@ -23,6 +23,7 @@ main(int argc, char *argv[])
 	struct message *msg;
 	const char *confpath = NULL;
 	int c;
+	int error = 0;
 	int dflag = 0;
 	int nflag = 0;
 	int verbose = 0;
@@ -71,12 +72,17 @@ main(int argc, char *argv[])
 
 	TAILQ_FOREACH(conf, config, entry) {
 		md = maildir_open(conf->maildir, MAILDIR_WALK | MAILDIR_ROOT);
-		if (md == NULL)
+		if (md == NULL) {
+			error = 1;
 			continue;
+		}
+
 		while (maildir_walk(md, path)) {
 			msg = message_parse(path);
-			if (msg == NULL)
+			if (msg == NULL) {
+				error = 1;
 				continue;
+			}
 
 			match = expr_eval(conf->expr, msg);
 			if (match == NULL) {
@@ -95,13 +101,17 @@ main(int argc, char *argv[])
 			case EXPR_TYPE_FLAG:
 			case EXPR_TYPE_MOVE:
 				dst = maildir_open(match->path, 0);
-				if (dst == NULL)
+				if (dst == NULL) {
+					error = 1;
 					break;
-				(void)maildir_move(md, dst, msg, &env);
+				}
+				if (maildir_move(md, dst, msg, &env))
+					error = 1;
 				maildir_close(dst);
 				break;
 			case EXPR_TYPE_DISCARD:
-				(void)maildir_unlink(md, msg);
+				if (maildir_unlink(md, msg))
+					error = 1;
 				break;
 			default:
 				break;
@@ -118,7 +128,7 @@ main(int argc, char *argv[])
 		free(conf);
 	}
 
-	return 0;
+	return error;
 }
 
 static __dead void
