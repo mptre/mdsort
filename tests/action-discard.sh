@@ -35,7 +35,7 @@ if testcase "dry run"; then
 		match header "To" /user/ discard
 	}
 	EOF
-	mdsort -d >$TMP2
+	mdsort -- -d >$TMP2
 	grep -q ' -> <discard>$' $TMP2 || fail 'expected move line'
 	pass
 fi

@@ -97,17 +97,18 @@ fcmp() {
 	return 0
 }
 
-# mdsort [- | -D] [mdsort-argument ...]
+# mdsort [- | -D] [-- mdsort-argument ...]
 mdsort() {
 	local _args="-f mdsort.conf" _input=0 _exit=0
 
-	while :; do
+	while [ $# -gt 0 ]; do
 		case "$1" in
 		-)	cat >$_TMP2
 			_input=1
 			;;
 		-D)	_args=;;
-		*)	break;;
+		--)	shift
+			break;;
 		esac
 		shift
 	done

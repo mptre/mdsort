@@ -44,13 +44,13 @@ if testcase "sanity"; then
 		match header "Received-SPF" /fail/i move "~/Maildir/Junk"
 	}
 	EOF
-	mdsort - -n </dev/null
+	mdsort - -- -n </dev/null
 	pass
 fi
 
 if testcase "empty"; then
 	>$CONF
-	mdsort - -n </dev/null
+	mdsort - -- -n </dev/null
 	pass
 fi
 
@@ -65,7 +65,7 @@ if testcase "comments"; then
 		match header "From" /user2@example.com/ move "~/Maildir/user2"
 	}
 	EOF
-	mdsort - -n </dev/null
+	mdsort - -- -n </dev/null
 	pass
 fi
 
@@ -75,7 +75,7 @@ if testcase "escape quote inside string"; then
 		match all move "dst"
 	}
 	EOF
-	mdsort - -n </dev/null
+	mdsort - -- -n </dev/null
 	pass
 fi
 
@@ -85,7 +85,7 @@ if testcase "escape slash inside pattern"; then
 		match header "From" /user\// move "~/Maildir/test2"
 	}
 	EOF
-	mdsort - -n </dev/null
+	mdsort - -- -n </dev/null
 	pass
 fi
 
@@ -94,7 +94,7 @@ if testcase -e "rule must end with newline"; then
 	maildir "~/Maildir/test1" {
 		match header "From" /./ move "~/Maildir/Junk"}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
 	pass
@@ -104,7 +104,7 @@ if testcase -e "empty maildir path"; then
 	cat <<-EOF >$CONF
 	maildir "" {}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:1: empty string
 	EOF
 	pass
@@ -114,7 +114,7 @@ if testcase -e "unknown keyword"; then
 	cat <<-EOF >$CONF
 	noway
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:1: unknown keyword: noway
 	EOF
 	pass
@@ -125,7 +125,7 @@ if testcase -e "invalid line continuation"; then
 	maildir "~/Maildir/test1" \ {
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:1: syntax error
 	EOF
 	pass
@@ -137,13 +137,13 @@ if testcase "default path"; then
 		match new move "~/Maildir/test2"
 	}
 	EOF
-	HOME=$MAILDIR mdsort -D -n
+	HOME=$MAILDIR mdsort -D -- -n
 	rm -f .mdsort.conf
 	pass
 fi
 
 if testcase -e "missing file"; then
-	mdsort - -n -f missing.conf <<-EOF
+	mdsort - -- -n -f missing.conf <<-EOF
 	mdsort: missing.conf: No such file or directory
 	EOF
 	pass
@@ -156,7 +156,7 @@ if testcase -e "invalid pattern"; then
 		match header "From" /(/ move "~/Maildir/test2"
 	}
 	EOF
-	mdsort >/dev/null
+	mdsort -- -n >/dev/null
 	pass
 fi
 
@@ -167,7 +167,7 @@ if testcase -e "missing header name"; then
 		match header { "" } /./ move "~/Maildir/test2"
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: empty string
 	mdsort.conf:3: empty string
 	EOF
@@ -180,7 +180,7 @@ if testcase -e "empty move destination"; then
 		match new move ""
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: empty string
 	EOF
 	pass
@@ -192,7 +192,7 @@ if testcase -e "keyword too long"; then
 		$(randstr $BUFSIZ lower)
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: keyword too long
 	mdsort.conf:2: syntax error
 	EOF
@@ -203,7 +203,7 @@ if testcase -e "string too long"; then
 	cat <<-EOF >$CONF
 	maildir "$(randstr $BUFSIZ alnum)" {}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:1: string too long
 	mdsort.conf:1: syntax error
 	EOF
@@ -214,7 +214,7 @@ if testcase -e "string unterminated"; then
 	cat <<-EOF >$CONF
 	maildir "
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:1: unterminated string
 	mdsort.conf:1: syntax error
 	EOF
@@ -228,7 +228,7 @@ if testcase -e "pattern too long"; then
 			move "~/Maildir/test2"
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: pattern too long
 	mdsort.conf:2: syntax error
 	EOF
@@ -241,7 +241,7 @@ if testcase -e "pattern unterminated"; then
 		match header "From" /
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: unterminated pattern
 	mdsort.conf:2: syntax error
 	EOF
@@ -252,7 +252,7 @@ if testcase -e "maildir path too long after tilde expansion"; then
 	cat <<-EOF >$CONF
 	maildir "~/$(randstr $((PATH_MAX - 10))  alnum)" {}
 	EOF
-	HOME=/home/user mdsort - -n <<-EOF
+	HOME=/home/user mdsort - -- -n <<-EOF
 	mdsort.conf:1: path too long
 	EOF
 	pass
@@ -265,7 +265,7 @@ if testcase -e "destination path too long after tilde expansion"; then
 			move "~/$(randstr $((PATH_MAX - 10)) alnum)"
 	}
 	EOF
-	HOME=/home/user mdsort - -n <<-EOF
+	HOME=/home/user mdsort - -- -n <<-EOF
 	mdsort.conf:2: path too long
 	EOF
 	pass
@@ -277,7 +277,7 @@ if testcase -e "missing left-hand expr with and"; then
 		match and new move "~/Maildir/Junk"
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
 	pass
@@ -289,7 +289,7 @@ if testcase -e "missing right-hand expr with and"; then
 		match new and move "~/Maildir/Junk"
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
 	pass
@@ -300,7 +300,7 @@ if testcase -e "empty match block"; then
 	maildir "~/Maildir/INBOX" {
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: empty match block
 	EOF
 	pass
@@ -313,7 +313,7 @@ if testcase -e "empty nested match block"; then
 		}
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:3: empty nested match block
 	EOF
 	pass
@@ -325,7 +325,7 @@ if testcase -e "missing action"; then
 		match new
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:3: missing action
 	EOF
 	pass
@@ -337,7 +337,7 @@ if testcase -e "duplicate move actions"; then
 		match new move "~/Maildir/one" move "~/Maildir/two"
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: move action already defined
 	EOF
 	pass

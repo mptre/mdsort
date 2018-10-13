@@ -10,7 +10,7 @@ if testcase "match header on first line"; then
 To: user@example.com
          ^         $
 EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -27,7 +27,7 @@ if testcase "match header on middle line"; then
 To: admin@a.com,user@a.com,no-reply@a.com
                 ^  $
 EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -44,7 +44,7 @@ if testcase "match header on last line"; then
 To: admin@example.com,user@example.com
                       ^  $
 EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -56,7 +56,7 @@ if testcase "match header negate"; then
 		match ! header "To" /user/ move "dst"
 	}
 	EOF
-	mdsort -d >$TMP1
+	mdsort -- -d >$TMP1
 	grep -q '^src/new.* -> dst/new$' $TMP1 || fail "expected move line"
 	pass
 fi
@@ -77,7 +77,7 @@ To: user@example.com
     user@example.com
                  ^ $
 EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2
 	pass
 fi
@@ -94,7 +94,7 @@ if testcase "match body on first line"; then
 	Hello
 	^   $
 	EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -110,7 +110,7 @@ if testcase "match body on first line no newline"; then
 	Hello
 	^   $
 	EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -132,7 +132,7 @@ if testcase "match body on middle line"; then
 	Hello hello
 	      ^   $
 	EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -147,7 +147,7 @@ if testcase "match body spanning multiple lines"; then
 		match body /h.*/i move "dst"
 	}
 	EOF
-	mdsort -d | tail -n +2 >$TMP1
+	mdsort -- -d | tail -n +2 >$TMP1
 	fcmp - $TMP1 </dev/null && pass
 fi
 
@@ -167,7 +167,7 @@ if testcase "match body many subexpressions"; then
 	foo bar
 	    ^ $
 	EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -189,7 +189,7 @@ To: user@example.com
 Hello!
 ^   $
 EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -209,7 +209,7 @@ Cc: admin@example.com
 Hello!
 ^   $
 EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -229,7 +229,7 @@ To: user@example.com
 Hello!
 ^   $
 EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
 
@@ -252,6 +252,6 @@ To: user@example.com
 Hello!
 ^   $
 EOF
-	mdsort -d | tail -n +2 >$TMP2
+	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
