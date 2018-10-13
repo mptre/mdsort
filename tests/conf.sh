@@ -43,6 +43,10 @@ if testcase "sanity"; then
 	maildir "~/Maildir/test2" {
 		match header "Received-SPF" /fail/i move "~/Maildir/Junk"
 	}
+
+	stdin {
+		match all move "~/Maildir/INBOX"
+	}
 	EOF
 	mdsort - -- -n </dev/null
 	pass

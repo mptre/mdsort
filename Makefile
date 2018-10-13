@@ -54,6 +54,7 @@ DISTFILES=	CHANGELOG.md \
 		tests/match-logical.sh \
 		tests/match-new.sh \
 		tests/match-old.sh \
+		tests/stdin.sh \
 		tests/run.sh \
 		util.c
 

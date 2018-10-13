@@ -8,6 +8,7 @@
 .Nm
 .Op Fl dnv
 .Op Fl f Ar file
+.Op Fl
 .Sh DESCRIPTION
 The
 .Nm
@@ -31,6 +32,13 @@ Verbose mode.
 Multiple
 .Fl v
 options increases the verbosity.
+.It Fl
+Read messages from stdin.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width TMPDIR
+.It Ev TMPDIR
+Path in which to store temporary files.
 .El
 .Sh FILES
 .Bl -tag -width "~/.mdsort.conf"

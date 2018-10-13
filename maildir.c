@@ -13,37 +13,48 @@
 #include "extern.h"
 
 static const char *maildir_genname(const struct maildir *,
-    const struct maildir *, struct message *, const struct environment *);
+    const char *, const struct environment *);
 static int maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
+static int maildir_stdin(struct maildir *, const struct environment *);
+static const char *maildir_path(struct maildir *);
 static int maildir_read(struct maildir *, char *);
 
 static int parsesubdir(const char *, enum subdir *);
 static const char *strsubdir(enum subdir);
 
 struct maildir *
-maildir_open(const char *path, int flags)
+maildir_open(const char *path, int flags, const struct environment *env)
 {
 	struct maildir *md;
 
 	md = malloc(sizeof(*md));
 	if (md == NULL)
 		err(1, NULL);
-	md->path = strdup(path);
-	if (md->path == NULL)
-		err(1, NULL);
+	md->path = NULL;
 	md->dir = NULL;
+	md->subdir = SUBDIR_NEW;
 	md->flags = flags;
-	if ((md->flags & MAILDIR_WALK)) {
-		md->subdir = SUBDIR_NEW;
-	} else if (parsesubdir(path, &md->subdir)) {
-		warnx("%s: subdir not found", path);
-		maildir_close(md);
-		return NULL;
+
+	if ((md->flags & MAILDIR_STDIN)) {
+		if (maildir_stdin(md, env)) {
+			maildir_close(md);
+			return NULL;
+		}
+	} else {
+		md->path = strdup(path);
+		if (md->path == NULL)
+			err(1, NULL);
+
+		if ((md->flags & MAILDIR_WALK) == 0 &&
+		    parsesubdir(md->path, &md->subdir)) {
+			maildir_close(md);
+			return NULL;
+		}
 	}
 
 	if ((md->flags & MAILDIR_WALK))
-		path = pathjoin(md->buf, md->path, strsubdir(md->subdir), NULL);
+		path = maildir_path(md);
 	if (maildir_opendir(md, path)) {
 		maildir_close(md);
 		return NULL;
@@ -55,8 +66,22 @@ maildir_open(const char *path, int flags)
 void
 maildir_close(struct maildir *md)
 {
+	char path[PATH_MAX];
+	const char *dir;
+
 	if (md == NULL)
 		return;
+
+	if ((md->flags & MAILDIR_STDIN)) {
+		dir = maildir_path(md);
+		if (maildir_opendir(md, dir) == 0) {
+			while (maildir_walk(md, path))
+				(void)unlink(path);
+			(void)rmdir(dir);
+			(void)rmdir(md->path);
+		}
+	}
+
 	if (md->dir != NULL)
 		closedir(md->dir);
 	free(md->path);
@@ -79,7 +104,7 @@ maildir_walk(struct maildir *md, char *buf)
 
 		if (maildir_next(md))
 			return 0;
-		path = pathjoin(md->buf, md->path, strsubdir(md->subdir), NULL);
+		path = maildir_path(md);
 		if (maildir_opendir(md, path))
 			return 0;
 	}
@@ -95,7 +120,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		{ 0,	0 }
 	};
 	struct stat st;
-	const char *dstname, *srcname;
+	const char *dstname, *flags, *srcname;
 	int dstfd, srcfd;
 	int doutime = 0;
 
@@ -112,7 +137,12 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		warn("fstatat");
 	}
 
-	dstname = maildir_genname(src, dst, msg, env);
+	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR)
+		message_set_flags(msg, 'S', 1);
+	else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW)
+		message_set_flags(msg, 'S', 0);
+	flags = message_get_flags(msg);
+	dstname = maildir_genname(dst, flags, env);
 	dstfd = dirfd(dst->dir);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
@@ -145,6 +175,9 @@ maildir_unlink(const struct maildir *md, const struct message *msg)
 static int
 maildir_next(struct maildir *md)
 {
+	if ((md->flags & MAILDIR_STDIN))
+		return 1;
+
 	switch (md->subdir) {
 	case SUBDIR_NEW:
 		md->subdir = SUBDIR_CUR;
@@ -172,42 +205,95 @@ maildir_opendir(struct maildir *md, const char *path)
 }
 
 static const char *
-maildir_genname(const struct maildir *src, const struct maildir *dst,
-    struct message *msg, const struct environment *env)
+maildir_genname(const struct maildir *dst, const char *flags,
+    const struct environment *env)
 {
-	static char fname[NAME_MAX];
-	const char *flags;
+	static char name[NAME_MAX];
 	long long ts;
 	int fd, n;
 	int count;
-
-	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR)
-		message_set_flags(msg, 'S', 1);
-	else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW)
-		message_set_flags(msg, 'S', 0);
-	flags = message_get_flags(msg);
 
 	count = arc4random() % 128;
 	for (;;) {
 		count++;
 		ts = time(NULL);
-		n = snprintf(fname, NAME_MAX, "%lld.%d_%d.%s%s",
+		n = snprintf(name, NAME_MAX, "%lld.%d_%d.%s%s",
 		    ts, getpid(), count, env->hostname, flags);
 		if (n == -1 || n >= NAME_MAX)
 			errx(1, "%s: buffer too small", __func__);
-		fd = openat(dirfd(dst->dir), fname, O_WRONLY | O_CREAT | O_EXCL,
+		fd = openat(dirfd(dst->dir), name, O_WRONLY | O_CREAT | O_EXCL,
 		    S_IRUSR | S_IWUSR);
 		if (fd == -1) {
 			if (errno == EEXIST) {
 				log_debug("%s: %s: file exists\n",
-				    __func__, fname);
+				    __func__, name);
 				continue;
 			}
-			err(1, "openat: %s", fname);
+			err(1, "openat: %s", name);
 		}
 		close(fd);
-		return fname;
+		return name;
 	}
+}
+
+static const char *
+maildir_path(struct maildir *md)
+{
+	return pathjoin(md->buf, md->path, strsubdir(md->subdir), NULL);
+}
+
+static int
+maildir_stdin(struct maildir *md, const struct environment *env)
+{
+	char buf[BUFSIZ];
+	const char *name, *path;
+	ssize_t nr, nw;
+	int fd;
+	int error = 0;
+
+	md->path = malloc(PATH_MAX);
+	if (md->path == NULL)
+		err(1, NULL);
+	pathjoin(md->path, env->tmpdir, "mdsort-XXXXXXXX", NULL);
+	if (mkdtemp(md->path) == NULL) {
+		warn("mkdtemp");
+		return 1;
+	}
+
+	path = maildir_path(md);
+	if (mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
+		warn("mkdir");
+		return 1;
+	}
+	if (maildir_opendir(md, path))
+		return 1;
+
+	name = maildir_genname(md, "", env);
+	fd = openat(dirfd(md->dir), name, O_WRONLY | O_EXCL);
+	if (fd == -1) {
+		warn("openat: %s/%s", path, name);
+		return 1;
+	}
+	for (;;) {
+		nr = read(STDIN_FILENO, buf, sizeof(buf));
+		if (nr == -1) {
+			error = 1;
+			warn("read");
+			break;
+		} else if (nr == 0) {
+			break;
+		}
+
+		nw = write(fd, buf, nr);
+		if (nw == -1) {
+			error = 1;
+			warn("write: %s/%s", path, name);
+			break;
+		}
+	}
+	close(fd);
+
+	return error;
 }
 
 static int
@@ -241,6 +327,7 @@ parsesubdir(const char *path, enum subdir *subdir)
 		*subdir = SUBDIR_CUR;
 		return 0;
 	}
+	warnx("%s: subdir not found", path);
 	return 1;
 }
 

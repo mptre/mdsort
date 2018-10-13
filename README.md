@@ -10,6 +10,7 @@ format.
 Example configuration:
 
 ```
+$ cat ~/.mdsort.conf
 maildir "~/Maildir/INBOX" {
 	# Move mdsort notifications from GitHub.
 	match header "From" /notifications@github.com/ and \
@@ -40,6 +41,18 @@ From: Charlie Root <notifications@github.com>
                     ^                      $
 Subject: mptre commented on pull request mptre/mdsort#1337
                                                ^    $
+```
+
+In addition,
+[mdsort(1)][mdsort]
+can also act as a MDA reading messages from stdin:
+
+```
+$ cat ~/.mdsort.conf
+stdin {
+	match all move "~/Maildir/INBOX"
+}
+$ mdsort - <message
 ```
 
 ## Installation

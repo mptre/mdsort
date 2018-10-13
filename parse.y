@@ -37,8 +37,9 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL BODY DISCARD FLAG HEADER MAILDIR MATCH MOVE NEW OLD PATTERN STRING
-%type <str> STRING flag
+%token ALL BODY DISCARD FLAG HEADER MAILDIR MATCH MOVE NEW OLD PATTERN STDIN
+%token STRING
+%type <str> STRING flag maildir_path
 %type <i> optneg
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
 %type <strings> stringblock strings
@@ -54,23 +55,33 @@ grammar		: /* empty */
 		| grammar maildir '\n'
 		;
 
-maildir		: MAILDIR STRING exprblock {
+maildir		: maildir_path exprblock {
 			struct config *conf;
-			char *path;
 
-			path = expandtilde($2);
-			if (path == NULL)
-				YYERROR;
-
-			if ($3 == NULL && parse_errors == 0)
+			if ($2 == NULL && parse_errors == 0)
 				yyerror("empty match block");
 
 			conf = malloc(sizeof(*conf));
 			if (conf == NULL)
 				err(1, NULL);
-			conf->maildir = path;
-			conf->expr = expr_alloc(EXPR_TYPE_ROOT, $3, NULL);
+			conf->maildir = $1;
+			conf->expr = expr_alloc(EXPR_TYPE_ROOT, $2, NULL);
 			TAILQ_INSERT_TAIL(&config, conf, entry);
+		}
+		;
+
+maildir_path	: MAILDIR STRING {
+			  $$ = expandtilde($2);
+			  if ($$ == NULL)
+				  YYERROR;
+		}
+		| STDIN {
+			const struct config *conf;
+
+			$$ = NULL;
+			TAILQ_FOREACH(conf, &config, entry)
+				if (conf->maildir == NULL)
+					yyerror("stdin already defined");
 		}
 		;
 
@@ -295,6 +306,7 @@ yylex(void)
 		{ "new",	NEW },
 		{ "old",	OLD },
 		{ "or",		OR },
+		{ "stdin",	STDIN },
 		{ NULL,		0 },
 	};
 	static char lexeme[BUFSIZ], kw[16];

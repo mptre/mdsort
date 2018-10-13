@@ -13,25 +13,27 @@ Comments can be put anywhere in the file using a hash mark
 .Pq Sq #
 and extend to the end of the current line.
 .Pp
-Each
-.Ic maildir
-section starts with a declaration of the maildir and its corresponding
-.Ar path :
+The configuration starts with one or many maildir definitions:
 .Bl -tag -width Ds
 .It Ic maildir Do Ar path Dc No { Ar rule ... No }
-.El
-.Pp
-Followed by a block of rules.
+A maildir rooted in
+.Ar path ;
 .Xr mdsort 1
 iterates over each message present in the
 .Pa cur
 and
 .Pa new
-directory rooted in
-.Ar path
-and evaluates each rule in sequential order.
+directory and evaluates each rule in sequential order.
 The first matching rule is favored.
+.It Ic stdin No { Ar rule ... No }
+Accepts a message from stdin and evaluates each rule in sequential order.
+The first matching rule is favored.
+This type of maildir will only be evaluted if
+.Xr mdsort 1
+is invoked with the stdin option.
+.El
 .Pp
+Each maildir is followed by a block of rules.
 A rule is defined as follows:
 .Bl -tag -width XXX
 .It Ic match Ar condition action ...
@@ -150,6 +152,11 @@ maildir "~/Maildir/INBOX" {
 
 	# Archive read messages.
 	match ! new move "~/Maildir/Archive"
+}
+
+# Accept messages from stdin and move to the invoking user's inbox.
+stdin {
+	match all move "~/Maildir/INBOX"
 }
 .Ed
 .Sh SEE ALSO

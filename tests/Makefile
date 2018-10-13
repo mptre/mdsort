@@ -10,7 +10,8 @@ TESTS=	action-flag.sh \
 	match-header.sh \
 	match-logical.sh \
 	match-new.sh \
-	match-old.sh
+	match-old.sh \
+	stdin.sh
 
 .SUFFIXES: .sh .out
 

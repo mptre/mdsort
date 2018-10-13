@@ -38,13 +38,17 @@ struct maildir {
  *     MAILDIR_ROOT      The given path refers to a maildir root, as opposed of
  *                       referencing a subdirectory (cur, new or tmp).
  *
+ *     MAILDIR_STDIN     Read messages from stdin.
+ *
  * The caller is responsible for freeing the returned memory using
  * maildir_close().
  */
-struct maildir *maildir_open(const char *path, int flags);
+struct maildir *maildir_open(const char *path, int flags,
+    const struct environment *env);
 
 #define MAILDIR_WALK	0x1
 #define MAILDIR_ROOT	0x2
+#define MAILDIR_STDIN	0x4
 
 void maildir_close(struct maildir *md);
 
@@ -231,6 +235,7 @@ TAILQ_HEAD(config_list, config);
 struct environment {
 	char home[PATH_MAX];
 	char hostname[HOST_NAME_MAX + 1];
+	char tmpdir[PATH_MAX];
 };
 
 /*

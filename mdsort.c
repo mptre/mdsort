@@ -1,4 +1,5 @@
 #include <err.h>
+#include <paths.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +26,8 @@ main(int argc, char *argv[])
 	int c;
 	int error = 0;
 	int dflag = 0;
+	int dostdin = 0;
+	int mdflags = MAILDIR_WALK | MAILDIR_ROOT;
 	int nflag = 0;
 	int verbose = 0;
 
@@ -50,6 +53,14 @@ main(int argc, char *argv[])
 		}
 	argc -= optind;
 	argv += optind;
+	if (argc > 0) {
+		if (strcmp(*argv, "-"))
+			usage();
+		argc--;
+		argv++;
+		dostdin = 1;
+		mdflags |= MAILDIR_STDIN;
+	}
 	if (argc > 0)
 		usage();
 	if (dflag && verbose < 1)
@@ -71,7 +82,16 @@ main(int argc, char *argv[])
 		return 0;
 
 	TAILQ_FOREACH(conf, config, entry) {
-		md = maildir_open(conf->maildir, MAILDIR_WALK | MAILDIR_ROOT);
+		if (conf->maildir != NULL && dostdin) {
+			log_debug("%s: %s: skip\n",
+			    __func__, conf->maildir);
+			continue;
+		} else if (conf->maildir == NULL && !dostdin) {
+			log_debug("%s: <stdin>: skip\n", __func__);
+			continue;
+		}
+
+		md = maildir_open(conf->maildir, mdflags, &env);
 		if (md == NULL) {
 			error = 1;
 			continue;
@@ -90,7 +110,8 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			log_info("%s -> %s\n", path, match->path);
+			log_info("%s -> %s\n",
+			    dostdin ? "<stdin>" : path, match->path);
 			if (dflag) {
 				expr_inspect(conf->expr, stdout);
 				message_free(msg);
@@ -100,7 +121,7 @@ main(int argc, char *argv[])
 			switch (match->action->type) {
 			case EXPR_TYPE_FLAG:
 			case EXPR_TYPE_MOVE:
-				dst = maildir_open(match->path, 0);
+				dst = maildir_open(match->path, 0, &env);
 				if (dst == NULL) {
 					error = 1;
 					break;
@@ -134,7 +155,7 @@ main(int argc, char *argv[])
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: mdsort [-dnv] [-f file]\n");
+	fprintf(stderr, "usage: mdsort [-dnv] [-f file] [-]\n");
 	exit(1);
 }
 
@@ -173,5 +194,10 @@ readenv(struct environment *env)
 	if (p == NULL)
 		errx(1, "%s: cannot find home directory", __func__);
 	if (strlcpy(env->home, p, sizeof(env->home)) >= sizeof(env->home))
+		errx(1, "%s: buffer too small", __func__);
+
+	if ((p = getenv("TMPDIR")) == NULL || *p == '\0')
+		p = _PATH_TMP;
+	if (strlcpy(env->tmpdir, p, sizeof(env->tmpdir)) >= sizeof(env->tmpdir))
 		errx(1, "%s: buffer too small", __func__);
 }
