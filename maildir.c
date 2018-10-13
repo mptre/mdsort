@@ -196,7 +196,7 @@ maildir_genname(const struct maildir *src, const struct maildir *dst,
 		if (n == -1 || n >= NAME_MAX)
 			errx(1, "%s: buffer too small", __func__);
 		fd = openat(dirfd(dst->dir), fname, O_WRONLY | O_CREAT | O_EXCL,
-		    0666);
+		    S_IRUSR | S_IWUSR);
 		if (fd == -1) {
 			if (errno == EEXIST) {
 				log_debug("%s: %s: file exists\n",
