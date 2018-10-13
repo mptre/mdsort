@@ -183,7 +183,9 @@ testcase() {
 	TCFAIL=-1
 	ls -d $MAILDIR/*/ 2>/dev/null | xargs rm -rf
 
-	if [ -s "$FILTER" ]; then
+	if [ $TCEXIT -eq 1 ] && [ $SKIPERR -eq 1 ]; then
+		:
+	elif [ -s "$FILTER" ]; then
 		echo "$TCDESC" | grep -q -f "$FILTER" && return 0
 	elif ! echo "$TCDESC" | grep -q -f $IGNORE; then
 		return 0
@@ -206,6 +208,7 @@ randstr() {
 
 ENV=
 NERR=0
+SKIPERR=0
 TCFILE=""
 TCDESC=""
 TCEXIT=0
@@ -230,8 +233,9 @@ FILTER="${MAILDIR}/filter"
 IGNORE="${MAILDIR}/ignore"
 >$IGNORE
 
-while getopts "b:e:f:i:" opt; do
+while getopts "Eb:e:f:i:" opt; do
 	case "$opt" in
+	E)	SKIPERR=1;;
 	b)	MDSORT=$OPTARG;;
 	e)	ENV="${ENV} ${OPTARG}";;
 	f)	echo "$OPTARG" >>$FILTER;;
