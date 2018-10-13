@@ -81,3 +81,72 @@ if testcase "destination interpolation"; then
 	refute_empty "example/new"
 	pass
 fi
+
+if testcase "dry run first line"; then
+	mkmd "src" "dst"
+	echo "Hello" | mkmsg -b "src/new" -- "To" "user@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match body /hello/i move "dst"
+	}
+	EOF
+	cat <<-EOF >$TMP1
+	Hello
+	^   $
+	EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2 && pass
+fi
+
+if testcase "dry run first line no newline"; then
+	mkmd "src" "dst"
+	printf 'To: user@example.com\n\nHello' | mkmsg -b "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match body /hello/i move "dst"
+	}
+	EOF
+	cat <<-EOF >$TMP1
+	Hello
+	^   $
+	EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2 && pass
+fi
+
+if testcase "dry run middle line"; then
+	mkmd "src" "dst"
+	mkmsg -b "src/new" <<-EOF
+	To: user@example.com
+
+	Hi,
+	Hello hello
+	Bye
+	EOF
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match body /hello/ move "dst"
+	}
+	EOF
+	cat <<-EOF >$TMP1
+	Hello hello
+	      ^   $
+	EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2 && pass
+fi
+
+if testcase "dry run multiple lines"; then
+	mkmd "src" "dst"
+	mkmsg -b "src/new" -- "To" "user@example.com" <<-EOF
+	He
+	llo
+	EOF
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match body /h.*/i move "dst"
+	}
+	EOF
+	mdsort -- -d | tail -n +2 >$TMP1
+	fcmp - $TMP1 </dev/null && pass
+fi

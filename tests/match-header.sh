@@ -124,3 +124,87 @@ if testcase "destination interpolation"; then
 	refute_empty "user-example/new"
 	pass
 fi
+
+if testcase "dry run first line"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" "user@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /example.com/ move "dst"
+	}
+	EOF
+	cat <<EOF >$TMP1
+To: user@example.com
+         ^         $
+EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2 && pass
+fi
+
+if testcase "dry run middle line"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" \
+		"$(printf 'admin@a.com,\n\tuser@a.com,\n\tno-reply@a.com')"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /user/ move "dst"
+	}
+	EOF
+	cat <<EOF >$TMP1
+To: admin@a.com,user@a.com,no-reply@a.com
+                ^  $
+EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2 && pass
+fi
+
+if testcase "dry run last line"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" \
+		"$(printf 'admin@example.com,\n\tuser@example.com')"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /user/ move "dst"
+	}
+	EOF
+	cat <<EOF >$TMP1
+To: admin@example.com,user@example.com
+                      ^  $
+EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2 && pass
+fi
+
+if testcase "dry run negate"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" "admin@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match ! header "To" /user/ move "dst"
+	}
+	EOF
+	mdsort -- -d >$TMP1
+	grep -q '^src/new.* -> dst/new$' $TMP1 || fail "expected move line"
+	pass
+fi
+
+if testcase "dry run many subexpressions"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" "user@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /(example).(com)/ move "dst"
+	}
+	EOF
+	cat <<EOF >$TMP1
+To: user@example.com
+         ^         $
+    user@example.com
+         ^     $
+    user@example.com
+                 ^ $
+EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	fcmp $TMP1 $TMP2
+	pass
+fi
