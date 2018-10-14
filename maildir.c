@@ -93,7 +93,7 @@ maildir_walk(struct maildir *md)
 	const char *path;
 
 	if ((md->flags & MAILDIR_WALK) == 0)
-		return 0;
+		return NULL;
 
 	for (;;) {
 		path = maildir_read(md);
