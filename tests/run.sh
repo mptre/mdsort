@@ -116,7 +116,7 @@ mdsort() {
 	_tmpdir="${MAILDIR}/_tmpdir"
 	mkdir "$_tmpdir"
 
-        env $ENV "TMPDIR=${_tmpdir}" "$MDSORT" $_args "$@" >$_TMP1 2>&1 ||
+        env "TMPDIR=${_tmpdir}" $ENV "$MDSORT" $_args "$@" >$_TMP1 2>&1 ||
 		_exit=1
 	if [ $TCEXIT -ne $_exit ]; then
 		fail "exits ${TCEXIT} != ${_exit}"
