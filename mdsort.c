@@ -15,13 +15,13 @@ static __dead void usage(void);
 int
 main(int argc, char *argv[])
 {
-	char path[PATH_MAX];
 	struct environment env;
 	struct config_list *config;
 	struct config *conf;
 	struct maildir *dst, *md;
 	const struct match *match;
 	struct message *msg;
+	const char *path;
 	const char *confpath = NULL;
 	int c;
 	int error = 0;
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		while (maildir_walk(md, path)) {
+		while ((path = maildir_walk(md))) {
 			msg = message_parse(path);
 			if (msg == NULL) {
 				error = 1;

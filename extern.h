@@ -53,12 +53,11 @@ struct maildir *maildir_open(const char *path, int flags,
 void maildir_close(struct maildir *md);
 
 /*
- * Writes the path to the next file located in the maildir to buf, which must be
- * at least of size PATH_MAX.
+ * Returns the path to the next file located in the maildir.
  * Calling it repeatedly will traverse all the files.
- * Once all files have been traversed, 0 is returned.
+ * Once all files have been traversed, NULL is returned.
  */
-int maildir_walk(struct maildir *md, char *buf);
+const char *maildir_walk(struct maildir *md);
 
 /*
  * Move the message located in src to dst.
