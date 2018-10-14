@@ -1,4 +1,5 @@
 #include <err.h>
+#include <errno.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdlib.h>
@@ -168,7 +169,7 @@ defaultconf(const struct environment *env)
 	len = sizeof(buf);
 	n = snprintf(buf, len, "%s/.mdsort.conf", env->home);
 	if (n == -1 || n >= len)
-		errx(1, "%s: buffer too small", __func__);
+		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
 }
 
@@ -194,10 +195,10 @@ readenv(struct environment *env)
 	if (p == NULL)
 		errx(1, "%s: cannot find home directory", __func__);
 	if (strlcpy(env->home, p, sizeof(env->home)) >= sizeof(env->home))
-		errx(1, "%s: buffer too small", __func__);
+		errc(1, ENAMETOOLONG, "%s", __func__);
 
 	if ((p = getenv("TMPDIR")) == NULL || *p == '\0')
 		p = _PATH_TMP;
 	if (strlcpy(env->tmpdir, p, sizeof(env->tmpdir)) >= sizeof(env->tmpdir))
-		errx(1, "%s: buffer too small", __func__);
+		errc(1, ENAMETOOLONG, "%s", __func__);
 }

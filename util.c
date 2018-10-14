@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,7 +64,7 @@ pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
 		n = snprintf(buf, PATH_MAX, "%s/%s/%s",
 		    root, dirname, filename);
 	if (n == -1 || n >= PATH_MAX)
-		errx(1, "%s: buffer too small", __func__);
+		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
 }
 

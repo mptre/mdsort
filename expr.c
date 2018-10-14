@@ -281,7 +281,7 @@ expr_eval_discard(struct expr *root, struct expr *ex,
 	/* Populate the path in case of a dry run. */
 	len = sizeof(root->match->path);
 	if (strlcpy(root->match->path, "<discard>", len) >= len)
-		errx(1, "%s: buffer too small", __func__);
+		errc(1, ENAMETOOLONG, "%s", __func__);
 
 	return 0;
 }
@@ -297,7 +297,7 @@ expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg)
 	str = TAILQ_FIRST(ex->strings);
 	len = sizeof(root->match->subdir);
 	if (strlcpy(root->match->subdir, str->val, len) >= len)
-		errx(1, "%s: buffer too small", __func__);
+		errc(1, ENAMETOOLONG, "%s", __func__);
 
 	/* A move action might be missing. */
 	if (strlen(root->match->maildir) == 0) {
@@ -350,7 +350,7 @@ expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 	str = TAILQ_FIRST(ex->strings);
 	len = sizeof(root->match->maildir);
 	if (strlcpy(root->match->maildir, str->val, len) >= len)
-		errx(1, "%s: buffer too small", __func__);
+		errc(1, ENAMETOOLONG, "%s", __func__);
 
 	/* A flag action might already have been evaluted. */
 	if (strlen(root->match->subdir) == 0) {

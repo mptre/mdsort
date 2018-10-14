@@ -222,7 +222,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 		n = snprintf(name, NAME_MAX, "%lld.%d_%d.%s%s",
 		    ts, pid, count, env->hostname, flags);
 		if (n == -1 || n >= NAME_MAX)
-			errx(1, "%s: buffer too small", __func__);
+			errc(1, ENAMETOOLONG, "%s", __func__);
 		fd = openat(dirfd(dst->dir), name, O_WRONLY | O_CREAT | O_EXCL,
 		    S_IRUSR | S_IWUSR);
 		if (fd == -1) {
