@@ -67,6 +67,13 @@ const char *maildir_walk(struct maildir *md);
 int maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env);
 
+/*
+ * Remove the message located in the given maildir.
+ *
+ * Returns zero on success, non-zero otherwise.
+ */
+int maildir_unlink(const struct maildir *md, const struct message *msg);
+
 struct message {
 	const char *path;
 	const char *body;
@@ -77,13 +84,6 @@ struct message {
 	struct header *headers;
 	size_t nheaders;
 };
-
-/*
- * Remove the message located in the given maildir.
- *
- * Returns zero on success, non-zero otherwise.
- */
-int maildir_unlink(const struct maildir *md, const struct message *msg);
 
 /*
  * Parse the message located at path.
