@@ -92,7 +92,7 @@ cppvar() {
 fcmp() {
 	if ! cmp -s "$1" "$2"; then
 		fail "unexpected output:"
-		diff -u -L want -L got "$1" "$2" || return 0
+		diff -u -L want -L got "$1" "$2" || true
 	fi
 	return 0
 }
@@ -130,7 +130,6 @@ mdsort() {
 
 	if [ $_input -eq 0 ]; then
 		cat "$_TMP1"
-		return 0
 	else
 		fcmp "$_TMP2" "$_TMP1"
 	fi
