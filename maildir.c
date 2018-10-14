@@ -18,7 +18,7 @@ static int maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
 static const char *maildir_path(struct maildir *);
-static int maildir_read(struct maildir *);
+static const char *maildir_read(struct maildir *);
 
 static int parsesubdir(const char *, enum subdir *);
 static const char *strsubdir(enum subdir);
@@ -96,9 +96,10 @@ maildir_walk(struct maildir *md)
 		return 0;
 
 	for (;;) {
-		if (maildir_read(md)) {
-			log_debug("%s: %s\n", __func__, md->buf);
-			return md->buf;
+		path = maildir_read(md);
+		if (path != NULL) {
+			log_debug("%s: %s\n", __func__, path);
+			return path;
 		}
 
 		if (maildir_next(md))
@@ -295,7 +296,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	return error;
 }
 
-static int
+static const char *
 maildir_read(struct maildir *md)
 {
 	struct dirent *ent;
@@ -307,8 +308,8 @@ maildir_read(struct maildir *md)
 		if (ent->d_type != DT_REG)
 			continue;
 
-		pathjoin(md->buf, md->path, strsubdir(md->subdir), ent->d_name);
-		return 1;
+		return pathjoin(md->buf, md->path, strsubdir(md->subdir),
+		    ent->d_name);
 	}
 }
 
