@@ -61,6 +61,17 @@ check_dead() {
 	EOF
 }
 
+check_errc() {
+	compile <<-EOF
+	#include <err.h>
+
+	int main(void) {
+		errc(1, 0, "");
+		return 0;
+	}
+	EOF
+}
+
 check_host_name_max() {
 	compile <<-EOF
 	#include <limits.h>
@@ -159,6 +170,7 @@ check_utimensat() {
 
 HAVE_ARC4RANDOM=0
 HAVE_DEAD=0
+HAVE_ERRC=0
 HAVE_HOST_NAME_MAX=0
 HAVE_PLEDGE=0
 HAVE_QUEUE=0
@@ -197,6 +209,7 @@ set -x
 
 check_arc4random && HAVE_ARC4RANDOM=1
 check_dead && HAVE_DEAD=1
+check_errc && HAVE_ERRC=1
 check_host_name_max && HAVE_HOST_NAME_MAX=1
 check_pledge && HAVE_PLEDGE=1
 check_queue && HAVE_QUEUE=1
@@ -219,6 +232,7 @@ MALLOC_OPTIONS=$(check_malloc_options)
 
 (
 [ $HAVE_ARC4RANDOM -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
+[ $HAVE_ERRC -eq 1 ] && printf '#define HAVE_ERRC\t1\n'
 [ $HAVE_PLEDGE -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
 [ $HAVE_QUEUE -eq 1 ] && printf '#define HAVE_QUEUE\t1\n'
 [ $HAVE_REALLOCARRAY -eq 1 ] && printf '#define HAVE_REALLOCARRAY\t1\n'
@@ -242,6 +256,9 @@ fi
 
 [ $HAVE_ARC4RANDOM -eq 0 ] && \
 	printf 'uint32_t arc4random(void);\n'
+[ $HAVE_ERRC -eq 0 ] && {
+	printf 'void errc(int eval, int code, const char *fmt, ...)\n';
+	printf '\t__attribute__((__noreturn__, __format__ (printf, 3, 4)));\n'; }
 [ $HAVE_PLEDGE -eq 0 ] && \
 	printf 'int pledge(const char *, const char *);\n'
 [ $HAVE_REALLOCARRAY -eq 0 ] && \

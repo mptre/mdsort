@@ -5,6 +5,7 @@ VERSION=	1.1.0
 PROG=	mdsort
 
 SRCS=	compat-arc4random.c \
+	compat-errc.c \
 	compat-pledge.c \
 	compat-reallocarray.c \
 	compat-strlcpy.c \
@@ -27,6 +28,7 @@ DISTFILES=	CHANGELOG.md \
 		Makefile \
 		README.md \
 		compat-arc4random.c \
+		compat-errc.c \
 		compat-pledge.c \
 		compat-queue.h \
 		compat-reallocarray.c \
