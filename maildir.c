@@ -210,15 +210,17 @@ maildir_genname(const struct maildir *dst, const char *flags,
 {
 	static char name[NAME_MAX];
 	long long ts;
+	pid_t pid;
 	int fd, n;
 	int count;
 
+	ts = time(NULL);
+	pid = getpid();
 	count = arc4random() % 128;
 	for (;;) {
 		count++;
-		ts = time(NULL);
 		n = snprintf(name, NAME_MAX, "%lld.%d_%d.%s%s",
-		    ts, getpid(), count, env->hostname, flags);
+		    ts, pid, count, env->hostname, flags);
 		if (n == -1 || n >= NAME_MAX)
 			errx(1, "%s: buffer too small", __func__);
 		fd = openat(dirfd(dst->dir), name, O_WRONLY | O_CREAT | O_EXCL,
