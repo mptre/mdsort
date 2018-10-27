@@ -1,3 +1,76 @@
+# v2.0.0 - 2018-10-27
+
+## Deprecations
+
+- Remove `-C` option used to create missing maildirs.
+  (c574ecc)
+  (Anton Lindqvist)
+
+## News
+
+- Add support for headers with multiple values.
+  (beaf3fd)
+  (Anton Lindqvist)
+
+- Add support for `match old` which matches messages that has been read but
+  later flagged as not read.
+  (3ddae2e)
+  (Anton Lindqvist)
+
+  ```
+  $ cat ~/.mdsort.conf
+  maildir "~/Maildir/INBOX" {
+    match old move "~/Maildir/Archive"
+  }
+  ```
+
+- Add `discard` action used to remove matching messages.
+  (bd24834)
+  (Anton Lindqvist)
+
+  ```
+  $ cat ~/.mdsort.conf
+  maildir "~/Maildir/INBOX" {
+    match header "Spam-Score" /[1-9]/ discard
+  }
+  ```
+
+- Display all matching subexpressions for a header and body during dry run.
+  (77aa29d, 64f61d0)
+  (Anton Lindqvist)
+
+  ```
+  $ cat ~/.mdsort.conf
+  maildir "~/Maildir/INBOX" {
+    match header "To" /(example).com/ move "~/Maildir/Archive"
+  }
+  $ mdsort -d
+  To: user@example.com
+           ^         $
+      user@example.com
+           ^     $
+  ```
+
+- Add MDA support in which messages are read from stdin.
+  (911429e)
+  (Anton Lindqvist)
+
+  ```
+  $ cat ~/.mdsort.conf
+  stdin {
+    match header "Spam-Score" /[1-9]/ discard
+
+    match all move "~/Maildir/INBOX"
+  }
+  $ mdsort - <message
+  ```
+
+# Bug fixes
+
+- Remove seen flag when flagging as new.
+  (2954399)
+  (Anton Lindqvist)
+
 # v1.1.0 - 2018-07-30
 
 ## News
@@ -42,6 +115,8 @@
   (Anton Lindqvist)
 
 # v1.0.0 - 2018-04-02
+
+## News
 
 - First somewhat stable release
   (Anton Lindqvist)
