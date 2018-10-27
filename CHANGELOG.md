@@ -65,7 +65,7 @@
   $ mdsort - <message
   ```
 
-# Bug fixes
+## Bug fixes
 
 - Remove seen flag when flagging as new.
   (2954399)
