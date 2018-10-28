@@ -17,11 +17,10 @@ static const char *maildir_genname(const struct maildir *,
 static int maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
-static const char *maildir_path(struct maildir *);
+static const char *maildir_path(struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
 static int parsesubdir(const char *, enum subdir *);
-static const char *strsubdir(enum subdir);
 
 struct maildir *
 maildir_open(const char *path, int flags, const struct environment *env)
@@ -54,7 +53,7 @@ maildir_open(const char *path, int flags, const struct environment *env)
 	}
 
 	if ((md->flags & MAILDIR_WALK))
-		path = maildir_path(md);
+		path = maildir_path(md, NULL);
 	if (maildir_opendir(md, path)) {
 		maildir_close(md);
 		return NULL;
@@ -72,11 +71,11 @@ maildir_close(struct maildir *md)
 		return;
 
 	if ((md->flags & MAILDIR_STDIN)) {
-		dir = maildir_path(md);
+		dir = maildir_path(md, NULL);
 		if (maildir_opendir(md, dir) == 0) {
 			while ((path = maildir_walk(md)))
 				(void)unlink(path);
-			(void)rmdir(maildir_path(md));
+			(void)rmdir(maildir_path(md, NULL));
 			(void)rmdir(md->path);
 		}
 	}
@@ -104,7 +103,7 @@ maildir_walk(struct maildir *md)
 
 		if (maildir_next(md))
 			return NULL;
-		path = maildir_path(md);
+		path = maildir_path(md, NULL);
 		if (maildir_opendir(md, path))
 			return NULL;
 	}
@@ -239,9 +238,19 @@ maildir_genname(const struct maildir *dst, const char *flags,
 }
 
 static const char *
-maildir_path(struct maildir *md)
+maildir_path(struct maildir *md, const char *filename)
 {
-	return pathjoin(md->buf, md->path, strsubdir(md->subdir), NULL);
+	const char *dirname = NULL;
+
+	switch (md->subdir) {
+	case SUBDIR_NEW:
+		dirname = "new";
+		break;
+	case SUBDIR_CUR:
+		dirname = "cur";
+		break;
+	}
+	return pathjoin(md->buf, md->path, dirname, filename);
 }
 
 static int
@@ -262,7 +271,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 		return 1;
 	}
 
-	path = maildir_path(md);
+	path = maildir_path(md, NULL);
 	if (mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
 		warn("mkdir");
 		return 1;
@@ -310,8 +319,7 @@ maildir_read(struct maildir *md)
 		if (ent->d_type != DT_REG)
 			continue;
 
-		return pathjoin(md->buf, md->path, strsubdir(md->subdir),
-		    ent->d_name);
+		return maildir_path(md, ent->d_name);
 	}
 }
 
@@ -331,16 +339,4 @@ parsesubdir(const char *path, enum subdir *subdir)
 	}
 	warnx("%s: subdir not found", path);
 	return 1;
-}
-
-static const char *
-strsubdir(enum subdir subdir)
-{
-	switch (subdir) {
-	case SUBDIR_NEW:
-		return "new";
-	case SUBDIR_CUR:
-		return "cur";
-	}
-	return NULL;
 }
