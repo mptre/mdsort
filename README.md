@@ -59,7 +59,7 @@ $ mdsort - <message
 
 ### OpenBSD
 
-```sh
+```
 # pkg_add mdsort
 ```
 
@@ -68,7 +68,7 @@ $ mdsort - <message
 The installation directory defaults to `/usr/local` and can be altered using the
 `PREFIX` environment variable:
 
-```sh
+```
 $ ./configure
 $ make install
 ```
