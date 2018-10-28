@@ -59,7 +59,9 @@ $ mdsort - <message
 
 ### OpenBSD
 
-Available in ports under `mail/mdsort`.
+```sh
+# pkg_add mdsort
+```
 
 ### From source
 
