@@ -78,5 +78,5 @@ $ make install
 Copyright (c) 2018 Anton Lindqvist.
 Distributed under the MIT license.
 
-[mdsort]: https://mptre.github.io/mdsort/
-[mdsort.conf]: https://mptre.github.io/mdsort/mdsort.conf.5
+[mdsort]: https://www.basename.se/mdsort/
+[mdsort.conf]: https://www.basename.se/mdsort/mdsort.conf.5.html
