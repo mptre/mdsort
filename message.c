@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -62,8 +61,6 @@ message_parse(const char *path)
 
 		n = read(fd, msg->buf + msglen, msgsize - msglen - 1);
 		if (n == -1) {
-			if (errno == EINTR)
-				continue;
 			warn("read: %s", path);
 			close(fd);
 			message_free(msg);
