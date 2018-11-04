@@ -38,6 +38,8 @@ if testcase "sanity"; then
 		match all move "~/Maildir/Junk"
 
 		match new discard
+
+		match header "From" /user@example.com/ pass
 	}
 
 	maildir "~/Maildir/test2" {

@@ -23,6 +23,7 @@ static int expr_eval_neg(struct expr *, struct expr *, const struct message *);
 static int expr_eval_new(struct expr *, struct expr *, const struct message *);
 static int expr_eval_old(struct expr *, struct expr *, const struct message *);
 static int expr_eval_or(struct expr *, struct expr *, const struct message *);
+static int expr_eval_pass(struct expr *, struct expr *, const struct message *);
 static int expr_eval_root(struct expr *, struct expr *, const struct message *);
 static void expr_inspect1(const struct expr *, const struct expr *, FILE *);
 static void expr_inspect_body(const struct expr *, FILE *);
@@ -62,6 +63,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
+	case EXPR_TYPE_PASS:
 		break;
 	}
 	return ex;
@@ -175,6 +177,7 @@ expr_count_actions(const struct expr *ex)
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
+	case EXPR_TYPE_PASS:
 		acc = 1;
 		break;
 	}
@@ -228,6 +231,9 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
 		break;
 	case EXPR_TYPE_DISCARD:
 		res = expr_eval_discard(root, ex, msg);
+		break;
+	case EXPR_TYPE_PASS:
+		res = expr_eval_pass(root, ex, msg);
 		break;
 	}
 	if (res == 0) {
@@ -402,9 +408,26 @@ expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
 static int
 expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg)
 {
+	const struct expr *action;
+
 	if (expr_eval1(root, ex->lhs, msg) == 0)
 		return 0; /* match, short-circuit */
+
+	action = root->match->action;
+	if (action && action->type == EXPR_TYPE_PASS) {
+		root->match->action = NULL;
+		return 1; /* pass, short-circuit */
+	}
+
 	return expr_eval1(root, ex->rhs, msg);
+}
+
+static int
+expr_eval_pass(struct expr *root, struct expr *ex,
+    const struct message *msg __unused)
+{
+	root->match->action = ex;
+	return 1;
 }
 
 static int
@@ -442,6 +465,7 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
+	case EXPR_TYPE_PASS:
 		break;
 	}
 }

@@ -117,6 +117,7 @@ enum expr_type {
 	EXPR_TYPE_MOVE,
 	EXPR_TYPE_FLAG,
 	EXPR_TYPE_DISCARD,
+	EXPR_TYPE_PASS,
 };
 
 struct expr {

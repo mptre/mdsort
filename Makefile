@@ -47,6 +47,7 @@ DISTFILES=	CHANGELOG.md \
 		tests/Makefile \
 		tests/action-discard.sh \
 		tests/action-flag.sh \
+		tests/action-pass.sh \
 		tests/basic.sh \
 		tests/conf.sh \
 		tests/dry.sh \

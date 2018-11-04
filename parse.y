@@ -9,6 +9,7 @@
 #include "extern.h"
 
 static char *expandtilde(char *);
+static void expr_validate(const struct expr *);
 static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 static int yygetc(void);
@@ -37,8 +38,8 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL BODY DISCARD FLAG HEADER MAILDIR MATCH MOVE NEW OLD PATTERN STDIN
-%token STRING
+%token ALL BODY DISCARD FLAG HEADER MAILDIR MATCH MOVE NEW OLD PASS PATTERN
+%token STDIN STRING
 %type <str> STRING flag maildir_path
 %type <i> optneg
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
@@ -172,13 +173,7 @@ expractions	: /* empty */ {
 				$$ = $2;
 			} else {
 				$$ = expr_alloc(EXPR_TYPE_AND, $1, $2);
-
-				if (expr_count($$, EXPR_TYPE_DISCARD) > 0 &&
-				    expr_count_actions($$) > 1)
-					yyerror("discard cannot be combined "
-					    "with another action");
-				if (expr_count($$, EXPR_TYPE_MOVE) > 1)
-					yyerror("move action already defined");
+				expr_validate($$);
 			}
 		}
 		;
@@ -205,6 +200,9 @@ expraction	: MOVE STRING {
 		}
 		| DISCARD {
 			$$ = expr_alloc(EXPR_TYPE_DISCARD, NULL, NULL);
+		}
+		| PASS {
+			$$ = expr_alloc(EXPR_TYPE_PASS, NULL, NULL);
 		}
 		;
 
@@ -306,6 +304,7 @@ yylex(void)
 		{ "new",	NEW },
 		{ "old",	OLD },
 		{ "or",		OR },
+		{ "pass",	PASS },
 		{ "stdin",	STDIN },
 		{ NULL,		0 },
 	};
@@ -427,6 +426,23 @@ expandtilde(char *str)
 		yyerror("path too long");
 	free(str);
 	return buf;
+}
+
+static void
+expr_validate(const struct expr *ex)
+{
+	int nactions;
+
+	if (expr_count(ex, EXPR_TYPE_MOVE) > 1)
+		yyerror("move action already defined");
+
+	nactions = expr_count_actions(ex);
+	if (nactions <= 1)
+		return;
+	if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
+		yyerror("discard cannot be combined with another action");
+	if (expr_count(ex, EXPR_TYPE_PASS) > 0)
+		yyerror("pass cannot be combined with another action");
 }
 
 static int

@@ -2,6 +2,7 @@ MDSORT=	${.CURDIR}/../mdsort
 
 TESTS=	action-flag.sh \
 	action-discard.sh \
+	action-pass.sh \
 	basic.sh \
 	conf.sh \
 	dry.sh \
