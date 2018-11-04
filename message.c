@@ -47,10 +47,13 @@ message_parse(const char *path)
 	msg = calloc(1, sizeof(*msg));
 	if (msg == NULL)
 		err(1, NULL);
+	msg->buf = malloc(msgsize);
+	if (msg->buf == NULL)
+		err(1, NULL);
 	msg->path = path;
 
 	for (;;) {
-		if (msglen >= msgsize - 1 || msg->buf == NULL) {
+		if (msglen >= msgsize - 1) {
 			msg->buf = reallocarray(msg->buf, 2, msgsize);
 			if (msg->buf == NULL)
 				err(1, NULL);
