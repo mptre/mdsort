@@ -59,21 +59,20 @@ Evaluates to true for any message.
 .It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op Ic i
 Evaluates to true if the message body matches
 .Ar pattern .
-.It Oo Ic \&! Oc Ic header Do Ar name Dc / Ns Ar pattern Ns / Ns Op Ic i
-Evaluates to true if the value of the header with
-.Ar name
-in message matches
-.Ar pattern .
-Finding the header with
-.Ar name
-in message is done case insensitive.
-.It Oo Ic \&! Oc Ic header No { Do Ar name Dc Ar ... No } / Ns Ar pattern Ns / Ns Op Ic i
+.It Xo Op Ic \&!
+.Ic header Dq Ar name
+.Pf / Ar pattern Ns Pf / Op Ic i
+.Xc
+.It Xo Op Ic \&!
+.Ic header No { Do Ar name Dc Ar ... No }
+.Pf / Ar pattern Ns Pf / Op Ic i
+.Xc
 Evaluates to true if the value of any of the headers with
-.Ar name ...
+.Ar name
 in message matches
 .Ar pattern .
 Finding the header with
-.Ar name ...
+.Ar name
 in message is done case insensitive.
 .It Oo Ic \&! Oc Ic new
 Evaluates to true if the message is not read.
