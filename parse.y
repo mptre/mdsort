@@ -59,7 +59,8 @@ grammar		: /* empty */
 maildir		: maildir_path exprblock {
 			struct config *conf;
 
-			if ($2 == NULL && parse_errors == 0)
+			/* Favor more specific error messages. */
+			if (parse_errors == 0 && expr_count_actions($2) == 0)
 				yyerror("empty match block");
 
 			conf = malloc(sizeof(*conf));
@@ -128,11 +129,8 @@ expr2		: expractions {
 		}
 		| exprblock {
 			$$ = $1;
-			if ($$ == NULL) {
+			if (expr_count_actions($$) == 0)
 				yyerror("empty nested match block");
-				/* Abort, avoids handling NULL upwards. */
-				YYERROR;
-			}
 		}
 		;
 
