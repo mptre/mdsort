@@ -105,7 +105,7 @@ int message_has_flags(const struct message *msg, unsigned char flag);
 void message_set_flags(struct message *msg, unsigned char flag, int add);
 
 enum expr_type {
-	EXPR_TYPE_ROOT,
+	EXPR_TYPE_BLOCK,
 	EXPR_TYPE_AND,
 	EXPR_TYPE_OR,
 	EXPR_TYPE_NEG,

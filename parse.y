@@ -66,7 +66,7 @@ maildir		: maildir_path exprblock {
 			if (conf == NULL)
 				err(1, NULL);
 			conf->maildir = $1;
-			conf->expr = expr_alloc(EXPR_TYPE_ROOT, $2, NULL);
+			conf->expr = $2;
 			TAILQ_INSERT_TAIL(&config, conf, entry);
 		}
 		;
@@ -87,7 +87,7 @@ maildir_path	: MAILDIR STRING {
 		;
 
 exprblock	: '{' optnl exprs '}' {
-			$$ = $3;
+			$$ = expr_alloc(EXPR_TYPE_BLOCK, $3, NULL);
 		}
 		;
 

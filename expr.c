@@ -12,6 +12,8 @@
 static int expr_eval1(struct expr *, struct expr *, const struct message *);
 static int expr_eval_all(struct expr *, struct expr *, const struct message *);
 static int expr_eval_and(struct expr *, struct expr *, const struct message *);
+static int expr_eval_block(struct expr *, struct expr *,
+    const struct message *);
 static int expr_eval_body(struct expr *, struct expr *, const struct message *);
 static int expr_eval_discard(struct expr *, struct expr *,
     const struct message *);
@@ -24,7 +26,6 @@ static int expr_eval_new(struct expr *, struct expr *, const struct message *);
 static int expr_eval_old(struct expr *, struct expr *, const struct message *);
 static int expr_eval_or(struct expr *, struct expr *, const struct message *);
 static int expr_eval_pass(struct expr *, struct expr *, const struct message *);
-static int expr_eval_root(struct expr *, struct expr *, const struct message *);
 static void expr_inspect1(const struct expr *, const struct expr *, FILE *);
 static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
@@ -47,7 +48,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	ex->lhs = lhs;
 	ex->rhs = rhs;
 	switch (ex->type) {
-	case EXPR_TYPE_ROOT:
+	case EXPR_TYPE_BLOCK:
 	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_HEADER:
 		ex->match = calloc(1, sizeof(*ex->match));
@@ -164,7 +165,7 @@ expr_count_actions(const struct expr *ex)
 		return 0;
 
 	switch (ex->type) {
-	case EXPR_TYPE_ROOT:
+	case EXPR_TYPE_BLOCK:
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
 	case EXPR_TYPE_NEG:
@@ -196,8 +197,8 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
 	int res = 1;
 
 	switch (ex->type) {
-	case EXPR_TYPE_ROOT:
-		res = expr_eval_root(root, ex, msg);
+	case EXPR_TYPE_BLOCK:
+		res = expr_eval_block(root, ex, msg);
 		break;
 	case EXPR_TYPE_AND:
 		res = expr_eval_and(root, ex, msg);
@@ -257,6 +258,21 @@ expr_eval_and(struct expr *root, struct expr *ex, const struct message *msg)
 	if (expr_eval1(root, ex->lhs, msg))
 		return 1; /* no match, short-circuit */
 	return expr_eval1(root, ex->rhs, msg);
+}
+
+static int
+expr_eval_block(struct expr *root, struct expr *ex, const struct message *msg)
+{
+	const struct expr *action;
+	int res;
+
+	res = expr_eval1(root, ex->lhs, msg);
+	action = root->match->action;
+	if (action && action->type == EXPR_TYPE_PASS) {
+		root->match->action = NULL;
+		return 1; /* pass, continue evaluation */
+	}
+	return res;
 }
 
 static int
@@ -408,17 +424,8 @@ expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
 static int
 expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg)
 {
-	const struct expr *action;
-
 	if (expr_eval1(root, ex->lhs, msg) == 0)
 		return 0; /* match, short-circuit */
-
-	action = root->match->action;
-	if (action && action->type == EXPR_TYPE_PASS) {
-		root->match->action = NULL;
-		return 1; /* pass, short-circuit */
-	}
-
 	return expr_eval1(root, ex->rhs, msg);
 }
 
@@ -427,13 +434,7 @@ expr_eval_pass(struct expr *root, struct expr *ex,
     const struct message *msg __unused)
 {
 	root->match->action = ex;
-	return 1;
-}
-
-static int
-expr_eval_root(struct expr *root, struct expr *ex, const struct message *msg)
-{
-	return expr_eval1(root, ex->lhs, msg);
+	return 0;
 }
 
 static void
@@ -444,7 +445,7 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 		return;
 
 	switch (ex->type) {
-	case EXPR_TYPE_ROOT:
+	case EXPR_TYPE_BLOCK:
 		expr_inspect1(root, ex->lhs, fh);
 		break;
 	case EXPR_TYPE_AND:
