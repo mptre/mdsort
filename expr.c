@@ -9,23 +9,23 @@
 #include "config.h"
 #include "extern.h"
 
-static int expr_eval1(struct expr *, struct expr *, const struct message *);
-static int expr_eval_all(struct expr *, struct expr *, const struct message *);
-static int expr_eval_and(struct expr *, struct expr *, const struct message *);
-static int expr_eval_block(struct expr *, struct expr *,
-    const struct message *);
-static int expr_eval_body(struct expr *, struct expr *, const struct message *);
-static int expr_eval_discard(struct expr *, struct expr *,
-    const struct message *);
-static int expr_eval_flag(struct expr *, struct expr *, const struct message *);
-static int expr_eval_header(struct expr *, struct expr *,
-    const struct message *);
-static int expr_eval_move(struct expr *, struct expr *, const struct message *);
-static int expr_eval_neg(struct expr *, struct expr *, const struct message *);
-static int expr_eval_new(struct expr *, struct expr *, const struct message *);
-static int expr_eval_old(struct expr *, struct expr *, const struct message *);
-static int expr_eval_or(struct expr *, struct expr *, const struct message *);
-static int expr_eval_pass(struct expr *, struct expr *, const struct message *);
+#define EXPR_EVAL_ARGS	struct expr *, struct expr *, const struct message *
+
+static int expr_eval1(EXPR_EVAL_ARGS);
+static int expr_eval_all(EXPR_EVAL_ARGS);
+static int expr_eval_and(EXPR_EVAL_ARGS);
+static int expr_eval_block(EXPR_EVAL_ARGS);
+static int expr_eval_body(EXPR_EVAL_ARGS);
+static int expr_eval_discard(EXPR_EVAL_ARGS);
+static int expr_eval_flag(EXPR_EVAL_ARGS);
+static int expr_eval_header(EXPR_EVAL_ARGS);
+static int expr_eval_move(EXPR_EVAL_ARGS);
+static int expr_eval_neg(EXPR_EVAL_ARGS);
+static int expr_eval_new(EXPR_EVAL_ARGS);
+static int expr_eval_old(EXPR_EVAL_ARGS);
+static int expr_eval_or(EXPR_EVAL_ARGS);
+static int expr_eval_pass(EXPR_EVAL_ARGS);
+
 static void expr_inspect1(const struct expr *, const struct expr *, FILE *);
 static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
