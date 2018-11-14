@@ -54,8 +54,6 @@ keyword.
 .Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
-.It Ic all
-Evaluates to true for any message.
 .It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op Ic i
 Evaluates to true if the message body matches
 .Ar pattern .
@@ -74,9 +72,17 @@ in message matches
 Finding the header with
 .Ar name
 in message is done case insensitive.
-.It Oo Ic \&! Oc Ic new
+.It Xo Op Ic \&!
+.Ic all
+.Xc
+Evaluates to true for any message.
+.It Xo Op Ic \&!
+.Ic new
+.Xc
 Evaluates to true if the message is not read.
-.It Oo Ic \&! Oc Ic old
+.It Xo Op Ic \&!
+.Ic old
+.Xc
 Evaluates to true if the message is old.
 Meaning, a message that has been read but later flagged as not read.
 .El
@@ -91,7 +97,9 @@ are true.
 Evaluates to true if any of the
 .Ar condition
 are true.
-.It Oo Ic \&! Oc Ic \&( Ar condition Ic \&)
+.It Xo Op Ic \&!
+.Ic \&( Ar condition Ic \&)
+.Xc
 Evaluates to true if the nested
 .Ar condition
 is true.
