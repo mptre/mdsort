@@ -136,7 +136,6 @@ struct expr {
 			EXPR_DATE_GT,
 			EXPR_DATE_LT,
 		} cmp;
-		time_t now;
 		time_t threshold;
 	} date;
 
@@ -227,7 +226,7 @@ void expr_inspect(const struct expr *ex, FILE *fh);
  * Parse the given formatted timestamp.
  * Returns zero on success, non-zero otherwise.
  */
-int time_parse(const char *str, time_t *res);
+int time_parse(const char *str, time_t *res, const struct environment *env);
 
 struct string {
 	char *val;
@@ -262,6 +261,9 @@ struct environment {
 	char home[PATH_MAX];
 	char hostname[HOST_NAME_MAX + 1];
 	char tmpdir[PATH_MAX];
+
+	time_t now;
+	long gmtoff;
 };
 
 /*

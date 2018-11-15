@@ -9,18 +9,11 @@
 static int tzparse(const char *, time_t *);
 
 int
-time_parse(const char *str, time_t *res)
+time_parse(const char *str, time_t *res, const struct environment *env)
 {
 	struct tm tm;
-	struct tm *tmp;
 	const char *end;
-	long gmtoff;
-	time_t now, tim, tz;
-
-	now = time(NULL);
-	tmp = localtime(&now);
-	gmtoff = tmp->tm_gmtoff;
-	log_debug("%s: gmtoff=%ld\n", __func__, gmtoff);
+	time_t tim, tz;
 
 	memset(&tm, 0, sizeof(tm));
 	end = strptime(str, "%a, %d %b %Y %H:%M:%S", &tm);
@@ -41,7 +34,7 @@ time_parse(const char *str, time_t *res)
 		return 1;
 	}
 
-	*res = tim - tz + gmtoff;
+	*res = tim - tz + env->gmtoff;
 	return 0;
 }
 

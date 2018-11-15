@@ -6,6 +6,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "extern.h"
@@ -178,6 +179,7 @@ static void
 readenv(struct environment *env)
 {
 	struct passwd *pw;
+	struct tm *tm;
 	char *p;
 
 	if (gethostname(env->hostname, sizeof(env->hostname)) == -1)
@@ -202,4 +204,11 @@ readenv(struct environment *env)
 		p = _PATH_TMP;
 	if (strlcpy(env->tmpdir, p, sizeof(env->tmpdir)) >= sizeof(env->tmpdir))
 		errc(1, ENAMETOOLONG, "%s", __func__);
+
+	env->now = time(NULL);
+	tm = localtime(&env->now);
+	if (tm == NULL)
+		err(1, "localtime");
+	env->gmtoff = tm->tm_gmtoff;
+	log_debug("%s: gmtoff=%ld\n", __func__, env->gmtoff);
 }

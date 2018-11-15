@@ -109,7 +109,6 @@ expr_set_date(struct expr *ex, unsigned char cmp, time_t threshold,
 		return 1;
 	}
 
-	ex->date.now = time(NULL);
 	ex->date.threshold = threshold;
 
 	return 0;
@@ -342,13 +341,13 @@ expr_eval_date(struct expr *root __unused, struct expr *ex,
 	if (dates == NULL)
 		return 1;
 	str = TAILQ_FIRST(dates);
-	if (time_parse(str->val, &tim))
+	if (time_parse(str->val, &tim, env))
 		return 1;
 
 	ex->match->key = "Date";
 	ex->match->val = str->val;
 
-	delta = ex->date.now - tim;
+	delta = env->now - tim;
 	switch (ex->date.cmp) {
 	case EXPR_DATE_GT:
 		if (delta > ex->date.threshold)
