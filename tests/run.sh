@@ -99,7 +99,7 @@ fcmp() {
 
 # mdsort [- | -D] [-- mdsort-argument ...]
 mdsort() {
-	local _args="-f mdsort.conf" _input=0 _exit=0 _tmpdir
+	local _args="-f mdsort.conf" _fail=0 _input=0 _exit=0 _tmpdir
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -119,6 +119,7 @@ mdsort() {
         env "TMPDIR=${_tmpdir}" $ENV "$MDSORT" $_args "$@" >$_TMP1 2>&1 ||
 		_exit=1
 	if [ $TCEXIT -ne $_exit ]; then
+		_fail=1
 		fail "exits ${TCEXIT} != ${_exit}"
 		cat "$_TMP1" 1>&2
 	fi
@@ -129,7 +130,9 @@ mdsort() {
 	rm -rf "$_tmpdir"
 
 	if [ $_input -eq 0 ]; then
-		cat "$_TMP1"
+		if [ $_fail -eq 0 ]; then
+			cat "$_TMP1"
+		fi
 	else
 		fcmp "$_TMP2" "$_TMP1"
 	fi
