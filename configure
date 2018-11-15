@@ -72,6 +72,28 @@ check_errc() {
 	EOF
 }
 
+# Check if strptime(3) is hidden behind _GNU_SOURCE.
+check_gnu_source() {
+	compile <<-EOF && return 1
+	#include <time.h>
+
+	int main(void) {
+		struct tm tm;
+		return !(strptime("0", "%s", &tm) != NULL);
+	}
+	EOF
+
+	compile <<-EOF
+	#define _GNU_SOURCE
+	#include <time.h>
+
+	int main(void) {
+		struct tm tm;
+		return !(strptime("0", "%s", &tm) != NULL);
+	}
+	EOF
+}
+
 check_host_name_max() {
 	compile <<-EOF
 	#include <limits.h>
@@ -171,6 +193,7 @@ check_utimensat() {
 HAVE_ARC4RANDOM=0
 HAVE_DEAD=0
 HAVE_ERRC=0
+HAVE_GNU_SOURCE=0
 HAVE_HOST_NAME_MAX=0
 HAVE_PLEDGE=0
 HAVE_QUEUE=0
@@ -210,6 +233,7 @@ set -x
 check_arc4random && HAVE_ARC4RANDOM=1
 check_dead && HAVE_DEAD=1
 check_errc && HAVE_ERRC=1
+check_gnu_source && HAVE_GNU_SOURCE=1
 check_host_name_max && HAVE_HOST_NAME_MAX=1
 check_pledge && HAVE_PLEDGE=1
 check_queue && HAVE_QUEUE=1
@@ -221,6 +245,14 @@ check_utimensat && HAVE_UTIMENSAT=1
 
 MALLOC_OPTIONS=$(check_malloc_options)
 
+# Order is important, must be present before any includes.
+(
+[ $HAVE_GNU_SOURCE -eq 1 ] && printf '#define _GNU_SOURCE\n'
+
+# Ensure this subshell always exits 0.
+true
+) >config.h
+
 # Headers needed for function prototypes.
 (
 [ $HAVE_ARC4RANDOM -eq 0 ] && echo stdint.h
@@ -228,7 +260,7 @@ MALLOC_OPTIONS=$(check_malloc_options)
 [ $HAVE_REALLOCARRAY -eq 0 ] && echo stdlib.h
 [ $HAVE_STRLCPY -eq 0 ] && echo stdlib.h
 [ $HAVE_UTIMENSAT -eq 0 ] && echo sys/time.h
-) | sort | uniq | headers >config.h
+) | sort | uniq | headers >>config.h
 
 (
 [ $HAVE_ARC4RANDOM -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
