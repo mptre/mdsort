@@ -10,7 +10,8 @@
 
 #include "extern.h"
 
-#define EXPR_EVAL_ARGS	struct expr *, struct expr *, const struct message *
+#define EXPR_EVAL_ARGS	struct expr *, struct expr *, const struct message *, \
+	const struct environment *
 
 static int expr_eval1(EXPR_EVAL_ARGS);
 static int expr_eval_all(EXPR_EVAL_ARGS);
@@ -153,11 +154,12 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 }
 
 const struct match *
-expr_eval(struct expr *ex, const struct message *msg)
+expr_eval(struct expr *ex, const struct message *msg,
+    const struct environment *env)
 {
 	match_reset(ex->match);
 	ex->cookie++;
-	if (expr_eval1(ex, ex, msg))
+	if (expr_eval1(ex, ex, msg, env))
 		return NULL;
 	switch (ex->match->action->type) {
 	case EXPR_TYPE_FLAG:
@@ -221,52 +223,53 @@ expr_inspect(const struct expr *ex, FILE *fh)
 }
 
 static int
-expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval1(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env)
 {
 	int res = 1;
 
 	switch (ex->type) {
 	case EXPR_TYPE_BLOCK:
-		res = expr_eval_block(root, ex, msg);
+		res = expr_eval_block(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_AND:
-		res = expr_eval_and(root, ex, msg);
+		res = expr_eval_and(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_OR:
-		res = expr_eval_or(root, ex, msg);
+		res = expr_eval_or(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_NEG:
-		res = expr_eval_neg(root, ex, msg);
+		res = expr_eval_neg(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_ALL:
-		res = expr_eval_all(root, ex, msg);
+		res = expr_eval_all(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_BODY:
-		res = expr_eval_body(root, ex, msg);
+		res = expr_eval_body(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_DATE:
-		res = expr_eval_date(root, ex, msg);
+		res = expr_eval_date(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_HEADER:
-		res = expr_eval_header(root, ex, msg);
+		res = expr_eval_header(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_NEW:
-		res = expr_eval_new(root, ex, msg);
+		res = expr_eval_new(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_OLD:
-		res = expr_eval_old(root, ex, msg);
+		res = expr_eval_old(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_MOVE:
-		res = expr_eval_move(root, ex, msg);
+		res = expr_eval_move(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_FLAG:
-		res = expr_eval_flag(root, ex, msg);
+		res = expr_eval_flag(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_DISCARD:
-		res = expr_eval_discard(root, ex, msg);
+		res = expr_eval_discard(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_PASS:
-		res = expr_eval_pass(root, ex, msg);
+		res = expr_eval_pass(root, ex, msg, env);
 		break;
 	}
 	if (res == 0) {
@@ -279,26 +282,28 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
 
 static int
 expr_eval_all(struct expr *root __unused, struct expr *ex __unused,
-    const struct message *msg __unused)
+    const struct message *msg __unused, const struct environment *env __unused)
 {
 	return 0;
 }
 
 static int
-expr_eval_and(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval_and(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env __unused)
 {
-	if (expr_eval1(root, ex->lhs, msg))
+	if (expr_eval1(root, ex->lhs, msg, env))
 		return 1; /* no match, short-circuit */
-	return expr_eval1(root, ex->rhs, msg);
+	return expr_eval1(root, ex->rhs, msg, env);
 }
 
 static int
-expr_eval_block(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval_block(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env)
 {
 	const struct expr *action;
 	int res;
 
-	res = expr_eval1(root, ex->lhs, msg);
+	res = expr_eval1(root, ex->lhs, msg, env);
 	action = root->match->action;
 	if (action && action->type == EXPR_TYPE_PASS) {
 		root->match->action = NULL;
@@ -308,7 +313,8 @@ expr_eval_block(struct expr *root, struct expr *ex, const struct message *msg)
 }
 
 static int
-expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env __unused)
 {
 	assert(ex->nmatches > 0);
 
@@ -326,7 +332,7 @@ expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg)
 
 static int
 expr_eval_date(struct expr *root __unused, struct expr *ex,
-    const struct message *msg)
+    const struct message *msg, const struct environment *env)
 {
 	const struct string_list *dates;
 	const struct string *str;
@@ -358,7 +364,7 @@ expr_eval_date(struct expr *root __unused, struct expr *ex,
 
 static int
 expr_eval_discard(struct expr *root, struct expr *ex,
-    const struct message *msg __unused)
+    const struct message *msg __unused, const struct environment *env __unused)
 {
 	size_t len;
 
@@ -373,7 +379,8 @@ expr_eval_discard(struct expr *root, struct expr *ex,
 }
 
 static int
-expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env __unused)
 {
 	struct string *str;
 	size_t len;
@@ -396,7 +403,8 @@ expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg)
 }
 
 static int
-expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env __unused)
 {
 	const struct string_list *values;
 	const struct string *key, *val;
@@ -426,7 +434,8 @@ expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg)
 }
 
 static int
-expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env __unused)
 {
 	struct string *str;
 	size_t len;
@@ -449,11 +458,12 @@ expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg)
 }
 
 static int
-expr_eval_neg(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval_neg(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env)
 {
 	assert(ex->rhs == NULL);
 
-	if (expr_eval1(root, ex->lhs, msg))
+	if (expr_eval1(root, ex->lhs, msg, env))
 		return 0;
 
 	/* Non-match, invalidate match below expression. */
@@ -463,7 +473,7 @@ expr_eval_neg(struct expr *root, struct expr *ex, const struct message *msg)
 
 static int
 expr_eval_new(struct expr *root __unused, struct expr *ex __unused,
-    const struct message *msg)
+    const struct message *msg, const struct environment *env __unused)
 {
 	char buf[NAME_MAX];
 
@@ -474,7 +484,7 @@ expr_eval_new(struct expr *root __unused, struct expr *ex __unused,
 
 static int
 expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
-    const struct message *msg)
+    const struct message *msg, const struct environment *env __unused)
 {
 	char buf[NAME_MAX];
 
@@ -486,16 +496,17 @@ expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
 }
 
 static int
-expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg)
+expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg,
+    const struct environment *env __unused)
 {
-	if (expr_eval1(root, ex->lhs, msg) == 0)
+	if (expr_eval1(root, ex->lhs, msg, env) == 0)
 		return 0; /* match, short-circuit */
-	return expr_eval1(root, ex->rhs, msg);
+	return expr_eval1(root, ex->rhs, msg, env);
 }
 
 static int
 expr_eval_pass(struct expr *root, struct expr *ex,
-    const struct message *msg __unused)
+    const struct message *msg __unused, const struct environment *env __unused)
 {
 	root->match->action = ex;
 	return 0;

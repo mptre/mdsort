@@ -215,7 +215,8 @@ int expr_count_actions(const struct expr *ex);
  * Returns a match if the expression matches the given message.
  * Otherwise, NULL is returned.
  */
-const struct match *expr_eval(struct expr *ex, const struct message *msg);
+const struct match *expr_eval(struct expr *ex, const struct message *msg,
+    const struct environment *env);
 
 /*
  * Writes a human readable representation of the latest match to fh.

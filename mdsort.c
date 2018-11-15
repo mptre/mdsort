@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			match = expr_eval(conf->expr, msg);
+			match = expr_eval(conf->expr, msg, &env);
 			if (match == NULL) {
 				message_free(msg);
 				continue;
