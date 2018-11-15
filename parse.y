@@ -38,10 +38,10 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL BODY DISCARD FLAG HEADER MAILDIR MATCH MOVE NEW OLD PASS PATTERN
-%token STDIN STRING
+%token ALL BODY DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE NEW OLD PASS
+%token PATTERN STDIN SCALAR STRING
 %type <str> STRING flag maildir_path
-%type <i> optneg
+%type <i> INT SCALAR cmp optneg
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
 %type <strings> stringblock strings
 %type <pattern> PATTERN
@@ -149,6 +149,14 @@ expr3		: BODY PATTERN {
 				yyerror("invalid pattern: %s", errstr);
 			expr_set_strings($$, $2);
 		}
+		| DATE cmp INT SCALAR {
+			const char *errstr;
+			time_t threshold = $3 * $4;
+
+			$$ = expr_alloc(EXPR_TYPE_DATE, NULL, NULL);
+			if (expr_set_date($$, $2, threshold, &errstr))
+				yyerror("invalid date: %s", errstr);
+		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW, NULL, NULL);
 		}
@@ -233,6 +241,14 @@ flag		: optneg NEW {
 		}
 		;
 
+cmp		: '<' {
+			$$ = '<';
+		}
+		| '>' {
+			$$ = '>';
+		}
+		;
+
 optneg		: /* empty */ {
 			$$ = 0;
 		}
@@ -293,6 +309,7 @@ yylex(void)
 		{ "all",	ALL },
 		{ "and",	AND },
 		{ "body",	BODY },
+		{ "date",	DATE },
 		{ "discard",	DISCARD },
 		{ "flag",	FLAG },
 		{ "header",	HEADER },
@@ -306,9 +323,23 @@ yylex(void)
 		{ "stdin",	STDIN },
 		{ NULL,		0 },
 	};
+	static struct {
+		const char *str;
+		unsigned int val;
+	} scalars[] = {
+		{ "seconds",	1 },
+		{ "minutes",	60 },
+		{ "hours",	60 * 60 },
+		{ "days",	60 * 60 * 24 },
+		{ "weeks",	60 * 60 * 24 * 7 },
+		{ "months",	60 * 60 * 24 * 30 },
+		{ "years",	60 * 60 * 24 * 365 },
+		{ NULL,		0 },
+	};
 	static char lexeme[BUFSIZ], kw[16];
 	char *buf;
-	int c, i;
+	size_t len;
+	int ambiguous, c, i, match;
 
 	buf = lexeme;
 
@@ -385,6 +416,14 @@ again:
 			yyungetc(c);
 
 		return PATTERN;
+	} else if (isdigit(c)) {
+		yylval.i = 0;
+		for (; isdigit(c); c = yygetc()) {
+			yylval.i *= 10;
+			yylval.i += c - '0';
+		}
+		yyungetc(c);
+		return INT;
 	} else if (islower(c)) {
 		buf = kw;
 		for (; islower(c); c = yygetc()) {
@@ -400,9 +439,28 @@ again:
 		for (i = 0; keywords[i].str != NULL; i++)
 			if (strcmp(kw, keywords[i].str) == 0)
 				return keywords[i].type;
-		yyerror("unknown keyword: %s", kw);
+
+		len = strlen(kw);
+		ambiguous = 0;
+		match = -1;
+		for (i = 0; scalars[i].str != NULL; i++) {
+			if (strncmp(kw, scalars[i].str, len) == 0) {
+				if (match >= 0)
+					ambiguous++;
+				match = i;
+			}
+		}
+		if (ambiguous) {
+			yyerror("ambiguous keyword: %s", kw);
+		} else if (match >= 0) {
+			yylval.i = scalars[match].val;
+			return SCALAR;
+		} else {
+			yyerror("unknown keyword: %s", kw);
+		}
 	}
 
+	yylval.i = c;
 	return c;
 }
 

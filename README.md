@@ -27,6 +27,11 @@ maildir "~/Maildir/INBOX" {
 	# Archive read messages.
 	match ! new move "~/Maildir/Archive"
 }
+
+maildir "~/Maildir/Trash" {
+	# Delete messages older than 2 weeks.
+	match date > 2 weeks discard
+}
 ```
 
 Invoking

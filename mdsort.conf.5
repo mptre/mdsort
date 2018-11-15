@@ -73,6 +73,25 @@ Finding the header with
 .Ar name
 in message is done case insensitive.
 .It Xo Op Ic \&!
+.Ic date \&> Ar age scale
+.Xc
+.It Xo Op Ic \&!
+.Ic date \&< Ar age scale
+.Xc
+Evalutes to true if the date header in message is either greater or less than
+.Ar age ,
+which must be a positive number.
+The
+.Ar scale
+must be either
+.Ic seconds , minutes , hours , days , weeks , months
+or
+.Ic years .
+It may be abbreviated in a non-ambiguous way, such as
+.Ic second
+or
+.Ic s .
+.It Xo Op Ic \&!
 .Ic all
 .Xc
 Evaluates to true for any message.
@@ -165,6 +184,11 @@ maildir "~/Maildir/INBOX" {
 
 	# Archive read messages.
 	match ! new move "~/Maildir/Archive"
+}
+
+maildir "~/Maildir/Trash" {
+	# Delete messages older than 2 weeks.
+	match date > 2 weeks discard
 }
 
 # Accept messages from stdin and move to the invoking user's inbox.

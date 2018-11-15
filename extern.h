@@ -111,6 +111,7 @@ enum expr_type {
 	EXPR_TYPE_NEG,
 	EXPR_TYPE_ALL,
 	EXPR_TYPE_BODY,
+	EXPR_TYPE_DATE,
 	EXPR_TYPE_HEADER,
 	EXPR_TYPE_NEW,
 	EXPR_TYPE_OLD,
@@ -129,6 +130,15 @@ struct expr {
 	regex_t pattern;
 	regmatch_t *matches;
 	size_t nmatches;
+
+	struct {
+		enum {
+			EXPR_DATE_GT,
+			EXPR_DATE_LT,
+		} cmp;
+		time_t now;
+		time_t threshold;
+	} date;
 
 	struct match *match;
 
@@ -160,6 +170,15 @@ struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
     struct expr *rhs);
 
 void expr_free(struct expr *ex);
+
+/*
+ * Associate the given date comparison operator and threshold with the
+ * expression.
+ * Returns zero on success. Otherwise, non-zero is returned and errstr explains
+ * why.
+ */
+int expr_set_date(struct expr *ex, unsigned char cmp, time_t threshold,
+    const char **errstr);
 
 /*
  * Associate the given string list with the expression.
@@ -202,6 +221,12 @@ const struct match *expr_eval(struct expr *ex, const struct message *msg);
  * Writes a human readable representation of the latest match to fh.
  */
 void expr_inspect(const struct expr *ex, FILE *fh);
+
+/*
+ * Parse the given formatted timestamp.
+ * Returns zero on success, non-zero otherwise.
+ */
+int time_parse(const char *str, time_t *res);
 
 struct string {
 	char *val;

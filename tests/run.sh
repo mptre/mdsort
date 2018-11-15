@@ -184,6 +184,16 @@ mkmsg() {
 	[ $_body -eq 1 ] && cat >>$_path || true
 }
 
+now() {
+	local _tim=$(date +%s)
+
+	if [ $# -eq 1 ]; then
+		_tim=$((_tim + $1))
+	fi
+
+	date -r "$_tim" '+%a, %d %b %Y %H:%M:%S %z'
+}
+
 testcase() {
 	assert_pass
 

@@ -15,6 +15,7 @@ SRCS=	compat-arc4random.c \
 	mdsort.c \
 	message.c \
 	parse.c \
+	time.c \
 	util.c
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
@@ -53,12 +54,14 @@ DISTFILES=	CHANGELOG.md \
 		tests/dry.sh \
 		tests/match-all.sh \
 		tests/match-body.sh \
+		tests/match-date.sh \
 		tests/match-header.sh \
 		tests/match-logical.sh \
 		tests/match-new.sh \
 		tests/match-old.sh \
 		tests/stdin.sh \
 		tests/run.sh \
+		time.c \
 		util.c
 
 PREFIX=	/usr/local

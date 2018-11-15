@@ -8,6 +8,7 @@ TESTS=	action-flag.sh \
 	dry.sh \
 	match-all.sh \
 	match-body.sh \
+	match-date.sh \
 	match-header.sh \
 	match-logical.sh \
 	match-new.sh \

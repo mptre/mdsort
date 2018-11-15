@@ -16,6 +16,7 @@ static int expr_eval_all(EXPR_EVAL_ARGS);
 static int expr_eval_and(EXPR_EVAL_ARGS);
 static int expr_eval_block(EXPR_EVAL_ARGS);
 static int expr_eval_body(EXPR_EVAL_ARGS);
+static int expr_eval_date(EXPR_EVAL_ARGS);
 static int expr_eval_discard(EXPR_EVAL_ARGS);
 static int expr_eval_flag(EXPR_EVAL_ARGS);
 static int expr_eval_header(EXPR_EVAL_ARGS);
@@ -28,6 +29,7 @@ static int expr_eval_pass(EXPR_EVAL_ARGS);
 
 static void expr_inspect1(const struct expr *, const struct expr *, FILE *);
 static void expr_inspect_body(const struct expr *, FILE *);
+static void expr_inspect_date(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
 static void match_copy(struct match *, const char *, const regmatch_t *,
@@ -50,6 +52,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	switch (ex->type) {
 	case EXPR_TYPE_BLOCK:
 	case EXPR_TYPE_BODY:
+	case EXPR_TYPE_DATE:
 	case EXPR_TYPE_HEADER:
 		ex->match = calloc(1, sizeof(*ex->match));
 		if (ex->match == NULL)
@@ -84,6 +87,30 @@ expr_free(struct expr *ex)
 	free(ex->match);
 	free(ex->matches);
 	free(ex);
+}
+
+int
+expr_set_date(struct expr *ex, unsigned char cmp, time_t threshold,
+    const char **errstr)
+{
+	assert(ex->type == EXPR_TYPE_DATE);
+
+	switch (cmp) {
+	case '>':
+		ex->date.cmp = EXPR_DATE_GT;
+		break;
+	case '<':
+		ex->date.cmp = EXPR_DATE_LT;
+		break;
+	default:
+		*errstr = "unknown comparison operator";
+		return 1;
+	}
+
+	ex->date.now = time(NULL);
+	ex->date.threshold = threshold;
+
+	return 0;
 }
 
 void
@@ -171,6 +198,7 @@ expr_count_actions(const struct expr *ex)
 	case EXPR_TYPE_NEG:
 	case EXPR_TYPE_ALL:
 	case EXPR_TYPE_BODY:
+	case EXPR_TYPE_DATE:
 	case EXPR_TYPE_HEADER:
 	case EXPR_TYPE_NEW:
 	case EXPR_TYPE_OLD:
@@ -214,6 +242,9 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg)
 		break;
 	case EXPR_TYPE_BODY:
 		res = expr_eval_body(root, ex, msg);
+		break;
+	case EXPR_TYPE_DATE:
+		res = expr_eval_date(root, ex, msg);
 		break;
 	case EXPR_TYPE_HEADER:
 		res = expr_eval_header(root, ex, msg);
@@ -290,6 +321,38 @@ expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg)
 	ex->match->val = msg->body;
 	match_copy(root->match, msg->body, ex->matches, ex->nmatches);
 	return 0;
+}
+
+static int
+expr_eval_date(struct expr *root __unused, struct expr *ex,
+    const struct message *msg)
+{
+	const struct string_list *dates;
+	const struct string *str;
+	time_t delta, tim;
+
+	dates = message_get_header(msg, "Date");
+	if (dates == NULL)
+		return 1;
+	str = TAILQ_FIRST(dates);
+	if (time_parse(str->val, &tim))
+		return 1;
+
+	ex->match->key = "Date";
+	ex->match->val = str->val;
+
+	delta = ex->date.now - tim;
+	switch (ex->date.cmp) {
+	case EXPR_DATE_GT:
+		if (delta > ex->date.threshold)
+			return 0;
+		break;
+	case EXPR_DATE_LT:
+		if (delta < ex->date.threshold)
+			return 0;
+		break;
+	}
+	return 1;
 }
 
 static int
@@ -456,6 +519,9 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 	case EXPR_TYPE_BODY:
 		expr_inspect_body(ex, fh);
 		break;
+	case EXPR_TYPE_DATE:
+		expr_inspect_date(ex, fh);
+		break;
 	case EXPR_TYPE_HEADER:
 		expr_inspect_header(ex, fh);
 		break;
@@ -506,6 +572,21 @@ expr_inspect_body(const struct expr *ex, FILE *fh)
 		fprintf(fh, "%.*s\n%*s^%*s$\n",
 		    (int)(lend - lbeg), lbeg, indent, "", len, "");
 	}
+}
+
+static void
+expr_inspect_date(const struct expr *ex, FILE *fh)
+{
+	const struct match *match;
+	int end, indent;
+
+	match = ex->match;
+	indent = strlen(match->key) + 2;
+	end = strlen(match->val);
+	if (end >= 2)
+		end -= 2;
+	fprintf(fh, "%s: %s\n", match->key, match->val);
+	fprintf(fh, "%*s^%*s$\n", indent, "", end, "");
 }
 
 static void
