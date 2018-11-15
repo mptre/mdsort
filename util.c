@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
@@ -5,7 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
 #include "extern.h"
 
 static int verbose;

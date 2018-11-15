@@ -1,11 +1,12 @@
 %{
 
+#include "config.h"
+
 #include <ctype.h>
 #include <err.h>
 #include <stdarg.h>
 #include <string.h>
 
-#include "config.h"
 #include "extern.h"
 
 static char *expandtilde(char *);

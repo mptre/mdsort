@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <err.h>
 #include <errno.h>
 #include <paths.h>
@@ -6,7 +8,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "extern.h"
 
 static const char *defaultconf(const struct environment *);

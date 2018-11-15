@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -6,7 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "config.h"
 #include "extern.h"
 
 #define EXPR_EVAL_ARGS	struct expr *, struct expr *, const struct message *

@@ -1,8 +1,9 @@
+#include "config.h"
+
 #include <err.h>
 #include <string.h>
 #include <time.h>
 
-#include "config.h"
 #include "extern.h"
 
 static int tzparse(const char *, time_t *);

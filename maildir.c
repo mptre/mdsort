@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -9,7 +11,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "extern.h"
 
 static const char *maildir_genname(const struct maildir *,
