@@ -185,13 +185,24 @@ mkmsg() {
 }
 
 now() {
-	local _tim=$(date +%s)
+	local _fmt='%a, %d %b %Y %H:%M:%S %z' _tim=$(date +%s)
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-f)
+			shift
+			_fmt="$1"
+			;;
+		*)	break;;
+		esac
+		shift
+	done
 
 	if [ $# -eq 1 ]; then
 		_tim=$((_tim + $1))
 	fi
 
-	date -r "$_tim" '+%a, %d %b %Y %H:%M:%S %z'
+	date -r "$_tim" "+${_fmt}"
 }
 
 testcase() {

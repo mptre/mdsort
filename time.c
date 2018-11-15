@@ -16,8 +16,8 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 	time_t tim, tz;
 
 	memset(&tm, 0, sizeof(tm));
-	end = strptime(str, "%a, %d %b %Y %H:%M:%S", &tm);
-	if (end == NULL) {
+	if ((end = strptime(str, "%a, %d %b %Y %H:%M:%S", &tm)) == NULL &&
+	    (end = strptime(str, "%d %b %Y %H:%M:%S", &tm)) == NULL) {
 		warnx("%s: could not parse date", str);
 		return 1;
 	}
