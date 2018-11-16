@@ -53,7 +53,7 @@ matrix:
         - T=linux-valgrind
         - CFLAGS=-Werror
         - DEBUG-g
-        - TESTFLAGS='-E -e valgrind -i conf.sh'
+        - TESTFLAGS='-E -e valgrind'
         - VALGRIND_OPTS='--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all'
       addons:
         apt:
