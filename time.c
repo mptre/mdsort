@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <err.h>
+#include <errno.h>
 #include <string.h>
 #include <time.h>
 
@@ -18,7 +19,7 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 	memset(&tm, 0, sizeof(tm));
 	if ((end = strptime(str, "%a, %d %b %Y %H:%M:%S", &tm)) == NULL &&
 	    (end = strptime(str, "%d %b %Y %H:%M:%S", &tm)) == NULL) {
-		warnx("%s: could not parse date", str);
+		warnc(EINVAL, "strptime: %s", str);
 		return 1;
 	}
 	tim = mktime(&tm);
@@ -30,7 +31,7 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 	for (; *end == ' ' || *end == '\t'; end++)
 		continue;
 	if (tzparse(end, &tz)) {
-		warnx("%s: could not parse timezone", str);
+		warnc(EINVAL, "tzparse: %s", str);
 		return 1;
 	}
 
