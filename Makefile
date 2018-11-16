@@ -10,6 +10,7 @@ SRCS=	compat-arc4random.c \
 	compat-reallocarray.c \
 	compat-strlcpy.c \
 	compat-utimensat.c \
+	compat-warnc.c \
 	expr.c \
 	maildir.c \
 	mdsort.c \
@@ -35,6 +36,7 @@ DISTFILES=	CHANGELOG.md \
 		compat-reallocarray.c \
 		compat-strlcpy.c \
 		compat-utimensat.c \
+		compat-warnc.c \
 		configure \
 		expr.c \
 		extern.h \
