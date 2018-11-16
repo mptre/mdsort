@@ -280,15 +280,15 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg,
 }
 
 static int
-expr_eval_all(struct expr *root __unused, struct expr *ex __unused,
-    const struct message *msg __unused, const struct environment *env __unused)
+expr_eval_all(struct expr *UNUSED(root), struct expr *UNUSED(ex),
+    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	return 0;
 }
 
 static int
 expr_eval_and(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env __unused)
+    const struct environment *env)
 {
 	if (expr_eval1(root, ex->lhs, msg, env))
 		return 1; /* no match, short-circuit */
@@ -313,7 +313,7 @@ expr_eval_block(struct expr *root, struct expr *ex, const struct message *msg,
 
 static int
 expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env __unused)
+    const struct environment *UNUSED(env))
 {
 	assert(ex->nmatches > 0);
 
@@ -330,7 +330,7 @@ expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg,
 }
 
 static int
-expr_eval_date(struct expr *root __unused, struct expr *ex,
+expr_eval_date(struct expr *UNUSED(root), struct expr *ex,
     const struct message *msg, const struct environment *env)
 {
 	const struct string_list *dates;
@@ -363,7 +363,7 @@ expr_eval_date(struct expr *root __unused, struct expr *ex,
 
 static int
 expr_eval_discard(struct expr *root, struct expr *ex,
-    const struct message *msg __unused, const struct environment *env __unused)
+    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	size_t len;
 
@@ -379,7 +379,7 @@ expr_eval_discard(struct expr *root, struct expr *ex,
 
 static int
 expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env __unused)
+    const struct environment *UNUSED(env))
 {
 	struct string *str;
 	size_t len;
@@ -403,7 +403,7 @@ expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg,
 
 static int
 expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env __unused)
+    const struct environment *UNUSED(env))
 {
 	const struct string_list *values;
 	const struct string *key, *val;
@@ -434,7 +434,7 @@ expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
 
 static int
 expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env __unused)
+    const struct environment *UNUSED(env))
 {
 	struct string *str;
 	size_t len;
@@ -471,8 +471,8 @@ expr_eval_neg(struct expr *root, struct expr *ex, const struct message *msg,
 }
 
 static int
-expr_eval_new(struct expr *root __unused, struct expr *ex __unused,
-    const struct message *msg, const struct environment *env __unused)
+expr_eval_new(struct expr *UNUSED(root), struct expr *UNUSED(ex),
+    const struct message *msg, const struct environment *UNUSED(env))
 {
 	char buf[NAME_MAX];
 
@@ -482,8 +482,8 @@ expr_eval_new(struct expr *root __unused, struct expr *ex __unused,
 }
 
 static int
-expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
-    const struct message *msg, const struct environment *env __unused)
+expr_eval_old(struct expr *UNUSED(root), struct expr *UNUSED(ex),
+    const struct message *msg, const struct environment *UNUSED(env))
 {
 	char buf[NAME_MAX];
 
@@ -496,7 +496,7 @@ expr_eval_old(struct expr *root __unused, struct expr *ex __unused,
 
 static int
 expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env __unused)
+    const struct environment *env)
 {
 	if (expr_eval1(root, ex->lhs, msg, env) == 0)
 		return 0; /* match, short-circuit */
@@ -505,7 +505,7 @@ expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg,
 
 static int
 expr_eval_pass(struct expr *root, struct expr *ex,
-    const struct message *msg __unused, const struct environment *env __unused)
+    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	root->match->action = ex;
 	return 0;

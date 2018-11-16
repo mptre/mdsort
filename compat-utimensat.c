@@ -11,9 +11,11 @@ int unused;
 #include <fcntl.h>
 #include <unistd.h>
 
+#include "extern.h"
+
 int
-utimensat(int fd, const char *path __unused, const struct timespec times[2],
-    int flags __unused)
+utimensat(int fd, const char *path, const struct timespec times[2],
+    int UNUSED(flags))
 {
 	struct stat st;
 	struct timeval tv[2];

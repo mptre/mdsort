@@ -4,8 +4,10 @@ int unused;
 
 #ifndef HAVE_PLEDGE
 
+#include "extern.h"
+
 int
-pledge(const char *promises __unused, const char *execpromises __unused)
+pledge(const char *UNUSED(promises), const char *UNUSED(execpromises))
 {
 	return 0;
 }

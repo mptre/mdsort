@@ -9,6 +9,8 @@
 #include <regex.h>
 #include <stdio.h>
 
+#define UNUSED(x)	_##x __unused
+
 /* Forward declarations. */
 struct environment;
 struct message;
