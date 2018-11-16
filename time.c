@@ -7,6 +7,7 @@
 
 #include "extern.h"
 
+static const char *timeparse(const char *, struct tm *);
 static int tzparse(const char *, time_t *);
 
 int
@@ -17,11 +18,9 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 	time_t tim, tz;
 
 	memset(&tm, 0, sizeof(tm));
-	if ((end = strptime(str, "%a, %d %b %Y %H:%M:%S", &tm)) == NULL &&
-	    (end = strptime(str, "%d %b %Y %H:%M:%S", &tm)) == NULL) {
-		warnc(EINVAL, "strptime: %s", str);
+	end = timeparse(str, &tm);
+	if (end == NULL)
 		return 1;
-	}
 	tim = mktime(&tm);
 	if (tim == -1) {
 		warn("%s", str);
@@ -37,6 +36,28 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 
 	*res = tim - tz + env->gmtoff;
 	return 0;
+}
+
+static const char *
+timeparse(const char *str, struct tm *tm)
+{
+	static const char *formats[] = {
+		"%a, %d %b %Y %H:%M:%S",
+		"%a, %d %b %Y %H:%M",
+		"%d %b %Y %H:%M:%S",
+		NULL,
+	};
+	const char *end;
+	int i;
+
+	for (i = 0; formats[i] != NULL; i++) {
+		end = strptime(str, formats[i], tm);
+		if (end != NULL)
+			return end;
+	}
+
+	warnc(EINVAL, "strptime: %s", str);
+	return NULL;
 }
 
 static int

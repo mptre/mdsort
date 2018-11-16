@@ -55,6 +55,20 @@ if testcase "less than"; then
 	pass
 fi
 
+if testcase "missing seconds"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M %z' -60)"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date > 30 seconds move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+	pass
+fi
+
 if testcase "missing weekday"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$(now -f '%d %b %Y %H:%M:%S %z' -60)"
