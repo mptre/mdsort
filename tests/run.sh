@@ -205,7 +205,8 @@ now() {
 		_tim=$((_tim + $1))
 	fi
 
-	date -r "$_tim" "+${_fmt}"
+	(date -r "$_tim" "+${_fmt}" 2>/dev/null ||
+		date -d "@${_tim}" "+${_fmt}")
 }
 
 testcase() {
@@ -284,6 +285,9 @@ ls "$MDSORT" >/dev/null || exit 1
 # Platform specific values.
 BUFSIZ=$(cppvar BUFSIZ || echo 0)
 PATH_MAX=$(cppvar PATH_MAX || echo 0)
+
+LC_ALL=C
+export LC_ALL
 
 cd $MAILDIR
 
