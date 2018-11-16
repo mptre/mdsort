@@ -4,6 +4,8 @@ int unused;
 
 #ifndef HAVE_PLEDGE
 
+#include <time.h>
+
 #include "extern.h"
 
 int
