@@ -82,7 +82,7 @@ main(int argc, char *argv[])
 	if (config == NULL)
 		return 1;
 	if (nflag)
-		return 0;
+		goto done;
 
 	TAILQ_FOREACH(conf, config, entry) {
 		if (conf->maildir != NULL && dostdin) {
@@ -145,6 +145,7 @@ main(int argc, char *argv[])
 		maildir_close(md);
 	}
 
+done:
 	while ((conf = TAILQ_FIRST(config)) != NULL) {
 		TAILQ_REMOVE(config, conf, entry);
 		expr_free(conf->expr);
