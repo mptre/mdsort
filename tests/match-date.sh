@@ -69,6 +69,20 @@ if testcase "missing weekday"; then
 	pass
 fi
 
+if testcase "invalid date"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "Date" "$(now -f '%d' -60)"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date > 30 seconds move "dst"
+	}
+	EOF
+	mdsort >/dev/null
+	refute_empty "src/new"
+	assert_empty "dst/new"
+	pass
+fi
+
 if testcase "dry run"; then
 	_d="$(now -120)"
 	mkmd "src" "dst"
