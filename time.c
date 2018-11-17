@@ -3,7 +3,6 @@
 #include <err.h>
 #include <errno.h>
 #include <string.h>
-#include <time.h>
 
 #include "extern.h"
 

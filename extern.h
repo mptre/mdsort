@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <regex.h>
 #include <stdio.h>
+#include <time.h>
 
 #define UNUSED(x)	_##x __attribute__((__unused__))
 

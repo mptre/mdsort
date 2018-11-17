@@ -6,7 +6,6 @@
 #include <err.h>
 #include <stdarg.h>
 #include <string.h>
-#include <time.h>
 
 #include "extern.h"
 
