@@ -9,7 +9,7 @@
 #include <regex.h>
 #include <stdio.h>
 
-#define UNUSED(x)	_##x __unused
+#define UNUSED(x)	_##x __attribute__((__unused__))
 
 /* Forward declarations. */
 struct environment;

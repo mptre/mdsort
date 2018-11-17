@@ -167,31 +167,6 @@ check_strlcpy() {
 	EOF
 }
 
-check_unused() {
-	compile <<-EOF
-	#include <stdlib.h>
-
-	int main(int argc __unused, char *argv[] __unused) {
-		return 0;
-	}
-	EOF
-}
-
-# Check if sys/stat.h includes an identifier named __unused.
-# This is the case for musl and sys/stat.h must therefore be included before
-# defining __unused.
-check_unused_sys_stat() {
-	compile <<-EOF || return 0
-	#define __unused
-	#include <sys/stat.h>
-
-	int main(void) {
-		return 0;
-	}
-	EOF
-	return 1
-}
-
 check_utimensat() {
 	compile <<-EOF
 	#include <sys/time.h>
@@ -226,8 +201,6 @@ HAVE_QUEUE=0
 HAVE_REALLOCARRAY=0
 HAVE_STAT_TIM=0
 HAVE_STRLCPY=0
-HAVE_UNUSED=0
-HAVE_UNUSED_SYS_STAT=0
 HAVE_UTIMENSAT=0
 HAVE_WARNC=0
 
@@ -268,8 +241,6 @@ check_queue && HAVE_QUEUE=1
 check_reallocarray && HAVE_REALLOCARRAY=1
 check_stat_tim && HAVE_STAT_TIM=1
 check_strlcpy && HAVE_STRLCPY=1
-check_unused && HAVE_UNUSED=1
-check_unused_sys_stat && HAVE_UNUSED_SYS_STAT=1
 check_utimensat && HAVE_UTIMENSAT=1
 check_warnc && HAVE_WARNC=1
 
@@ -290,9 +261,6 @@ true
 [ $HAVE_REALLOCARRAY -eq 0 ] && echo stdlib.h
 [ $HAVE_STRLCPY -eq 0 ] && echo stdlib.h
 [ $HAVE_UTIMENSAT -eq 0 ] && echo sys/time.h
-
-# Special case for musl, sys/stat.h must be included before defining __unused.
-[ $HAVE_UNUSED_SYS_STAT -eq 1 ] && echo sys/stat.h
 ) | sort | uniq | headers >>config.h
 
 (
@@ -314,9 +282,6 @@ if [ $HAVE_STAT_TIM -eq 0 ]; then
 	printf '#define st_ctim\tst_ctimespec\n'
 	printf '#define st_mtim\tst_mtimespec\n'
 fi
-
-[ $HAVE_UNUSED -eq 0 ] && \
-	printf '#define __unused __attribute__((__unused__))\n'
 
 [ $HAVE_UTIMENSAT -eq 0 ] && printf '#define UTIME_OMIT -1L\n'
 
