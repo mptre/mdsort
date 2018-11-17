@@ -93,7 +93,7 @@ expr_free(struct expr *ex)
 }
 
 int
-expr_set_date(struct expr *ex, unsigned char cmp, time_t threshold,
+expr_set_date(struct expr *ex, unsigned char cmp, time_t age,
     const char **errstr)
 {
 	assert(ex->type == EXPR_TYPE_DATE);
@@ -110,7 +110,7 @@ expr_set_date(struct expr *ex, unsigned char cmp, time_t threshold,
 		return 1;
 	}
 
-	ex->date.threshold = threshold;
+	ex->date.age = age;
 
 	return 0;
 }
@@ -351,11 +351,11 @@ expr_eval_date(struct expr *UNUSED(root), struct expr *ex,
 	delta = env->now - tim;
 	switch (ex->date.cmp) {
 	case EXPR_DATE_GT:
-		if (delta > ex->date.threshold)
+		if (delta > ex->date.age)
 			return 0;
 		break;
 	case EXPR_DATE_LT:
-		if (delta < ex->date.threshold)
+		if (delta < ex->date.age)
 			return 0;
 		break;
 	}

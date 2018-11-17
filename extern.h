@@ -138,7 +138,7 @@ struct expr {
 			EXPR_DATE_GT,
 			EXPR_DATE_LT,
 		} cmp;
-		time_t threshold;
+		time_t age;
 	} date;
 
 	struct match *match;
@@ -173,12 +173,11 @@ struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
 void expr_free(struct expr *ex);
 
 /*
- * Associate the given date comparison operator and threshold with the
- * expression.
+ * Associate the given date comparison operator and age with the expression.
  * Returns zero on success. Otherwise, non-zero is returned and errstr explains
  * why.
  */
-int expr_set_date(struct expr *ex, unsigned char cmp, time_t threshold,
+int expr_set_date(struct expr *ex, unsigned char cmp, time_t age,
     const char **errstr);
 
 /*

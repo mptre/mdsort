@@ -25,6 +25,20 @@ if testcase -e "scalar abbreviation ambiguous"; then
 	pass
 fi
 
+if testcase -e "age too large"; then
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date > 4294967296 seconds  move "dst"
+		match date > 9999999999 seconds  move "dst"
+	}
+	EOF
+	mdsort - -- -n <<-EOF
+	mdsort.conf:2: integer too large
+	mdsort.conf:3: integer too large
+	EOF
+	pass
+fi
+
 if testcase "greater than"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$(now -1)"

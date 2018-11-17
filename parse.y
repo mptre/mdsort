@@ -29,7 +29,8 @@ static int lineno, lineno_save, parse_errors;
 
 %union {
 	char *str;
-	int i;
+	unsigned int i;
+	time_t t;
 
 	struct expr *expr;
 	struct string_list *strings;
@@ -40,10 +41,11 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL BODY DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE NEW OLD PASS
+%token ALL BODY CMP DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE NEW OLD PASS
 %token PATTERN STDIN SCALAR STRING
 %type <str> STRING flag maildir_path
-%type <i> INT SCALAR cmp optneg
+%type <i> CMP INT SCALAR date_cmp optneg
+%type <t> date_age
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
 %type <strings> stringblock strings
 %type <pattern> PATTERN
@@ -151,12 +153,11 @@ expr3		: BODY PATTERN {
 				yyerror("invalid pattern: %s", errstr);
 			expr_set_strings($$, $2);
 		}
-		| DATE cmp INT SCALAR {
+		| DATE date_cmp date_age {
 			const char *errstr;
-			time_t threshold = $3 * $4;
 
 			$$ = expr_alloc(EXPR_TYPE_DATE, NULL, NULL);
-			if (expr_set_date($$, $2, threshold, &errstr))
+			if (expr_set_date($$, $2, $3, &errstr))
 				yyerror("invalid date: %s", errstr);
 		}
 		| NEW {
@@ -243,11 +244,13 @@ flag		: optneg NEW {
 		}
 		;
 
-cmp		: '<' {
-			$$ = '<';
+date_cmp	: CMP {
+			$$ = $1;
 		}
-		| '>' {
-			$$ = '>';
+		;
+
+date_age	: INT SCALAR {
+			$$ = $1 * $2;
 		}
 		;
 
@@ -341,7 +344,7 @@ yylex(void)
 	static char lexeme[BUFSIZ], kw[16];
 	char *buf;
 	size_t len;
-	int ambiguous, c, i, match;
+	int ambiguous, c, i, match, overflow;
 
 	buf = lexeme;
 
@@ -354,10 +357,13 @@ again:
 	/* Used for more accurate error messages. */
 	lineno_save = lineno;
 
+	yylval.i = c;
 	if (c == EOF) {
 		return 0;
 	} else if (c == '!') {
 		return NEG;
+	} else if (c == '<' || c == '>') {
+		return CMP;
 	} else if (c == '#') {
 		for (;;) {
 			c = yygetc();
@@ -419,9 +425,23 @@ again:
 
 		return PATTERN;
 	} else if (isdigit(c)) {
-		yylval.i = 0;
+		yylval.i = overflow = 0;
 		for (; isdigit(c); c = yygetc()) {
+			if (overflow)
+				continue;
+
+			if (yylval.i > UINT_MAX / 10) {
+				yyerror("integer too large");
+				overflow = 1;
+				continue;
+			}
 			yylval.i *= 10;
+
+			if (yylval.i > UINT_MAX - (c - '0')) {
+				yyerror("integer too large");
+				overflow = 1;
+				continue;
+			}
 			yylval.i += c - '0';
 		}
 		yyungetc(c);
@@ -462,7 +482,6 @@ again:
 		}
 	}
 
-	yylval.i = c;
 	return c;
 }
 
