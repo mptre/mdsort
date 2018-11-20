@@ -344,6 +344,7 @@ expr_eval_date(struct expr *UNUSED(root), struct expr *ex,
 	if (time_parse(str->val, &tim, env))
 		return 1;
 
+	match_reset(ex->match);
 	ex->match->key = "Date";
 	ex->match->val = str->val;
 
