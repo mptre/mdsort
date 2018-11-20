@@ -13,8 +13,16 @@
 #define UNUSED(x)	_##x __attribute__((__unused__))
 
 /* Forward declarations. */
-struct environment;
 struct message;
+
+struct environment {
+	char home[PATH_MAX];
+	char hostname[HOST_NAME_MAX + 1];
+	char tmpdir[PATH_MAX];
+
+	time_t now;
+	long gmtoff;
+};
 
 enum subdir {
 	SUBDIR_NEW,
@@ -258,15 +266,6 @@ struct config {
 };
 
 TAILQ_HEAD(config_list, config);
-
-struct environment {
-	char home[PATH_MAX];
-	char hostname[HOST_NAME_MAX + 1];
-	char tmpdir[PATH_MAX];
-
-	time_t now;
-	long gmtoff;
-};
 
 /*
  * Parses the configuration located at path and returns a config list on
