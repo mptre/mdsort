@@ -39,6 +39,10 @@ all:
 EOF
 }
 
+search_path() {
+	which "$@"
+}
+
 check_arc4random() {
 	compile <<-EOF
 	#include <stdlib.h>
@@ -208,7 +212,7 @@ CC=$(makevar CC)
 CFLAGS=$(makevar CFLAGS)
 CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
 INSTALL=$(makevar INSTALL)
-SHA256=$(which sha256sum sha256 2>/dev/null | head -1)
+SHA256=$(search_path sha256sum sha256 | head -1)
 YACC=$(makevar YACC)
 
 : "${CPPFLAGS:=}"
@@ -229,7 +233,7 @@ set -u
 # Enable tracing, will end up in config.log.
 set -x
 
-[ -z "$YACC" ] && fatal "cannot find yacc"
+([ -z "$YACC" ] || ! search_path "$YACC") && fatal "cannot find yacc"
 
 check_arc4random && HAVE_ARC4RANDOM=1
 check_dead && HAVE_DEAD=1
