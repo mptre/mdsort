@@ -212,14 +212,12 @@ CC=$(makevar CC)
 CFLAGS=$(makevar CFLAGS)
 CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
 INSTALL=$(makevar INSTALL)
-SHA256=$(search_path sha256sum sha256 | head -1)
 YACC=$(makevar YACC)
 
 : "${CPPFLAGS:=}"
 : "${DEBUG:=}"
 : "${INSTALL:=install}"
 : "${LDFLAGS:=}"
-: "${SHA256:=false}"
 : "${YFLAGS:=}"
 
 exec 3>&1 4>&2
@@ -319,7 +317,6 @@ DEBUG=		$(echo $DEBUG)
 INSTALL=	$(echo $INSTALL)
 LDFLAGS=	$(echo $LDFLAGS)
 MALLOC_OPTIONS=	$(echo $MALLOC_OPTIONS)
-SHA256=		$(echo $SHA256)
 YACC=		$(echo $YACC)
 YFLAGS=		$(echo $YFLAGS)
 EOF
