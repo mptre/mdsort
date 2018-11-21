@@ -7,7 +7,7 @@ if testcase -e "pass is mutually exclusive with all other actions"; then
 		match all pass pass
 	}
 	EOF
-	mdsort - -n <<-EOF
+	mdsort - -- -n <<-EOF
 	mdsort.conf:2: pass cannot be combined with another action
 	mdsort.conf:3: pass cannot be combined with another action
 	mdsort.conf:4: discard cannot be combined with another action

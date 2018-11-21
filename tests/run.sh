@@ -109,6 +109,9 @@ mdsort() {
 		-D)	_args=;;
 		--)	shift
 			break;;
+		*)	fail "mdsort: unknown test options: ${@}"
+			return 0
+			;;
 		esac
 		shift
 	done
