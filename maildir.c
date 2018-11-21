@@ -27,39 +27,41 @@ maildir_open(const char *path, int flags, const struct environment *env)
 {
 	struct maildir *md;
 
-	md = malloc(sizeof(*md));
+	md = calloc(1, sizeof(*md));
 	if (md == NULL)
 		err(1, NULL);
-	md->path = NULL;
-	md->dir = NULL;
 	md->subdir = SUBDIR_NEW;
 	md->flags = flags;
 
 	if ((md->flags & MAILDIR_STDIN)) {
-		if (maildir_stdin(md, env)) {
-			maildir_close(md);
-			return NULL;
-		}
+		if (maildir_stdin(md, env))
+			goto fail;
 	} else {
-		md->path = strdup(path);
-		if (md->path == NULL)
-			err(1, NULL);
+		if ((md->flags & MAILDIR_WALK)) {
+			md->path = strdup(path);
+			if (md->path == NULL)
+				err(1, NULL);
+		} else {
+			if (parsesubdir(path, &md->subdir))
+				goto fail;
 
-		if ((md->flags & MAILDIR_WALK) == 0 &&
-		    parsesubdir(md->path, &md->subdir)) {
-			maildir_close(md);
-			return NULL;
+			md->path = malloc(PATH_MAX);
+			if (md->path == NULL)
+				err(1, NULL);
+			if (pathslice(path, md->path, 0, -1) == NULL)
+				goto fail;
 		}
 	}
 
-	if ((md->flags & MAILDIR_WALK))
-		path = maildir_path(md, NULL);
-	if (maildir_opendir(md, path)) {
-		maildir_close(md);
-		return NULL;
-	}
+	path = maildir_path(md, NULL);
+	if (maildir_opendir(md, path))
+		goto fail;
 
 	return md;
+
+fail:
+	maildir_close(md);
+	return NULL;
 }
 
 void
