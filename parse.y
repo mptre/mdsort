@@ -31,6 +31,8 @@ static int lineno, lineno_save, parse_errors;
 	unsigned int i;
 	time_t t;
 
+	enum expr_cmp cmp;
+
 	struct expr *expr;
 	struct string_list *strings;
 
@@ -40,11 +42,12 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL BODY CMP DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE NEW OLD PASS
+%token ALL BODY DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE NEW OLD PASS
 %token PATTERN STDIN SCALAR STRING
 %type <str> STRING flag maildir_path
-%type <i> CMP INT SCALAR date_cmp optneg
+%type <i> INT SCALAR optneg
 %type <t> date_age
+%type <cmp> date_cmp
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
 %type <strings> stringblock strings
 %type <pattern> PATTERN
@@ -153,11 +156,8 @@ expr3		: BODY PATTERN {
 			expr_set_strings($$, $2);
 		}
 		| DATE date_cmp date_age {
-			const char *errstr;
-
 			$$ = expr_alloc(EXPR_TYPE_DATE, NULL, NULL);
-			if (expr_set_date($$, $2, $3, &errstr))
-				yyerror("invalid date: %s", errstr);
+			expr_set_date($$, $2, $3);
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW, NULL, NULL);
@@ -243,8 +243,11 @@ flag		: optneg NEW {
 		}
 		;
 
-date_cmp	: CMP {
-			$$ = $1;
+date_cmp	: '<' {
+			$$ = EXPR_CMP_LT;
+		}
+		| '>' {
+			$$ = EXPR_CMP_GT;
 		}
 		;
 
@@ -361,8 +364,6 @@ again:
 		return 0;
 	} else if (c == '!') {
 		return NEG;
-	} else if (c == '<' || c == '>') {
-		return CMP;
 	} else if (c == '#') {
 		for (;;) {
 			c = yygetc();

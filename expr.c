@@ -91,27 +91,13 @@ expr_free(struct expr *ex)
 	free(ex);
 }
 
-int
-expr_set_date(struct expr *ex, unsigned char cmp, time_t age,
-    const char **errstr)
+void
+expr_set_date(struct expr *ex, enum expr_cmp cmp, time_t age)
 {
 	assert(ex->type == EXPR_TYPE_DATE);
 
-	switch (cmp) {
-	case '>':
-		ex->date.cmp = EXPR_DATE_GT;
-		break;
-	case '<':
-		ex->date.cmp = EXPR_DATE_LT;
-		break;
-	default:
-		*errstr = "unknown comparison operator";
-		return 1;
-	}
-
+	ex->date.cmp = cmp;
 	ex->date.age = age;
-
-	return 0;
 }
 
 void
@@ -350,12 +336,12 @@ expr_eval_date(struct expr *UNUSED(root), struct expr *ex,
 
 	delta = env->now - tim;
 	switch (ex->date.cmp) {
-	case EXPR_DATE_GT:
-		if (delta > ex->date.age)
+	case EXPR_CMP_LT:
+		if (delta < ex->date.age)
 			return 0;
 		break;
-	case EXPR_DATE_LT:
-		if (delta < ex->date.age)
+	case EXPR_CMP_GT:
+		if (delta > ex->date.age)
 			return 0;
 		break;
 	}

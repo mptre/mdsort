@@ -132,6 +132,11 @@ enum expr_type {
 	EXPR_TYPE_PASS,
 };
 
+enum expr_cmp {
+	EXPR_CMP_LT,
+	EXPR_CMP_GT,
+};
+
 struct expr {
 	enum expr_type type;
 	int cookie;
@@ -143,10 +148,7 @@ struct expr {
 	size_t nmatches;
 
 	struct {
-		enum {
-			EXPR_DATE_GT,
-			EXPR_DATE_LT,
-		} cmp;
+		enum expr_cmp cmp;
 		time_t age;
 	} date;
 
@@ -181,13 +183,7 @@ struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
 
 void expr_free(struct expr *ex);
 
-/*
- * Associate the given date comparison operator and age with the expression.
- * Returns zero on success. Otherwise, non-zero is returned and errstr explains
- * why.
- */
-int expr_set_date(struct expr *ex, unsigned char cmp, time_t age,
-    const char **errstr);
+void expr_set_date(struct expr *ex, enum expr_cmp cmp, time_t age);
 
 /*
  * Associate the given string list with the expression.
