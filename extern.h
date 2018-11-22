@@ -185,9 +185,6 @@ void expr_free(struct expr *ex);
 
 void expr_set_date(struct expr *ex, enum expr_cmp cmp, time_t age);
 
-/*
- * Associate the given string list with the expression.
- */
 void expr_set_strings(struct expr *ex, struct string_list *strings);
 
 /*
