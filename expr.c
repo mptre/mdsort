@@ -34,6 +34,9 @@ static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_date(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
+static int expr_regexec(struct expr *, struct match *, const char *,
+    const char *);
+
 static void match_copy(struct match *, const char *, const regmatch_t *,
     size_t);
 static const char *match_get(const struct match *, unsigned long n);
@@ -305,13 +308,8 @@ expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg,
 
 	if (msg->body == NULL)
 		return 1;
-	if (regexec(&ex->pattern, msg->body, ex->nmatches, ex->matches, 0))
+	if (expr_regexec(ex, root->match, NULL, msg->body))
 		return 1;
-
-	match_reset(ex->match);
-	ex->match->key = NULL;
-	ex->match->val = msg->body;
-	match_copy(root->match, msg->body, ex->matches, ex->nmatches);
 	return 0;
 }
 
@@ -404,15 +402,8 @@ expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
 			continue;
 
 		TAILQ_FOREACH(val, values, entry) {
-			if (regexec(&ex->pattern, val->val, ex->nmatches,
-				    ex->matches, 0))
+                        if (expr_regexec(ex, root->match, key->val, val->val))
 				continue;
-
-			match_reset(ex->match);
-			ex->match->key = key->val;
-			ex->match->val = val->val;
-			match_copy(root->match, val->val, ex->matches,
-			    ex->nmatches);
 			return 0;
 		}
 	}
@@ -610,6 +601,20 @@ expr_inspect_header(const struct expr *ex, FILE *fh)
 			len -= 2;
 		fprintf(fh, "%*s^%*s$\n", indent + beg, "", len, "");
 	}
+}
+
+static int
+expr_regexec(struct expr *ex, struct match *match, const char *key,
+    const char *val)
+{
+	if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
+		return 1;
+
+	match_reset(ex->match);
+	ex->match->key = key;
+	ex->match->val = val;
+	match_copy(match, val, ex->matches, ex->nmatches);
+	return 0;
 }
 
 static void
