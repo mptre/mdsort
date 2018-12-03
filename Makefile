@@ -61,8 +61,8 @@ DISTFILES=	CHANGELOG.md \
 		tests/match-logical.sh \
 		tests/match-new.sh \
 		tests/match-old.sh \
-		tests/stdin.sh \
 		tests/run.sh \
+		tests/stdin.sh \
 		time.c \
 		util.c
 
