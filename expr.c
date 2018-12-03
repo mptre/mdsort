@@ -317,20 +317,18 @@ static int
 expr_eval_date(struct expr *UNUSED(root), struct expr *ex,
     const struct message *msg, const struct environment *env)
 {
-	const struct string_list *dates;
-	const struct string *str;
+	const char *date;
 	time_t delta, tim;
 
-	dates = message_get_header(msg, "Date");
-	if (dates == NULL)
+	date = message_get_header1(msg, "Date");
+	if (date == NULL)
 		return 1;
-	str = TAILQ_FIRST(dates);
-	if (time_parse(str->val, &tim, env))
+	if (time_parse(date, &tim, env))
 		return 1;
 
 	match_reset(ex->match);
 	ex->match->key = "Date";
-	ex->match->val = str->val;
+	ex->match->val = date;
 
 	delta = env->now - tim;
 	switch (ex->date.cmp) {

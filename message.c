@@ -121,6 +121,19 @@ message_get_header(const struct message *msg, const char *header)
 }
 
 const char *
+message_get_header1(const struct message *msg, const char *header)
+{
+	const struct string_list *values;
+	const struct string *str;
+
+	values = message_get_header(msg, header);
+	if (values == NULL)
+		return NULL;
+	str = TAILQ_FIRST(values);
+	return str->val;
+}
+
+const char *
 message_get_flags(const struct message *msg)
 {
 	static char buf[32];

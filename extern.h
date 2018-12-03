@@ -109,6 +109,8 @@ void message_free(struct message *msg);
 const struct string_list *message_get_header(const struct message *msg,
     const char *header);
 
+const char *message_get_header1(const struct message *msg, const char *header);
+
 const char *message_get_flags(const struct message *msg);
 
 int message_has_flags(const struct message *msg, unsigned char flag);
