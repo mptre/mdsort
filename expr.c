@@ -35,7 +35,7 @@ static void expr_inspect_date(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
 static int expr_regexec(struct expr *, struct match *, const char *,
-    const char *);
+    const char *, int);
 
 static void match_copy(struct match *, const char *, const regmatch_t *,
     size_t);
@@ -301,13 +301,14 @@ expr_eval_block(struct expr *root, struct expr *ex, const struct message *msg,
 
 static int
 expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *UNUSED(env))
+    const struct environment *env)
 {
 	assert(ex->nmatches > 0);
 
 	if (msg->body == NULL)
 		return 1;
-	if (expr_regexec(ex, root->match, NULL, msg->body))
+	if (expr_regexec(ex, root->match, NULL, msg->body,
+		    env->options & OPTION_DRYRUN))
 		return 1;
 	return 0;
 }
@@ -389,7 +390,7 @@ expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg,
 
 static int
 expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *UNUSED(env))
+    const struct environment *env)
 {
 	const struct string_list *values;
 	const struct string *key, *val;
@@ -403,7 +404,8 @@ expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
 			continue;
 
 		TAILQ_FOREACH(val, values, entry) {
-                        if (expr_regexec(ex, root->match, key->val, val->val))
+			if (expr_regexec(ex, root->match, key->val, val->val,
+				    env->options & OPTION_DRYRUN))
 				continue;
 			return 0;
 		}
@@ -606,21 +608,25 @@ expr_inspect_header(const struct expr *ex, FILE *fh)
 
 static int
 expr_regexec(struct expr *ex, struct match *match, const char *key,
-    const char *val)
+    const char *val, int dryrun)
 {
 	if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
 		return 1;
 
-	match_reset(ex->match);
-	if (key != NULL) {
-		ex->match->key = strdup(key);
-		if (ex->match->key == NULL)
+	match_copy(match, val, ex->matches, ex->nmatches);
+
+	if (dryrun) {
+		match_reset(ex->match);
+		if (key != NULL) {
+			ex->match->key = strdup(key);
+			if (ex->match->key == NULL)
+				err(1, NULL);
+		}
+		ex->match->val = strdup(val);
+		if (ex->match->val == NULL)
 			err(1, NULL);
 	}
-	ex->match->val = strdup(val);
-	if (ex->match->val == NULL)
-		err(1, NULL);
-	match_copy(match, val, ex->matches, ex->nmatches);
+
 	return 0;
 }
 
