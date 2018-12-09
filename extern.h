@@ -98,7 +98,11 @@ struct message {
 
 	struct header *headers;
 	size_t nheaders;
+
+	TAILQ_ENTRY(message) entry;
 };
+
+TAILQ_HEAD(message_list, message);
 
 /*
  * Parse the message located at path.
@@ -121,12 +125,17 @@ int message_has_flags(const struct message *msg, unsigned char flag);
 
 void message_set_flags(struct message *msg, unsigned char flag, int add);
 
+struct message_list *message_get_attachments(const struct message *msg);
+
+void message_list_free(struct message_list *messages);
+
 enum expr_type {
 	EXPR_TYPE_BLOCK,
 	EXPR_TYPE_AND,
 	EXPR_TYPE_OR,
 	EXPR_TYPE_NEG,
 	EXPR_TYPE_ALL,
+	EXPR_TYPE_ATTACHMENT,
 	EXPR_TYPE_BODY,
 	EXPR_TYPE_DATE,
 	EXPR_TYPE_HEADER,

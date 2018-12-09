@@ -29,6 +29,11 @@ static int findheader(char *, char **, char **, char **, char **);
 static ssize_t searchheader(const struct header *, size_t, const char *,
     size_t *);
 
+static const char *findboundary(const char *, const char *, int *);
+static char *parseboundary(const char *);
+
+static const char *skipline(const char *);
+
 struct message *
 message_parse(const char *path)
 {
@@ -188,6 +193,80 @@ message_set_flags(struct message *msg, unsigned char flag, int add)
 		msg->flags |= FLAG(flag);
 	else
 		msg->flags &= ~FLAG(flag);
+}
+
+struct message_list *
+message_get_attachments(const struct message *msg)
+{
+	struct message_list *attachments = NULL;
+	struct message *attach;
+	const char *b, *beg, *body, *end, *type;
+	char *boundary;
+	int term;
+
+	type = message_get_header1(msg, "Content-Type");
+	if (type == NULL)
+		return NULL;
+	boundary = parseboundary(type);
+	if (boundary == NULL)
+		return NULL;
+
+	body = msg->body;
+	beg = end = NULL;
+	term = 0;
+	for (;;) {
+		b = findboundary(boundary, body, &term);
+		if (b == NULL)
+			break;
+		if (beg == NULL)
+			beg = b = skipline(b);
+		else
+			end = b;
+		body = b;
+		if (beg == NULL || end == NULL)
+			continue;
+
+		if (attachments == NULL) {
+			attachments = malloc(sizeof(*attachments));
+			if (attachments == NULL)
+				err(1, NULL);
+			TAILQ_INIT(attachments);
+		}
+		attach = calloc(1, sizeof(*attach));
+		if (attach == NULL)
+			err(1, NULL);
+		attach->buf = strndup(beg, end - beg);
+		if (attach->buf == NULL)
+			err(1, NULL);
+		attach->body = message_parse_headers(attach);
+		TAILQ_INSERT_TAIL(attachments, attach, entry);
+
+		beg = end = NULL;
+		if (term)
+			break;
+	}
+	free(boundary);
+	if (!term) {
+		message_list_free(attachments);
+		return NULL;
+	}
+
+	return attachments;
+}
+
+void
+message_list_free(struct message_list *messages)
+{
+	struct message *msg;
+
+	if (messages == NULL)
+		return;
+
+	while ((msg = TAILQ_FIRST(messages)) != NULL) {
+		TAILQ_REMOVE(messages, msg, entry);
+		message_free(msg);
+	}
+	free(messages);
 }
 
 static void
@@ -355,4 +434,92 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 			hi = mi - 1;
 	}
 	return -1;
+}
+
+static const char *
+findboundary(const char *boundary, const char *s, int *term)
+{
+	const char *beg;
+	size_t len;
+	int skip = 0;
+
+	len = strlen(boundary);
+
+	for (;;) {
+		*term = 0;
+
+		if (skip)
+			s = skipline(s);
+		if (*s == '\0')
+			break;
+		skip = 1;
+		beg = s;
+
+		if (strncmp(s, "--", 2))
+			continue;
+		s += 2;
+
+		if (strncmp(s, boundary, len))
+			continue;
+		s += len;
+
+		if (strncmp(s, "--", 2) == 0) {
+			s += 2;
+			*term = 1;
+		}
+		if (*s == '\n')
+			return beg;
+	}
+
+	return NULL;
+}
+
+static char *
+parseboundary(const char *str)
+{
+	const char *needle, *p;
+	char *boundary;
+	size_t len;
+
+	log_debug("%s: %s\n", __func__, str);
+
+	needle = "multipart/";
+	len = strlen(needle);
+	if (strncmp(str, needle, len))
+		return NULL;
+	str += len;
+	for (; *str != '\0' && *str != ';'; str++)
+		continue;
+	if (*str == '\0')
+		return NULL;
+	str++;
+
+	for (; *str == ' ' || *str == '\t'; str++)
+		continue;
+
+	needle = "boundary=\"";
+	len = strlen(needle);
+	if (strncmp(str, needle, len))
+		return NULL;
+	str += len;
+	p = str;
+	for (; *p != '\0' && *p != '"'; p++)
+		continue;
+	len = p - str;
+	if (len == 0)
+		return NULL;
+	boundary = strndup(str, len);
+	if (boundary == NULL)
+		err(1, NULL);
+	return boundary;
+}
+
+static const char *
+skipline(const char *s)
+{
+	for (; *s != '\0' && *s != '\n'; s++)
+		continue;
+	if (*s != '\0')
+		s++;
+	return s;
 }

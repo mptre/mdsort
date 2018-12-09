@@ -7,6 +7,7 @@ TESTS=	action-flag.sh \
 	conf.sh \
 	dry.sh \
 	match-all.sh \
+	match-attachment.sh \
 	match-body.sh \
 	match-date.sh \
 	match-header.sh \

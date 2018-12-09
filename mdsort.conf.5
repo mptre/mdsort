@@ -73,6 +73,16 @@ Finding the header with
 .Ar name
 in message is done case insensitive.
 .It Xo Op Ic \&!
+.Ic attachment
+.Xc
+Evaluates to true if the message has attachments.
+.It Xo Op Ic \&!
+.Ic attachment
+.Pf / Ar pattern Ns Pf / Op i
+.Xc
+Evaluates to true if the message has attachments with a content type matching
+.Ar pattern .
+.It Xo Op Ic \&!
 .Ic date \&> Ar age scale
 .Xc
 .It Xo Op Ic \&!

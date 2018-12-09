@@ -42,8 +42,8 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL BODY DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE NEW OLD PASS
-%token PATTERN STDIN SCALAR STRING
+%token ALL ATTACHMENT BODY DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE NEW
+%token OLD PASS PATTERN STDIN SCALAR STRING
 %type <str> STRING flag maildir_path
 %type <i> INT SCALAR optneg
 %type <t> date_age
@@ -154,6 +154,20 @@ expr3		: BODY PATTERN {
 			if (expr_set_pattern($$, $3.str, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 			expr_set_strings($$, $2);
+		}
+		| ATTACHMENT {
+			const char *errstr;
+
+			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, NULL, NULL);
+			if (expr_set_pattern($$, ".*", 0, &errstr))
+				yyerror("invalid pattern: %s", errstr);
+		}
+		| ATTACHMENT PATTERN {
+			const char *errstr;
+
+			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, NULL, NULL);
+			if (expr_set_pattern($$, $2.str, $2.flags, &errstr))
+				yyerror("invalid pattern: %s", errstr);
 		}
 		| DATE date_cmp date_age {
 			$$ = expr_alloc(EXPR_TYPE_DATE, NULL, NULL);
@@ -314,6 +328,7 @@ yylex(void)
 		int type;
 	} keywords[] = {
 		{ "all",	ALL },
+		{ "attachment",	ATTACHMENT },
 		{ "and",	AND },
 		{ "body",	BODY },
 		{ "date",	DATE },

@@ -16,6 +16,7 @@
 static int expr_eval1(EXPR_EVAL_ARGS);
 static int expr_eval_all(EXPR_EVAL_ARGS);
 static int expr_eval_and(EXPR_EVAL_ARGS);
+static int expr_eval_attachment(EXPR_EVAL_ARGS);
 static int expr_eval_block(EXPR_EVAL_ARGS);
 static int expr_eval_body(EXPR_EVAL_ARGS);
 static int expr_eval_date(EXPR_EVAL_ARGS);
@@ -54,6 +55,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	ex->lhs = lhs;
 	ex->rhs = rhs;
 	switch (ex->type) {
+	case EXPR_TYPE_ATTACHMENT:
 	case EXPR_TYPE_BLOCK:
 	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_DATE:
@@ -181,6 +183,7 @@ expr_count_actions(const struct expr *ex)
 		return 0;
 
 	switch (ex->type) {
+	case EXPR_TYPE_ATTACHMENT:
 	case EXPR_TYPE_BLOCK:
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
@@ -226,6 +229,9 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg,
 		break;
 	case EXPR_TYPE_NEG:
 		res = expr_eval_neg(root, ex, msg, env);
+		break;
+	case EXPR_TYPE_ATTACHMENT:
+		res = expr_eval_attachment(root, ex, msg, env);
 		break;
 	case EXPR_TYPE_ALL:
 		res = expr_eval_all(root, ex, msg, env);
@@ -280,6 +286,36 @@ expr_eval_and(struct expr *root, struct expr *ex, const struct message *msg,
 	if (expr_eval1(root, ex->lhs, msg, env))
 		return 1; /* no match, short-circuit */
 	return expr_eval1(root, ex->rhs, msg, env);
+}
+
+static int
+expr_eval_attachment(struct expr *root, struct expr *ex,
+    const struct message *msg, const struct environment *env)
+{
+	struct message_list *attachments;
+	struct message *attach;
+	const char *type;
+
+	attachments = message_get_attachments(msg);
+	if (attachments == NULL)
+		return 1;
+
+	TAILQ_FOREACH(attach, attachments, entry) {
+		type = message_get_header1(attach, "Content-Type");
+		if (type == NULL)
+			continue;
+		log_debug("%s: %s\n", __func__, type);
+
+		if (expr_regexec(ex, root->match, "Content-Type", type,
+			    env->options & OPTION_DRYRUN))
+			continue;
+
+		message_list_free(attachments);
+		return 0;
+	}
+
+	message_list_free(attachments);
+	return 1;
 }
 
 static int
@@ -510,6 +546,7 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 	case EXPR_TYPE_DATE:
 		expr_inspect_date(ex, fh);
 		break;
+	case EXPR_TYPE_ATTACHMENT:
 	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_HEADER:
 		expr_inspect_header(ex, fh);
