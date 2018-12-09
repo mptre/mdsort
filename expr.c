@@ -326,8 +326,12 @@ expr_eval_date(struct expr *UNUSED(root), struct expr *ex,
 		return 1;
 
 	match_reset(ex->match);
-	ex->match->key = "Date";
-	ex->match->val = date;
+	ex->match->key = strdup("Date");
+	if (ex->match->key == NULL)
+		err(1, NULL);
+	ex->match->val = strdup(date);
+	if (ex->match->val == NULL)
+		err(1, NULL);
 
 	delta = env->now - tim;
 	switch (ex->date.cmp) {
@@ -608,8 +612,14 @@ expr_regexec(struct expr *ex, struct match *match, const char *key,
 		return 1;
 
 	match_reset(ex->match);
-	ex->match->key = key;
-	ex->match->val = val;
+	if (key != NULL) {
+		ex->match->key = strdup(key);
+		if (ex->match->key == NULL)
+			err(1, NULL);
+	}
+	ex->match->val = strdup(val);
+	if (ex->match->val == NULL)
+		err(1, NULL);
 	match_copy(match, val, ex->matches, ex->nmatches);
 	return 0;
 }
@@ -701,6 +711,9 @@ match_reset(struct match *match)
 	for (i = 0; i < match->nmatches; i++)
 		free(match->matches[i]);
 	free(match->matches);
+
+	free(match->key);
+	free(match->val);
 
 	memset(match, 0, sizeof(*match));
 }

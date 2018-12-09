@@ -170,8 +170,8 @@ struct match {
 	char **matches;
 	size_t nmatches;
 
-	const char *key;
-	const char *val;
+	char *key;
+	char *val;
 };
 
 /*
