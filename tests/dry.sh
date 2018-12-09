@@ -8,12 +8,12 @@ if testcase "match body many subexpressions"; then
 		match body /foo (bar)?/ move "dst"
 	}
 	EOF
-	cat <<-EOF >$TMP1
-	foo bar
-	^     $
-	foo bar
-	    ^ $
-	EOF
+	cat <<EOF >$TMP1
+Body: foo bar
+      ^     $
+      foo bar
+          ^ $
+EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
@@ -33,8 +33,8 @@ Cc: admin@example.com
     ^   $
 To: user@example.com
     ^  $
-Hello!
-^   $
+Body: Hello!
+      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -53,8 +53,8 @@ if testcase "matches from previous evaluations are discarded"; then
 	cat <<EOF >$TMP1
 Cc: admin@example.com
     ^   $
-Hello!
-^   $
+Body: Hello!
+      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -73,8 +73,8 @@ if testcase "matches from previous evaluations are discarded, inverted"; then
 	cat <<EOF >$TMP1
 To: user@example.com
     ^  $
-Hello!
-^   $
+Body: Hello!
+      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -96,8 +96,8 @@ if testcase "match nested rules"; then
 	cat <<EOF >$TMP1
 To: user@example.com
          ^     $
-Hello!
-^   $
+Body: Hello!
+      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass

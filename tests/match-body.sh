@@ -90,10 +90,10 @@ if testcase "dry run first line"; then
 		match body /hello/i move "dst"
 	}
 	EOF
-	cat <<-EOF >$TMP1
-	Hello
-	^   $
-	EOF
+	cat <<EOF >$TMP1
+Body: Hello
+      ^   $
+EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
@@ -106,10 +106,10 @@ if testcase "dry run first line no newline"; then
 		match body /hello/i move "dst"
 	}
 	EOF
-	cat <<-EOF >$TMP1
-	Hello
-	^   $
-	EOF
+	cat <<EOF >$TMP1
+Body: Hello
+      ^   $
+EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
@@ -128,10 +128,10 @@ if testcase "dry run middle line"; then
 		match body /hello/ move "dst"
 	}
 	EOF
-	cat <<-EOF >$TMP1
-	Hello hello
-	      ^   $
-	EOF
+	cat <<EOF >$TMP1
+Body: Hello hello
+            ^   $
+EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi

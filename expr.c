@@ -30,7 +30,6 @@ static int expr_eval_or(EXPR_EVAL_ARGS);
 static int expr_eval_pass(EXPR_EVAL_ARGS);
 
 static void expr_inspect1(const struct expr *, const struct expr *, FILE *);
-static void expr_inspect_body(const struct expr *, FILE *);
 static void expr_inspect_date(const struct expr *, FILE *);
 static void expr_inspect_header(const struct expr *, FILE *);
 
@@ -307,7 +306,7 @@ expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg,
 
 	if (msg->body == NULL)
 		return 1;
-	if (expr_regexec(ex, root->match, NULL, msg->body,
+	if (expr_regexec(ex, root->match, "Body", msg->body,
 		    env->options & OPTION_DRYRUN))
 		return 1;
 	return 0;
@@ -508,12 +507,10 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 		expr_inspect1(root, ex->lhs, fh);
 		expr_inspect1(root, ex->rhs, fh);
 		break;
-	case EXPR_TYPE_BODY:
-		expr_inspect_body(ex, fh);
-		break;
 	case EXPR_TYPE_DATE:
 		expr_inspect_date(ex, fh);
 		break;
+	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_HEADER:
 		expr_inspect_header(ex, fh);
 		break;
@@ -526,43 +523,6 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_PASS:
 		break;
-	}
-}
-
-static void
-expr_inspect_body(const struct expr *ex, FILE *fh)
-{
-	const struct match *match;
-	const char *lbeg, *lend, *p;
-	unsigned int i;
-	int beg, end, indent, len;
-
-	match = ex->match;
-
-	for (i = 0; i < ex->nmatches; i++) {
-		beg = ex->matches[i].rm_so;
-		end = ex->matches[i].rm_eo;
-
-		lbeg = match->val;
-		for (;;) {
-			if ((p = strchr(lbeg, '\n')) == NULL ||
-			    p > match->val + beg)
-				break;
-			lbeg = p + 1;
-		}
-		lend = strchr(lbeg, '\n');
-		if (lend == NULL)
-			lend = match->val + end;
-		/* Skip matches spanning over multiple lines. */
-		if (match->val + end > lend)
-			continue;
-
-		indent = beg - (lbeg - match->val);
-		len = end - beg;
-		if (len >= 2)
-			len -= 2;
-		fprintf(fh, "%.*s\n%*s^%*s$\n",
-		    (int)(lend - lbeg), lbeg, indent, "", len, "");
 	}
 }
 
@@ -585,24 +545,44 @@ static void
 expr_inspect_header(const struct expr *ex, FILE *fh)
 {
 	const struct match *match;
+	const char *lbeg, *lend, *p;
 	unsigned int i;
-	int beg, end, indent, len;
+	int beg, end, indent, len, lindent;
+	int printkey = 1;
 
 	match = ex->match;
 	indent = strlen(match->key) + 2;
 
-	fprintf(fh, "%s: ", match->key);
 	for (i = 0; i < ex->nmatches; i++) {
-		if (i > 0)
-			fprintf(fh, "%*s", indent, "");
-		fprintf(fh, "%s\n", match->val);
-
 		beg = ex->matches[i].rm_so;
 		end = ex->matches[i].rm_eo;
+
+		lbeg = match->val;
+		for (;;) {
+			if ((p = strchr(lbeg, '\n')) == NULL ||
+			    p > match->val + beg)
+				break;
+			lbeg = p + 1;
+		}
+		lend = strchr(lbeg, '\n');
+		if (lend == NULL)
+			lend = match->val + strlen(match->val);
+		/* Skip matches spanning over multiple lines. */
+		if (match->val + end > lend)
+			continue;
+
+		lindent = beg - (lbeg - match->val) + indent;
 		len = end - beg;
 		if (len >= 2)
 			len -= 2;
-		fprintf(fh, "%*s^%*s$\n", indent + beg, "", len, "");
+
+		if (printkey)
+			fprintf(fh, "%s: ", match->key);
+		else
+			fprintf(fh, "%*s", indent, "");
+		printkey = 0;
+		fprintf(fh, "%.*s\n%*s^%*s$\n",
+		    (int)(lend - lbeg), lbeg, lindent, "", len, "");
 	}
 }
 
@@ -617,11 +597,9 @@ expr_regexec(struct expr *ex, struct match *match, const char *key,
 
 	if (dryrun) {
 		match_reset(ex->match);
-		if (key != NULL) {
-			ex->match->key = strdup(key);
-			if (ex->match->key == NULL)
-				err(1, NULL);
-		}
+		ex->match->key = strdup(key);
+		if (ex->match->key == NULL)
+			err(1, NULL);
 		ex->match->val = strdup(val);
 		if (ex->match->val == NULL)
 			err(1, NULL);
