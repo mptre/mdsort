@@ -83,20 +83,6 @@ if testcase "duplicate headers"; then
 	pass
 fi
 
-if testcase "no blank line after headers"; then
-	mkmd "src" "dst"
-	echo "To: user@example.com" | mkmsg -H -b "src/new"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match header "To" /user/ move "dst"
-	}
-	EOF
-	mdsort
-	assert_empty "src/new"
-	refute_empty "dst/new"
-	pass
-fi
-
 if testcase "key comparison is case insensitive"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "to" "user@example.com"
