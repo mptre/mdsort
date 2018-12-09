@@ -117,7 +117,6 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 	int ret;
 	int rflags = REG_EXTENDED;
 
-	assert(ex->type == EXPR_TYPE_BODY || ex->type == EXPR_TYPE_HEADER);
 	assert(ex->nmatches == 0);
 
 	if (flags & EXPR_PATTERN_ICASE) {
