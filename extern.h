@@ -22,6 +22,10 @@ struct environment {
 
 	time_t now;
 	long gmtoff;
+
+	unsigned int options;
+#define OPTION_DRYRUN	0x1
+#define OPTION_SYNTAX	0x2
 };
 
 enum subdir {

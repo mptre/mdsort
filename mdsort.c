@@ -27,25 +27,25 @@ main(int argc, char *argv[])
 	const char *confpath = NULL;
 	int c;
 	int error = 0;
-	int dflag = 0;
 	int dostdin = 0;
 	int mdflags = MAILDIR_WALK | MAILDIR_ROOT;
-	int nflag = 0;
 	int verbose = 0;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
 		err(1, "pledge");
 
+	memset(&env, 0, sizeof(env));
+
 	while ((c = getopt(argc, argv, "dnvf:")) != -1)
 		switch (c) {
 		case 'd':
-			dflag = 1;
+			env.options |= OPTION_DRYRUN;
 			break;
 		case 'f':
 			confpath = optarg;
 			break;
 		case 'n':
-			nflag = 1;
+			env.options |= OPTION_SYNTAX;
 			break;
 		case 'v':
 			verbose++;
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 	}
 	if (argc > 0)
 		usage();
-	if (dflag && verbose < 1)
+	if ((env.options & OPTION_DRYRUN) && verbose < 1)
 		verbose = 1;
 	log_init(verbose);
 
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 	config = parse_config(confpath, &env);
 	if (config == NULL)
 		return 1;
-	if (nflag)
+	if ((env.options & OPTION_SYNTAX))
 		goto done;
 
 	TAILQ_FOREACH(conf, config, entry) {
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 
 			log_info("%s -> %s\n",
 			    dostdin ? "<stdin>" : path, match->path);
-			if (dflag) {
+			if ((env.options & OPTION_DRYRUN)) {
 				expr_inspect(conf->expr, stdout);
 				message_free(msg);
 				continue;
