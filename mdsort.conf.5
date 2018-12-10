@@ -49,21 +49,21 @@ A
 .Ar pattern
 used within a condition is interpreted as an extended regular expression and can
 be made case insensitive using the
-.Ic i
+.Sq i
 keyword.
 .Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
-.It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op Ic i
+.It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op i
 Evaluates to true if the message body matches
 .Ar pattern .
 .It Xo Op Ic \&!
 .Ic header Dq Ar name
-.Pf / Ar pattern Ns Pf / Op Ic i
+.Pf / Ar pattern Ns Pf / Op i
 .Xc
 .It Xo Op Ic \&!
 .Ic header No { Do Ar name Dc Ar ... No }
-.Pf / Ar pattern Ns Pf / Op Ic i
+.Pf / Ar pattern Ns Pf / Op i
 .Xc
 Evaluates to true if the value of any of the headers with
 .Ar name
