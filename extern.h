@@ -19,6 +19,7 @@ struct environment {
 	char home[PATH_MAX];
 	char hostname[HOST_NAME_MAX + 1];
 	char tmpdir[PATH_MAX];
+	const char *confpath;
 
 	time_t now;
 	long gmtoff;

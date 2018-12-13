@@ -24,7 +24,6 @@ main(int argc, char *argv[])
 	const struct match *match;
 	struct message *msg;
 	const char *path;
-	const char *confpath = NULL;
 	int c;
 	int error = 0;
 	int dostdin = 0;
@@ -42,7 +41,7 @@ main(int argc, char *argv[])
 			env.options |= OPTION_DRYRUN;
 			break;
 		case 'f':
-			confpath = optarg;
+			env.confpath = optarg;
 			break;
 		case 'n':
 			env.options |= OPTION_SYNTAX;
@@ -75,9 +74,9 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 		err(1, "pledge");
 
-	if (confpath == NULL)
-		confpath = defaultconf(&env);
-	config = parse_config(confpath, &env);
+	if (env.confpath == NULL)
+		env.confpath = defaultconf(&env);
+	config = parse_config(env.confpath, &env);
 	if (config == NULL)
 		return 1;
 	if ((env.options & OPTION_SYNTAX))
