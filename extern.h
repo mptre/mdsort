@@ -155,6 +155,7 @@ enum expr_cmp {
 
 struct expr {
 	enum expr_type type;
+	int lno;
 	int cookie;
 
 	struct string_list *strings;
@@ -194,7 +195,7 @@ struct match {
  * The caller is responsible for freeing the returned memory using
  * expr_free().
  */
-struct expr *expr_alloc(enum expr_type type, struct expr *lhs,
+struct expr *expr_alloc(enum expr_type type, int lno, struct expr *lhs,
     struct expr *rhs);
 
 void expr_free(struct expr *ex);

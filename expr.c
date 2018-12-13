@@ -47,7 +47,7 @@ static int match_interpolate(struct match *);
 static void match_reset(struct match *);
 
 struct expr *
-expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
+expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 {
 	struct expr *ex;
 
@@ -55,6 +55,7 @@ expr_alloc(enum expr_type type, struct expr *lhs, struct expr *rhs)
 	if (ex == NULL)
 		err(1, NULL);
 	ex->type = type;
+	ex->lno = lno;
 	ex->lhs = lhs;
 	ex->rhs = rhs;
 	switch (ex->type) {

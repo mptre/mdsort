@@ -94,7 +94,7 @@ maildir_path	: MAILDIR STRING {
 		;
 
 exprblock	: '{' optnl exprs '}' {
-			$$ = expr_alloc(EXPR_TYPE_BLOCK, $3, NULL);
+			$$ = expr_alloc(EXPR_TYPE_BLOCK, lineno, $3, NULL);
 		}
 		;
 
@@ -105,7 +105,7 @@ exprs		: /* empty */ {
 			if ($1 == NULL)
 				$$ = $2;
 			else
-				$$ = expr_alloc(EXPR_TYPE_OR, $1, $2);
+				$$ = expr_alloc(EXPR_TYPE_OR, lineno, $1, $2);
 		}
 		| error nl {
 			$$ = NULL;
@@ -113,18 +113,18 @@ exprs		: /* empty */ {
 		;
 
 expr		: MATCH expr1 expr2 {
-			$$ = expr_alloc(EXPR_TYPE_AND, $2, $3);
+			$$ = expr_alloc(EXPR_TYPE_AND, lineno, $2, $3);
 		}
 		;
 
 expr1		: expr1 AND expr1 {
-			$$ = expr_alloc(EXPR_TYPE_AND, $1, $3);
+			$$ = expr_alloc(EXPR_TYPE_AND, lineno, $1, $3);
 		}
 		| expr1 OR expr1 {
-			$$ = expr_alloc(EXPR_TYPE_OR, $1, $3);
+			$$ = expr_alloc(EXPR_TYPE_OR, lineno, $1, $3);
 		}
 		| NEG expr1 {
-			$$ = expr_alloc(EXPR_TYPE_NEG, $2, NULL);
+			$$ = expr_alloc(EXPR_TYPE_NEG, lineno, $2, NULL);
 		}
 		| expr3
 		;
@@ -143,14 +143,14 @@ expr2		: expractions {
 expr3		: BODY PATTERN {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_BODY, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_BODY, lineno, NULL, NULL);
 			if (expr_set_pattern($$, $2.str, $2.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
 		| HEADER strings PATTERN {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_HEADER, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_HEADER, lineno, NULL, NULL);
 			if (expr_set_pattern($$, $3.str, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 			expr_set_strings($$, $2);
@@ -158,29 +158,29 @@ expr3		: BODY PATTERN {
 		| ATTACHMENT {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, lineno, NULL, NULL);
 			if (expr_set_pattern($$, ".*", 0, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
 		| ATTACHMENT PATTERN {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, lineno, NULL, NULL);
 			if (expr_set_pattern($$, $2.str, $2.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
 		| DATE date_cmp date_age {
-			$$ = expr_alloc(EXPR_TYPE_DATE, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_DATE, lineno, NULL, NULL);
 			expr_set_date($$, $2, $3);
 		}
 		| NEW {
-			$$ = expr_alloc(EXPR_TYPE_NEW, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_NEW, lineno, NULL, NULL);
 		}
 		| OLD {
-			$$ = expr_alloc(EXPR_TYPE_OLD, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_OLD, lineno, NULL, NULL);
 		}
 		| ALL {
-			$$ = expr_alloc(EXPR_TYPE_ALL, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_ALL, lineno, NULL, NULL);
 		}
 		| '(' expr1 ')' {
 			$$ = $2;
@@ -194,7 +194,7 @@ expractions	: /* empty */ {
 			if ($1 == NULL) {
 				$$ = $2;
 			} else {
-				$$ = expr_alloc(EXPR_TYPE_AND, $1, $2);
+				$$ = expr_alloc(EXPR_TYPE_AND, lineno, $1, $2);
 				expr_validate($$);
 			}
 		}
@@ -204,7 +204,7 @@ expraction	: MOVE STRING {
 			struct string_list *strings;
 			char *path;
 
-			$$ = expr_alloc(EXPR_TYPE_MOVE, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_MOVE, lineno, NULL, NULL);
 			path = expandtilde($2);
 			if (path == NULL)
 				YYERROR;
@@ -215,16 +215,16 @@ expraction	: MOVE STRING {
 		| FLAG flag {
 			struct string_list *strings;
 
-			$$ = expr_alloc(EXPR_TYPE_FLAG, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_FLAG, lineno, NULL, NULL);
 			strings = strings_alloc();
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
 		}
 		| DISCARD {
-			$$ = expr_alloc(EXPR_TYPE_DISCARD, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_DISCARD, lineno, NULL, NULL);
 		}
 		| PASS {
-			$$ = expr_alloc(EXPR_TYPE_PASS, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_PASS, lineno, NULL, NULL);
 		}
 		;
 
