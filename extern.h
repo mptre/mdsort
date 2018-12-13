@@ -238,7 +238,8 @@ const struct match *expr_eval(struct expr *ex, const struct message *msg,
 /*
  * Writes a human readable representation of the latest match to fh.
  */
-void expr_inspect(const struct expr *ex, FILE *fh);
+void expr_inspect(const struct expr *ex, FILE *fh,
+    const struct environment *env);
 
 /*
  * Parse the given formatted timestamp.

@@ -115,7 +115,7 @@ main(int argc, char *argv[])
 			log_info("%s -> %s\n",
 			    dostdin ? "<stdin>" : path, match->path);
 			if ((env.options & OPTION_DRYRUN)) {
-				expr_inspect(conf->expr, stdout);
+				expr_inspect(conf->expr, stdout, &env);
 				message_free(msg);
 				continue;
 			}

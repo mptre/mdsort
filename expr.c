@@ -30,9 +30,12 @@ static int expr_eval_old(EXPR_EVAL_ARGS);
 static int expr_eval_or(EXPR_EVAL_ARGS);
 static int expr_eval_pass(EXPR_EVAL_ARGS);
 
-static void expr_inspect1(const struct expr *, const struct expr *, FILE *);
-static void expr_inspect_date(const struct expr *, FILE *);
-static void expr_inspect_header(const struct expr *, FILE *);
+static void expr_inspect1(const struct expr *, const struct expr *, FILE *,
+    const struct environment *);
+static void expr_inspect_date(const struct expr *, FILE *,
+    const struct environment *);
+static void expr_inspect_header(const struct expr *, FILE *,
+    const struct environment *);
 
 static int expr_regexec(struct expr *, struct match *, const char *,
     const char *, int);
@@ -206,9 +209,9 @@ expr_count_actions(const struct expr *ex)
 }
 
 void
-expr_inspect(const struct expr *ex, FILE *fh)
+expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 {
-	expr_inspect1(ex, ex, fh);
+	expr_inspect1(ex, ex, fh, env);
 }
 
 static int
@@ -528,7 +531,8 @@ expr_eval_pass(struct expr *root, struct expr *ex,
 }
 
 static void
-expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
+expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh,
+    const struct environment *env)
 {
 	/* Ensure expression was visited during last call to expr_eval(). */
 	if (root->cookie != ex->cookie)
@@ -536,20 +540,20 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 
 	switch (ex->type) {
 	case EXPR_TYPE_BLOCK:
-		expr_inspect1(root, ex->lhs, fh);
+		expr_inspect1(root, ex->lhs, fh, env);
 		break;
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
-		expr_inspect1(root, ex->lhs, fh);
-		expr_inspect1(root, ex->rhs, fh);
+		expr_inspect1(root, ex->lhs, fh, env);
+		expr_inspect1(root, ex->rhs, fh, env);
 		break;
 	case EXPR_TYPE_DATE:
-		expr_inspect_date(ex, fh);
+		expr_inspect_date(ex, fh, env);
 		break;
 	case EXPR_TYPE_ATTACHMENT:
 	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_HEADER:
-		expr_inspect_header(ex, fh);
+		expr_inspect_header(ex, fh, env);
 		break;
 	case EXPR_TYPE_NEG:
 	case EXPR_TYPE_ALL:
@@ -564,7 +568,7 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh)
 }
 
 static void
-expr_inspect_date(const struct expr *ex, FILE *fh)
+expr_inspect_date(const struct expr *ex, FILE *fh, const struct environment *UNUSED(env))
 {
 	const struct match *match;
 	int end, indent;
@@ -579,7 +583,7 @@ expr_inspect_date(const struct expr *ex, FILE *fh)
 }
 
 static void
-expr_inspect_header(const struct expr *ex, FILE *fh)
+expr_inspect_header(const struct expr *ex, FILE *fh, const struct environment *UNUSED(env))
 {
 	const struct match *match;
 	const char *lbeg, *lend, *p;
