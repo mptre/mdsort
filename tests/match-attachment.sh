@@ -239,8 +239,8 @@ if testcase 'dry run without pattern'; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Content-Type: text/plain
-              ^        $
+mdsort.conf:2: Content-Type: text/plain
+                             ^        $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2
@@ -264,8 +264,8 @@ if testcase 'dry run with pattern'; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Content-Type: text/plain
-              ^        $
+mdsort.conf:2: Content-Type: text/plain
+                             ^        $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2

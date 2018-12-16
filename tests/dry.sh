@@ -9,10 +9,10 @@ if testcase "match body many subexpressions"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Body: foo bar
-      ^     $
-      foo bar
-          ^ $
+mdsort.conf:2: Body: foo bar
+                     ^     $
+                     foo bar
+                         ^ $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -29,12 +29,12 @@ if testcase "match many headers and body"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Cc: admin@example.com
-    ^   $
-To: user@example.com
-    ^  $
-Body: Hello!
-      ^   $
+mdsort.conf:2: Cc: admin@example.com
+                   ^   $
+mdsort.conf:2: To: user@example.com
+                   ^  $
+mdsort.conf:2: Body: Hello!
+                     ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -51,10 +51,10 @@ if testcase "matches from previous evaluations are discarded"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Cc: admin@example.com
-    ^   $
-Body: Hello!
-      ^   $
+mdsort.conf:2: Cc: admin@example.com
+                   ^   $
+mdsort.conf:2: Body: Hello!
+                     ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -71,10 +71,10 @@ if testcase "matches from previous evaluations are discarded, inverted"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-To: user@example.com
-    ^  $
-Body: Hello!
-      ^   $
+mdsort.conf:2: To: user@example.com
+                   ^  $
+mdsort.conf:2: Body: Hello!
+                     ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -94,10 +94,10 @@ if testcase "match nested rules"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-To: user@example.com
-         ^     $
-Body: Hello!
-      ^   $
+mdsort.conf:2: To: user@example.com
+                        ^     $
+mdsort.conf:3: Body: Hello!
+                     ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass

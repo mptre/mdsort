@@ -36,6 +36,8 @@ static void expr_inspect_date(const struct expr *, FILE *,
     const struct environment *);
 static void expr_inspect_header(const struct expr *, FILE *,
     const struct environment *);
+static int expr_inspect_prefix(const struct expr *, FILE *,
+    const struct environment *);
 
 static int expr_regexec(struct expr *, struct match *, const char *,
     const char *, int);
@@ -584,12 +586,13 @@ expr_inspect_date(const struct expr *ex, FILE *fh, const struct environment *UNU
 }
 
 static void
-expr_inspect_header(const struct expr *ex, FILE *fh, const struct environment *UNUSED(env))
+expr_inspect_header(const struct expr *ex, FILE *fh,
+    const struct environment *env)
 {
 	const struct match *match;
 	const char *lbeg, *lend, *p;
 	unsigned int i;
-	int beg, end, indent, len, lindent;
+	int beg, end, indent, len, lindent, plen;
 	int printkey = 1;
 
 	match = ex->match;
@@ -618,14 +621,40 @@ expr_inspect_header(const struct expr *ex, FILE *fh, const struct environment *U
 		if (len >= 2)
 			len -= 2;
 
-		if (printkey)
+		if (printkey) {
+			plen = expr_inspect_prefix(ex, fh, env);
+			printkey = 0;
 			fprintf(fh, "%s: ", match->key);
-		else
-			fprintf(fh, "%*s", indent, "");
-		printkey = 0;
+		} else {
+			fprintf(fh, "%*s", indent + plen, "");
+		}
+		lindent += plen;
 		fprintf(fh, "%.*s\n%*s^%*s$\n",
 		    (int)(lend - lbeg), lbeg, lindent, "", len, "");
 	}
+}
+
+static int
+expr_inspect_prefix(const struct expr *ex, FILE *fh,
+    const struct environment *env)
+{
+	const char *path;
+	size_t len;
+	int n;
+	int nwrite = 0;
+
+	path = env->confpath;
+	len = strlen(env->home);
+	if (strncmp(path, env->home, len) == 0) {
+		n = fprintf(fh, "~");
+		if (n > 0)
+			nwrite += n;
+		path += len;
+	}
+	n = fprintf(fh, "%s:%d: ", path, ex->lno);
+	if (n > 0)
+		nwrite += n;
+	return nwrite;
 }
 
 static int

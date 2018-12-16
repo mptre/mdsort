@@ -120,8 +120,8 @@ if testcase "dry run first line"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-To: user@example.com
-         ^         $
+mdsort.conf:2: To: user@example.com
+                        ^         $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -137,8 +137,8 @@ if testcase "dry run middle line"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-To: admin@a.com,user@a.com,no-reply@a.com
-                ^  $
+mdsort.conf:2: To: admin@a.com,user@a.com,no-reply@a.com
+                               ^  $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -154,8 +154,8 @@ if testcase "dry run last line"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-To: admin@example.com,user@example.com
-                      ^  $
+mdsort.conf:2: To: admin@example.com,user@example.com
+                                     ^  $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -183,12 +183,12 @@ if testcase "dry run many subexpressions"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-To: user@example.com
-         ^         $
-    user@example.com
-         ^     $
-    user@example.com
-                 ^ $
+mdsort.conf:2: To: user@example.com
+                        ^         $
+                   user@example.com
+                        ^     $
+                   user@example.com
+                                ^ $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2

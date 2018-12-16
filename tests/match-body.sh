@@ -91,8 +91,8 @@ if testcase "dry run first line"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Body: Hello
-      ^   $
+mdsort.conf:2: Body: Hello
+                     ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -107,8 +107,8 @@ if testcase "dry run first line no newline"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Body: Hello
-      ^   $
+mdsort.conf:2: Body: Hello
+                     ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
@@ -129,8 +129,8 @@ if testcase "dry run middle line"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Body: Hello hello
-            ^   $
+mdsort.conf:2: Body: Hello hello
+                           ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass

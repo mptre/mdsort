@@ -42,10 +42,10 @@ maildir(s) unchanged:
 ```
 $ mdsort -d
 /home/anton/Maildir/INBOX/new/1521917775.89020_21.host -> /home/anton/Maildir/mdsort/new
-From: Charlie Root <notifications@github.com>
-                    ^                      $
-Subject: mptre commented on pull request mptre/mdsort#1337
-                                               ^    $
+~/.mdsort.conf:3: From: Charlie Root <notifications@github.com>
+                                      ^                      $
+~/.mdsort.conf:4: Subject: mptre commented on pull request mptre/mdsort#1337
+                                                                 ^    $
 ```
 
 In addition,
