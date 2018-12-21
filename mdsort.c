@@ -11,6 +11,8 @@
 #include "extern.h"
 
 static const char *defaultconf(const struct environment *);
+static int match_exec(const struct match *, struct maildir *,
+    struct message *, const struct environment *);
 static void readenv(struct environment *);
 static __dead void usage(void);
 
@@ -20,7 +22,7 @@ main(int argc, char *argv[])
 	struct environment env;
 	struct config_list *config;
 	struct config *conf;
-	struct maildir *dst, *md;
+	struct maildir *md;
 	const struct match *match;
 	struct message *msg;
 	const char *path;
@@ -119,25 +121,8 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			switch (match->action->type) {
-			case EXPR_TYPE_FLAG:
-			case EXPR_TYPE_MOVE:
-				dst = maildir_open(match->path, 0, &env);
-				if (dst == NULL) {
-					error = 1;
-					break;
-				}
-				if (maildir_move(md, dst, msg, &env))
-					error = 1;
-				maildir_close(dst);
-				break;
-			case EXPR_TYPE_DISCARD:
-				if (maildir_unlink(md, msg))
-					error = 1;
-				break;
-			default:
-				break;
-			}
+			if (match_exec(match, md, msg, &env))
+				error = 1;
 			message_free(msg);
 		}
 		maildir_close(md);
@@ -172,6 +157,35 @@ defaultconf(const struct environment *env)
 	if (n == -1 || n >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
+}
+
+static int
+match_exec(const struct match *match, struct maildir *src,
+    struct message *msg, const struct environment *env)
+{
+	struct maildir *dst;
+	int error = 0;
+
+	switch (match->action->type) {
+	case EXPR_TYPE_FLAG:
+	case EXPR_TYPE_MOVE:
+		dst = maildir_open(match->path, 0, env);
+		if (dst == NULL) {
+			error = 1;
+			break;
+		}
+		if (maildir_move(src, dst, msg, env))
+			error = 1;
+		maildir_close(dst);
+		break;
+	case EXPR_TYPE_DISCARD:
+		if (maildir_unlink(src, msg))
+			error = 1;
+		break;
+	default:
+		break;
+	}
+	return error;
 }
 
 static void
