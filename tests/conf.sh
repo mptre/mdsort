@@ -39,7 +39,7 @@ if testcase "sanity"; then
 
 		match new discard
 
-		match header "From" /user@example.com/ pass
+		match header "From" /user@example.com/ break
 	}
 
 	maildir "~/Maildir/test2" {

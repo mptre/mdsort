@@ -19,6 +19,7 @@ static int expr_eval_and(EXPR_EVAL_ARGS);
 static int expr_eval_attachment(EXPR_EVAL_ARGS);
 static int expr_eval_block(EXPR_EVAL_ARGS);
 static int expr_eval_body(EXPR_EVAL_ARGS);
+static int expr_eval_break(EXPR_EVAL_ARGS);
 static int expr_eval_date(EXPR_EVAL_ARGS);
 static int expr_eval_discard(EXPR_EVAL_ARGS);
 static int expr_eval_flag(EXPR_EVAL_ARGS);
@@ -28,7 +29,6 @@ static int expr_eval_neg(EXPR_EVAL_ARGS);
 static int expr_eval_new(EXPR_EVAL_ARGS);
 static int expr_eval_old(EXPR_EVAL_ARGS);
 static int expr_eval_or(EXPR_EVAL_ARGS);
-static int expr_eval_pass(EXPR_EVAL_ARGS);
 
 static void expr_inspect1(const struct expr *, const struct expr *, FILE *,
     const struct environment *);
@@ -79,7 +79,7 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
-	case EXPR_TYPE_PASS:
+	case EXPR_TYPE_BREAK:
 		break;
 	}
 	return ex;
@@ -204,7 +204,7 @@ expr_count_actions(const struct expr *ex)
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
-	case EXPR_TYPE_PASS:
+	case EXPR_TYPE_BREAK:
 		acc = 1;
 		break;
 	}
@@ -266,8 +266,8 @@ expr_eval1(struct expr *root, struct expr *ex, const struct message *msg,
 	case EXPR_TYPE_DISCARD:
 		res = expr_eval_discard(root, ex, msg, env);
 		break;
-	case EXPR_TYPE_PASS:
-		res = expr_eval_pass(root, ex, msg, env);
+	case EXPR_TYPE_BREAK:
+		res = expr_eval_break(root, ex, msg, env);
 		break;
 	}
 	if (res == 0) {
@@ -333,9 +333,9 @@ expr_eval_block(struct expr *root, struct expr *ex, const struct message *msg,
 
 	res = expr_eval1(root, ex->lhs, msg, env);
 	action = root->match->action;
-	if (action && action->type == EXPR_TYPE_PASS) {
+	if (action && action->type == EXPR_TYPE_BREAK) {
 		root->match->action = NULL;
-		return 1; /* pass, continue evaluation */
+		return 1; /* break, continue evaluation */
 	}
 	return res;
 }
@@ -351,6 +351,14 @@ expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg,
 	if (expr_regexec(ex, root->match, "Body", msg->body,
 		    env->options & OPTION_DRYRUN))
 		return 1;
+	return 0;
+}
+
+static int
+expr_eval_break(struct expr *root, struct expr *ex,
+    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
+{
+	root->match->action = ex;
 	return 0;
 }
 
@@ -525,14 +533,6 @@ expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg,
 	return expr_eval1(root, ex->rhs, msg, env);
 }
 
-static int
-expr_eval_pass(struct expr *root, struct expr *ex,
-    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
-{
-	root->match->action = ex;
-	return 0;
-}
-
 static void
 expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh,
     const struct environment *env)
@@ -565,7 +565,7 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh,
 	case EXPR_TYPE_MOVE:
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
-	case EXPR_TYPE_PASS:
+	case EXPR_TYPE_BREAK:
 		break;
 	}
 }

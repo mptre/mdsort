@@ -136,6 +136,12 @@ is true.
 .Pp
 Next comes one or many actions:
 .Bl -tag -width Ds
+.It Ic break
+Abort evaluation of the current block of rules.
+Especially useful when using nested
+.Ic match
+blocks, see below.
+Mutually exclusive with all other actions.
 .It Ic discard
 Remove the message from the maildir.
 Mutually exclusive with all other actions.
@@ -163,12 +169,6 @@ that matches first may vary.
 Only one
 .Ic move
 action can be defined per rule.
-.It Ic pass
-Abort evaluation of the current block of rules.
-Especially useful when using nested
-.Ic match
-blocks.
-Mutually exclusive with all other actions.
 .El
 .It Ic match Ar condition No { Ar rule ... No }
 The nested block of rules

@@ -48,9 +48,9 @@ DISTFILES=	CHANGELOG.md \
 		parse.y \
 		tests/GNUmakefile \
 		tests/Makefile \
+		tests/action-break.sh \
 		tests/action-discard.sh \
 		tests/action-flag.sh \
-		tests/action-pass.sh \
 		tests/basic.sh \
 		tests/conf.sh \
 		tests/dry.sh \

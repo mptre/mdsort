@@ -42,8 +42,8 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL ATTACHMENT BODY DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE NEW
-%token OLD PASS PATTERN STDIN SCALAR STRING
+%token ALL ATTACHMENT BODY BREAK DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE
+%token NEW OLD PATTERN STDIN SCALAR STRING
 %type <str> STRING flag maildir_path
 %type <i> INT SCALAR optneg
 %type <t> date_age
@@ -200,7 +200,10 @@ expractions	: /* empty */ {
 		}
 		;
 
-expraction	: MOVE STRING {
+expraction	: BREAK {
+			$$ = expr_alloc(EXPR_TYPE_BREAK, lineno, NULL, NULL);
+		}
+		| MOVE STRING {
 			struct string_list *strings;
 			char *path;
 
@@ -222,9 +225,6 @@ expraction	: MOVE STRING {
 		}
 		| DISCARD {
 			$$ = expr_alloc(EXPR_TYPE_DISCARD, lineno, NULL, NULL);
-		}
-		| PASS {
-			$$ = expr_alloc(EXPR_TYPE_PASS, lineno, NULL, NULL);
 		}
 		;
 
@@ -331,6 +331,7 @@ yylex(void)
 		{ "attachment",	ATTACHMENT },
 		{ "and",	AND },
 		{ "body",	BODY },
+		{ "break",	BREAK },
 		{ "date",	DATE },
 		{ "discard",	DISCARD },
 		{ "flag",	FLAG },
@@ -341,7 +342,6 @@ yylex(void)
 		{ "new",	NEW },
 		{ "old",	OLD },
 		{ "or",		OR },
-		{ "pass",	PASS },
 		{ "stdin",	STDIN },
 		{ NULL,		0 },
 	};
@@ -531,10 +531,10 @@ expr_validate(const struct expr *ex)
 	nactions = expr_count_actions(ex);
 	if (nactions <= 1)
 		return;
+	if (expr_count(ex, EXPR_TYPE_BREAK) > 0)
+		yyerror("break cannot be combined with another action");
 	if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
 		yyerror("discard cannot be combined with another action");
-	if (expr_count(ex, EXPR_TYPE_PASS) > 0)
-		yyerror("pass cannot be combined with another action");
 }
 
 static int

@@ -1,18 +1,18 @@
-if testcase -e "pass is mutually exclusive with all other actions"; then
+if testcase -e "break is mutually exclusive with all other actions"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
-		match all move "dst" pass
-		match all flag new pass
-		match all discard pass
-		match all pass pass
+		match all move "dst" break
+		match all flag new break
+		match all discard break
+		match all break break
 	}
 	EOF
 	mdsort - -- -n <<-EOF
-	mdsort.conf:2: pass cannot be combined with another action
-	mdsort.conf:3: pass cannot be combined with another action
+	mdsort.conf:2: break cannot be combined with another action
+	mdsort.conf:3: break cannot be combined with another action
+	mdsort.conf:4: break cannot be combined with another action
 	mdsort.conf:4: discard cannot be combined with another action
-	mdsort.conf:4: pass cannot be combined with another action
-	mdsort.conf:5: pass cannot be combined with another action
+	mdsort.conf:5: break cannot be combined with another action
 	EOF
 	pass
 fi
@@ -23,7 +23,7 @@ if testcase "root level"; then
 	mkmsg "src/new" -- "To" "admin@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
-		match header "To" /user@example.com/ pass
+		match header "To" /user@example.com/ break
 
 		match ! new move "fail"
 
@@ -45,13 +45,13 @@ if testcase "nested level"; then
 		match new {
 			match new {
 				match new {
-					match header "To" /user/ pass
+					match header "To" /user/ break
 					match all move "d3"
 				}
-				match header "To" /user/ pass
+				match header "To" /user/ break
 				match all move "d2"
 			}
-			match header "To" /user/ pass
+			match header "To" /user/ break
 			match all move "d1"
 		}
 		match all move "d0"
