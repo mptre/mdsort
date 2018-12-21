@@ -124,7 +124,8 @@ mdsort.conf:2: To: user@example.com
                         ^         $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2 && pass
+	fcmp $TMP1 $TMP2
+	pass
 fi
 
 if testcase "dry run middle line"; then
@@ -141,7 +142,8 @@ mdsort.conf:2: To: admin@a.com,user@a.com,no-reply@a.com
                                ^  $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2 && pass
+	fcmp $TMP1 $TMP2
+	pass
 fi
 
 if testcase "dry run last line"; then
@@ -158,7 +160,8 @@ mdsort.conf:2: To: admin@example.com,user@example.com
                                      ^  $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2 && pass
+	fcmp $TMP1 $TMP2
+	pass
 fi
 
 if testcase "dry run negate"; then
