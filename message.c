@@ -16,7 +16,7 @@
 
 struct header {
 	const char *key;
-	char *val;
+	const char *val;
 	struct string_list *values;	/* list of all values for key */
 };
 
