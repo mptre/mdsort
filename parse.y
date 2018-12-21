@@ -42,8 +42,24 @@ static int lineno, lineno_save, parse_errors;
 	} pattern;
 }
 
-%token ALL ATTACHMENT BODY BREAK DATE DISCARD FLAG HEADER INT MAILDIR MATCH MOVE
-%token NEW OLD PATTERN STDIN SCALAR STRING
+%token ALL
+%token ATTACHMENT
+%token BODY
+%token BREAK
+%token DATE
+%token DISCARD
+%token FLAG
+%token HEADER
+%token INT
+%token MAILDIR
+%token MATCH
+%token MOVE
+%token NEW
+%token OLD
+%token PATTERN
+%token SCALAR
+%token STDIN
+%token STRING
 %type <str> STRING flag maildir_path
 %type <i> INT SCALAR optneg
 %type <t> date_age
