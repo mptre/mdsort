@@ -135,18 +135,3 @@ EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	fcmp $TMP1 $TMP2 && pass
 fi
-
-if testcase "dry run multiple lines"; then
-	mkmd "src" "dst"
-	mkmsg -b "src/new" -- "To" "user@example.com" <<-EOF
-	He
-	llo
-	EOF
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match body /h.*/i move "dst"
-	}
-	EOF
-	mdsort -- -d | tail -n +2 >$TMP1
-	fcmp - $TMP1 </dev/null && pass
-fi

@@ -122,7 +122,7 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 {
 	static char buf[1024];
 	int ret;
-	int rflags = REG_EXTENDED;
+	int rflags = REG_EXTENDED | REG_NEWLINE;
 
 	assert(ex->nmatches == 0);
 
@@ -612,9 +612,6 @@ expr_inspect_header(const struct expr *ex, FILE *fh,
 		lend = strchr(lbeg, '\n');
 		if (lend == NULL)
 			lend = match->val + strlen(match->val);
-		/* Skip matches spanning over multiple lines. */
-		if (match->val + end > lend)
-			continue;
 
 		lindent = beg - (lbeg - match->val) + indent;
 		len = end - beg;
