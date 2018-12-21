@@ -45,6 +45,8 @@ static int expr_regexec(struct expr *, struct match *, const char *,
 static void match_copy(struct match *, const char *, const regmatch_t *,
     size_t);
 static const char *match_get(const struct match *, unsigned long n);
+static void match_dest(struct match *, const struct message *, const char *,
+    const char *);
 static int match_interpolate(struct match *);
 static void match_reset(struct match *);
 
@@ -418,21 +420,11 @@ expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg,
     const struct environment *UNUSED(env))
 {
 	struct string *str;
-	size_t len;
 
 	root->match->action = ex;
 
 	str = TAILQ_FIRST(ex->strings);
-	len = sizeof(root->match->subdir);
-	if (strlcpy(root->match->subdir, str->val, len) >= len)
-		errc(1, ENAMETOOLONG, "%s", __func__);
-
-	/* A move action might be missing. */
-	if (strlen(root->match->maildir) == 0) {
-		if (pathslice(msg->path, root->match->maildir, 0, -2) == NULL)
-			errx(1, "%s: %s: maildir not found", __func__,
-			    msg->path);
-	}
+	match_dest(root->match, msg, NULL, str->val);
 
 	return 0;
 }
@@ -467,21 +459,11 @@ expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg,
     const struct environment *UNUSED(env))
 {
 	struct string *str;
-	size_t len;
 
 	root->match->action = ex;
 
 	str = TAILQ_FIRST(ex->strings);
-	len = sizeof(root->match->maildir);
-	if (strlcpy(root->match->maildir, str->val, len) >= len)
-		errc(1, ENAMETOOLONG, "%s", __func__);
-
-	/* A flag action might already have been evaluted. */
-	if (strlen(root->match->subdir) == 0) {
-		if (pathslice(msg->path, root->match->subdir, -2, -2) == NULL)
-			errx(1, "%s: %s: subdir not found",
-			    __func__, msg->path);
-	}
+	match_dest(root->match, msg, str->val, NULL);
 
 	return 0;
 }
@@ -705,6 +687,37 @@ match_get(const struct match *match, unsigned long n)
 	if (n >= match->nmatches)
 		return NULL;
 	return match->matches[n];
+}
+
+static void
+match_dest(struct match *match, const struct message *msg, const char *maildir,
+    const char *subdir)
+{
+	size_t len, siz;
+
+	if (maildir != NULL) {
+		len = strlen(maildir);
+		siz = sizeof(match->maildir);
+		if (strlcpy(match->maildir, maildir, siz) >= siz)
+			errc(1, ENAMETOOLONG, "%s", __func__);
+	} else if (match->maildir[0] == '\0') {
+		/* No maildir present, infer from message path. */
+		if (pathslice(msg->path, match->maildir, 0, -2) == NULL)
+			errx(1, "%s: %s: maildir not found",
+			    __func__, msg->path);
+	}
+
+	if (subdir != NULL) {
+		len = strlen(subdir);
+		siz = sizeof(match->subdir);
+		if (strlcpy(match->subdir, subdir, siz) >= siz)
+			errc(1, ENAMETOOLONG, "%s", __func__);
+	} else if (match->subdir[0] == '\0') {
+		/* No subdir present, infer from message path. */
+		if (pathslice(msg->path, match->subdir, -2, -2) == NULL)
+			errx(1, "%s: %s: subdir not found",
+			    __func__, msg->path);
+	}
 }
 
 static int
