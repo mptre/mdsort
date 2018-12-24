@@ -69,23 +69,14 @@ if testcase "less than"; then
 	pass
 fi
 
-if testcase "missing seconds"; then
+if testcase "date format variations"; then
 	mkmd "src" "dst"
+	# Missing seconds.
 	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M %z' -60)"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match date > 30 seconds move "dst"
-	}
-	EOF
-	mdsort
-	assert_empty "src/new"
-	refute_empty "dst/new"
-	pass
-fi
-
-if testcase "missing weekday"; then
-	mkmd "src" "dst"
+	# Missing weekday.
 	mkmsg "src/new" -- "Date" "$(now -f '%d %b %Y %H:%M:%S %z' -60)"
+	# Timezone abbreviation without offset.
+	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M:%S GMT' -86400)"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match date > 30 seconds move "dst"
