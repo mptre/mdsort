@@ -8,7 +8,8 @@
 
 static const char *timeparse(const char *, struct tm *);
 static int tzparse(const char *, time_t *);
-static int tzabbrparse(const char *, time_t *);
+static int tzabbr(const char *, time_t *);
+static int tzoff(const char *, time_t *);
 
 int
 time_parse(const char *str, time_t *res, const struct environment *env)
@@ -63,6 +64,25 @@ timeparse(const char *str, struct tm *tm)
 static int
 tzparse(const char *str, time_t *tz)
 {
+	if (tzoff(str, tz) && tzabbr(str, tz))
+		return 1;
+	return 0;
+}
+
+static int
+tzabbr(const char *str, time_t *tz)
+{
+	if (strcmp(str, "GMT") == 0) {
+		*tz = 0;
+		return 0;
+	}
+
+	return 1;
+}
+
+static int
+tzoff(const char *str, time_t *tz)
+{
 	int i, sign;
 	int hours = 0;
 	int minutes = 0;
@@ -72,7 +92,7 @@ tzparse(const char *str, time_t *tz)
 	else if (str[0] == '-')
 		sign = -1;
 	else
-		return tzabbrparse(str, tz);
+		return 1;
 
 	for (i = 1; i >= 0; i--) {
 		str++;
@@ -96,15 +116,4 @@ tzparse(const char *str, time_t *tz)
 
 	*tz = sign * (hours * 60 * 60 + minutes * 60);
 	return 0;
-}
-
-static int
-tzabbrparse(const char *str, time_t *tz)
-{
-	if (strcmp(str, "GMT") == 0) {
-		*tz = 0;
-		return 0;
-	}
-
-	return 1;
 }
