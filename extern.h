@@ -21,8 +21,8 @@ struct environment {
 	char tmpdir[PATH_MAX];
 	const char *confpath;
 
+	long tz_offset;
 	time_t now;
-	long gmtoff;
 
 	unsigned int options;
 #define OPTION_DRYRUN	0x1

@@ -35,7 +35,7 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 		return 1;
 	}
 
-	*res = tim - tz + env->gmtoff;
+	*res = tim - tz + env->tz_offset;
 	return 0;
 }
 

@@ -222,9 +222,9 @@ readenv(struct environment *env)
 	tm = localtime(&env->now);
 	if (tm == NULL)
 		err(1, "localtime");
-	env->gmtoff = tm->tm_gmtoff;
+	env->tz_offset = tm->tm_gmtoff;
 
         log_debug("%s: home=\"%s\", hostname=\"%s\", tmpdir=\"%s\", now=%lld, "
-	    "gmtoff=%ld\n", __func__, env->home, env->hostname, env->tmpdir,
-	    (long long)env->now, env->gmtoff);
+	    "tz_offset=%ld\n", __func__, env->home, env->hostname, env->tmpdir,
+	    (long long)env->now, env->tz_offset);
 }
