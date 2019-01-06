@@ -21,6 +21,12 @@ struct environment {
 	char tmpdir[PATH_MAX];
 	const char *confpath;
 
+	enum {
+		TZ_STATE_LOCAL,	/* getenv("TZ") == NULL */
+		TZ_STATE_UTC,	/* strlen(getenv("TZ")) == 0 */
+		TZ_STATE_SET,	/* strlen(getenv("TZ")) > 0 */
+	} tz_state;
+	char tz_buf[256];
 	long tz_offset;
 	time_t now;
 

@@ -2,13 +2,14 @@
 
 #include <err.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "extern.h"
 
 static const char *timeparse(const char *, struct tm *);
-static int tzparse(const char *, time_t *);
-static int tzabbr(const char *, time_t *);
+static int tzparse(const char *, time_t *, const struct environment *);
+static int tzabbr(const char *, time_t *, const struct environment *);
 static int tzoff(const char *, time_t *);
 
 int
@@ -30,7 +31,7 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 
 	for (; *end == ' ' || *end == '\t'; end++)
 		continue;
-	if (tzparse(end, &tz)) {
+	if (tzparse(end, &tz, env)) {
 		warnc(EINVAL, "tzparse: %s", str);
 		return 1;
 	}
@@ -62,22 +63,54 @@ timeparse(const char *str, struct tm *tm)
 }
 
 static int
-tzparse(const char *str, time_t *tz)
+tzparse(const char *str, time_t *tz, const struct environment *env)
 {
-	if (tzoff(str, tz) && tzabbr(str, tz))
+	if (tzoff(str, tz) && tzabbr(str, tz, env))
 		return 1;
 	return 0;
 }
 
 static int
-tzabbr(const char *str, time_t *tz)
+tzabbr(const char *str, time_t *tz, const struct environment *env)
 {
-	if (strcmp(str, "GMT") == 0) {
-		*tz = 0;
-		return 0;
+	struct tm *tm;
+	int error = 0;
+
+	if (strlen(str) == 0)
+		return 1;
+
+	if (setenv("TZ", str, 1) == -1) {
+		warn("setenv: TZ");
+		return 1;
+	}
+	tzset();
+	tm = localtime(&env->now);
+	if (tm == NULL) {
+		warn("localtime");
+		error = 1;
+	} else {
+		*tz = tm->tm_gmtoff;
 	}
 
-	return 1;
+	/* Reset timezone. */
+	switch (env->tz_state) {
+	case TZ_STATE_LOCAL:
+		if (unsetenv("TZ") == -1) {
+			warn("unsetenv: TZ");
+			return 1;
+		}
+		break;
+	case TZ_STATE_UTC:
+	case TZ_STATE_SET:
+		if (setenv("TZ", env->tz_buf, 1) == -1) {
+			warn("setenv: TZ");
+			return 1;
+		}
+		break;
+	}
+	tzset();
+
+	return error;
 }
 
 static int

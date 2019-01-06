@@ -218,6 +218,17 @@ readenv(struct environment *env)
 	if (strlcpy(env->tmpdir, p, sizeof(env->tmpdir)) >= sizeof(env->tmpdir))
 		errc(1, ENAMETOOLONG, "%s", __func__);
 
+	if ((p = getenv("TZ")) == NULL) {
+		env->tz_state = TZ_STATE_LOCAL;
+	} else {
+		if (*p == '\0')
+			env->tz_state = TZ_STATE_UTC;
+		else
+			env->tz_state = TZ_STATE_SET;
+		if (strlcpy(env->tz_buf, p, sizeof(env->tz_buf)) >= sizeof(env->tz_buf))
+			errc(1, ENAMETOOLONG, "%s", __func__);
+	}
+
 	env->now = time(NULL);
 	tm = localtime(&env->now);
 	if (tm == NULL)
