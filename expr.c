@@ -693,10 +693,9 @@ static void
 match_dest(struct match *match, const struct message *msg, const char *maildir,
     const char *subdir)
 {
-	size_t len, siz;
+	size_t siz;
 
 	if (maildir != NULL) {
-		len = strlen(maildir);
 		siz = sizeof(match->maildir);
 		if (strlcpy(match->maildir, maildir, siz) >= siz)
 			errc(1, ENAMETOOLONG, "%s", __func__);
@@ -708,7 +707,6 @@ match_dest(struct match *match, const struct message *msg, const char *maildir,
 	}
 
 	if (subdir != NULL) {
-		len = strlen(subdir);
 		siz = sizeof(match->subdir);
 		if (strlcpy(match->subdir, subdir, siz) >= siz)
 			errc(1, ENAMETOOLONG, "%s", __func__);
