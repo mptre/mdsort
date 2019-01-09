@@ -211,12 +211,12 @@ readenv(struct environment *env)
 	if (p == NULL)
 		errx(1, "%s: cannot find home directory", __func__);
 	if (strlcpy(env->home, p, sizeof(env->home)) >= sizeof(env->home))
-		errc(1, ENAMETOOLONG, "%s", __func__);
+		errc(1, ENAMETOOLONG, "%s: HOME", __func__);
 
 	if ((p = getenv("TMPDIR")) == NULL || *p == '\0')
 		p = _PATH_TMP;
 	if (strlcpy(env->tmpdir, p, sizeof(env->tmpdir)) >= sizeof(env->tmpdir))
-		errc(1, ENAMETOOLONG, "%s", __func__);
+		errc(1, ENAMETOOLONG, "%s: TMPDIR", __func__);
 
 	if ((p = getenv("TZ")) == NULL) {
 		env->tz_state = TZ_STATE_LOCAL;
@@ -226,7 +226,7 @@ readenv(struct environment *env)
 		else
 			env->tz_state = TZ_STATE_SET;
 		if (strlcpy(env->tz_buf, p, sizeof(env->tz_buf)) >= sizeof(env->tz_buf))
-			errc(1, ENAMETOOLONG, "%s", __func__);
+			errc(1, ENAMETOOLONG, "%s: TZ", __func__);
 	}
 
 	env->now = time(NULL);
