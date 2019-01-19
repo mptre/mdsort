@@ -64,7 +64,7 @@ pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
 	else
 		n = snprintf(buf, PATH_MAX, "%s/%s/%s",
 		    root, dirname, filename);
-	if (n == -1 || n >= PATH_MAX)
+	if (n < 0 || n >= PATH_MAX)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
 }

@@ -530,7 +530,7 @@ expandtilde(char *str)
 	if (buf == NULL)
 		err(1, NULL);
 	n = snprintf(buf, len, "%s%s", env->home, str + 1);
-	if (n == -1 || n >= len)
+	if (n < 0 || n >= len)
 		yyerror("path too long");
 	free(str);
 	return buf;

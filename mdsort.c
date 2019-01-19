@@ -154,7 +154,7 @@ defaultconf(const struct environment *env)
 
 	len = sizeof(buf);
 	n = snprintf(buf, len, "%s/.mdsort.conf", env->home);
-	if (n == -1 || n >= len)
+	if (n < 0 || n >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
 }
