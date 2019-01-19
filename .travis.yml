@@ -13,21 +13,9 @@ matrix:
     - os: linux
       compiler: gcc
       env:
-        - T=linux-gcc
-        - CFLAGS=-Werror
-
-    - os: linux
-      compiler: gcc-8
-      env:
         - T=linux-gcc-ubsan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined  -fuse-ld=gold'
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc-8
+        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined'
 
     - os: linux
       compiler: musl-gcc
