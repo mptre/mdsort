@@ -19,6 +19,6 @@ TESTS=	action-break.sh \
 .SUFFIXES: .sh .out
 
 .sh.out:
-	sh ${.CURDIR}/run.sh -b ${MDSORT} ${TESTFLAGS} ${.CURDIR}/${<}
+	sh ${.CURDIR}/t.sh -b ${MDSORT} ${TESTFLAGS} ${.CURDIR}/${<}
 
 all: ${TESTS:.sh=.out}

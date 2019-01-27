@@ -2,7 +2,7 @@ set -e
 
 usage() {
 	cat <<-EOF | xargs 1>&2
-	usage: sh run.sh
+	usage: sh t.sh
 		[-e env]
 		[-f filter-test]
 		[-i ignore-test]
