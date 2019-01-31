@@ -6,9 +6,25 @@ matrix:
     - os: linux
       compiler: clang
       env:
+        - T=linux-clang-asan
+        - CFLAGS=-Werror
+        - DEBUG='-g -fsanitize=address -fno-sanitize-recover=address'
+        - TESTFLAGS=-E
+
+    - os: linux
+      compiler: clang
+      env:
         - T=linux-clang-ubsan
         - CFLAGS=-Werror
         - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined'
+
+    - os: linux
+      compiler: gcc
+      env:
+        - T=linux-gcc-asan
+        - CFLAGS=-Werror
+        - DEBUG='-g -fsanitize=address -fno-sanitize-recover=address'
+        - TESTFLAGS=-E
 
     - os: linux
       compiler: gcc
