@@ -210,7 +210,7 @@ if testcase "body boundary invalid"; then
 	refute_empty "src/new"
 fi
 
-if testcase 'dry run without pattern'; then
+if testcase "dry run without pattern"; then
 	mkmd "src"
 	mkmsg -b -H "src/new" <<-EOF -- \
 		"Content-Type" "multipart/alternative; boundary=\"deadbeef\""
@@ -234,7 +234,7 @@ EOF
 	assert_file $TMP1 $TMP2
 fi
 
-if testcase 'dry run with pattern'; then
+if testcase "dry run with pattern"; then
 	mkmd "src"
 	mkmsg -b -H "src/new" <<-EOF -- \
 		"Content-Type" "multipart/alternative; boundary=\"deadbeef\""
