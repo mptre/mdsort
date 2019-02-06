@@ -74,8 +74,8 @@ mdsort() {
 	_tmpdir="${WRKDIR}/_tmpdir"
 	mkdir "$_tmpdir"
 
-        env "TMPDIR=${_tmpdir}" ${EXEC:-} "$MDSORT" $_args "$@" >"$_tmp" 2>&1 ||
-		_exit2=1
+	(cd "$WRKDIR" && env "TMPDIR=${_tmpdir}" ${EXEC:-} "$MDSORT" $_args "$@") \
+		>"$_tmp" 2>&1 || _exit2=1
 	if [ "$_exit1" -ne "$_exit2" ]; then
 		fail "exits ${_exit1} != ${_exit2}" <"$_tmp"
 	fi
@@ -178,5 +178,3 @@ PATH_MAX=$(cppvar PATH_MAX || echo 0)
 
 LC_ALL=C
 export LC_ALL
-
-cd "$WRKDIR"

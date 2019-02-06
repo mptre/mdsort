@@ -129,13 +129,12 @@ if testcase -t leaky "invalid line continuation"; then
 fi
 
 if testcase "default path"; then
-	cat <<-EOF >.mdsort.conf
+	cat <<-EOF >"${WRKDIR}/.mdsort.conf"
 	maildir "~/Maildir/test1" {
 		match new move "~/Maildir/test2"
 	}
 	EOF
 	HOME=$WRKDIR mdsort -D -- -n
-	rm -f .mdsort.conf
 fi
 
 if testcase -t leaky "missing file"; then
