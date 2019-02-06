@@ -9,7 +9,6 @@ if testcase "old"; then
 	mdsort
 	assert_empty "src/cur"
 	refute_empty "dst/cur"
-	pass
 fi
 
 if testcase "negate"; then
@@ -23,7 +22,6 @@ if testcase "negate"; then
 	mdsort
 	refute_empty "src/cur"
 	assert_empty "dst/cur"
-	pass
 fi
 
 if testcase "seen flag present"; then
@@ -37,7 +35,6 @@ if testcase "seen flag present"; then
 	mdsort
 	refute_empty "src/cur"
 	assert_empty "dst/cur"
-	pass
 fi
 
 if testcase "invalid flags"; then
@@ -52,5 +49,4 @@ if testcase "invalid flags"; then
 	refute_empty "src/cur"
 	assert_find "src/cur" "*:1,"
 	assert_empty "dst/cur"
-	pass
 fi

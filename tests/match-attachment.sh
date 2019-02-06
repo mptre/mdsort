@@ -22,7 +22,6 @@ if testcase "no pattern"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "with pattern"; then
@@ -47,7 +46,6 @@ if testcase "with pattern"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "with pattern no match"; then
@@ -72,7 +70,6 @@ if testcase "with pattern no match"; then
 	mdsort
 	refute_empty "src/new"
 	assert_empty "dst/new"
-	pass
 fi
 
 if testcase "negate"; then
@@ -97,7 +94,6 @@ if testcase "negate"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "multipart mixed"; then
@@ -118,7 +114,6 @@ if testcase "multipart mixed"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "content type unknown"; then
@@ -131,7 +126,6 @@ if testcase "content type unknown"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	pass
 fi
 
 if testcase "content type missing"; then
@@ -144,7 +138,6 @@ if testcase "content type missing"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	pass
 fi
 
 if testcase "content type boundary empty"; then
@@ -157,7 +150,6 @@ if testcase "content type boundary empty"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	pass
 fi
 
 if testcase "content type boundary invalid"; then
@@ -170,7 +162,6 @@ if testcase "content type boundary invalid"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	pass
 fi
 
 if testcase "content type boundary missing"; then
@@ -183,7 +174,6 @@ if testcase "content type boundary missing"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	pass
 fi
 
 if testcase "content type boundary without attachments"; then
@@ -199,7 +189,6 @@ if testcase "content type boundary without attachments"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	pass
 fi
 
 if testcase "body boundary invalid"; then
@@ -219,7 +208,6 @@ if testcase "body boundary invalid"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	pass
 fi
 
 if testcase 'dry run without pattern'; then
@@ -243,8 +231,7 @@ mdsort.conf:2: Content-Type: text/plain
                              ^        $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase 'dry run with pattern'; then
@@ -268,6 +255,5 @@ mdsort.conf:2: Content-Type: text/plain
                              ^        $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi

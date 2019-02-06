@@ -9,7 +9,6 @@ if testcase "flag as new"; then
 	mdsort
 	assert_empty "src/cur"
 	refute_empty "src/new"
-	pass
 fi
 
 if testcase "flag as not new"; then
@@ -23,7 +22,6 @@ if testcase "flag as not new"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "src/cur"
-	pass
 fi
 
 if testcase "flag and move"; then
@@ -37,7 +35,6 @@ if testcase "flag and move"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/cur"
-	pass
 fi
 
 if testcase "move and flag"; then
@@ -51,7 +48,6 @@ if testcase "move and flag"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/cur"
-	pass
 fi
 
 if testcase "flag as not new when path flags are missing"; then
@@ -66,7 +62,6 @@ if testcase "flag as not new when path flags are missing"; then
 	assert_empty "src/new"
 	refute_empty "src/cur"
 	assert_find "src/cur" "*:2,S"
-	pass
 fi
 
 if testcase "flag as not new when path flags are invalid"; then
@@ -83,7 +78,6 @@ if testcase "flag as not new when path flags are invalid"; then
 	refute_empty "src/cur"
 	assert_find "src/cur" "*:1,S"
 	assert_find "src/cur" "*:2,s"
-	pass
 fi
 
 if testcase "flag as not new when path flags are already present"; then
@@ -98,7 +92,6 @@ if testcase "flag as not new when path flags are already present"; then
 	assert_empty "src/new"
 	refute_empty "src/cur"
 	assert_find "src/cur" "*:2,S"
-	pass
 fi
 
 if testcase "flag as not new when path flags are valid"; then
@@ -112,7 +105,6 @@ if testcase "flag as not new when path flags are valid"; then
 	mdsort
 	assert_empty "src/new"
 	assert_find "src/cur" "*:2,RS"
-	pass
 fi
 
 if testcase "flag as new when seen flag is already present"; then
@@ -127,5 +119,4 @@ if testcase "flag as new when seen flag is already present"; then
 	assert_empty "src/cur"
 	refute_empty "src/new"
 	refute_find "src/new" "*2,S"
-	pass
 fi

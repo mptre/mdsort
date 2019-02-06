@@ -1,4 +1,4 @@
-if testcase -e "discard is mutually exclusive with all other actions"; then
+if testcase -t leaky "discard is mutually exclusive with all other actions"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match all move "dst" discard
@@ -7,14 +7,13 @@ if testcase -e "discard is mutually exclusive with all other actions"; then
 		match all break discard
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: discard cannot be combined with another action
 	mdsort.conf:3: discard cannot be combined with another action
 	mdsort.conf:4: discard cannot be combined with another action
 	mdsort.conf:5: break cannot be combined with another action
 	mdsort.conf:5: discard cannot be combined with another action
 	EOF
-	pass
 fi
 
 if testcase "discard"; then
@@ -27,7 +26,6 @@ if testcase "discard"; then
 	EOF
 	mdsort
 	assert_empty "src/new"
-	pass
 fi
 
 if testcase "dry run"; then
@@ -38,7 +36,6 @@ if testcase "dry run"; then
 		match header "To" /user/ discard
 	}
 	EOF
-	mdsort -- -d >$TMP2
-	grep -q ' -> <discard>$' $TMP2 || fail 'expected move line'
-	pass
+	mdsort -- -d >$TMP1
+        grep -q ' -> <discard>$' $TMP1 || fail - "expected move line" <$TMP1
 fi

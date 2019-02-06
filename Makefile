@@ -64,12 +64,11 @@ DISTFILES=	CHANGELOG.md \
 		tests/match-old.sh \
 		tests/stdin.sh \
 		tests/t.sh \
+		tests/util.sh \
 		time.c \
 		util.c
 
 PREFIX=	/usr/local
-
-TESTFLAGS?=	-e MALLOC_OPTIONS=${MALLOC_OPTIONS}
 
 all: ${PROG}
 
@@ -113,9 +112,8 @@ lint:
 .PHONY: lint
 
 test: ${PROG}
-	${MAKE} -C ${.CURDIR}/tests \
-		"MDSORT=${.OBJDIR}/${PROG}" \
-		"TESTFLAGS=${TESTFLAGS}"
+	env "MALLOC_OPTIONS=${MALLOC_OPTIONS}" "MDSORT=${.OBJDIR}/${PROG}" \
+		${MAKE} -C ${.CURDIR}/tests "TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
 
 -include ${DEPS}

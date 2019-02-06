@@ -9,7 +9,6 @@ if testcase "basic"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "negate"; then
@@ -23,7 +22,6 @@ if testcase "negate"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "empty body"; then
@@ -37,7 +35,6 @@ if testcase "empty body"; then
 	mdsort
 	refute_empty "src/new"
 	assert_empty "dst/new"
-	pass
 fi
 
 if testcase "malformed body"; then
@@ -51,7 +48,6 @@ if testcase "malformed body"; then
 	mdsort
 	refute_empty "src/new"
 	assert_empty "dst/new"
-	pass
 fi
 
 if testcase "empty message"; then
@@ -65,7 +61,6 @@ if testcase "empty message"; then
 	mdsort
 	refute_empty "src/new"
 	assert_empty "dst/new"
-	pass
 fi
 
 if testcase "destination interpolation"; then
@@ -79,7 +74,6 @@ if testcase "destination interpolation"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "example/new"
-	pass
 fi
 
 if testcase "dry run first line"; then
@@ -95,8 +89,7 @@ mdsort.conf:2: Body: Hello
                      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run first line no newline"; then
@@ -112,8 +105,7 @@ mdsort.conf:2: Body: Hello
                      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run middle line"; then
@@ -135,6 +127,5 @@ mdsort.conf:2: Body: Hello hello
                            ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi

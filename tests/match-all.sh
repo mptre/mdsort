@@ -13,5 +13,4 @@ if testcase "all matches any message"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi

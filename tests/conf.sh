@@ -51,13 +51,11 @@ if testcase "sanity"; then
 	}
 	EOF
 	mdsort - -- -n </dev/null
-	pass
 fi
 
 if testcase "empty"; then
 	>$CONF
 	mdsort - -- -n </dev/null
-	pass
 fi
 
 if testcase "comments"; then
@@ -72,7 +70,6 @@ if testcase "comments"; then
 	}
 	EOF
 	mdsort - -- -n </dev/null
-	pass
 fi
 
 if testcase "escape quote inside string"; then
@@ -82,7 +79,6 @@ if testcase "escape quote inside string"; then
 	}
 	EOF
 	mdsort - -- -n </dev/null
-	pass
 fi
 
 if testcase "escape slash inside pattern"; then
@@ -92,49 +88,44 @@ if testcase "escape slash inside pattern"; then
 	}
 	EOF
 	mdsort - -- -n </dev/null
-	pass
 fi
 
-if testcase -e "rule must end with newline"; then
+if testcase -t leaky "rule must end with newline"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /./ move "~/Maildir/Junk"}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "empty maildir path"; then
+if testcase -t leaky "empty maildir path"; then
 	cat <<-EOF >$CONF
 	maildir "" {}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: empty string
 	EOF
-	pass
 fi
 
-if testcase -e "unknown keyword"; then
+if testcase -t leaky "unknown keyword"; then
 	cat <<-EOF >$CONF
 	noway
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: unknown keyword: noway
 	EOF
-	pass
 fi
 
-if testcase -e "invalid line continuation"; then
+if testcase -t leaky "invalid line continuation"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" \ {
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: syntax error
 	EOF
-	pass
 fi
 
 if testcase "default path"; then
@@ -143,208 +134,190 @@ if testcase "default path"; then
 		match new move "~/Maildir/test2"
 	}
 	EOF
-	HOME=$MAILDIR mdsort -D -- -n
+	HOME=$WRKDIR mdsort -D -- -n
 	rm -f .mdsort.conf
-	pass
 fi
 
-if testcase -e "missing file"; then
-	mdsort - -- -n -f missing.conf <<-EOF
+if testcase -t leaky "missing file"; then
+	mdsort -e - -- -n -f missing.conf <<-EOF
 	mdsort: missing.conf: No such file or directory
 	EOF
-	pass
 fi
 
-if testcase -e "invalid pattern"; then
+if testcase -t leaky "invalid pattern"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match body /(/ move "~/Maildir/test2"
 		match header "From" /(/ move "~/Maildir/test2"
 	}
 	EOF
-	mdsort -- -n >/dev/null
-	pass
+	mdsort -e -- -n >/dev/null
 fi
 
-if testcase -e "missing header name"; then
+if testcase -t leaky "missing header name"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "" /./ move "~/Maildir/test2"
 		match header { "" } /./ move "~/Maildir/test2"
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: empty string
 	mdsort.conf:3: empty string
 	EOF
-	pass
 fi
 
-if testcase -e "empty move destination"; then
+if testcase -t leaky "empty move destination"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match new move ""
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: empty string
 	EOF
-	pass
 fi
 
-if testcase -e "keyword too long"; then
+if testcase -t leaky "keyword too long"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
-		$(randstr $BUFSIZ lower)
+		$(genstr $BUFSIZ)
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: keyword too long
 	mdsort.conf:2: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "string too long"; then
+if testcase -t leaky "string too long"; then
 	cat <<-EOF >$CONF
-	maildir "$(randstr $BUFSIZ alnum)" {}
+	maildir "$(genstr $BUFSIZ)" {}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: string too long
 	mdsort.conf:1: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "string unterminated"; then
+if testcase -t leaky "string unterminated"; then
 	cat <<-EOF >$CONF
 	maildir "
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: unterminated string
 	mdsort.conf:1: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "pattern too long"; then
+if testcase -t leaky "pattern too long"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
-		match header "From" /$(randstr $BUFSIZ alnum)/ \
+		match header "From" /$(genstr $BUFSIZ)/ \
 			move "~/Maildir/test2"
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: pattern too long
 	mdsort.conf:2: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "pattern unterminated"; then
+if testcase -t leaky "pattern unterminated"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: unterminated pattern
 	mdsort.conf:2: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "maildir path too long after tilde expansion"; then
+if testcase -t leaky -t tilde "maildir path too long after tilde expansion"; then
 	cat <<-EOF >$CONF
-	maildir "~/$(randstr $((PATH_MAX - 10))  alnum)" {}
+	maildir "~/$(genstr $((PATH_MAX - 10)))" {}
 	EOF
-	HOME=/home/user mdsort - -- -n <<-EOF
+	HOME=/home/user mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: path too long
 	EOF
-	pass
 fi
 
-if testcase -e "destination path too long after tilde expansion"; then
+if testcase -t leaky -t tilde "destination path too long after tilde expansion"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /./ \
-			move "~/$(randstr $((PATH_MAX - 10)) alnum)"
+			move "~/$(genstr $((PATH_MAX - 10)))"
 	}
 	EOF
-	HOME=/home/user mdsort - -- -n <<-EOF
+	HOME=/home/user mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: path too long
 	EOF
-	pass
 fi
 
-if testcase -e "missing left-hand expr with and"; then
+if testcase -t leaky "missing left-hand expr with and"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match and new move "~/Maildir/Junk"
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "missing right-hand expr with and"; then
+if testcase -t leaky "missing right-hand expr with and"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new and move "~/Maildir/Junk"
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "empty match block"; then
+if testcase -t leaky "empty match block"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: empty match block
 	EOF
-	pass
 fi
 
-if testcase -e "empty nested match block"; then
+if testcase -t leaky "empty nested match block"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new {
 		}
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:3: empty nested match block
 	EOF
-	pass
 fi
 
-if testcase -e "missing action"; then
+if testcase -t leaky "missing action"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:3: missing action
 	EOF
-	pass
 fi
 
-if testcase -e "duplicate move actions"; then
+if testcase -t leaky "duplicate move actions"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new move "~/Maildir/one" move "~/Maildir/two"
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: move action already defined
 	EOF
-	pass
 fi

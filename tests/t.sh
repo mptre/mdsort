@@ -1,301 +1,178 @@
-set -e
+#!/bin/sh
 
-usage() {
-	cat <<-EOF | xargs 1>&2
-	usage: sh t.sh
-		[-e env]
-		[-f filter-test]
-		[-i ignore-test]
-		-b binary
-		test-file ...
-	EOF
-	exit 1
+# Copyright (c) 2019 Anton Lindqvist <anton@basename.se>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+set -eu
+
+# assert_eq want got [message]
+assert_eq() {
+	[ "$1" = "$2" ] && return 0
+
+	# $3 is intentionally unquoted since it's optional.
+	printf 'WANT:\t%s\nGOT:\t%s\n' "$1" "$2" | fail - ${3:-}
 }
 
-atexit() {
-	local _err=$?
-
-	assert_pass
-
-	rm -rf "$@"
-	([ $_err -ne 0 ] || [ $NERR -gt 0 ]) && exit 1
-	exit 0
-}
-
-fail() {
-	[ $TCFAIL -lt 0 ] && printf 'FAIL: %s\n' "$TCDESC" 1>&2
-	printf '\t%s\n' "$@" 1>&2
-	TCFAIL=1
-	NERR=$((NERR + 1))
-}
-
-pass() {
-	[ $TCFAIL -eq 1 ] && return 0
-
-	if [ $TCFAIL -ge 0 ]; then
-		fail "pass called twice"
-	fi
-
-	TCFAIL=0
-	printf '%s: %s\n' "${1:-PASS}" "$TCDESC"
-}
-
-_assert_empty() {
-	ls "${MAILDIR}/${1}" 2>/dev/null | cmp -s - /dev/null
-}
-
-assert_empty() {
-	if ! _assert_empty $@; then
-		fail "expected ${1} to be empty"
-	fi
-}
-
-refute_empty() {
-	if _assert_empty $@; then
-		fail "expected ${1} to not be empty"
-	fi
-}
-
-_assert_find() {
-	! find "${MAILDIR}/${1}" -type f -name "$2" | cmp -s - /dev/null
-}
-
-assert_find() {
-	if ! _assert_find $@; then
-		fail "expected ${1}/${2} to not be empty"
-	fi
-}
-
-refute_find() {
-	if _assert_find $@; then
-		fail "expected ${1}/${2} to be empty"
-	fi
-}
-
-assert_pass() {
-	if [ $TCFAIL -lt 0 ]; then
-		fail "pass never called"
-	fi
-}
-
-cppvar() {
-	cpp - <<-EOF >$_TMP1 2>/dev/null
-	#include <limits.h>
-	#include <stdio.h>
-
-	${1}
-	EOF
-
-	grep -v '^$' <$_TMP1 | tail -1
-}
-
-fcmp() {
+# assert_file file0 file1
+assert_file() {
 	if ! cmp -s "$1" "$2"; then
-		fail "unexpected output:"
-		diff -u -L want -L got "$1" "$2" || true
+                diff -u -L want -L got "$1" "$2" | fail - "unexpected output:"
 	fi
 	return 0
 }
 
-# mdsort [- | -D] [-- mdsort-argument ...]
-mdsort() {
-	local _args="-f mdsort.conf" _fail=0 _input=0 _exit=0 _tmpdir
+# fail [message]
+fail() {
+	NERR=$((NERR + 1))
+
+	report -f -p FAIL "$@"
+}
+
+# testcase [-t tag] description
+testcase() {
+	local _tags=""
+
+	# Report on behalf of the previous test case.
+	[ "$NTEST" -gt 0 ] && report -p PASS
+
+	NTEST=$((NTEST + 1))
+	TCREPORT=0
+
+	find "$WRKDIR" -mindepth 1 -delete
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
-		-)	cat >$_TMP2
-			_input=1
-			;;
-		-D)	_args=;;
-		--)	shift
-			break;;
-		*)	fail "mdsort: unknown test options: ${@}"
-			return 0
-			;;
+		-t)	shift; _tags="${_tags} ${1}";;
+		*)	break;;
 		esac
 		shift
 	done
+	TCDESC="$*"
 
-	_tmpdir="${MAILDIR}/_tmpdir"
-	mkdir "$_tmpdir"
-
-        env "TMPDIR=${_tmpdir}" $ENV "$MDSORT" $_args "$@" >$_TMP1 2>&1 ||
-		_exit=1
-	if [ $TCEXIT -ne $_exit ]; then
-		_fail=1
-		fail "exits ${TCEXIT} != ${_exit}"
-		cat "$_TMP1" 1>&2
-	fi
-
-	if ! find "$_tmpdir" -mindepth 1 | cmp -s - /dev/null; then
-                fail "temporary directory not empty:" $(find "$_tmpdir")
-	fi
-	rm -rf "$_tmpdir"
-
-	if [ $_input -eq 0 ]; then
-		if [ $_fail -eq 0 ]; then
-			cat "$_TMP1"
-		fi
+	if [ -s "$INCLUDE" ]; then
+		case "$FILTER" in
+		f)	echo "$TCDESC";;
+		t)	echo "$_tags";;
+		esac | grep -q -f "$INCLUDE" && return 0
+	elif [ -s "$EXCLUDE" ]; then
+		case "$FILTER" in
+		F)	echo "$TCDESC";;
+		T)	echo "$_tags";;
+		esac | grep -q -f "$EXCLUDE" || return 0
 	else
-		fcmp "$_TMP2" "$_TMP1"
+		return 0
 	fi
+	report -p SKIP
+	return 1
 }
 
-# mkmd dir ...
-mkmd() {
-	local _a _b
+# Everything below is part of the private API, relying on it is a bad idea.
 
-	for _a; do
-		for _b in cur new tmp; do
-			mkdir -p "${MAILDIR}/${_a}/${_b}"
-		done
-	done
+# fatal message
+fatal() {
+	echo "t.sh: ${*}" 1>&2
+	exit 1
 }
 
-# mkmsg [-H] [-b] [-s suffix] dir [-- headers ...]
-mkmsg() {
-	local _body=0 _dir _headers=1 _name _path _suffix
+# report [-] [-f] -p prefix [message]
+report() {
+	local _force=0  _prefix="" _stdin=0 _tmp="${WRKDIR}/report"
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
-		-b)	_body=1;;
-		-H)	_headers=0;;
-		-s)
-			shift
-			_suffix="$1"
-			;;
-		*)	break
-		esac
-		shift
-	done
-
-	_dir="${MAILDIR}/${1}"; shift
-
-	while :; do
-		_name=$(printf '%d.%d_%d.hostname%s' \
-			"$(date '+%s')" "$$" "$RANDOM" "$_suffix")
-		_path="${_dir}/${_name}"
-		[ -e "$_path" ] || break
-	done
-	touch "$_path"
-
-	if [ "$1" = "--" ]; then
-		shift
-		while [ $# -gt 0 ]; do
-			echo "${1}: ${2}" >>$_path
-			shift 2
-		done
-	fi
-	[ $_headers -eq 1 ] && printf 'Content-Type: text/plain\n' >>$_path
-	echo >>$_path
-	[ $_body -eq 1 ] && cat >>$_path || true
-}
-
-now() {
-	local _fmt='%a, %d %b %Y %H:%M:%S %z' _tim=$(date +%s)
-
-	while [ $# -gt 0 ]; do
-		case "$1" in
-		-f)
-			shift
-			_fmt="$1"
-			;;
+		-)	_stdin=1;;
+		-f)	_force=1;;
+		-p)	shift; _prefix="$1";;
 		*)	break;;
 		esac
 		shift
 	done
 
-	if [ $# -eq 1 ]; then
-		_tim=$((_tim + $1))
-	fi
-
-	(date -r "$_tim" "+${_fmt}" 2>/dev/null ||
-		date -d "@${_tim}" "+${_fmt}")
-}
-
-testcase() {
-	assert_pass
-
-	[ "$1" = "-e" ] && { TCEXIT=1; shift; } || TCEXIT=0
-	TCDESC="${TCFILE}: $@"
-	TCFAIL=-1
-	ls -d $MAILDIR/*/ 2>/dev/null | xargs rm -rf
-
-	if [ $TCEXIT -eq 1 ] && [ $SKIPERR -eq 1 ]; then
-		:
-	elif [ -s "$FILTER" ]; then
-		echo "$TCDESC" | grep -q -f "$FILTER" && return 0
-	elif ! echo "$TCDESC" | grep -q -f $IGNORE; then
+	if [ "$_force" -eq 0 ] && [ "$TCREPORT" -eq 1 ]; then
 		return 0
 	fi
-	pass "SKIP"
-	return 1
+	TCREPORT=1
+
+	# Try hard to output everything to stderr in one go.
+	{
+		printf '%s: %s: %s' "$_prefix" "$NAME" "$TCDESC"
+		[ $# -gt 0 ] && printf ': %s' "$*"
+		echo
+		[ $_stdin -eq 1 ] && cat
+	} >"$_tmp"
+	cat <"$_tmp" 1>&2
 }
 
-# randstr length predicate
-randstr() {
-	local _len=$1 _pred=$2
+# atexit file ...
+atexit() {
+	local _err="$?"
 
-	>$_TMP1
-	while [ $(wc -c "$_TMP1" | xargs | cut -d ' ' -f 1) -lt "$_len" ]; do
-		dd if=/dev/urandom of=/dev/stdout "bs=${_len}" count=1 \
-			2>/dev/null | tr -cd "[:${_pred}:]" >>$_TMP1
-	done
-	cut -b "-${_len}" "$_TMP1"
+	if [ "$NTEST" -gt 0 ]; then
+		# Report on behalf of the previous test case.
+		if [ "$_err" -eq 0 ]; then
+			report -p PASS
+		else
+			report -p FAIL
+		fi
+	fi
+
+	# Remove temporary files.
+	rm -rf "$@"
+
+	if [ "$NERR" -ne 0 ]; then
+		exit 1
+	fi
+	exit "$_err"
 }
 
-ENV=
-NERR=0
-SKIPERR=0
-TCFILE=""
-TCDESC=""
-TCEXIT=0
-TCFAIL=0
+usage() {
+	echo "usage: sh t.sh [-f filter] [-t tag] file ..." 1>&2
+	exit 1
+}
 
-MAILDIR=$(mktemp -d -t mdsort.XXXXXX)
-trap "atexit $MAILDIR" EXIT
+# Keep the include and exclude files outside of the temporary directory since
+# it's wiped between test cases.
+INCLUDE="$(mktemp -t t.sh.XXXXXX)"
+EXCLUDE="$(mktemp -t t.sh.XXXXXX)"
+WRKDIR="$(mktemp -d -t t.sh.XXXXXX)"
+trap 'atexit $INCLUDE $EXCLUDE $WRKDIR' EXIT
 
-CONF="${MAILDIR}/mdsort.conf"
+FILTER=""	# filter mode
+NAME=""		# test file name
+NERR=0		# total number of errors
+NTEST=0		# total number of executed test cases
+TCDESC=""	# current test case description
+TCREPORT=0	# current test called report
 
-# Temporary files used in tests.
-TMP1="${MAILDIR}/tmp1"
-TMP2="${MAILDIR}/tmp2"
-
-# Temporary files used internally.
-_TMP1="${MAILDIR}/_tmp1"
-_TMP2="${MAILDIR}/_tmp2"
-
-FILTER="${MAILDIR}/filter"
->$FILTER
-
-IGNORE="${MAILDIR}/ignore"
->$IGNORE
-
-while getopts "Eb:e:f:i:" opt; do
+while getopts "F:f:t:T:" opt; do
 	case "$opt" in
-	E)	SKIPERR=1;;
-	b)	MDSORT=$OPTARG;;
-	e)	ENV="${ENV} ${OPTARG}";;
-	f)	echo "$OPTARG" >>$FILTER;;
-	i)	echo "$OPTARG" >>$IGNORE;;
+	f|t)	FILTER="$opt"
+		echo "$OPTARG" >>"$INCLUDE"
+		;;
+	F|T)	FILTER="$opt"
+		echo "$OPTARG" >>"$EXCLUDE"
+		;;
 	*)	usage;;
 	esac
 done
 shift $((OPTIND - 1))
-([ $# -eq 0 ] || [ -z "$MDSORT" ]) && usage
+[ $# -eq 0 ] && usage
+if [ -s "$INCLUDE" ] && [ -s "$EXCLUDE" ]; then
+	fatal "including and excluding tests is mutually exclusive"
+fi
 
-ls "$MDSORT" >/dev/null || exit 1
-
-# Platform specific values.
-BUFSIZ=$(cppvar BUFSIZ || echo 0)
-PATH_MAX=$(cppvar PATH_MAX || echo 0)
-
-LC_ALL=C
-export LC_ALL
-
-cd $MAILDIR
-
-for f; do
-	TCFILE="$(basename "$f")"
-	. "$f"
+for a; do
+	NAME="${a##*/}"
+	. "$a"
 done

@@ -9,34 +9,31 @@ if testcase "scalar abbreviation"; then
 	}
 	EOF
 	mdsort -- -n
-	pass
 fi
 
-if testcase -e "scalar abbreviation ambiguous"; then
+if testcase -t leaky "scalar abbreviation ambiguous"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match date > 1m move "dst"
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: ambiguous keyword: m
 	mdsort.conf:2: syntax error
 	EOF
-	pass
 fi
 
-if testcase -e "age too large"; then
+if testcase -t leaky "age too large"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match date > 4294967296 seconds  move "dst"
 		match date > 9999999999 seconds  move "dst"
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: integer too large
 	mdsort.conf:3: integer too large
 	EOF
-	pass
 fi
 
 if testcase "greater than"; then
@@ -51,7 +48,6 @@ if testcase "greater than"; then
 	mdsort
 	refute_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "less than"; then
@@ -66,7 +62,6 @@ if testcase "less than"; then
 	mdsort
 	refute_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "date format variations"; then
@@ -85,7 +80,6 @@ if testcase "date format variations"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "invalid date"; then
@@ -99,7 +93,6 @@ if testcase "invalid date"; then
 	mdsort >/dev/null
 	refute_empty "src/new"
 	assert_empty "dst/new"
-	pass
 fi
 
 if testcase "dry run"; then
@@ -116,6 +109,5 @@ Date: ${_d}
       ^                             $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi

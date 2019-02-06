@@ -9,7 +9,7 @@ matrix:
         - T=linux-clang-asan
         - CFLAGS=-Werror
         - DEBUG='-g -fsanitize=address -fno-sanitize-recover=address'
-        - TESTFLAGS=-E
+        - TESTFLAGS='-T leaky'
 
     - os: linux
       compiler: clang
@@ -24,7 +24,7 @@ matrix:
         - T=linux-gcc-asan
         - CFLAGS=-Werror
         - DEBUG='-g -fsanitize=address -fno-sanitize-recover=address'
-        - TESTFLAGS=-E
+        - TESTFLAGS='-T leaky'
 
     - os: linux
       compiler: gcc
@@ -38,7 +38,7 @@ matrix:
       env:
         - T=linux-musl
         - CFLAGS=-Werror
-        - TESTFLAGS='-i tilde\ expansion'
+        - TESTFLAGS='-T tilde'
       addons:
         apt:
           packages:
@@ -49,15 +49,15 @@ matrix:
       env:
         - T=macos-clang
         - CFLAGS=-Werror
-        - TESTFLAGS='-i too\ long'
 
     - os: linux
       compiler: clang
       env:
         - T=linux-valgrind
         - CFLAGS=-Werror
-        - DEBUG-g
-        - TESTFLAGS='-E -e valgrind'
+        - DEBUG=-g
+        - EXEC=valgrind
+        - TESTFLAGS='-T leaky'
         - VALGRIND_OPTS='--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all'
       addons:
         apt:

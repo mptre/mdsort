@@ -1,4 +1,4 @@
-if testcase -e "break is mutually exclusive with all other actions"; then
+if testcase -t leaky "break is mutually exclusive with all other actions"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match all move "dst" break
@@ -7,14 +7,13 @@ if testcase -e "break is mutually exclusive with all other actions"; then
 		match all break break
 	}
 	EOF
-	mdsort - -- -n <<-EOF
+	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: break cannot be combined with another action
 	mdsort.conf:3: break cannot be combined with another action
 	mdsort.conf:4: break cannot be combined with another action
 	mdsort.conf:4: discard cannot be combined with another action
 	mdsort.conf:5: break cannot be combined with another action
 	EOF
-	pass
 fi
 
 if testcase "root level"; then
@@ -33,7 +32,6 @@ if testcase "root level"; then
 	mdsort
 	refute_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "nested level"; then
@@ -61,5 +59,4 @@ if testcase "nested level"; then
 	assert_empty "src/new"
 	refute_empty "d0/new"
 	refute_empty "d3/new"
-	pass
 fi

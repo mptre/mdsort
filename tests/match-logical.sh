@@ -12,7 +12,6 @@ if testcase "many and conditions"; then
 	mdsort
 	refute_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "many or conditions"; then
@@ -28,7 +27,6 @@ if testcase "many or conditions"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "many and/or conditions"; then
@@ -45,5 +43,4 @@ if testcase "many and/or conditions"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi

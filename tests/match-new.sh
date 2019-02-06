@@ -12,7 +12,6 @@ if testcase "basic"; then
 	refute_empty "src/cur"
 	refute_empty "dst/new"
 	assert_empty "dst/cur"
-	pass
 fi
 
 if testcase "negate"; then
@@ -29,5 +28,4 @@ if testcase "negate"; then
 	assert_empty "src/cur"
 	assert_empty "dst/new"
 	refute_empty "dst/cur"
-	pass
 fi

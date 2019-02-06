@@ -6,10 +6,9 @@ if testcase "tilde expansion"; then
 		match body /Bob/ move "~/dst"
 	}
 	EOF
-	HOME=$MAILDIR mdsort
+	HOME=$WRKDIR mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "escape slash in pattern"; then
@@ -23,7 +22,6 @@ if testcase "escape slash in pattern"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "match negate binds to the innermost condition"; then
@@ -38,7 +36,6 @@ if testcase "match negate binds to the innermost condition"; then
 	mdsort
 	refute_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "match negate nested condition"; then
@@ -53,7 +50,6 @@ if testcase "match negate nested condition"; then
 	mdsort
 	refute_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "match nested"; then
@@ -72,7 +68,6 @@ if testcase "match nested"; then
 	mdsort
 	refute_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "match nested without interpolation matches"; then
@@ -88,7 +83,6 @@ if testcase "match nested without interpolation matches"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "match nested with negate"; then
@@ -109,7 +103,6 @@ if testcase "match nested with negate"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "match case insensitive"; then
@@ -123,7 +116,6 @@ if testcase "match case insensitive"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "unique suffix is preserved when valid"; then
@@ -138,7 +130,6 @@ if testcase "unique suffix is preserved when valid"; then
 	assert_empty "src/new"
 	refute_empty "dst/new"
 	assert_find "dst/new" "*:2,S"
-	pass
 fi
 
 if testcase "destination interpolation first match is favored"; then
@@ -152,7 +143,6 @@ if testcase "destination interpolation first match is favored"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "first/new"
-	pass
 fi
 
 if testcase "destination interpolation out of bounds"; then
@@ -164,9 +154,8 @@ if testcase "destination interpolation out of bounds"; then
 	}
 	EOF
 	mdsort >$TMP1
-	grep -q '\\1/new: invalid back-reference in destination' $TMP1 || \
-		fail "expected back-reference to be invalid"
-	pass
+	grep -q '\\1/new: invalid back-reference in destination' $TMP1 ||
+		fail - "expected back-reference to be invalid" <$TMP1
 fi
 
 if testcase "destination interpolation out of range"; then
@@ -178,9 +167,8 @@ if testcase "destination interpolation out of range"; then
 	}
 	EOF
 	mdsort >$TMP1
-	grep -q '9/new: invalid back-reference in destination' $TMP1 || \
-		fail "expected back-reference to be invalid"
-	pass
+	grep -q '9/new: invalid back-reference in destination' $TMP1 ||
+		fail - "expected back-reference to be invalid" <$TMP1
 fi
 
 if testcase "destination interpolation negative"; then
@@ -194,7 +182,6 @@ if testcase "destination interpolation negative"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "\-1/new"
-	pass
 fi
 
 if testcase "destination interpolation non-decimal"; then
@@ -208,7 +195,6 @@ if testcase "destination interpolation non-decimal"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "userx1/new"
-	pass
 fi
 
 if testcase "destination interpolation with none body/header"; then
@@ -220,9 +206,8 @@ if testcase "destination interpolation with none body/header"; then
 	}
 	EOF
 	mdsort >$TMP1
-	grep -q '\\1/new: invalid back-reference in destination' $TMP1 || \
-		fail "expected back-reference to be invalid"
-	pass
+	grep -q '\\1/new: invalid back-reference in destination' $TMP1 ||
+		fail - "expected back-reference to be invalid" <$TMP1
 fi
 
 if testcase "destination interpolation with negate"; then
@@ -234,33 +219,29 @@ if testcase "destination interpolation with negate"; then
 	}
 	EOF
 	mdsort >$TMP1
-	grep -q '\\1/new: invalid back-reference in destination' $TMP1 || \
-		fail "expected back-reference to be invalid"
-	pass
+	grep -q '\\1/new: invalid back-reference in destination' $TMP1 ||
+		fail - "expected back-reference to be invalid" <$TMP1
 fi
 
 if testcase "destination interpolation too long"; then
 	mkmd "src"
-	mkmsg "src/new" -- "To" "user@$(randstr $PATH_MAX alnum).com"
+	mkmsg "src/new" -- "To" "user@$(genstr $PATH_MAX).com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /(.+)/ move "\1"
 	}
 	EOF
 	mdsort >$TMP1
-	grep -q '\\1/new: destination too long' $TMP1 || \
-		fail "expected destination to be too long"
-	pass
+	grep -q '\\1/new: destination too long' $TMP1 ||
+		fail - "expected destination to be too long" <$TMP1
 fi
 
-if testcase -e "unknown option"; then
-	mdsort -- -1 >$TMP1
-	grep -q 'usage' $TMP1 || fail "expected usage output"
-	pass
+if testcase -t leaky "unknown option"; then
+	mdsort -e -- -1 >$TMP1
+	grep -q 'usage' $TMP1 || fail - "expected usage output" <$TMP1
 fi
 
-if testcase -e "extraneous option"; then
-	mdsort -- extraneous >$TMP1
-	grep -q 'usage' $TMP1 || fail "expected usage output"
-	pass
+if testcase -t leaky "extraneous option"; then
+	mdsort -e -- extraneous >$TMP1
+	grep -q 'usage' $TMP1 || fail - "expected usage output" <$TMP1
 fi

@@ -12,7 +12,6 @@ if testcase "basic"; then
 	assert_empty "src/cur"
 	refute_empty "dst/new"
 	refute_empty "dst/cur"
-	pass
 fi
 
 if testcase "negate"; then
@@ -26,7 +25,6 @@ if testcase "negate"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "line continuation"; then
@@ -40,7 +38,6 @@ if testcase "line continuation"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "many headers"; then
@@ -57,7 +54,6 @@ if testcase "many headers"; then
 	assert_empty "src/cur"
 	refute_empty "dst/new"
 	refute_empty "dst/cur"
-	pass
 fi
 
 if testcase "duplicate headers"; then
@@ -80,7 +76,6 @@ if testcase "duplicate headers"; then
 	refute_empty "user/new"
 	refute_empty "admin/new"
 	refute_empty "root/new"
-	pass
 fi
 
 if testcase "key comparison is case insensitive"; then
@@ -94,7 +89,6 @@ if testcase "key comparison is case insensitive"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	pass
 fi
 
 if testcase "destination interpolation"; then
@@ -108,7 +102,6 @@ if testcase "destination interpolation"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "user-example/new"
-	pass
 fi
 
 if testcase "dry run first line"; then
@@ -124,8 +117,7 @@ mdsort.conf:2: To: user@example.com
                         ^         $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run middle line"; then
@@ -142,8 +134,7 @@ mdsort.conf:2: To: admin@a.com,user@a.com,no-reply@a.com
                                ^  $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run last line"; then
@@ -160,8 +151,7 @@ mdsort.conf:2: To: admin@example.com,user@example.com
                                      ^  $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run negate"; then
@@ -173,8 +163,8 @@ if testcase "dry run negate"; then
 	}
 	EOF
 	mdsort -- -d >$TMP1
-	grep -q '^src/new.* -> dst/new$' $TMP1 || fail "expected move line"
-	pass
+	grep -q '^src/new.* -> dst/new$' $TMP1 ||
+		fail - "expected move line" <$TMP1
 fi
 
 if testcase "dry run many subexpressions"; then
@@ -194,6 +184,5 @@ mdsort.conf:2: To: user@example.com
                                 ^ $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi

@@ -15,8 +15,7 @@ mdsort.conf:2: Body: foo bar
                          ^ $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "match many headers and body"; then
@@ -38,8 +37,7 @@ mdsort.conf:2: Body: Hello!
                      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "matches from previous evaluations are discarded"; then
@@ -59,8 +57,7 @@ mdsort.conf:2: Body: Hello!
                      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "matches from previous evaluations are discarded, inverted"; then
@@ -80,8 +77,7 @@ mdsort.conf:2: Body: Hello!
                      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi
 
 if testcase "match nested rules"; then
@@ -104,6 +100,5 @@ mdsort.conf:3: Body: Hello!
                      ^   $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
-	fcmp $TMP1 $TMP2
-	pass
+	assert_file $TMP1 $TMP2
 fi

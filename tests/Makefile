@@ -1,5 +1,3 @@
-MDSORT=	${.CURDIR}/../mdsort
-
 TESTS=	action-break.sh \
 	action-discard.sh \
 	action-flag.sh \
@@ -19,6 +17,6 @@ TESTS=	action-break.sh \
 .SUFFIXES: .sh .out
 
 .sh.out:
-	sh ${.CURDIR}/t.sh -b ${MDSORT} ${TESTFLAGS} ${.CURDIR}/${<}
+	sh ${.CURDIR}/t.sh ${TESTFLAGS} ${.CURDIR}/util.sh ${.CURDIR}/$<
 
 all: ${TESTS:.sh=.out}
