@@ -8,7 +8,7 @@ matrix:
       env:
         - T=linux-clang-asan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=address -fno-sanitize-recover=address'
+        - DEBUG='-g -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
 
     - os: linux
@@ -16,14 +16,14 @@ matrix:
       env:
         - T=linux-clang-ubsan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined'
+        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=all'
 
     - os: linux
       compiler: gcc
       env:
         - T=linux-gcc-asan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=address -fno-sanitize-recover=address'
+        - DEBUG='-g -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
 
     - os: linux
@@ -31,7 +31,7 @@ matrix:
       env:
         - T=linux-gcc-ubsan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=undefined'
+        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=all'
 
     - os: linux
       compiler: musl-gcc
