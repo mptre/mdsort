@@ -14,22 +14,45 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-set -eu
+set -e
 
 # assert_eq want got [message]
 assert_eq() {
-	[ "$1" = "$2" ] && return 0
-
-	# $3 is intentionally unquoted since it's optional.
-	printf 'WANT:\t%s\nGOT:\t%s\n' "$1" "$2" | fail - ${3:-}
+	if ! _assert_eq "$1" "$2"; then
+                printf 'WANT:\t%s\nGOT:\t%s\n' "$1" "$2" |
+		fail - "${3:-assert_eq}"
+	fi
 }
 
-# assert_file file0 file1
-assert_file() {
-	if ! cmp -s "$1" "$2"; then
-                diff -u -L want -L got "$1" "$2" | fail - "unexpected output:"
+# refute_eq want got [message]
+refute_eq() {
+	if _assert_eq "$1" "$2"; then
+		fail "${3:-refute_eq}"
 	fi
-	return 0
+}
+
+# _assert_eq want got
+_assert_eq() {
+	[ "$1" = "$2" ]
+}
+
+# assert_file file0 file1 [message]
+assert_file() {
+	if ! _assert_file "$1" "$2"; then
+                diff -u -L want -L got "$1" "$2" | fail - "${3:-assert_file}"
+	fi
+}
+
+# refute_file file0 file1 [message]
+refute_file() {
+	if _assert_file "$1" "$2"; then
+		fail "${3:-refute_file}"
+	fi
+}
+
+# _assert_file file0 file1
+_assert_file() {
+	cmp -s "$1" "$2"
 }
 
 # fail [message]
