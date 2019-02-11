@@ -170,12 +170,12 @@ now() {
 		date -d "@${_tim}" "+${_fmt}")
 }
 
+ls "$MDSORT" >/dev/null || exit 1
+
 # Temporary files used in tests.
 CONF="${WRKDIR}/mdsort.conf"
 TMP1="${WRKDIR}/tmp1"
 TMP2="${WRKDIR}/tmp2"
-
-ls "$MDSORT" >/dev/null || exit 1
 
 # Platform specific values.
 BUFSIZ=$(cppvar BUFSIZ || echo 0)
