@@ -1,31 +1,37 @@
+# assert_empty dir [message]
 assert_empty() {
 	if ! _assert_empty "$@"; then
 		fail "${2:-expected ${1} to be empty}"
 	fi
 }
 
+# refute_empty dir [message]
 refute_empty() {
 	if _assert_empty "$@"; then
 		fail "${2:-expected ${1} to not be empty}"
 	fi
 }
 
+# _assert_empty dir
 _assert_empty() {
 	ls "${WRKDIR}/${1}" 2>/dev/null | cmp -s - /dev/null
 }
 
+# assert_find dir pattern [message]
 assert_find() {
-	if ! _assert_find $@; then
-		fail "expected ${1}/${2} to not be empty"
+	if ! _assert_find "$@"; then
+		fail "${3:-expected ${1}/${2} to not be empty}"
 	fi
 }
 
+# refute_find dir pattern [message]
 refute_find() {
-	if _assert_find $@; then
-		fail "expected ${1}/${2} to be empty"
+	if _assert_find "$@"; then
+		fail "${3:-expected ${1}/${2} to be empty}"
 	fi
 }
 
+# _assert_find dir pattern
 _assert_find() {
 	! find "${WRKDIR}/${1}" -type f -name "$2" | cmp -s - /dev/null
 }
