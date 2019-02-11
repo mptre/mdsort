@@ -102,6 +102,44 @@ message_free(struct message *msg)
 	free(msg);
 }
 
+int
+message_write(const struct message *msg, FILE *dst)
+{
+	char buf[BUFSIZ];
+	FILE *src;
+	size_t nread, nwrite;
+	int error = 0;
+
+	src = fopen(msg->path, "re");
+	if (src == NULL) {
+		warn("fopen: %s", msg->path);
+		return 1;
+	}
+
+	for (;;) {
+		nread = fread(buf, 1, sizeof(buf), src);
+		if (nread == 0) {
+			if (feof(src)) {
+				break;
+			} else if (ferror(src)) {
+				warn("fread: %s", msg->path);
+				error = 1;
+				break;
+			}
+		}
+
+		nwrite = fwrite(buf, 1, nread, dst);
+		if (nwrite == 0) {
+			warn("fwrite");
+			error = 1;
+			break;
+		}
+	}
+	fclose(src);
+
+	return error;
+}
+
 const struct string_list *
 message_get_header(const struct message *msg, const char *header)
 {

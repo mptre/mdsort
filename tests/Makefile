@@ -4,6 +4,7 @@ TESTS=	action-break.sh \
 	basic.sh \
 	conf.sh \
 	dry.sh \
+	exdev.sh \
 	match-all.sh \
 	match-attachment.sh \
 	match-body.sh \

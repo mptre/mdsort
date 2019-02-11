@@ -54,6 +54,7 @@ DISTFILES=	CHANGELOG.md \
 		tests/basic.sh \
 		tests/conf.sh \
 		tests/dry.sh \
+		tests/exdev.sh \
 		tests/match-all.sh \
 		tests/match-attachment.sh \
 		tests/match-body.sh \

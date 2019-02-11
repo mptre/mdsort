@@ -19,6 +19,8 @@ static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
 static const char *maildir_path(struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
+static int maildir_write(const struct maildir *, const char *,
+    const struct message *);
 
 static int parsesubdir(const char *, enum subdir *);
 
@@ -124,6 +126,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	const char *dstname, *flags, *srcname;
 	int dstfd, srcfd;
 	int doutime = 0;
+	int error = 0;
 
 	srcname = pathslice(msg->path, buf, -1, -1);
 	if (srcname == NULL) {
@@ -147,13 +150,24 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	dstfd = dirfd(dst->dir);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
-		warn("renameat");
-		return 1;
+		error = 1;
+		if (errno == EXDEV) {
+			/*
+			 * Rename failed since source and destination reside on
+			 * different file systems. Fallback to writing a new
+			 * message.
+			 */
+			error = maildir_write(dst, dstname, msg);
+                        if (error == 0 && (src->flags & MAILDIR_STDIN) == 0)
+				error = maildir_unlink(src, msg);
+		} else {
+			warn("renameat");
+		}
 	} else if (doutime && utimensat(dstfd, dstname, times, 0) == -1) {
 		warn("utimensat");
-		return 1;
+		error = 1;
 	}
-	return 0;
+	return error;
 }
 
 int
@@ -323,6 +337,31 @@ maildir_read(struct maildir *md)
 
 		return maildir_path(md, ent->d_name);
 	}
+}
+
+static int
+maildir_write(const struct maildir *md, const char *path,
+    const struct message *msg)
+{
+	FILE *fh;
+	int error, fd;
+
+	fd = openat(dirfd(md->dir), path, O_WRONLY | O_CLOEXEC);
+	if (fd == -1) {
+		warn("open: %s/%s", md->path, path);
+		return 1;
+	}
+	fh = fdopen(fd, "we");
+	if (fh == NULL) {
+		warn("fdopen: %s/%s", md->path, path);
+		return 1;
+	}
+
+	error = message_write(msg, fh);
+
+	fclose(fh);
+
+	return error;
 }
 
 static int
