@@ -10,6 +10,13 @@
 
 #include "extern.h"
 
+/*
+ * When reading messages from stdin and an error occurred, always exit with
+ * a code indicating temporary failure as opposed of permanent failure.
+ * The actual number is a convention established by sendmail.
+ */
+#define EX_TEMPFAIL	75
+
 static const char *defaultconf(const struct environment *);
 static int match_exec(const struct match *, struct maildir *,
     struct message *, const struct environment *);
@@ -79,8 +86,10 @@ main(int argc, char *argv[])
 	if (env.confpath == NULL)
 		env.confpath = defaultconf(&env);
 	config = parse_config(env.confpath, &env);
-	if (config == NULL)
-		return 1;
+	if (config == NULL) {
+		error = 1;
+		goto done;
+	}
 	if ((env.options & OPTION_SYNTAX))
 		goto done;
 
@@ -129,12 +138,15 @@ main(int argc, char *argv[])
 	}
 
 done:
-	while ((conf = TAILQ_FIRST(config)) != NULL) {
+	while (config != NULL && (conf = TAILQ_FIRST(config)) != NULL) {
 		TAILQ_REMOVE(config, conf, entry);
 		expr_free(conf->expr);
 		free(conf->maildir);
 		free(conf);
 	}
+
+	if (error && dostdin)
+		return EX_TEMPFAIL;
 
 	return error;
 }

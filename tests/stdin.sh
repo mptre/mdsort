@@ -57,6 +57,22 @@ if testcase "discard"; then
 	mdsort -- - </dev/null
 fi
 
+if testcase "temporary failure"; then
+	cat <<-EOF >$CONF
+	stdin {
+		match all move "dst"
+	}
+	EOF
+	mdsort -t -- - </dev/null >/dev/null
+fi
+
+if testcase "temporary config failure"; then
+	cat <<-EOF >$CONF
+	invalid
+	EOF
+	mdsort -t -- - </dev/null >/dev/null
+fi
+
 if testcase "dry run"; then
 	cat <<-EOF >$CONF
 	stdin {
