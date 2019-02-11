@@ -14,7 +14,14 @@ refute_empty() {
 
 # _assert_empty dir
 _assert_empty() {
-	ls "${WRKDIR}/${1}" 2>/dev/null | cmp -s - /dev/null
+	local _dir="$1"
+
+	# Append WRKDIR if relative.
+	if [ "$_dir" = "${_dir#/}" ]; then
+		_dir="${WRKDIR}/${_dir}"
+	fi
+
+	ls "${_dir}" 2>/dev/null | cmp -s - /dev/null
 }
 
 # assert_find dir pattern [message]
@@ -86,8 +93,7 @@ mdsort() {
 		fail "exits ${_exit1} != ${_exit2}" <"$_tmp"
 	fi
 
-	# The directory must be relative to WRKDIR.
-	assert_empty "_tmpdir" "temporary directory not empty"
+	assert_empty "$_tmpdir" "temporary directory not empty"
 
 	if [ -n "$_input" ]; then
 		assert_file "$_input" "$_tmp"
