@@ -22,7 +22,7 @@ if testcase "maildir rules are skipped"; then
 	}
 	EOF
 	mdsort -- - </dev/null
-	refute_empty "src"
+	refute_empty "src/new"
 fi
 
 if testcase "stdin rule is skipped"; then
@@ -34,7 +34,7 @@ if testcase "stdin rule is skipped"; then
 	}
 	EOF
 	mdsort
-	refute_empty "src"
+	refute_empty "src/new"
 fi
 
 if testcase "move"; then
@@ -45,7 +45,7 @@ if testcase "move"; then
 	}
 	EOF
 	mdsort -- - </dev/null
-	refute_empty "dst"
+	refute_empty "dst/new"
 fi
 
 if testcase "discard"; then
