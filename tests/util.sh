@@ -1,12 +1,12 @@
 assert_empty() {
-	if ! _assert_empty $@; then
-		fail "expected ${1} to be empty"
+	if ! _assert_empty "$@"; then
+		fail "${2:-expected ${1} to be empty}"
 	fi
 }
 
 refute_empty() {
-	if _assert_empty $@; then
-		fail "expected ${1} to not be empty"
+	if _assert_empty "$@"; then
+		fail "${2:-expected ${1} to not be empty}"
 	fi
 }
 
@@ -80,9 +80,8 @@ mdsort() {
 		fail "exits ${_exit1} != ${_exit2}" <"$_tmp"
 	fi
 
-	if ! find "$_tmpdir" -mindepth 1 | cmp -s - /dev/null; then
-                 find "$_tmpdir" | fail - "temporary directory not empty:"
-	fi
+	# The directory must be relative to WRKDIR.
+	assert_empty "_tmpdir" "temporary directory not empty"
 
 	if [ -n "$_input" ]; then
 		assert_file "$_input" "$_tmp"
