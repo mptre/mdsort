@@ -1,3 +1,80 @@
+# v3.0.0 - 2019-02-13
+
+## Changes
+
+- Matchers accepting a pattern now perform matching on line basis, making
+  anchors (`^$`) usable.
+  (a0907cb)
+  (Anton Lindqvist)
+
+- Rename option 'pass' to 'break' for clarity.
+  (8bfd8fe)
+  (Anton Lindqvist)
+
+- Exit 75 on error when reading messages from stdin.
+  (3e32658)
+  (Anton Lindqvist)
+
+## News
+
+- Add break action. Especially useful when using nested match blocks since it
+  allows more fine-grained rules followed by a fallback:
+  (34d96bd)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    # Match messages from "spam" but discard any message addressed to "user".
+    # Such messages will be caught by the last rule and moved to the archive.
+    match header "From" /spam/ {
+      match header "To" /user/ break
+      match all move "~/Maildir/Spam"
+    }
+    match all move "~/Maildir/Archive"
+  }
+  ```
+
+- Add support for `match date` which matches messages greater or less than a
+  given time range.
+  (e09a074)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/Trash" {
+    # Delete messages older than 2 weeks.
+    match date > 2 weeks discard
+  }
+  ```
+
+- Add attachment matcher which matches messages with attachments, optionally
+  specifying a required content type.
+  (2e09f73)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    match attachment /text\/calendar/ move "~/Maildir/Calendar"
+  }
+  ```
+
+- Annotate each dry run match with the matching config rule.
+  (9a071bc)
+  (Anton Lindqvist)
+
+  ```
+  $ cat ~/.mdsort.conf
+  maildir "~/Maildir/INBOX" {
+    match header "To" /example/ move "~/Maildir/Archive"
+  }
+  $ mdsort -d
+  ~/.mdsort.conf:2: To: user@example.com
+                             ^    $
+  ```
+
+- Handle `EXDEV` errors when moving messages.
+  (3c0fdf9)
+  (Anton Lindqvist)
+
 # v2.0.0 - 2018-10-27
 
 ## Deprecations
