@@ -7,7 +7,7 @@
   (a0907cb)
   (Anton Lindqvist)
 
-- Rename option 'pass' to 'break' for clarity.
+- Rename option `pass` to `break` for clarity.
   (8bfd8fe)
   (Anton Lindqvist)
 
