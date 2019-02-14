@@ -141,9 +141,11 @@ Abort evaluation of the current block of rules.
 Especially useful when using nested
 .Ic match
 blocks, see below.
+.Pp
 Mutually exclusive with all other actions.
 .It Ic discard
 Remove the message from the maildir.
+.Pp
 Mutually exclusive with all other actions.
 .It Ic flag Oo Ic \&! Oc Ic new
 Flag the message as read or not.
@@ -159,7 +161,7 @@ where
 is a digit.
 The digit refers to the nth subexpression of the first matching
 .Ar pattern
-and will be replaced with matched string.
+and will be replaced with the matched string.
 Note, using back-references with many
 .Ic or
 conditions is not encouraged since the
