@@ -105,8 +105,8 @@ if testcase "dry run"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-Date: ${_d}
-      ^                             $
+mdsort.conf:2: Date: ${_d}
+                     ^                             $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	assert_file $TMP1 $TMP2

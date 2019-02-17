@@ -553,7 +553,8 @@ expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh,
 }
 
 static void
-expr_inspect_date(const struct expr *ex, FILE *fh, const struct environment *UNUSED(env))
+expr_inspect_date(const struct expr *ex, FILE *fh,
+    const struct environment *env)
 {
 	const struct match *match;
 	int end, indent;
@@ -563,6 +564,7 @@ expr_inspect_date(const struct expr *ex, FILE *fh, const struct environment *UNU
 	end = strlen(match->val);
 	if (end >= 2)
 		end -= 2;
+	indent += expr_inspect_prefix(ex, fh, env);
 	fprintf(fh, "%s: %s\n", match->key, match->val);
 	fprintf(fh, "%*s^%*s$\n", indent, "", end, "");
 }
