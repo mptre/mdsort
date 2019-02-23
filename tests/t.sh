@@ -18,9 +18,11 @@ set -e
 
 # assert_eq want got [message]
 assert_eq() {
+	local _tmp="${WRKDIR}/assert_eq"
+
 	if ! _assert_eq "$1" "$2"; then
-                printf 'WANT:\t%s\nGOT:\t%s\n' "$1" "$2" |
-		fail - "${3:-assert_eq}"
+                printf 'WANT:\t%s\nGOT:\t%s\n' "$1" "$2" >"$_tmp"
+		fail - "${3:-assert_eq}" <"$_tmp"
 	fi
 }
 
@@ -38,8 +40,11 @@ _assert_eq() {
 
 # assert_file file0 file1 [message]
 assert_file() {
+	local _tmp="${WRKDIR}/assert_file"
+
 	if ! _assert_file "$1" "$2"; then
-                diff -u -L want -L got "$1" "$2" | fail - "${3:-assert_file}"
+                diff -u -L want -L got "$1" "$2" >"$_tmp"
+		fail - "${3:-assert_file}" <"$_tmp"
 	fi
 }
 
