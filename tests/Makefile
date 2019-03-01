@@ -1,19 +1,19 @@
-TESTS=	action-break.sh \
-	action-discard.sh \
-	action-flag.sh \
-	basic.sh \
-	conf.sh \
-	dry.sh \
-	exdev.sh \
-	match-all.sh \
-	match-attachment.sh \
-	match-body.sh \
-	match-date.sh \
-	match-header.sh \
-	match-logical.sh \
-	match-new.sh \
-	match-old.sh \
-	stdin.sh
+TESTS+=	action-break.sh
+TESTS+=	action-discard.sh
+TESTS+=	action-flag.sh
+TESTS+=	basic.sh
+TESTS+=	conf.sh
+TESTS+=	dry.sh
+TESTS+=	exdev.sh
+TESTS+=	match-all.sh
+TESTS+=	match-attachment.sh
+TESTS+=	match-body.sh
+TESTS+=	match-date.sh
+TESTS+=	match-header.sh
+TESTS+=	match-logical.sh
+TESTS+=	match-new.sh
+TESTS+=	match-old.sh
+TESTS+=	stdin.sh
 
 .SUFFIXES: .sh .out
 

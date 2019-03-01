@@ -4,70 +4,71 @@ VERSION=	3.0.0
 
 PROG=	mdsort
 
-SRCS=	compat-arc4random.c \
-	compat-errc.c \
-	compat-pledge.c \
-	compat-reallocarray.c \
-	compat-strlcpy.c \
-	compat-utimensat.c \
-	compat-warnc.c \
-	expr.c \
-	maildir.c \
-	mdsort.c \
-	message.c \
-	parse.c \
-	time.c \
-	util.c
+SRCS+=	compat-arc4random.c
+SRCS+=	compat-errc.c
+SRCS+=	compat-pledge.c
+SRCS+=	compat-reallocarray.c
+SRCS+=	compat-strlcpy.c
+SRCS+=	compat-utimensat.c
+SRCS+=	compat-warnc.c
+SRCS+=	expr.c
+SRCS+=	maildir.c
+SRCS+=	mdsort.c
+SRCS+=	message.c
+SRCS+=	parse.c
+SRCS+=	time.c
+SRCS+=	util.c
+
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
 
 CFLAGS+=	${DEBUG}
 CPPFLAGS+=	-I${.CURDIR}
 
-DISTFILES=	CHANGELOG.md \
-		GNUmakefile \
-		LICENSE \
-		Makefile \
-		README.md \
-		compat-arc4random.c \
-		compat-errc.c \
-		compat-pledge.c \
-		compat-queue.h \
-		compat-reallocarray.c \
-		compat-strlcpy.c \
-		compat-utimensat.c \
-		compat-warnc.c \
-		configure \
-		expr.c \
-		extern.h \
-		maildir.c \
-		mdsort.1 \
-		mdsort.c \
-		mdsort.conf.5 \
-		message.c \
-		parse.y \
-		tests/GNUmakefile \
-		tests/Makefile \
-		tests/action-break.sh \
-		tests/action-discard.sh \
-		tests/action-flag.sh \
-		tests/basic.sh \
-		tests/conf.sh \
-		tests/dry.sh \
-		tests/exdev.sh \
-		tests/match-all.sh \
-		tests/match-attachment.sh \
-		tests/match-body.sh \
-		tests/match-date.sh \
-		tests/match-header.sh \
-		tests/match-logical.sh \
-		tests/match-new.sh \
-		tests/match-old.sh \
-		tests/stdin.sh \
-		tests/t.sh \
-		tests/util.sh \
-		time.c \
-		util.c
+DISTFILES+=	CHANGELOG.md
+DISTFILES+=	GNUmakefile
+DISTFILES+=	LICENSE
+DISTFILES+=	Makefile
+DISTFILES+=	README.md
+DISTFILES+=	compat-arc4random.c
+DISTFILES+=	compat-errc.c
+DISTFILES+=	compat-pledge.c
+DISTFILES+=	compat-queue.h
+DISTFILES+=	compat-reallocarray.c
+DISTFILES+=	compat-strlcpy.c
+DISTFILES+=	compat-utimensat.c
+DISTFILES+=	compat-warnc.c
+DISTFILES+=	configure
+DISTFILES+=	expr.c
+DISTFILES+=	extern.h
+DISTFILES+=	maildir.c
+DISTFILES+=	mdsort.1
+DISTFILES+=	mdsort.c
+DISTFILES+=	mdsort.conf.5
+DISTFILES+=	message.c
+DISTFILES+=	parse.y
+DISTFILES+=	tests/GNUmakefile
+DISTFILES+=	tests/Makefile
+DISTFILES+=	tests/action-break.sh
+DISTFILES+=	tests/action-discard.sh
+DISTFILES+=	tests/action-flag.sh
+DISTFILES+=	tests/basic.sh
+DISTFILES+=	tests/conf.sh
+DISTFILES+=	tests/dry.sh
+DISTFILES+=	tests/exdev.sh
+DISTFILES+=	tests/match-all.sh
+DISTFILES+=	tests/match-attachment.sh
+DISTFILES+=	tests/match-body.sh
+DISTFILES+=	tests/match-date.sh
+DISTFILES+=	tests/match-header.sh
+DISTFILES+=	tests/match-logical.sh
+DISTFILES+=	tests/match-new.sh
+DISTFILES+=	tests/match-old.sh
+DISTFILES+=	tests/stdin.sh
+DISTFILES+=	tests/t.sh
+DISTFILES+=	tests/util.sh
+DISTFILES+=	time.c
+DISTFILES+=	util.c
 
 PREFIX=	/usr/local
 
