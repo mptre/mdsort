@@ -33,10 +33,12 @@ headers() {
 }
 
 makevar() {
-	make -sf - <<EOF
-all:
-	@echo \${${1}}
-EOF
+	var="$(printf 'all:\n\t@echo ${%s}\n' "$1" | make -sf -)"
+	if [ -n "$var" ]; then
+		echo "$var"
+	else
+		return 1
+	fi
 }
 
 search_path() {
@@ -195,6 +197,17 @@ check_warnc() {
 	EOF
 }
 
+TMP=$(mktemp -t configure.XXXXXX)
+trap "atexit $TMP" EXIT
+
+exec 3>&1 4>&2
+exec 1>config.log 2>&1
+
+# At this point, all variables used must be defined.
+set -u
+# Enable tracing, will end up in config.log.
+set -x
+
 HAVE_ARC4RANDOM=0
 HAVE_DEAD=0
 HAVE_ERRC=0
@@ -208,28 +221,15 @@ HAVE_STRLCPY=0
 HAVE_UTIMENSAT=0
 HAVE_WARNC=0
 
-CC=$(makevar CC)
-CFLAGS=$(makevar CFLAGS)
-CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
-INSTALL=$(makevar INSTALL)
-YACC=$(makevar YACC)
-
-: "${CPPFLAGS:=}"
-: "${DEBUG:=}"
-: "${INSTALL:=install}"
-: "${LDFLAGS:=}"
-: "${YFLAGS:=}"
-
-exec 3>&1 4>&2
-exec 1>config.log 2>&1
-
-TMP=$(mktemp -t configure.XXXXXX)
-trap "atexit $TMP" EXIT
-
-# At this point, all variables used must be defined.
-set -u
-# Enable tracing, will end up in config.log.
-set -x
+CC=$(makevar CC || :)
+CFLAGS=$(makevar CFLAGS || :)
+CFLAGS="${CFLAGS} ${DEBUG:-} -Wall -Wextra -MD -MP"
+CPPFLAGS="$(makevar CPPFLAGS || :)"
+DEBUG="$(makevar DEBUG || :)"
+INSTALL=$(makevar INSTALL || echo install)
+LDFLAGS="$(makevar LDFLAGS || :)"
+YACC=$(makevar YACC || :)
+YFLAGS="$(makevar YFLAGS || :)"
 
 ([ -z "$YACC" ] || ! search_path "$YACC") && fatal "cannot find yacc"
 
