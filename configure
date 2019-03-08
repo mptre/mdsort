@@ -225,6 +225,7 @@ CC=$(makevar CC || :)
 CFLAGS=$(makevar CFLAGS || :)
 CFLAGS="${CFLAGS} ${DEBUG:-} -Wall -Wextra -MD -MP"
 CPPFLAGS="$(makevar CPPFLAGS || :)"
+CPPFLAGS="${CPPFLAGS} -I\${.CURDIR}"
 DEBUG="$(makevar DEBUG || :)"
 INSTALL=$(makevar INSTALL || echo install)
 LDFLAGS="$(makevar LDFLAGS || :)"

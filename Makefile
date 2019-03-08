@@ -23,7 +23,6 @@ OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
 
 CFLAGS+=	${DEBUG}
-CPPFLAGS+=	-I${.CURDIR}
 
 DISTFILES+=	CHANGELOG.md
 DISTFILES+=	GNUmakefile
