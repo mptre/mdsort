@@ -110,7 +110,7 @@ lint:
 	mandoc -Tlint -Wstyle ${.CURDIR}/mdsort.1 ${.CURDIR}/mdsort.conf.5
 .PHONY: lint
 
-test: ${PROG}
+test: all
 	env "MALLOC_OPTIONS=${MALLOC_OPTIONS}" "MDSORT=${.OBJDIR}/${PROG}" \
 		${MAKE} -C ${.CURDIR}/tests "TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
