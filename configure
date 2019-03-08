@@ -227,10 +227,15 @@ CFLAGS="${CFLAGS} ${DEBUG:-} -Wall -Wextra -MD -MP"
 CPPFLAGS="$(makevar CPPFLAGS || :)"
 CPPFLAGS="${CPPFLAGS} -I\${.CURDIR}"
 DEBUG="$(makevar DEBUG || :)"
-INSTALL=$(makevar INSTALL || echo install)
 LDFLAGS="$(makevar LDFLAGS || :)"
 YACC=$(makevar YACC || :)
 YFLAGS="$(makevar YFLAGS || :)"
+
+PREFIX="$(makevar PREFIX || echo /usr/local)"
+BINDIR="$(makevar BINDIR || echo "${PREFIX}/bin")"
+MANDIR="$(makevar MANDIR || echo "${PREFIX}/man")"
+INSTALL="$(makevar INSTALL || echo install)"
+INSTALL_MAN="$(makevar INSTALL_MAN || echo install -m 444)"
 
 ([ -z "$YACC" ] || ! search_path "$YACC") && fatal "cannot find yacc"
 
@@ -315,9 +320,13 @@ CC=		$(echo $CC)
 CFLAGS=		$(echo $CFLAGS)
 CPPFLAGS=	$(echo $CPPFLAGS)
 DEBUG=		$(echo $DEBUG)
-INSTALL=	$(echo $INSTALL)
 LDFLAGS=	$(echo $LDFLAGS)
 MALLOC_OPTIONS=	$(echo $MALLOC_OPTIONS)
 YACC=		$(echo $YACC)
 YFLAGS=		$(echo $YFLAGS)
+
+BINDIR?=	$(echo $BINDIR)
+MANDIR?=	$(echo $MANDIR)
+INSTALL?=	$(echo $INSTALL)
+INSTALL_MAN?=	$(echo $INSTALL_MAN)
 EOF
