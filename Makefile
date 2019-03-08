@@ -22,8 +22,6 @@ SRCS+=	util.c
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
 
-CFLAGS+=	${DEBUG}
-
 DISTFILES+=	CHANGELOG.md
 DISTFILES+=	GNUmakefile
 DISTFILES+=	LICENSE

@@ -221,12 +221,14 @@ HAVE_STRLCPY=0
 HAVE_UTIMENSAT=0
 HAVE_WARNC=0
 
+# Order is important, must come first if not defined.
+DEBUG="$(makevar DEBUG || :)"
+
 CC=$(makevar CC || :)
 CFLAGS=$(makevar CFLAGS || :)
-CFLAGS="${CFLAGS} ${DEBUG:-} -Wall -Wextra -MD -MP"
+CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
 CPPFLAGS="$(makevar CPPFLAGS || :)"
 CPPFLAGS="${CPPFLAGS} -I\${.CURDIR}"
-DEBUG="$(makevar DEBUG || :)"
 LDFLAGS="$(makevar LDFLAGS || :)"
 YACC=$(makevar YACC || :)
 YFLAGS="$(makevar YFLAGS || :)"
