@@ -226,11 +226,11 @@ HAVE_WARNC=0
 DEBUG="$(makevar DEBUG || :)"
 
 CC=$(makevar CC || :)
-CFLAGS=$(makevar CFLAGS || :)
+CFLAGS=$(DEBUG= makevar CFLAGS || :)
 CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
 CPPFLAGS="$(makevar CPPFLAGS || :)"
 CPPFLAGS="${CPPFLAGS} -I\${.CURDIR}"
-LDFLAGS="$(makevar LDFLAGS || :)"
+LDFLAGS="$(DEBUG= makevar LDFLAGS || :)"
 YACC=$(makevar YACC || :)
 YFLAGS="$(makevar YFLAGS || :)"
 
