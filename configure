@@ -6,6 +6,7 @@ atexit() {
 	err=$?
 
 	# Dump contents of generated files to config.log.
+	exec 1>>config.log 2>&1
 	set -x
 	cat config.h
 	cat Makefile.inc
@@ -256,13 +257,11 @@ check_warnc && HAVE_WARNC=1
 
 MALLOC_OPTIONS=$(check_malloc_options)
 
-# Order is important, must be present before any includes.
-(
-[ $HAVE_GNU_SOURCE -eq 1 ] && printf '#define _GNU_SOURCE\n'
+# Redirect stdout to config.h.
+exec 1>config.h
 
-# Ensure this subshell always exits 0.
-true
-) >config.h
+# Order is important, must be present before any includes.
+[ $HAVE_GNU_SOURCE -eq 1 ] && printf '#define _GNU_SOURCE\n'
 
 # Headers needed for function prototypes.
 (
@@ -271,9 +270,8 @@ true
 [ $HAVE_REALLOCARRAY -eq 0 ] && echo stdlib.h
 [ $HAVE_STRLCPY -eq 0 ] && echo stdlib.h
 [ $HAVE_UTIMENSAT -eq 0 ] && echo sys/time.h
-) | sort | uniq | headers >>config.h
+) | sort | uniq | headers
 
-(
 [ $HAVE_ARC4RANDOM -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
 [ $HAVE_ERRC -eq 1 ] && printf '#define HAVE_ERRC\t1\n'
 [ $HAVE_PLEDGE -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
@@ -312,12 +310,11 @@ fi
 	printf 'void warnc(int code, const char *fmt, ...)\n'
 	printf '\t__attribute__((__format__ (printf, 2, 3)));\n'; }
 
-# Ensure this subshell always exits 0.
-true
-) >>config.h
+# Redirect stdout to Makefile.inc.
+exec 1>Makefile.inc
 
 # Use echo to normalize whitespace.
-cat <<EOF >Makefile.inc
+cat <<EOF
 CC=		$(echo $CC)
 CFLAGS=		$(echo $CFLAGS)
 CPPFLAGS=	$(echo $CPPFLAGS)
