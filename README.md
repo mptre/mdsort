@@ -70,8 +70,8 @@ $ mdsort - <message
 
 ### From source
 
-The installation directory defaults to `/usr/local` and can be altered using the
-`PREFIX` environment variable:
+The installation prefix defaults to `/usr/local` and can be altered using the
+`PREFIX` environment variable when invoking `configure`:
 
 ```
 $ ./configure
