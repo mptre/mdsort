@@ -109,8 +109,10 @@ lint:
 .PHONY: lint
 
 test: all
-	env "MALLOC_OPTIONS=${MALLOC_OPTIONS}" "MDSORT=${.OBJDIR}/${PROG}" \
-		${MAKE} -C ${.CURDIR}/tests "TESTFLAGS=${TESTFLAGS}"
+	${MAKE} -C ${.CURDIR}/tests \
+		"MALLOC_OPTIONS=${MALLOC_OPTIONS}" \
+		"MDSORT=${.OBJDIR}/${PROG}" \
+		"TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
 
 -include ${DEPS}
