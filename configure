@@ -293,18 +293,18 @@ fi
 
 [ $HAVE_UTIMENSAT -eq 0 ] && printf '#define UTIME_OMIT -1L\n'
 
-[ $HAVE_ARC4RANDOM -eq 0 ] && \
+[ $HAVE_ARC4RANDOM -eq 0 ] &&
 	printf 'uint32_t arc4random(void);\n'
 [ $HAVE_ERRC -eq 0 ] && {
 	printf 'void errc(int eval, int code, const char *fmt, ...)\n';
 	printf '\t__attribute__((__noreturn__, __format__ (printf, 3, 4)));\n'; }
-[ $HAVE_PLEDGE -eq 0 ] && \
+[ $HAVE_PLEDGE -eq 0 ] &&
 	printf 'int pledge(const char *, const char *);\n'
-[ $HAVE_REALLOCARRAY -eq 0 ] && \
+[ $HAVE_REALLOCARRAY -eq 0 ] &&
 	printf 'void *reallocarray(void *, size_t, size_t);\n'
-[ $HAVE_STRLCPY -eq 0 ] && \
+[ $HAVE_STRLCPY -eq 0 ] &&
 	printf 'size_t strlcpy(char *, const char *, size_t);\n'
-[ $HAVE_UTIMENSAT -eq 0 ] && \
+[ $HAVE_UTIMENSAT -eq 0 ] &&
 	printf 'int utimensat(int, const char *, const struct timespec [2], int);\n'
 [ $HAVE_WARNC -eq 0 ] && {
 	printf 'void warnc(int code, const char *fmt, ...)\n'
