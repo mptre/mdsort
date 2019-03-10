@@ -81,7 +81,7 @@ check_errc() {
 
 # Check if strptime(3) is hidden behind _GNU_SOURCE.
 check_gnu_source() {
-	compile <<-EOF && return 1
+	cat <<-EOF >"$TMP"
 	#include <time.h>
 
 	int main(void) {
@@ -90,15 +90,9 @@ check_gnu_source() {
 	}
 	EOF
 
-	compile <<-EOF
-	#define _GNU_SOURCE
-	#include <time.h>
+	compile <"$TMP" && return 1
 
-	int main(void) {
-		struct tm tm;
-		return !(strptime("0", "%s", &tm) != NULL);
-	}
-	EOF
+	{ echo "#define _GNU_SOURCE"; cat "$TMP"; } | compile
 }
 
 check_host_name_max() {
