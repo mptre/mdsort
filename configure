@@ -232,7 +232,7 @@ PREFIX="$(makevar PREFIX || echo /usr/local)"
 BINDIR="$(makevar BINDIR || echo "${PREFIX}/bin")"
 MANDIR="$(makevar MANDIR || echo "${PREFIX}/man")"
 INSTALL="$(makevar INSTALL || echo install)"
-INSTALL_MAN="$(makevar INSTALL_MAN || echo install -m 444)"
+INSTALL_MAN="$(makevar INSTALL_MAN || echo install)"
 
 ([ -z "$YACC" ] || ! search_path "$YACC") && fatal "cannot find yacc"
 
