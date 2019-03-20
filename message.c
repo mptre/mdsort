@@ -23,7 +23,7 @@ struct header {
 static void message_parse_flags(struct message *);
 static const char *message_parse_headers(struct message *);
 
-static int cmpheader(const void *, const void *);
+static int cmpheaderkey(const void *, const void *);
 static char *decodeheader(const char *);
 static int findheader(char *, char **, char **, char **, char **);
 static ssize_t searchheader(const struct header *, size_t, const char *,
@@ -355,7 +355,7 @@ message_parse_headers(struct message *msg)
 	}
 	if (msg->nheaders > 0)
 		qsort(msg->headers, msg->nheaders, sizeof(*msg->headers),
-		    cmpheader);
+		    cmpheaderkey);
 
 	for (; *buf == '\n'; buf++)
 		continue;
@@ -363,7 +363,7 @@ message_parse_headers(struct message *msg)
 }
 
 static int
-cmpheader(const void *p1, const void *p2)
+cmpheaderkey(const void *p1, const void *p2)
 {
 	const struct header *h1 = p1;
 	const struct header *h2 = p2;
@@ -453,14 +453,14 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 	hi = nmemb - 1;
 	while (lo <= hi) {
 		mi = lo + (hi - lo)/2;
-		cmp = cmpheader(&needle, headers + mi);
+		cmp = cmpheaderkey(&needle, headers + mi);
 		if (cmp == 0) {
 			/* Move backwards to the first matching element. */
 			for (; mi > 0; mi--)
-				if (cmpheader(&needle, headers + mi - 1))
+				if (cmpheaderkey(&needle, headers + mi - 1))
 					break;
 			for (i = mi; i < nmemb; i++)
-				if (cmpheader(&needle, headers + i))
+				if (cmpheaderkey(&needle, headers + i))
 					break;
 			*nfound = i - mi;
 			return mi;
