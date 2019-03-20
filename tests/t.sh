@@ -18,11 +18,8 @@ set -e
 
 # assert_eq want got [message]
 assert_eq() {
-	local _tmp="${WRKDIR}/assert_eq"
-
 	if ! _assert_eq "$1" "$2"; then
-                printf 'WANT:\t%s\nGOT:\t%s\n' "$1" "$2" >"$_tmp"
-		fail - "${3:-assert_eq}" <"$_tmp"
+		printf 'WANT:\t%s\nGOT:\t%s\n' "$1" "$2" | fail - "${3:-assert_eq}"
 	fi
 }
 
@@ -40,11 +37,8 @@ _assert_eq() {
 
 # assert_file file0 file1 [message]
 assert_file() {
-	local _tmp="${WRKDIR}/assert_file"
-
 	if ! _assert_file "$1" "$2"; then
-                diff -u -L want -L got "$1" "$2" >"$_tmp"
-		fail - "${3:-assert_file}" <"$_tmp"
+		diff -u -L want -L got "$1" "$2" | fail - "${3:-assert_file}"
 	fi
 }
 
@@ -62,7 +56,7 @@ _assert_file() {
 
 # fail [message]
 fail() {
-	NERR=$((NERR + 1))
+	echo >>"$NERR"
 
 	report -f -p FAIL "$@"
 }
@@ -72,10 +66,9 @@ testcase() {
 	local _tags=""
 
 	# Report on behalf of the previous test case.
-	[ "$NTEST" -gt 0 ] && report -p PASS
+	[ -s "$NTEST" ] && report -p PASS
 
-	NTEST=$((NTEST + 1))
-	TCREPORT=0
+	echo >>"$NTEST"
 
 	find "$WRKDIR" -mindepth 1 -delete
 
@@ -127,10 +120,10 @@ report() {
 		shift
 	done
 
-	if [ "$_force" -eq 0 ] && [ "$TCREPORT" -eq 1 ]; then
+	if [ "$_force" -eq 0 ] && [ -e "$TCREPORT" ]; then
 		return 0
 	fi
-	TCREPORT=1
+	: >"$TCREPORT"
 
 	# Try hard to output everything to stderr in one go.
 	{
@@ -146,7 +139,7 @@ report() {
 atexit() {
 	local _err="$?"
 
-	if [ "$NTEST" -gt 0 ]; then
+	if [ -s "$NTEST" ]; then
 		# Report on behalf of the previous test case.
 		if [ "$_err" -eq 0 ]; then
 			report -p PASS
@@ -155,12 +148,13 @@ atexit() {
 		fi
 	fi
 
+	if [ -s "$NERR" ]; then
+		_err="1"
+	fi
+
 	# Remove temporary files.
 	rm -rf "$@"
 
-	if [ "$NERR" -ne 0 ]; then
-		exit 1
-	fi
 	exit "$_err"
 }
 
@@ -169,19 +163,23 @@ usage() {
 	exit 1
 }
 
-# Keep the include and exclude files outside of the temporary directory since
-# it's wiped between test cases.
+# Keep crucial files outside of temporary directory since it's wiped between
+# test cases.
 INCLUDE="$(mktemp -t t.sh.XXXXXX)"
 EXCLUDE="$(mktemp -t t.sh.XXXXXX)"
+NERR="$(mktemp -t t.sh.XXXXXX)"
+NTEST="$(mktemp -t t.sh.XXXXXX)"
 WRKDIR="$(mktemp -d -t t.sh.XXXXXX)"
-trap 'atexit $INCLUDE $EXCLUDE $WRKDIR' EXIT
+trap 'atexit $INCLUDE $EXCLUDE $NERR $NTEST $WRKDIR' EXIT
 
-FILTER=""	# filter mode
-NAME=""		# test file name
-NERR=0		# total number of errors
-NTEST=0		# total number of executed test cases
-TCDESC=""	# current test case description
-TCREPORT=0	# current test called report
+# Filter mode.
+FILTER=""
+# Test file name.
+NAME=""
+# Current test case description.
+TCDESC=""
+# Current test case called report indicator.
+TCREPORT="${WRKDIR}/_tcreport"
 
 while getopts "F:f:t:T:" opt; do
 	case "$opt" in
