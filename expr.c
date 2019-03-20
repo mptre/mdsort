@@ -1,7 +1,6 @@
 #include "config.h"
 
 #include <assert.h>
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <stddef.h>
@@ -10,10 +9,9 @@
 
 #include "extern.h"
 
-#define EXPR_EVAL_ARGS	struct expr *, struct expr *, const struct message *, \
-	const struct environment *
+#define EXPR_EVAL_ARGS	struct expr *, struct match_list *, \
+	const struct message *, const struct environment *
 
-static int expr_eval1(EXPR_EVAL_ARGS);
 static int expr_eval_all(EXPR_EVAL_ARGS);
 static int expr_eval_and(EXPR_EVAL_ARGS);
 static int expr_eval_attachment(EXPR_EVAL_ARGS);
@@ -30,8 +28,6 @@ static int expr_eval_new(EXPR_EVAL_ARGS);
 static int expr_eval_old(EXPR_EVAL_ARGS);
 static int expr_eval_or(EXPR_EVAL_ARGS);
 
-static void expr_inspect1(const struct expr *, const struct expr *, FILE *,
-    const struct environment *);
 static void expr_inspect_date(const struct expr *, FILE *,
     const struct environment *);
 static void expr_inspect_header(const struct expr *, FILE *,
@@ -39,16 +35,8 @@ static void expr_inspect_header(const struct expr *, FILE *,
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
 
-static int expr_regexec(struct expr *, struct match *, const char *,
+static int expr_regexec(struct expr *, struct match_list *, const char *,
     const char *, int);
-
-static void match_copy(struct match *, const char *, const regmatch_t *,
-    size_t);
-static const char *match_get(const struct match *, unsigned long n);
-static void match_dest(struct match *, const struct message *, const char *,
-    const char *);
-static int match_interpolate(struct match *);
-static void match_reset(struct match *);
 
 struct expr *
 expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
@@ -68,9 +56,14 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_DATE:
 	case EXPR_TYPE_HEADER:
+	case EXPR_TYPE_MOVE:
+	case EXPR_TYPE_FLAG:
+	case EXPR_TYPE_DISCARD:
+	case EXPR_TYPE_BREAK:
 		ex->match = calloc(1, sizeof(*ex->match));
 		if (ex->match == NULL)
 			err(1, NULL);
+		ex->match->mh_expr = ex;
 		break;
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
@@ -78,10 +71,6 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_ALL:
 	case EXPR_TYPE_NEW:
 	case EXPR_TYPE_OLD:
-	case EXPR_TYPE_MOVE:
-	case EXPR_TYPE_FLAG:
-	case EXPR_TYPE_DISCARD:
-	case EXPR_TYPE_BREAK:
 		break;
 	}
 	return ex;
@@ -149,24 +138,61 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 	return 0;
 }
 
-const struct match *
-expr_eval(struct expr *ex, const struct message *msg,
+int
+expr_eval(struct expr *ex, struct match_list *ml, const struct message *msg,
     const struct environment *env)
 {
-	match_reset(ex->match);
-	ex->cookie++;
-	if (expr_eval1(ex, ex, msg, env))
-		return NULL;
-	switch (ex->match->action->type) {
-	case EXPR_TYPE_FLAG:
-	case EXPR_TYPE_MOVE:
-		if (match_interpolate(ex->match))
-			return NULL;
+	int res = 1;
+
+	switch (ex->type) {
+	case EXPR_TYPE_BLOCK:
+		res = expr_eval_block(ex, ml, msg, env);
 		break;
-	default:
+	case EXPR_TYPE_AND:
+		res = expr_eval_and(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_OR:
+		res = expr_eval_or(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_NEG:
+		res = expr_eval_neg(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_ATTACHMENT:
+		res = expr_eval_attachment(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_ALL:
+		res = expr_eval_all(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_BODY:
+		res = expr_eval_body(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_DATE:
+		res = expr_eval_date(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_HEADER:
+		res = expr_eval_header(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_NEW:
+		res = expr_eval_new(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_OLD:
+		res = expr_eval_old(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_MOVE:
+		res = expr_eval_move(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_FLAG:
+		res = expr_eval_flag(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_DISCARD:
+		res = expr_eval_discard(ex, ml, msg, env);
+		break;
+	case EXPR_TYPE_BREAK:
+		res = expr_eval_break(ex, ml, msg, env);
 		break;
 	}
-	return ex->match;
+
+	return res;
 }
 
 int
@@ -216,88 +242,48 @@ expr_count_actions(const struct expr *ex)
 void
 expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 {
-	expr_inspect1(ex, ex, fh, env);
-}
-
-static int
-expr_eval1(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env)
-{
-	int res = 1;
-
 	switch (ex->type) {
-	case EXPR_TYPE_BLOCK:
-		res = expr_eval_block(root, ex, msg, env);
-		break;
-	case EXPR_TYPE_AND:
-		res = expr_eval_and(root, ex, msg, env);
-		break;
-	case EXPR_TYPE_OR:
-		res = expr_eval_or(root, ex, msg, env);
-		break;
-	case EXPR_TYPE_NEG:
-		res = expr_eval_neg(root, ex, msg, env);
+	case EXPR_TYPE_DATE:
+		expr_inspect_date(ex, fh, env);
 		break;
 	case EXPR_TYPE_ATTACHMENT:
-		res = expr_eval_attachment(root, ex, msg, env);
-		break;
-	case EXPR_TYPE_ALL:
-		res = expr_eval_all(root, ex, msg, env);
-		break;
 	case EXPR_TYPE_BODY:
-		res = expr_eval_body(root, ex, msg, env);
-		break;
-	case EXPR_TYPE_DATE:
-		res = expr_eval_date(root, ex, msg, env);
-		break;
 	case EXPR_TYPE_HEADER:
-		res = expr_eval_header(root, ex, msg, env);
+		expr_inspect_header(ex, fh, env);
 		break;
+	case EXPR_TYPE_BLOCK:
+	case EXPR_TYPE_AND:
+	case EXPR_TYPE_OR:
+	case EXPR_TYPE_NEG:
+	case EXPR_TYPE_ALL:
 	case EXPR_TYPE_NEW:
-		res = expr_eval_new(root, ex, msg, env);
-		break;
 	case EXPR_TYPE_OLD:
-		res = expr_eval_old(root, ex, msg, env);
-		break;
 	case EXPR_TYPE_MOVE:
-		res = expr_eval_move(root, ex, msg, env);
-		break;
 	case EXPR_TYPE_FLAG:
-		res = expr_eval_flag(root, ex, msg, env);
-		break;
 	case EXPR_TYPE_DISCARD:
-		res = expr_eval_discard(root, ex, msg, env);
-		break;
 	case EXPR_TYPE_BREAK:
-		res = expr_eval_break(root, ex, msg, env);
 		break;
 	}
-	if (res == 0) {
-		/* Mark expression as visited on match. */
-		ex->cookie = root->cookie;
-	}
-
-	return res;
 }
 
 static int
-expr_eval_all(struct expr *UNUSED(root), struct expr *UNUSED(ex),
+expr_eval_all(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     const struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	return 0;
 }
 
 static int
-expr_eval_and(struct expr *root, struct expr *ex, const struct message *msg,
+expr_eval_and(struct expr *ex, struct match_list *ml, const struct message *msg,
     const struct environment *env)
 {
-	if (expr_eval1(root, ex->lhs, msg, env))
+	if (expr_eval(ex->lhs, ml, msg, env))
 		return 1; /* no match, short-circuit */
-	return expr_eval1(root, ex->rhs, msg, env);
+	return expr_eval(ex->rhs, ml, msg, env);
 }
 
 static int
-expr_eval_attachment(struct expr *root, struct expr *ex,
+expr_eval_attachment(struct expr *ex, struct match_list *ml,
     const struct message *msg, const struct environment *env)
 {
 	struct message_list *attachments;
@@ -314,7 +300,7 @@ expr_eval_attachment(struct expr *root, struct expr *ex,
 			continue;
 		log_debug("%s: %s\n", __func__, type);
 
-		if (expr_regexec(ex, root->match, "Content-Type", type,
+		if (expr_regexec(ex, ml, "Content-Type", type,
 			    env->options & OPTION_DRYRUN))
 			continue;
 
@@ -327,45 +313,43 @@ expr_eval_attachment(struct expr *root, struct expr *ex,
 }
 
 static int
-expr_eval_block(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env)
+expr_eval_block(struct expr *ex, struct match_list *ml,
+    const struct message *msg, const struct environment *env)
 {
-	const struct expr *action;
 	int res;
 
-	res = expr_eval1(root, ex->lhs, msg, env);
-	action = root->match->action;
-	if (action && action->type == EXPR_TYPE_BREAK) {
-		root->match->action = NULL;
+	res = expr_eval(ex->lhs, ml, msg, env);
+	if (matches_find(ml, EXPR_TYPE_BREAK) != NULL) {
+		matches_clear(ml);
 		return 1; /* break, continue evaluation */
 	}
 	return res;
 }
 
 static int
-expr_eval_body(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env)
+expr_eval_body(struct expr *ex, struct match_list *ml,
+    const struct message *msg, const struct environment *env)
 {
 	assert(ex->nmatches > 0);
 
 	if (msg->body == NULL)
 		return 1;
-	if (expr_regexec(ex, root->match, "Body", msg->body,
+	if (expr_regexec(ex, ml, "Body", msg->body,
 		    env->options & OPTION_DRYRUN))
 		return 1;
 	return 0;
 }
 
 static int
-expr_eval_break(struct expr *root, struct expr *ex,
+expr_eval_break(struct expr *ex, struct match_list *ml,
     const struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
-	root->match->action = ex;
+	matches_append(ml, ex->match);
 	return 0;
 }
 
 static int
-expr_eval_date(struct expr *UNUSED(root), struct expr *ex,
+expr_eval_date(struct expr *ex, struct match_list *ml,
     const struct message *msg, const struct environment *env)
 {
 	const char *date;
@@ -377,61 +361,69 @@ expr_eval_date(struct expr *UNUSED(root), struct expr *ex,
 	if (time_parse(date, &tim, env))
 		return 1;
 
-	match_reset(ex->match);
-	ex->match->key = strdup("Date");
-	if (ex->match->key == NULL)
-		err(1, NULL);
-	ex->match->val = strdup(date);
-	if (ex->match->val == NULL)
-		err(1, NULL);
-
 	delta = env->now - tim;
 	switch (ex->date.cmp) {
 	case EXPR_CMP_LT:
-		if (delta < ex->date.age)
-			return 0;
+		if (!(delta < ex->date.age))
+			return 1;
 		break;
 	case EXPR_CMP_GT:
-		if (delta > ex->date.age)
-			return 0;
+		if (!(delta > ex->date.age))
+			return 1;
 		break;
 	}
-	return 1;
+
+	if ((env->options & OPTION_DRYRUN)) {
+		match_reset(ex->match);
+
+		ex->match->mh_key = strdup("Date");
+		if (ex->match->mh_key == NULL)
+			err(1, NULL);
+		ex->match->mh_val = strdup(date);
+		if (ex->match->mh_val == NULL)
+			err(1, NULL);
+	}
+
+	matches_append(ml, ex->match);
+
+	return 0;
 }
 
 static int
-expr_eval_discard(struct expr *root, struct expr *ex,
+expr_eval_discard(struct expr *ex, struct match_list *ml,
     const struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	size_t len;
 
-	root->match->action = ex;
+	matches_append(ml, ex->match);
 
-	/* Populate the path in case of a dry run. */
-	len = sizeof(root->match->path);
-	if (strlcpy(root->match->path, "<discard>", len) >= len)
+	len = sizeof(ml->ml_path);
+	if (strlcpy(ml->ml_path, "<discard>", len) >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 
 	return 0;
 }
 
 static int
-expr_eval_flag(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_flag(struct expr *ex, struct match_list *ml,
+    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
-	struct string *str;
-
-	root->match->action = ex;
+	const struct string *str;
+	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
-	match_dest(root->match, msg, NULL, str->val);
+	len = sizeof(ml->ml_maildir);
+	if (strlcpy(ml->ml_subdir, str->val, len) >= len)
+		errc(1, ENAMETOOLONG, "%s", __func__);
+
+	matches_append(ml, ex->match);
 
 	return 0;
 }
 
 static int
-expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *env)
+expr_eval_header(struct expr *ex, struct match_list *ml,
+    const struct message *msg, const struct environment *env)
 {
 	const struct string_list *values;
 	const struct string *key, *val;
@@ -445,7 +437,7 @@ expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
 			continue;
 
 		TAILQ_FOREACH(val, values, entry) {
-			if (expr_regexec(ex, root->match, key->val, val->val,
+			if (expr_regexec(ex, ml, key->val, val->val,
 				    env->options & OPTION_DRYRUN))
 				continue;
 			return 0;
@@ -455,35 +447,38 @@ expr_eval_header(struct expr *root, struct expr *ex, const struct message *msg,
 }
 
 static int
-expr_eval_move(struct expr *root, struct expr *ex, const struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_move(struct expr *ex, struct match_list *ml,
+    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
-	struct string *str;
-
-	root->match->action = ex;
+	const struct string *str;
+	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
-	match_dest(root->match, msg, str->val, NULL);
+	len = sizeof(ml->ml_maildir);
+	if (strlcpy(ml->ml_maildir, str->val, len) >= len)
+		errc(1, ENAMETOOLONG, "%s", __func__);
+
+	matches_append(ml, ex->match);
 
 	return 0;
 }
 
 static int
-expr_eval_neg(struct expr *root, struct expr *ex, const struct message *msg,
+expr_eval_neg(struct expr *ex, struct match_list *ml, const struct message *msg,
     const struct environment *env)
 {
 	assert(ex->rhs == NULL);
 
-	if (expr_eval1(root, ex->lhs, msg, env))
+	if (expr_eval(ex->lhs, ml, msg, env))
 		return 0;
 
 	/* Non-match, invalidate match below expression. */
-	match_reset(root->match);
+	matches_clear(ml);
 	return 1;
 }
 
 static int
-expr_eval_new(struct expr *UNUSED(root), struct expr *UNUSED(ex),
+expr_eval_new(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     const struct message *msg, const struct environment *UNUSED(env))
 {
 	char buf[NAME_MAX];
@@ -494,7 +489,7 @@ expr_eval_new(struct expr *UNUSED(root), struct expr *UNUSED(ex),
 }
 
 static int
-expr_eval_old(struct expr *UNUSED(root), struct expr *UNUSED(ex),
+expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     const struct message *msg, const struct environment *UNUSED(env))
 {
 	char buf[NAME_MAX];
@@ -507,49 +502,12 @@ expr_eval_old(struct expr *UNUSED(root), struct expr *UNUSED(ex),
 }
 
 static int
-expr_eval_or(struct expr *root, struct expr *ex, const struct message *msg,
+expr_eval_or(struct expr *ex, struct match_list *ml, const struct message *msg,
     const struct environment *env)
 {
-	if (expr_eval1(root, ex->lhs, msg, env) == 0)
+	if (expr_eval(ex->lhs, ml, msg, env) == 0)
 		return 0; /* match, short-circuit */
-	return expr_eval1(root, ex->rhs, msg, env);
-}
-
-static void
-expr_inspect1(const struct expr *root, const struct expr *ex, FILE *fh,
-    const struct environment *env)
-{
-	/* Ensure expression was visited during last call to expr_eval(). */
-	if (root->cookie != ex->cookie)
-		return;
-
-	switch (ex->type) {
-	case EXPR_TYPE_BLOCK:
-		expr_inspect1(root, ex->lhs, fh, env);
-		break;
-	case EXPR_TYPE_AND:
-	case EXPR_TYPE_OR:
-		expr_inspect1(root, ex->lhs, fh, env);
-		expr_inspect1(root, ex->rhs, fh, env);
-		break;
-	case EXPR_TYPE_DATE:
-		expr_inspect_date(ex, fh, env);
-		break;
-	case EXPR_TYPE_ATTACHMENT:
-	case EXPR_TYPE_BODY:
-	case EXPR_TYPE_HEADER:
-		expr_inspect_header(ex, fh, env);
-		break;
-	case EXPR_TYPE_NEG:
-	case EXPR_TYPE_ALL:
-	case EXPR_TYPE_NEW:
-	case EXPR_TYPE_OLD:
-	case EXPR_TYPE_MOVE:
-	case EXPR_TYPE_FLAG:
-	case EXPR_TYPE_DISCARD:
-	case EXPR_TYPE_BREAK:
-		break;
-	}
+	return expr_eval(ex->rhs, ml, msg, env);
 }
 
 static void
@@ -560,12 +518,12 @@ expr_inspect_date(const struct expr *ex, FILE *fh,
 	int end, indent;
 
 	match = ex->match;
-	indent = strlen(match->key) + 2;
-	end = strlen(match->val);
+	indent = strlen(match->mh_key) + 2;
+	end = strlen(match->mh_val);
 	if (end >= 2)
 		end -= 2;
 	indent += expr_inspect_prefix(ex, fh, env);
-	fprintf(fh, "%s: %s\n", match->key, match->val);
+	fprintf(fh, "%s: %s\n", match->mh_key, match->mh_val);
 	fprintf(fh, "%*s^%*s$\n", indent, "", end, "");
 }
 
@@ -580,24 +538,24 @@ expr_inspect_header(const struct expr *ex, FILE *fh,
 	int printkey = 1;
 
 	match = ex->match;
-	indent = strlen(match->key) + 2;
+	indent = strlen(match->mh_key) + 2;
 
 	for (i = 0; i < ex->nmatches; i++) {
 		beg = ex->matches[i].rm_so;
 		end = ex->matches[i].rm_eo;
 
-		lbeg = match->val;
+		lbeg = match->mh_val;
 		for (;;) {
 			if ((p = strchr(lbeg, '\n')) == NULL ||
-			    p > match->val + beg)
+			    p > match->mh_val + beg)
 				break;
 			lbeg = p + 1;
 		}
 		lend = strchr(lbeg, '\n');
 		if (lend == NULL)
-			lend = match->val + strlen(match->val);
+			lend = match->mh_val + strlen(match->mh_val);
 
-		lindent = beg - (lbeg - match->val) + indent;
+		lindent = beg - (lbeg - match->mh_val) + indent;
 		len = end - beg;
 		if (len >= 2)
 			len -= 2;
@@ -605,7 +563,7 @@ expr_inspect_header(const struct expr *ex, FILE *fh,
 		if (printkey) {
 			plen = expr_inspect_prefix(ex, fh, env);
 			printkey = 0;
-			fprintf(fh, "%s: ", match->key);
+			fprintf(fh, "%s: ", match->mh_key);
 		} else {
 			fprintf(fh, "%*s", indent + plen, "");
 		}
@@ -639,146 +597,23 @@ expr_inspect_prefix(const struct expr *ex, FILE *fh,
 }
 
 static int
-expr_regexec(struct expr *ex, struct match *match, const char *key,
+expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
     const char *val, int dryrun)
 {
 	if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
 		return 1;
 
-	match_copy(match, val, ex->matches, ex->nmatches);
+	matches_append(ml, ex->match);
 
+	match_copy(ex->match, val, ex->matches, ex->nmatches);
 	if (dryrun) {
-		match_reset(ex->match);
-		ex->match->key = strdup(key);
-		if (ex->match->key == NULL)
+		ex->match->mh_key = strdup(key);
+		if (ex->match->mh_key == NULL)
 			err(1, NULL);
-		ex->match->val = strdup(val);
-		if (ex->match->val == NULL)
+		ex->match->mh_val = strdup(val);
+		if (ex->match->mh_val == NULL)
 			err(1, NULL);
 	}
 
 	return 0;
-}
-
-static void
-match_copy(struct match *match, const char *str, const regmatch_t *off,
-    size_t nmemb)
-{
-	char *cpy;
-	size_t i, len;
-
-	if (match->nmatches > 0)
-		return;
-
-	match->matches = reallocarray(NULL, nmemb, sizeof(*match->matches));
-	if (match->matches == NULL)
-		err(1, NULL);
-	match->nmatches = nmemb;
-	for (i = 0; i < nmemb; i++) {
-		len = off[i].rm_eo - off[i].rm_so;
-		cpy = strndup(str + off[i].rm_so, len);
-		if (cpy == NULL)
-			err(1, NULL);
-		match->matches[i] = cpy;
-	}
-}
-
-static const char *
-match_get(const struct match *match, unsigned long n)
-{
-	if (n >= match->nmatches)
-		return NULL;
-	return match->matches[n];
-}
-
-static void
-match_dest(struct match *match, const struct message *msg, const char *maildir,
-    const char *subdir)
-{
-	size_t siz;
-
-	if (maildir != NULL) {
-		siz = sizeof(match->maildir);
-		if (strlcpy(match->maildir, maildir, siz) >= siz)
-			errc(1, ENAMETOOLONG, "%s", __func__);
-	} else if (match->maildir[0] == '\0') {
-		/* No maildir present, infer from message path. */
-		if (pathslice(msg->path, match->maildir, 0, -2) == NULL)
-			errx(1, "%s: %s: maildir not found",
-			    __func__, msg->path);
-	}
-
-	if (subdir != NULL) {
-		siz = sizeof(match->subdir);
-		if (strlcpy(match->subdir, subdir, siz) >= siz)
-			errc(1, ENAMETOOLONG, "%s", __func__);
-	} else if (match->subdir[0] == '\0') {
-		/* No subdir present, infer from message path. */
-		if (pathslice(msg->path, match->subdir, -2, -2) == NULL)
-			errx(1, "%s: %s: subdir not found",
-			    __func__, msg->path);
-	}
-}
-
-static int
-match_interpolate(struct match *match)
-{
-	char path[PATH_MAX];
-	const char *sub;
-	char *end;
-	unsigned long bf;
-	size_t i = 0;
-	size_t j = 0;
-
-	assert(match != NULL);
-
-	pathjoin(path, match->maildir, match->subdir, NULL);
-
-	while (path[i] != '\0') {
-		if (path[i] == '\\' && isdigit(path[i + 1])) {
-			errno = 0;
-			bf = strtoul(path + i + 1, &end, 10);
-			if ((errno == ERANGE && bf == ULONG_MAX) ||
-			    ((sub = match_get(match, bf)) == NULL)) {
-				warnx("%s: invalid back-reference in "
-				    "destination", path);
-				return 1;
-			}
-			for (; *sub != '\0'; sub++) {
-				if (j == sizeof(match->path) - 1)
-					goto toolong;
-				match->path[j++] = *sub;
-			}
-			i = end - path;
-			continue;
-		}
-		if (j == sizeof(match->path) - 1)
-			goto toolong;
-		match->path[j++] = path[i++];
-	}
-	assert(j < sizeof(match->path));
-	match->path[j] = '\0';
-	return 0;
-
-toolong:
-	warnx("%s: destination too long", path);
-	return 1;
-}
-
-static void
-match_reset(struct match *match)
-{
-	unsigned int i;
-
-	if (match == NULL)
-		return;
-
-	for (i = 0; i < match->nmatches; i++)
-		free(match->matches[i]);
-	free(match->matches);
-
-	free(match->key);
-	free(match->val);
-
-	memset(match, 0, sizeof(*match));
 }

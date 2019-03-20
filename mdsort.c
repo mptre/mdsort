@@ -18,19 +18,17 @@
 #define EX_TEMPFAIL	75
 
 static const char *defaultconf(const struct environment *);
-static int match_exec(const struct match *, struct maildir *,
-    struct message *, const struct environment *);
 static void readenv(struct environment *);
 static __dead void usage(void);
 
 int
 main(int argc, char *argv[])
 {
+	struct match_list matches = MATCH_LIST_INITIALIZER(matches);
 	struct environment env;
 	struct config_list *config;
 	struct config *conf;
 	struct maildir *md;
-	const struct match *match;
 	struct message *msg;
 	const char *path;
 	int c;
@@ -116,21 +114,26 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			match = expr_eval(conf->expr, msg, &env);
-			if (match == NULL) {
+			matches_clear(&matches);
+			if (expr_eval(conf->expr, &matches, msg, &env)) {
+				message_free(msg);
+				continue;
+			}
+			if (matches_interpolate(&matches, msg)) {
+				error = 1;
 				message_free(msg);
 				continue;
 			}
 
 			log_info("%s -> %s\n",
-			    dostdin ? "<stdin>" : path, match->path);
+			    dostdin ? "<stdin>" : path, matches.ml_path);
 			if ((env.options & OPTION_DRYRUN)) {
-				expr_inspect(conf->expr, stdout, &env);
+				matches_inspect(&matches, stdout, &env);
 				message_free(msg);
 				continue;
 			}
 
-			if (match_exec(match, md, msg, &env))
+			if (matches_exec(&matches, md, msg, &env))
 				error = 1;
 			message_free(msg);
 		}
@@ -169,35 +172,6 @@ defaultconf(const struct environment *env)
 	if (n < 0 || n >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
-}
-
-static int
-match_exec(const struct match *match, struct maildir *src,
-    struct message *msg, const struct environment *env)
-{
-	struct maildir *dst;
-	int error = 0;
-
-	switch (match->action->type) {
-	case EXPR_TYPE_FLAG:
-	case EXPR_TYPE_MOVE:
-		dst = maildir_open(match->path, 0, env);
-		if (dst == NULL) {
-			error = 1;
-			break;
-		}
-		if (maildir_move(src, dst, msg, env))
-			error = 1;
-		maildir_close(dst);
-		break;
-	case EXPR_TYPE_DISCARD:
-		if (maildir_unlink(src, msg))
-			error = 1;
-		break;
-	default:
-		break;
-	}
-	return error;
 }
 
 static void

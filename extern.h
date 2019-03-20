@@ -150,6 +150,8 @@ enum expr_type {
 	EXPR_TYPE_HEADER,
 	EXPR_TYPE_NEW,
 	EXPR_TYPE_OLD,
+
+	/* actions */
 	EXPR_TYPE_MOVE,
 	EXPR_TYPE_FLAG,
 	EXPR_TYPE_DISCARD,
@@ -164,7 +166,6 @@ enum expr_cmp {
 struct expr {
 	enum expr_type type;
 	int lno;
-	int cookie;
 
 	struct string_list *strings;
 
@@ -184,18 +185,27 @@ struct expr {
 };
 
 struct match {
-	char maildir[PATH_MAX];
-	char subdir[NAME_MAX];
-	char path[PATH_MAX];
+	const struct expr *mh_expr;
 
-	const struct expr *action;
+	char **mh_matches;
+	size_t mh_nmatches;
 
-	char **matches;
-	size_t nmatches;
+	char *mh_key;
+	char *mh_val;
 
-	char *key;
-	char *val;
+	TAILQ_ENTRY(match) mh_entry;
 };
+
+struct match_list {
+	char ml_maildir[PATH_MAX];
+	char ml_subdir[PATH_MAX];
+	char ml_path[PATH_MAX];
+
+	TAILQ_HEAD(, match) ml_head;
+};
+
+#define MATCH_LIST_INITIALIZER(ml)	\
+	{"", "", "", TAILQ_HEAD_INITIALIZER((ml).ml_head) }
 
 /*
  * Allocate a new expression with the given type.
@@ -239,10 +249,11 @@ int expr_count(const struct expr *ex, enum expr_type type);
 int expr_count_actions(const struct expr *ex);
 
 /*
- * Returns a match if the expression matches the given message.
- * Otherwise, NULL is returned.
+ * Returns 0 if the expression matches the given message. The given match list
+ * will be populated with the matching expressions.
+ * Otherwise, non-zero is returned.
  */
-const struct match *expr_eval(struct expr *ex, const struct message *msg,
+int expr_eval(struct expr *ex, struct match_list *ml, const struct message *msg,
     const struct environment *env);
 
 /*
@@ -250,6 +261,25 @@ const struct match *expr_eval(struct expr *ex, const struct message *msg,
  */
 void expr_inspect(const struct expr *ex, FILE *fh,
     const struct environment *env);
+
+void matches_append(struct match_list *ml, struct match *mh);
+
+void matches_clear(struct match_list *ml);
+
+int matches_interpolate(struct match_list *ml, const struct message *msg);
+
+int matches_exec(const struct match_list *ml, struct maildir *md,
+    struct message *msg, const struct environment *env);
+
+void matches_inspect(const struct match_list *ml, FILE *fh,
+    const struct environment *env);
+
+void match_copy(struct match *mh, const char *str, const regmatch_t *off,
+    size_t nmemb);
+
+void match_reset(struct match *mh);
+
+struct match *matches_find(struct match_list *ml, enum expr_type type);
 
 /*
  * Parse the given formatted timestamp.

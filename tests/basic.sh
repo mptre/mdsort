@@ -153,7 +153,7 @@ if testcase "destination interpolation out of bounds"; then
 		match header "To" /./ move "\1"
 	}
 	EOF
-	mdsort >$TMP1
+	mdsort -e >$TMP1
 	grep -q '\\1/new: invalid back-reference in destination' $TMP1 ||
 		fail - "expected back-reference to be invalid" <$TMP1
 fi
@@ -166,7 +166,7 @@ if testcase "destination interpolation out of range"; then
 		match header "To" /./ move "\99999999999999999999"
 	}
 	EOF
-	mdsort >$TMP1
+	mdsort -e >$TMP1
 	grep -q '9/new: invalid back-reference in destination' $TMP1 ||
 		fail - "expected back-reference to be invalid" <$TMP1
 fi
@@ -205,7 +205,7 @@ if testcase "destination interpolation with none body/header"; then
 		match new move "\1"
 	}
 	EOF
-	mdsort >$TMP1
+	mdsort -e >$TMP1
 	grep -q '\\1/new: invalid back-reference in destination' $TMP1 ||
 		fail - "expected back-reference to be invalid" <$TMP1
 fi
@@ -218,7 +218,7 @@ if testcase "destination interpolation with negate"; then
 		match ! header "To" /(user)/ or new move "\1"
 	}
 	EOF
-	mdsort >$TMP1
+	mdsort -e >$TMP1
 	grep -q '\\1/new: invalid back-reference in destination' $TMP1 ||
 		fail - "expected back-reference to be invalid" <$TMP1
 fi
@@ -231,7 +231,7 @@ if testcase "destination interpolation too long"; then
 		match header "To" /(.+)/ move "\1"
 	}
 	EOF
-	mdsort >$TMP1
+	mdsort -e >$TMP1
 	grep -q '\\1/new: destination too long' $TMP1 ||
 		fail - "expected destination to be too long" <$TMP1
 fi
