@@ -11,7 +11,7 @@
 
 #include "extern.h"
 
-#define FLAG(c)		(isupper(c) ? 1 << ((c) - 'A') : 0)
+#define FLAG(c)		(isupper((c)) ? 1 << ((c) - 'A') : 0)
 #define FLAGS_BAD	((unsigned int)-1)
 
 struct header {
