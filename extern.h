@@ -121,7 +121,7 @@ struct message *message_parse(const char *path);
 
 void message_free(struct message *msg);
 
-int message_write(const struct message *msg, FILE *dst);
+int message_write(struct message *msg, FILE *fh);
 
 const struct string_list *message_get_header(const struct message *msg,
     const char *header);

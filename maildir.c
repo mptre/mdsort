@@ -20,7 +20,7 @@ static int maildir_stdin(struct maildir *, const struct environment *);
 static const char *maildir_path(struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 static int maildir_write(const struct maildir *, const char *,
-    const struct message *);
+    struct message *);
 
 static int parsesubdir(const char *, enum subdir *);
 
@@ -340,8 +340,7 @@ maildir_read(struct maildir *md)
 }
 
 static int
-maildir_write(const struct maildir *md, const char *path,
-    const struct message *msg)
+maildir_write(const struct maildir *md, const char *path, struct message *msg)
 {
 	FILE *fh;
 	int error, fd;

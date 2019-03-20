@@ -15,6 +15,7 @@
 #define FLAGS_BAD	((unsigned int)-1)
 
 struct header {
+	unsigned int id;
 	const char *key;
 	const char *val;
 	struct string_list *values;	/* list of all values for key */
@@ -23,6 +24,7 @@ struct header {
 static void message_parse_flags(struct message *);
 static const char *message_parse_headers(struct message *);
 
+static int cmpheaderid(const void *, const void *);
 static int cmpheaderkey(const void *, const void *);
 static char *decodeheader(const char *);
 static int findheader(char *, char **, char **, char **, char **);
@@ -103,41 +105,30 @@ message_free(struct message *msg)
 }
 
 int
-message_write(const struct message *msg, FILE *dst)
+message_write(struct message *msg, FILE *fh)
 {
-	char buf[BUFSIZ];
-	FILE *src;
-	size_t nread, nwrite;
-	int error = 0;
+	const struct header *hdr;
+	unsigned int i;
 
-	src = fopen(msg->path, "re");
-	if (src == NULL) {
-		warn("fopen: %s", msg->path);
+	/* Preserve ordering of headers. */
+	if (msg->nheaders > 0)
+		qsort(msg->headers, msg->nheaders, sizeof(*msg->headers),
+		    cmpheaderid);
+
+	for (i = 0; i < msg->nheaders; i++) {
+		hdr = &msg->headers[i];
+		if (fprintf(fh, "%s: %s\n", hdr->key, hdr->val) < 0) {
+			warn("fprintf");
+			return 1;
+		}
+	}
+
+	if (fprintf(fh, "\n%s", msg->body ? msg->body : "") < 0) {
+		warn("fprintf");
 		return 1;
 	}
 
-	for (;;) {
-		nread = fread(buf, 1, sizeof(buf), src);
-		if (nread == 0) {
-			if (feof(src)) {
-				break;
-			} else if (ferror(src)) {
-				warn("fread: %s", msg->path);
-				error = 1;
-				break;
-			}
-		}
-
-		nwrite = fwrite(buf, 1, nread, dst);
-		if (nwrite == 0) {
-			warn("fwrite");
-			error = 1;
-			break;
-		}
-	}
-	fclose(src);
-
-	return error;
+	return 0;
 }
 
 const struct string_list *
@@ -346,6 +337,7 @@ message_parse_headers(struct message *msg)
 		    sizeof(*msg->headers));
 		if (msg->headers == NULL)
 			err(1, NULL);
+		msg->headers[msg->nheaders].id = msg->nheaders;
 		msg->headers[msg->nheaders].key = keybeg;
 		msg->headers[msg->nheaders].val = valbeg;
 		msg->headers[msg->nheaders].values = NULL;
@@ -360,6 +352,19 @@ message_parse_headers(struct message *msg)
 	for (; *buf == '\n'; buf++)
 		continue;
 	return buf;
+}
+
+static int
+cmpheaderid(const void *p1, const void *p2)
+{
+	const struct header *h1 = p1;
+	const struct header *h2 = p2;
+
+	if (h1->id < h2->id)
+		return -1;
+	if (h1->id > h2->id)
+		return 1;
+	return 0;
 }
 
 static int

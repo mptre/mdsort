@@ -30,8 +30,12 @@ if testcase "move from stdin"; then
 	}
 	EOF
 	cat <<-EOF >$TMP1
+	B: first
+	A: second
 	From: standard@input.com
 
+	The headers above are intentionally not sorted in order to ensure
+	that the ordering is preserved.
 	EOF
 	mdsort -- - <$TMP1
 	refute_empty "${XDIR}/dst/new"
