@@ -365,10 +365,9 @@ message_parse_headers(struct message *msg)
 static int
 cmpheader(const void *p1, const void *p2)
 {
-	const struct header *h1, *h2;
+	const struct header *h1 = p1;
+	const struct header *h2 = p2;
 
-	h1 = p1;
-	h2 = p2;
 	return strcasecmp(h1->key, h2->key);
 }
 
