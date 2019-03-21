@@ -253,7 +253,7 @@ int expr_count_actions(const struct expr *ex);
  * will be populated with the matching expressions.
  * Otherwise, non-zero is returned.
  */
-int expr_eval(struct expr *ex, struct match_list *ml, const struct message *msg,
+int expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env);
 
 /*

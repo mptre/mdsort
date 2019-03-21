@@ -9,8 +9,8 @@
 
 #include "extern.h"
 
-#define EXPR_EVAL_ARGS	struct expr *, struct match_list *, \
-	const struct message *, const struct environment *
+#define EXPR_EVAL_ARGS	struct expr *, struct match_list *,	\
+	struct message *, const struct environment *
 
 static int expr_eval_all(EXPR_EVAL_ARGS);
 static int expr_eval_and(EXPR_EVAL_ARGS);
@@ -139,7 +139,7 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 }
 
 int
-expr_eval(struct expr *ex, struct match_list *ml, const struct message *msg,
+expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
 	int res = 1;
@@ -268,13 +268,13 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 
 static int
 expr_eval_all(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
-    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
+    struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	return 0;
 }
 
 static int
-expr_eval_and(struct expr *ex, struct match_list *ml, const struct message *msg,
+expr_eval_and(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
 	if (expr_eval(ex->lhs, ml, msg, env))
@@ -284,7 +284,7 @@ expr_eval_and(struct expr *ex, struct match_list *ml, const struct message *msg,
 
 static int
 expr_eval_attachment(struct expr *ex, struct match_list *ml,
-    const struct message *msg, const struct environment *env)
+    struct message *msg, const struct environment *env)
 {
 	struct message_list *attachments;
 	struct message *attach;
@@ -314,7 +314,7 @@ expr_eval_attachment(struct expr *ex, struct match_list *ml,
 
 static int
 expr_eval_block(struct expr *ex, struct match_list *ml,
-    const struct message *msg, const struct environment *env)
+    struct message *msg, const struct environment *env)
 {
 	int res;
 
@@ -328,7 +328,7 @@ expr_eval_block(struct expr *ex, struct match_list *ml,
 
 static int
 expr_eval_body(struct expr *ex, struct match_list *ml,
-    const struct message *msg, const struct environment *env)
+    struct message *msg, const struct environment *env)
 {
 	assert(ex->nmatches > 0);
 
@@ -342,7 +342,7 @@ expr_eval_body(struct expr *ex, struct match_list *ml,
 
 static int
 expr_eval_break(struct expr *ex, struct match_list *ml,
-    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
+    struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	matches_append(ml, ex->match);
 	return 0;
@@ -350,7 +350,7 @@ expr_eval_break(struct expr *ex, struct match_list *ml,
 
 static int
 expr_eval_date(struct expr *ex, struct match_list *ml,
-    const struct message *msg, const struct environment *env)
+    struct message *msg, const struct environment *env)
 {
 	const char *date;
 	time_t delta, tim;
@@ -391,7 +391,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 
 static int
 expr_eval_discard(struct expr *ex, struct match_list *ml,
-    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
+    struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	size_t len;
 
@@ -406,7 +406,7 @@ expr_eval_discard(struct expr *ex, struct match_list *ml,
 
 static int
 expr_eval_flag(struct expr *ex, struct match_list *ml,
-    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
+    struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	const struct string *str;
 	size_t len;
@@ -423,7 +423,7 @@ expr_eval_flag(struct expr *ex, struct match_list *ml,
 
 static int
 expr_eval_header(struct expr *ex, struct match_list *ml,
-    const struct message *msg, const struct environment *env)
+    struct message *msg, const struct environment *env)
 {
 	const struct string_list *values;
 	const struct string *key, *val;
@@ -448,7 +448,7 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 
 static int
 expr_eval_move(struct expr *ex, struct match_list *ml,
-    const struct message *UNUSED(msg), const struct environment *UNUSED(env))
+    struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	const struct string *str;
 	size_t len;
@@ -464,7 +464,7 @@ expr_eval_move(struct expr *ex, struct match_list *ml,
 }
 
 static int
-expr_eval_neg(struct expr *ex, struct match_list *ml, const struct message *msg,
+expr_eval_neg(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
 	assert(ex->rhs == NULL);
@@ -479,7 +479,7 @@ expr_eval_neg(struct expr *ex, struct match_list *ml, const struct message *msg,
 
 static int
 expr_eval_new(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
-    const struct message *msg, const struct environment *UNUSED(env))
+    struct message *msg, const struct environment *UNUSED(env))
 {
 	char buf[NAME_MAX];
 
@@ -490,7 +490,7 @@ expr_eval_new(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 
 static int
 expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
-    const struct message *msg, const struct environment *UNUSED(env))
+    struct message *msg, const struct environment *UNUSED(env))
 {
 	char buf[NAME_MAX];
 
@@ -502,7 +502,7 @@ expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 }
 
 static int
-expr_eval_or(struct expr *ex, struct match_list *ml, const struct message *msg,
+expr_eval_or(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
 	if (expr_eval(ex->lhs, ml, msg, env) == 0)
