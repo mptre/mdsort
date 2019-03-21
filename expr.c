@@ -142,57 +142,40 @@ int
 expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
-	int res = 1;
-
 	switch (ex->type) {
 	case EXPR_TYPE_BLOCK:
-		res = expr_eval_block(ex, ml, msg, env);
-		break;
+		return expr_eval_block(ex, ml, msg, env);
 	case EXPR_TYPE_AND:
-		res = expr_eval_and(ex, ml, msg, env);
-		break;
+		return expr_eval_and(ex, ml, msg, env);
 	case EXPR_TYPE_OR:
-		res = expr_eval_or(ex, ml, msg, env);
-		break;
+		return expr_eval_or(ex, ml, msg, env);
 	case EXPR_TYPE_NEG:
-		res = expr_eval_neg(ex, ml, msg, env);
-		break;
+		return expr_eval_neg(ex, ml, msg, env);
 	case EXPR_TYPE_ATTACHMENT:
-		res = expr_eval_attachment(ex, ml, msg, env);
-		break;
+		return expr_eval_attachment(ex, ml, msg, env);
 	case EXPR_TYPE_ALL:
-		res = expr_eval_all(ex, ml, msg, env);
-		break;
+		return expr_eval_all(ex, ml, msg, env);
 	case EXPR_TYPE_BODY:
-		res = expr_eval_body(ex, ml, msg, env);
-		break;
+		return expr_eval_body(ex, ml, msg, env);
 	case EXPR_TYPE_DATE:
-		res = expr_eval_date(ex, ml, msg, env);
-		break;
+		return expr_eval_date(ex, ml, msg, env);
 	case EXPR_TYPE_HEADER:
-		res = expr_eval_header(ex, ml, msg, env);
-		break;
+		return expr_eval_header(ex, ml, msg, env);
 	case EXPR_TYPE_NEW:
-		res = expr_eval_new(ex, ml, msg, env);
-		break;
+		return expr_eval_new(ex, ml, msg, env);
 	case EXPR_TYPE_OLD:
-		res = expr_eval_old(ex, ml, msg, env);
-		break;
+		return expr_eval_old(ex, ml, msg, env);
 	case EXPR_TYPE_MOVE:
-		res = expr_eval_move(ex, ml, msg, env);
-		break;
+		return expr_eval_move(ex, ml, msg, env);
 	case EXPR_TYPE_FLAG:
-		res = expr_eval_flag(ex, ml, msg, env);
-		break;
+		return expr_eval_flag(ex, ml, msg, env);
 	case EXPR_TYPE_DISCARD:
-		res = expr_eval_discard(ex, ml, msg, env);
-		break;
+		return expr_eval_discard(ex, ml, msg, env);
 	case EXPR_TYPE_BREAK:
-		res = expr_eval_break(ex, ml, msg, env);
-		break;
+		return expr_eval_break(ex, ml, msg, env);
 	}
 
-	return res;
+	return 1;
 }
 
 int
