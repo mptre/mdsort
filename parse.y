@@ -344,8 +344,8 @@ yylex(void)
 		int type;
 	} keywords[] = {
 		{ "all",	ALL },
-		{ "attachment",	ATTACHMENT },
 		{ "and",	AND },
+		{ "attachment",	ATTACHMENT },
 		{ "body",	BODY },
 		{ "break",	BREAK },
 		{ "date",	DATE },
