@@ -42,10 +42,6 @@ makevar() {
 	fi
 }
 
-search_path() {
-	which "$@"
-}
-
 check_arc4random() {
 	compile <<-EOF
 	#include <stdlib.h>
@@ -219,13 +215,13 @@ HAVE_WARNC=0
 # Order is important, must come first if not defined.
 DEBUG="$(makevar DEBUG || :)"
 
-CC=$(makevar CC || :)
+CC=$(makevar CC || fatal "CC: not defined")
 CFLAGS=$(DEBUG= makevar CFLAGS || :)
 CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
 CPPFLAGS="$(makevar CPPFLAGS || :)"
 CPPFLAGS="${CPPFLAGS} -I\${.CURDIR}"
 LDFLAGS="$(DEBUG= makevar LDFLAGS || :)"
-YACC=$(makevar YACC || :)
+YACC=$(makevar YACC || fatal "YACC: not defined")
 YFLAGS="$(makevar YFLAGS || :)"
 
 PREFIX="$(makevar PREFIX || echo /usr/local)"
@@ -233,8 +229,6 @@ BINDIR="$(makevar BINDIR || echo "${PREFIX}/bin")"
 MANDIR="$(makevar MANDIR || echo "${PREFIX}/man")"
 INSTALL="$(makevar INSTALL || echo install)"
 INSTALL_MAN="$(makevar INSTALL_MAN || echo install)"
-
-([ -z "$YACC" ] || ! search_path "$YACC") && fatal "cannot find yacc"
 
 check_arc4random && HAVE_ARC4RANDOM=1
 check_dead && HAVE_DEAD=1
