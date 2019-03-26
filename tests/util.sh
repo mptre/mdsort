@@ -135,12 +135,12 @@ mkmsg() {
 
 	_i=0
 	while :; do
-		_name=$(printf '%d.%d_%d.hostname%s' \
-			"$(date '+%s')" "$$" "$_i" "$_suffix")
+		_name=$(printf '1553633333.%d_%d.hostname%s' \
+			"$$" "$NMSG" "$_suffix")
 		_path="${_dir}/${_name}"
 		[ -e "$_path" ] || break
 
-		_i=$((_i + 1))
+		NMSG=$((NMSG + 1))
 	done
 	touch "$_path"
 
@@ -188,6 +188,9 @@ TMP2="${WRKDIR}/tmp2"
 # Platform specific values.
 BUFSIZ=$(cppvar BUFSIZ || echo 0)
 PATH_MAX=$(cppvar PATH_MAX || echo 0)
+
+# Number of messages created by mkmsg.
+NMSG=0
 
 LC_ALL=C
 export LC_ALL
