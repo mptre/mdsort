@@ -1,6 +1,7 @@
 TESTS+=	action-break.sh
 TESTS+=	action-discard.sh
 TESTS+=	action-flag.sh
+TESTS+=	action-label.sh
 TESTS+=	basic.sh
 TESTS+=	conf.sh
 TESTS+=	dry.sh

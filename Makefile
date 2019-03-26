@@ -51,6 +51,7 @@ DISTFILES+=	tests/Makefile
 DISTFILES+=	tests/action-break.sh
 DISTFILES+=	tests/action-discard.sh
 DISTFILES+=	tests/action-flag.sh
+DISTFILES+=	tests/action-label.sh
 DISTFILES+=	tests/basic.sh
 DISTFILES+=	tests/conf.sh
 DISTFILES+=	tests/dry.sh

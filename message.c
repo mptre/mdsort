@@ -16,8 +16,13 @@
 
 struct header {
 	unsigned int id;
+
+	unsigned int flags;
+#define HEADER_FLAG_DIRTY	0x1	/* val must be freed */
+#define HEADER_FLAG_NOWR	0x2	/* omit during message_writeat() */
+
 	const char *key;
-	const char *val;
+	char *val;
 	struct string_list *values;	/* list of all values for key */
 };
 
@@ -35,6 +40,7 @@ static const char *findboundary(const char *, const char *, int *);
 static char *parseboundary(const char *);
 
 static const char *skipline(const char *);
+static int strword(const char *, const char *);
 
 struct message *
 message_parse(const char *path)
@@ -97,18 +103,37 @@ message_free(struct message *msg)
 	if (msg == NULL)
 		return;
 
-	for (i = 0; i < msg->nheaders; i++)
+	for (i = 0; i < msg->nheaders; i++) {
 		strings_free(msg->headers[i].values);
+		if ((msg->headers[i].flags & HEADER_FLAG_DIRTY))
+			free(msg->headers[i].val);
+	}
+
 	free(msg->buf);
 	free(msg->headers);
 	free(msg);
 }
 
 int
-message_write(struct message *msg, FILE *fh)
+message_writeat(struct message *msg, int dirfd, const char *path)
 {
 	const struct header *hdr;
+	FILE *fh;
 	unsigned int i;
+	int fd;
+	int error = 0;
+
+	fd = openat(dirfd, path, O_WRONLY | O_CLOEXEC);
+	if (fd == -1) {
+		warn("open: %s", path);
+		return 1;
+	}
+	fh = fdopen(fd, "we");
+	if (fh == NULL) {
+		warn("fdopen: %s", path);
+		close(fd);
+		return 1;
+	}
 
 	/* Preserve ordering of headers. */
 	if (msg->nheaders > 0)
@@ -117,18 +142,25 @@ message_write(struct message *msg, FILE *fh)
 
 	for (i = 0; i < msg->nheaders; i++) {
 		hdr = &msg->headers[i];
+		if ((hdr->flags & HEADER_FLAG_NOWR))
+			continue;
+
 		if (fprintf(fh, "%s: %s\n", hdr->key, hdr->val) < 0) {
 			warn("fprintf");
-			return 1;
+			error = 1;
+			goto out;
 		}
 	}
 
 	if (fprintf(fh, "\n%s", msg->body ? msg->body : "") < 0) {
 		warn("fprintf");
-		return 1;
+		error = 1;
 	}
 
-	return 0;
+out:
+	fclose(fh);
+	close(fd);
+	return error;
 }
 
 const struct string_list *
@@ -165,6 +197,49 @@ message_get_header1(const struct message *msg, const char *header)
 		return NULL;
 	str = TAILQ_FIRST(values);
 	return str->val;
+}
+
+void
+message_set_header(struct message *msg, const char *header, char *val)
+{
+	struct header *hdr;
+	ssize_t idx;
+	size_t i, nfound;
+
+	idx = searchheader(msg->headers, msg->nheaders, header, &nfound);
+	if (idx == -1) {
+		msg->headers = reallocarray(msg->headers, msg->nheaders + 1,
+		    sizeof(*msg->headers));
+		if (msg->headers == NULL)
+			err(1, NULL);
+
+		hdr = &msg->headers[msg->nheaders];
+		hdr->flags = HEADER_FLAG_DIRTY;
+		hdr->id = msg->nheaders;
+		hdr->key = header;
+		hdr->val = val;
+		hdr->values = NULL;
+		msg->nheaders++;
+	} else {
+		/*
+		 * Multiple occurrences of the given header.
+		 * Prevent all occurrences other than the first one to be
+		 * written by message_writeat().
+		 */
+		for (i = 1; i < nfound; i++) {
+			hdr = &msg->headers[idx + i];
+			hdr->flags |= HEADER_FLAG_NOWR;
+		}
+
+		hdr = &msg->headers[idx];
+		if ((hdr->flags & HEADER_FLAG_DIRTY))
+			free(hdr->val);
+		else
+			hdr->flags |= HEADER_FLAG_DIRTY;
+		hdr->val = val;
+		strings_free(hdr->values);
+		hdr->values = NULL;
+	}
 }
 
 const char *
@@ -222,6 +297,28 @@ message_set_flags(struct message *msg, unsigned char flag, int add)
 		msg->flags |= FLAG(flag);
 	else
 		msg->flags &= ~FLAG(flag);
+}
+
+/*
+ * Returns non-zero if label is present in the X-Label header, with respect
+ * to word boundaries.
+ */
+int
+message_has_label(const struct message *msg, const char *label)
+{
+	const struct string_list *labels;
+	const struct string *str;
+
+	labels = message_get_header(msg, "X-Label");
+	if (labels == NULL)
+		return 0;
+
+	TAILQ_FOREACH(str, labels, entry) {
+		if (strword(str->val, label))
+			return 1;
+	}
+
+	return 0;
 }
 
 struct message_list *
@@ -338,6 +435,7 @@ message_parse_headers(struct message *msg)
 		if (msg->headers == NULL)
 			err(1, NULL);
 		msg->headers[msg->nheaders].id = msg->nheaders;
+		msg->headers[msg->nheaders].flags = 0;
 		msg->headers[msg->nheaders].key = keybeg;
 		msg->headers[msg->nheaders].val = valbeg;
 		msg->headers[msg->nheaders].values = NULL;
@@ -564,4 +662,26 @@ skipline(const char *s)
 	if (*s != '\0')
 		s++;
 	return s;
+}
+
+static int
+strword(const char *haystack, const char *needle)
+{
+	const char *beg, *p;
+	size_t len;
+
+	beg = haystack;
+	len = strlen(needle);
+	for (;;) {
+		p = strstr(haystack, needle);
+		if (p == NULL)
+			return 0;
+		if ((p == beg || p[-1] == ' ') &&
+		    (p[len] == '\0' || p[len] == ' '))
+			return 1;
+
+		haystack = p + len;
+	}
+
+	return 0;
 }

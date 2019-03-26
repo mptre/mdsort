@@ -149,6 +149,20 @@ Remove the message from the maildir.
 Mutually exclusive with all other actions.
 .It Ic flag Oo Ic \&! Oc Ic new
 Flag the message as read or not.
+.It Ic label Dq Ar label
+.It Ic label No { Do Ar label Dc Ar ... No }
+Add
+.Ar label
+to the X-Label header in message.
+The
+.Ar label
+may contain back-references, see
+.Ic move
+below.
+.Pp
+Only one
+.Ic label
+action can be defined per rule.
 .It Ic move Dq Ar path
 Move the message to the maildir located at
 .Ar path .

@@ -16,7 +16,20 @@ static const char *match_get(const struct match *, unsigned long);
 void
 matches_append(struct match_list *ml, struct match *mh)
 {
-	TAILQ_INSERT_TAIL(&ml->ml_head, mh, mh_entry);
+	enum expr_type type = mh->mh_expr->type;
+
+	/*
+	 * A message only needs to moved or flagged once since both actions
+	 * refer to the same destination.
+	 */
+	if ((type == EXPR_TYPE_MOVE || type == EXPR_TYPE_FLAG) &&
+	    (matches_find(ml, EXPR_TYPE_MOVE) || matches_find(ml, EXPR_TYPE_FLAG)))
+		return;
+
+	if (type == EXPR_TYPE_LABEL)
+		TAILQ_INSERT_HEAD(&ml->ml_head, mh, mh_entry);
+	else
+		TAILQ_INSERT_TAIL(&ml->ml_head, mh, mh_entry);
 }
 
 void
@@ -98,22 +111,18 @@ int
 matches_exec(const struct match_list *ml, struct maildir *src,
     struct message *msg, const struct environment *env)
 {
+	char path[NAME_MAX];
 	struct maildir *dst;
 	struct match *mh;
+	const char *path_save;
 	int error = 0;
-	int didmove = 0;
+
+	path_save = msg->path;
 
 	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
 		switch (mh->mh_expr->type) {
 		case EXPR_TYPE_FLAG:
 		case EXPR_TYPE_MOVE:
-			/*
-			 * A message only needs to moved once since flag and
-			 * move actions refers to the same destination.
-			 */
-			if (didmove)
-				continue;
-
 			dst = maildir_open(ml->ml_path, 0, env);
 			if (dst == NULL) {
 				error = 1;
@@ -122,16 +131,34 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			if (maildir_move(src, dst, msg, env))
 				error = 1;
 			maildir_close(dst);
-			didmove = 1;
 			break;
 		case EXPR_TYPE_DISCARD:
 			if (maildir_unlink(src, msg))
 				error = 1;
 			break;
+		case EXPR_TYPE_LABEL:
+			/*
+			 * Write message with new labels to the source maildir
+			 * and update the message path. This is of importance
+			 * if a move or flag action is up next.
+			 */
+			if (maildir_write(src, src, msg,
+			    path, sizeof(path), env))
+				error = 1;
+			else if (maildir_unlink(src, msg))
+				error = 1;
+			else
+				msg->path = path;
+			break;
 		default:
 			break;
 		}
+
+		if (error)
+			break;
 	}
+
+	msg->path = path_save;
 
 	return error;
 }

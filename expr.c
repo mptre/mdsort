@@ -22,6 +22,7 @@ static int expr_eval_date(EXPR_EVAL_ARGS);
 static int expr_eval_discard(EXPR_EVAL_ARGS);
 static int expr_eval_flag(EXPR_EVAL_ARGS);
 static int expr_eval_header(EXPR_EVAL_ARGS);
+static int expr_eval_label(EXPR_EVAL_ARGS);
 static int expr_eval_move(EXPR_EVAL_ARGS);
 static int expr_eval_neg(EXPR_EVAL_ARGS);
 static int expr_eval_new(EXPR_EVAL_ARGS);
@@ -37,6 +38,8 @@ static int expr_inspect_prefix(const struct expr *, FILE *,
 
 static int expr_regexec(struct expr *, struct match_list *, const char *,
     const char *, int);
+
+static size_t append(char **, size_t *, size_t *, const char *);
 
 struct expr *
 expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
@@ -60,6 +63,7 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_BREAK:
+	case EXPR_TYPE_LABEL:
 		ex->match = calloc(1, sizeof(*ex->match));
 		if (ex->match == NULL)
 			err(1, NULL);
@@ -173,6 +177,8 @@ expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
 		return expr_eval_discard(ex, ml, msg, env);
 	case EXPR_TYPE_BREAK:
 		return expr_eval_break(ex, ml, msg, env);
+	case EXPR_TYPE_LABEL:
+		return expr_eval_label(ex, ml, msg, env);
 	}
 
 	return 1;
@@ -216,6 +222,7 @@ expr_count_actions(const struct expr *ex)
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_BREAK:
+	case EXPR_TYPE_LABEL:
 		acc = 1;
 		break;
 	}
@@ -245,6 +252,7 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 	case EXPR_TYPE_FLAG:
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_BREAK:
+	case EXPR_TYPE_LABEL:
 		break;
 	}
 }
@@ -430,6 +438,42 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 }
 
 static int
+expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
+{
+	const struct string_list *labels;
+	const struct string *str;
+	char *buf = NULL;
+	size_t buflen = 0;
+	size_t bufsiz = 0;
+
+	labels = message_get_header(msg, "X-Label");
+	if (labels != NULL) {
+		TAILQ_FOREACH(str, labels, entry) {
+			/* The header can be empty. */
+			if (append(&buf, &bufsiz, &buflen, str->val) > 0)
+				append(&buf, &bufsiz, &buflen, " ");
+		}
+	}
+
+	TAILQ_FOREACH(str, ex->strings, entry) {
+		if (message_has_label(msg, str->val))
+			continue;
+
+		append(&buf, &bufsiz, &buflen, str->val);
+		append(&buf, &bufsiz, &buflen, " ");
+	}
+	if (buflen > 0)
+		buf[buflen - 1] = '\0';
+
+	message_set_header(msg, "X-Label", buf);
+
+	matches_append(ml, ex->match);
+
+	return 0;
+}
+
+static int
 expr_eval_move(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
@@ -599,4 +643,29 @@ expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
 	}
 
 	return 0;
+}
+
+/*
+ * Append str to buf, both bufsiz and buflen are updated accordingly.
+ * Returns the number of appended bytes.
+ */
+static size_t
+append(char **buf, size_t *bufsiz, size_t *buflen, const char *str)
+{
+	size_t len, newsiz;
+
+	len = strlen(str);
+	while (*buflen + len >= *bufsiz) {
+		newsiz = 2 * *bufsiz;
+		if (newsiz == 0)
+			newsiz = BUFSIZ;
+		*buf = realloc(*buf, newsiz);
+		if (*buf == NULL)
+			err(1, NULL);
+		*bufsiz = newsiz;
+	}
+	memcpy(*buf + *buflen, str, len);
+	*buflen += len;
+
+	return len;
 }

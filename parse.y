@@ -51,6 +51,7 @@ static int lineno, lineno_save, parse_errors;
 %token FLAG
 %token HEADER
 %token INT
+%token LABEL
 %token MAILDIR
 %token MATCH
 %token MOVE
@@ -60,6 +61,7 @@ static int lineno, lineno_save, parse_errors;
 %token SCALAR
 %token STDIN
 %token STRING
+
 %type <str> STRING flag maildir_path
 %type <i> INT SCALAR optneg
 %type <t> date_age
@@ -242,6 +244,10 @@ expraction	: BREAK {
 		| DISCARD {
 			$$ = expr_alloc(EXPR_TYPE_DISCARD, lineno, NULL, NULL);
 		}
+		| LABEL strings {
+			$$ = expr_alloc(EXPR_TYPE_LABEL, lineno, NULL, NULL);
+			expr_set_strings($$, $2);
+		}
 		;
 
 
@@ -352,6 +358,7 @@ yylex(void)
 		{ "discard",	DISCARD },
 		{ "flag",	FLAG },
 		{ "header",	HEADER },
+		{ "label",	LABEL },
 		{ "maildir",	MAILDIR },
 		{ "match",	MATCH },
 		{ "move",	MOVE },
@@ -543,6 +550,8 @@ expr_validate(const struct expr *ex)
 
 	if (expr_count(ex, EXPR_TYPE_MOVE) > 1)
 		yyerror("move action already defined");
+	if (expr_count(ex, EXPR_TYPE_LABEL) > 1)
+		yyerror("label action already defined");
 
 	nactions = expr_count_actions(ex);
 	if (nactions <= 1)

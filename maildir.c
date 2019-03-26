@@ -19,9 +19,9 @@ static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
 static const char *maildir_path(struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
-static int maildir_write(const struct maildir *, const char *,
-    struct message *);
 
+static const char *msgflags(const struct maildir *, const struct maildir *,
+    struct message *);
 static int parsesubdir(const char *, enum subdir *);
 
 struct maildir *
@@ -141,11 +141,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		warn("fstatat");
 	}
 
-	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR)
-		message_set_flags(msg, 'S', 1);
-	else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW)
-		message_set_flags(msg, 'S', 0);
-	flags = message_get_flags(msg);
+	flags = msgflags(src, dst, msg);
 	dstname = maildir_genname(dst, flags, buf[1], sizeof(buf[1]), env);
 	dstfd = dirfd(dst->dir);
 
@@ -157,7 +153,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 			 * different file systems. Fallback to writing a new
 			 * message.
 			 */
-			error = maildir_write(dst, dstname, msg);
+			error = message_writeat(msg, dirfd(dst->dir), dstname);
                         if (error == 0 && (src->flags & MAILDIR_STDIN) == 0)
 				error = maildir_unlink(src, msg);
 		} else {
@@ -185,6 +181,23 @@ maildir_unlink(const struct maildir *md, const struct message *msg)
 		return 1;
 	}
 	return 0;
+}
+
+/*
+ * Write message to a new file in the given maildir. The destination filename
+ * will be written to buf, which must have a capacity of at least NAME_MAX.
+ */
+int
+maildir_write(const struct maildir *src, const struct maildir *dst,
+    struct message *msg, char *buf, size_t bufsiz,
+    const struct environment *env)
+{
+	const char *flags;
+
+	flags = msgflags(dst, src, msg);
+	maildir_genname(dst, flags, buf, bufsiz, env);
+
+	return message_writeat(msg, dirfd(dst->dir), buf);
 }
 
 static int
@@ -338,28 +351,16 @@ maildir_read(struct maildir *md)
 	}
 }
 
-static int
-maildir_write(const struct maildir *md, const char *path, struct message *msg)
+static const char *
+msgflags(const struct maildir *src, const struct maildir *dst,
+    struct message *msg)
 {
-	FILE *fh;
-	int error, fd;
+	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR)
+		message_set_flags(msg, 'S', 1);
+	else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW)
+		message_set_flags(msg, 'S', 0);
 
-	fd = openat(dirfd(md->dir), path, O_WRONLY | O_CLOEXEC);
-	if (fd == -1) {
-		warn("open: %s/%s", md->path, path);
-		return 1;
-	}
-	fh = fdopen(fd, "we");
-	if (fh == NULL) {
-		warn("fdopen: %s/%s", md->path, path);
-		return 1;
-	}
-
-	error = message_write(msg, fh);
-
-	fclose(fh);
-
-	return error;
+	return message_get_flags(msg);
 }
 
 static int

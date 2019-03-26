@@ -96,6 +96,10 @@ int maildir_move(const struct maildir *src, const struct maildir *dst,
  */
 int maildir_unlink(const struct maildir *md, const struct message *msg);
 
+int maildir_write(const struct maildir *src, const struct maildir *dst,
+    struct message *msg, char *buf, size_t bufsiz,
+    const struct environment *env);
+
 struct message {
 	const char *path;
 	const char *body;
@@ -121,18 +125,22 @@ struct message *message_parse(const char *path);
 
 void message_free(struct message *msg);
 
-int message_write(struct message *msg, FILE *fh);
+int message_writeat(struct message *msg, int dirfd, const char *path);
 
 const struct string_list *message_get_header(const struct message *msg,
     const char *header);
 
 const char *message_get_header1(const struct message *msg, const char *header);
 
+void message_set_header(struct message *msg, const char *header, char *val);
+
 const char *message_get_flags(const struct message *msg);
 
 int message_has_flags(const struct message *msg, unsigned char flag);
 
 void message_set_flags(struct message *msg, unsigned char flag, int add);
+
+int message_has_label(const struct message *msg, const char *label);
 
 struct message_list *message_get_attachments(const struct message *msg);
 
@@ -156,6 +164,7 @@ enum expr_type {
 	EXPR_TYPE_FLAG,
 	EXPR_TYPE_DISCARD,
 	EXPR_TYPE_BREAK,
+	EXPR_TYPE_LABEL,
 };
 
 enum expr_cmp {
