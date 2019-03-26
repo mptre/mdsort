@@ -12,8 +12,8 @@
 
 #include "extern.h"
 
-static const char *maildir_genname(const struct maildir *,
-    const char *, const struct environment *);
+static char *maildir_genname(const struct maildir *, const char *,
+    char *, size_t, const struct environment *);
 static int maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
@@ -117,7 +117,7 @@ int
 maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env)
 {
-	char buf[NAME_MAX];
+	char buf[2][NAME_MAX];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
@@ -128,7 +128,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	int doutime = 0;
 	int error = 0;
 
-	srcname = pathslice(msg->path, buf, -1, -1);
+	srcname = pathslice(msg->path, buf[0], -1, -1);
 	if (srcname == NULL) {
 		warnx("%s: basename not found", msg->path);
 		return 1;
@@ -146,7 +146,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW)
 		message_set_flags(msg, 'S', 0);
 	flags = message_get_flags(msg);
-	dstname = maildir_genname(dst, flags, env);
+	dstname = maildir_genname(dst, flags, buf[1], sizeof(buf[1]), env);
 	dstfd = dirfd(dst->dir);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
@@ -219,11 +219,10 @@ maildir_opendir(struct maildir *md, const char *path)
 	return 0;
 }
 
-static const char *
+static char *
 maildir_genname(const struct maildir *dst, const char *flags,
-    const struct environment *env)
+    char *buf, size_t bufsiz, const struct environment *env)
 {
-	static char name[NAME_MAX];
 	long long ts;
 	pid_t pid;
 	int fd, n;
@@ -234,22 +233,22 @@ maildir_genname(const struct maildir *dst, const char *flags,
 	count = arc4random() % 128;
 	for (;;) {
 		count++;
-		n = snprintf(name, NAME_MAX, "%lld.%d_%d.%s%s",
+		n = snprintf(buf, bufsiz, "%lld.%d_%d.%s%s",
 		    ts, pid, count, env->hostname, flags);
 		if (n < 0 || n >= NAME_MAX)
 			errc(1, ENAMETOOLONG, "%s", __func__);
-		fd = openat(dirfd(dst->dir), name, O_WRONLY | O_CREAT | O_EXCL,
+		fd = openat(dirfd(dst->dir), buf, O_WRONLY | O_CREAT | O_EXCL,
 		    S_IRUSR | S_IWUSR);
 		if (fd == -1) {
 			if (errno == EEXIST) {
 				log_debug("%s: %s: file exists\n",
-				    __func__, name);
+				    __func__, buf);
 				continue;
 			}
-			err(1, "openat: %s", name);
+			err(1, "openat: %s", buf);
 		}
 		close(fd);
-		return name;
+		return buf;
 	}
 }
 
@@ -272,8 +271,8 @@ maildir_path(struct maildir *md, const char *filename)
 static int
 maildir_stdin(struct maildir *md, const struct environment *env)
 {
-	char buf[BUFSIZ];
-	const char *name, *path;
+	char buf[BUFSIZ], name[NAME_MAX];
+	const char *path;
 	ssize_t nr, nw;
 	int fd;
 	int error = 0;
@@ -295,7 +294,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	if (maildir_opendir(md, path))
 		return 1;
 
-	name = maildir_genname(md, "", env);
+	maildir_genname(md, "", name, sizeof(name), env);
 	fd = openat(dirfd(md->dir), name, O_WRONLY | O_EXCL);
 	if (fd == -1) {
 		warn("openat: %s/%s", path, name);
