@@ -40,6 +40,9 @@ if testcase "sanity"; then
 		match new discard
 
 		match header "From" /user@example.com/ break
+
+		match header "From" /user\+(.+)@example.com/ label "\1" \
+			move "~/Maildir/Junk"
 	}
 
 	maildir "~/Maildir/test2" {

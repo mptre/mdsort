@@ -1,5 +1,3 @@
-# XXX interpolate
-
 # assert_label label file
 assert_label() {
 	local _got
@@ -194,5 +192,30 @@ if testcase "flag and label"; then
 	assert_empty "src/new"
 	refute_empty "src/cur"
 	assert_label label ${WRKDIR}/src/cur/*
+fi
 
+if testcase "interpolation with no x-label header"; then
+	mkmd "src"
+	mkmsg -H "src/new" -- "To" "user+label@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /user\+(.+)@example.com/ label "\1"
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+	assert_label label ${WRKDIR}/src/new/*
+fi
+
+if testcase "interpolation with x-label header"; then
+	mkmd "src"
+	mkmsg -H "src/new" -- "X-Label" "label"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "X-Label" /.+/ label "\0"
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+	assert_label "label label" ${WRKDIR}/src/new/*
 fi

@@ -220,6 +220,9 @@ message_set_header(struct message *msg, const char *header, char *val)
 		hdr->val = val;
 		hdr->values = NULL;
 		msg->nheaders++;
+
+		qsort(msg->headers, msg->nheaders, sizeof(*msg->headers),
+		    cmpheaderkey);
 	} else {
 		/*
 		 * Multiple occurrences of the given header.

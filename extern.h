@@ -275,7 +275,7 @@ void matches_append(struct match_list *ml, struct match *mh);
 
 void matches_clear(struct match_list *ml);
 
-int matches_interpolate(struct match_list *ml, const struct message *msg);
+int matches_interpolate(struct match_list *ml, struct message *msg);
 
 int matches_exec(const struct match_list *ml, struct maildir *md,
     struct message *msg, const struct environment *env);

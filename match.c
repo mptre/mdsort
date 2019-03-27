@@ -1,6 +1,5 @@
 #include "config.h"
 
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <ctype.h>
@@ -12,6 +11,10 @@
 static const struct match *matches_find_interpolate(const struct match_list *);
 
 static const char *match_get(const struct match *, unsigned long);
+
+static int bufgrow(char **, size_t *, size_t, int);
+static char *interpolate(const struct match *, const char *, char *, size_t,
+    int);
 
 void
 matches_append(struct match_list *ml, struct match *mh)
@@ -45,15 +48,13 @@ matches_clear(struct match_list *ml)
 }
 
 int
-matches_interpolate(struct match_list *ml, const struct message *msg)
+matches_interpolate(struct match_list *ml, struct message *msg)
 {
 	char buf[PATH_MAX];
 	const struct match *mh;
-	const char *sub;
-	char *end, *path;
-	unsigned long bf;
-	size_t i = 0;
-	size_t j = 0;
+	const char *str;
+	char *label, *path;
+	size_t len;
 
 	/* Discard is mutually exclusive with all other actions. */
 	if (matches_find(ml, EXPR_TYPE_DISCARD) != NULL)
@@ -65,46 +66,32 @@ matches_interpolate(struct match_list *ml, const struct message *msg)
 			errx(1, "%s: %s: maildir not found",
 			    __func__, msg->path);
 	}
-
 	if (ml->ml_subdir[0] == '\0') {
 		/* No subdir present, infer from message path. */
 		if (pathslice(msg->path, ml->ml_subdir, -2, -2) == NULL)
 			errx(1, "%s: %s: subdir not found",
 			    __func__, msg->path);
 	}
-
 	path = pathjoin(buf, ml->ml_maildir, ml->ml_subdir, NULL);
 
 	mh = matches_find_interpolate(ml);
-	while (path[i] != '\0') {
-		if (path[i] == '\\' && isdigit(path[i + 1])) {
-			errno = 0;
-			bf = strtoul(path + i + 1, &end, 10);
-			if ((errno == ERANGE && bf == ULONG_MAX) ||
-			    ((sub = match_get(mh, bf)) == NULL)) {
-				warnx("%s: invalid back-reference in "
-				    "destination", path);
-				return 1;
-			}
-			for (; *sub != '\0'; sub++) {
-				if (j == sizeof(ml->ml_path) - 1)
-					goto toolong;
-				ml->ml_path[j++] = *sub;
-			}
-			i = end - path;
-			continue;
-		}
-		if (j == sizeof(ml->ml_path) - 1)
-			goto toolong;
-		ml->ml_path[j++] = path[i++];
-	}
-	assert(j < sizeof(ml->ml_path));
-	ml->ml_path[j] = '\0';
-	return 0;
+	len = sizeof(ml->ml_path);
+	if (interpolate(mh, path, ml->ml_path, len, 0) == NULL)
+		return 1;
 
-toolong:
-	warnx("%s: destination too long", path);
-	return 1;
+	if (matches_find(ml, EXPR_TYPE_LABEL)) {
+		str = message_get_header1(msg, "X-Label");
+		len = strlen(str) + 1;
+		label = malloc(len);
+		if (label == NULL)
+			err(1, NULL);
+		label = interpolate(mh, str, label, len, 1);
+		if (label == NULL)
+			return 1;
+		message_set_header(msg, "X-Label", label);
+	}
+
+	return 0;
 }
 
 int
@@ -248,4 +235,69 @@ match_get(const struct match *mh, unsigned long n)
 	if (mh == NULL || n >= mh->mh_nmatches)
 		return NULL;
 	return mh->mh_matches[n];
+}
+
+static int
+bufgrow(char **buf, size_t *bufsiz, size_t buflen, int grow)
+{
+	size_t newsiz;
+
+	if (*bufsiz > 0 && buflen < *bufsiz - 1)
+		return 0;
+	if (!grow)
+		return 1;
+
+	newsiz = *bufsiz + 64;
+	*buf = realloc(*buf, newsiz);
+	if (*buf == NULL)
+		err(1, NULL);
+	*bufsiz = newsiz;
+
+	return 0;
+}
+
+static char *
+interpolate(const struct match *mh, const char *str, char *buf, size_t bufsiz,
+    int grow)
+{
+	const char *sub;
+	char *end;
+	unsigned long br;
+	size_t buflen = 0;
+	size_t i = 0;
+
+	while (str[i] != '\0') {
+		if (str[i] == '\\' && isdigit(str[i + 1])) {
+			errno = 0;
+			br = strtoul(str + i + 1, &end, 10);
+			if ((errno == ERANGE && br == ULONG_MAX) ||
+			    ((sub = match_get(mh, br)) == NULL))
+				goto invalid;
+			for (; *sub != '\0'; sub++) {
+				if (bufgrow(&buf, &bufsiz, buflen, grow))
+					goto toolong;
+				buf[buflen++] = *sub;
+			}
+			i = end - str;
+			continue;
+		}
+		if (bufgrow(&buf, &bufsiz, buflen, grow))
+			goto toolong;
+		buf[buflen++] = str[i++];
+	}
+	buf[buflen] = '\0';
+
+	return buf;
+
+invalid:
+	warnx("%s: invalid back-reference", str);
+	if (grow)
+		free(buf);
+	return NULL;
+
+toolong:
+	warnx("%s: interpolated string too long", str);
+	if (grow)
+		free(buf);
+	return NULL;
 }
