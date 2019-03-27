@@ -51,19 +51,38 @@ used within a condition is interpreted as an extended regular expression and can
 be made case insensitive using the
 .Sq i
 keyword.
+Subexpressions in
+.Ar pattern
+can be used to interpolate arguments to
+.Ar action .
+Referencing a subexpression is done using back-references on the form
+.Sq \e#
+where
+.Sq #
+is a digit.
+The digit refers to the nth subexpression of
+.Ar pattern
+and will be replaced with the matched string.
+By default, subexpressions of the first matching
+.Ar pattern
+is used.
+Using the
+.Sq f
+keyword will force usage of subexpressions from the corresponding
+.Ar pattern .
 .Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
-.It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op i
+.It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op fi
 Evaluates to true if the message body matches
 .Ar pattern .
 .It Xo Op Ic \&!
 .Ic header Dq Ar name
-.Pf / Ar pattern Ns Pf / Op i
+.Pf / Ar pattern Ns Pf / Op fi
 .Xc
 .It Xo Op Ic \&!
 .Ic header No { Do Ar name Dc Ar ... No }
-.Pf / Ar pattern Ns Pf / Op i
+.Pf / Ar pattern Ns Pf / Op fi
 .Xc
 Evaluates to true if the value of any of the headers with
 .Ar name
@@ -78,7 +97,7 @@ in message is done case insensitive.
 Evaluates to true if the message has attachments.
 .It Xo Op Ic \&!
 .Ic attachment
-.Pf / Ar pattern Ns Pf / Op i
+.Pf / Ar pattern Ns Pf / Op fi
 .Xc
 Evaluates to true if the message has attachments with a content type matching
 .Ar pattern .
@@ -156,9 +175,7 @@ Add
 to the X-Label header in message.
 The
 .Ar label
-may contain back-references, see
-.Ic move
-below.
+may contain back-references.
 .Pp
 Only one
 .Ic label
@@ -168,19 +185,7 @@ Move the message to the maildir located at
 .Ar path .
 The
 .Ar path
-may contain back-references on the form
-.Sq \e#
-where
-.Sq #
-is a digit.
-The digit refers to the nth subexpression of the first matching
-.Ar pattern
-and will be replaced with the matched string.
-Note, using back-references with many
-.Ic or
-conditions is not encouraged since the
-.Ar pattern
-that matches first may vary.
+may contain back-references.
 .Pp
 Only one
 .Ic move

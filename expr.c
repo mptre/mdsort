@@ -125,6 +125,10 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 		rflags |= REG_ICASE;
 		flags &= ~EXPR_PATTERN_ICASE;
 	}
+	if (flags & EXPR_PATTERN_FORCE) {
+		ex->ex_re.r_flags |= EXPR_PATTERN_FORCE;
+		flags &= ~EXPR_PATTERN_FORCE;
+	}
 	assert(flags == 0);
 
 	if ((ret = regcomp(&ex->ex_re.r_pattern, pattern, rflags)) != 0) {
@@ -228,6 +232,23 @@ expr_count_actions(const struct expr *ex)
 		break;
 	}
 	return acc + expr_count_actions(ex->lhs) + expr_count_actions(ex->rhs);
+}
+
+/*
+ * Returns the number of expressions with the given pattern flags.
+ */
+int
+expr_count_patterns(const struct expr *ex, unsigned int flags)
+{
+	int n = 0;
+
+	if (ex == NULL)
+		return 0;
+
+	if (ex->ex_re.r_nmatches > 0 && (ex->ex_re.r_flags & flags))
+		n = 1;
+	return n + expr_count_patterns(ex->lhs, flags) +
+	    expr_count_patterns(ex->rhs, flags);
 }
 
 void

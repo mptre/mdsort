@@ -16,7 +16,8 @@ if testcase "sanity"; then
 			! header "Subject" /hello/ or \
 			! new move "~/Maildir/Junk"
 
-		match body /hello/i move "~/Maildir/Junk"
+		match body /hello/if move "~/Maildir/Junk"
+		match body /hello/fi move "~/Maildir/Junk"
 
 		match ! body /hello/ move "~/Maildir/Junk"
 
@@ -321,5 +322,16 @@ if testcase -t leaky "duplicate move actions"; then
 	EOF
 	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: move action already defined
+	EOF
+fi
+
+if testcase -t leaky "duplicate force pattern flag"; then
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+		match header "From" /a/f and header "To" /b/f discard
+	}
+	EOF
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:3: pattern force flag cannot be used more than once
 	EOF
 fi

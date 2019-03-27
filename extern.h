@@ -182,6 +182,7 @@ struct expr {
 		regex_t r_pattern;
 		regmatch_t *r_matches;
 		size_t r_nmatches;
+		unsigned int r_flags;
 	} ex_re;
 
 	struct {
@@ -240,6 +241,9 @@ void expr_set_strings(struct expr *ex, struct string_list *strings);
  *
  *     EXPR_PATTERN_ICASE    Ignore case.
  *
+ *     EXPR_PATTERN_FORCE    Force usage of matches belonging to the
+ *                           given pattern during interpolation.
+ *
  * Returns zero if pattern is successfully compiled into a regular expression.
  * Otherwise, returns non-zero and if errstr is not NULL it will point to an
  * explanation on why the compilation failed.
@@ -248,6 +252,7 @@ int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
     const char **errstr);
 
 #define EXPR_PATTERN_ICASE	0x1
+#define EXPR_PATTERN_FORCE	0x2
 
 /*
  * Returns the number of expressions with the given type.
@@ -258,6 +263,8 @@ int expr_count(const struct expr *ex, enum expr_type type);
  * Returns the number of actions.
  */
 int expr_count_actions(const struct expr *ex);
+
+int expr_count_patterns(const struct expr *ex, unsigned int flags);
 
 /*
  * Returns 0 if the expression matches the given message. The given match list
