@@ -24,6 +24,9 @@ maildir "~/Maildir/INBOX" {
 	match header "Received-SPF" /fail/ or header "X-Spam-Score" /[1-9]/ \
 		move "~/Maildir/Spam"
 
+	# Label messages with the plus portion of the address.
+	match header "To" /user\+(.+)@example.com/ label "\1"
+
 	# Archive read messages.
 	match ! new move "~/Maildir/Archive"
 }
