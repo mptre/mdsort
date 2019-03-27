@@ -192,20 +192,20 @@ expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
 int
 expr_count(const struct expr *ex, enum expr_type type)
 {
-	int acc = 0;
+	int n = 0;
 
 	if (ex == NULL)
 		return 0;
 
 	if (ex->type == type)
-		acc = 1;
-	return acc + expr_count(ex->lhs, type) + expr_count(ex->rhs, type);
+		n = 1;
+	return n + expr_count(ex->lhs, type) + expr_count(ex->rhs, type);
 }
 
 int
 expr_count_actions(const struct expr *ex)
 {
-	int acc = 0;
+	int n = 0;
 
 	if (ex == NULL)
 		return 0;
@@ -228,10 +228,10 @@ expr_count_actions(const struct expr *ex)
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_BREAK:
 	case EXPR_TYPE_LABEL:
-		acc = 1;
+		n = 1;
 		break;
 	}
-	return acc + expr_count_actions(ex->lhs) + expr_count_actions(ex->rhs);
+	return n + expr_count_actions(ex->lhs) + expr_count_actions(ex->rhs);
 }
 
 /*
