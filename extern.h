@@ -178,9 +178,11 @@ struct expr {
 
 	struct string_list *strings;
 
-	regex_t pattern;
-	regmatch_t *matches;
-	size_t nmatches;
+	struct {
+		regex_t r_pattern;
+		regmatch_t *r_matches;
+		size_t r_nmatches;
+	} ex_re;
 
 	struct {
 		enum expr_cmp cmp;

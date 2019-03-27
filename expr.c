@@ -90,9 +90,9 @@ expr_free(struct expr *ex)
 	expr_free(ex->rhs);
 	strings_free(ex->strings);
 	match_reset(ex->match);
-	regfree(&ex->pattern);
+	regfree(&ex->ex_re.r_pattern);
+	free(ex->ex_re.r_matches);
 	free(ex->match);
-	free(ex->matches);
 	free(ex);
 }
 
@@ -119,7 +119,7 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 	int ret;
 	int rflags = REG_EXTENDED | REG_NEWLINE;
 
-	assert(ex->nmatches == 0);
+	assert(ex->ex_re.r_nmatches == 0);
 
 	if (flags & EXPR_PATTERN_ICASE) {
 		rflags |= REG_ICASE;
@@ -127,16 +127,17 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 	}
 	assert(flags == 0);
 
-	if ((ret = regcomp(&ex->pattern, pattern, rflags)) != 0) {
+	if ((ret = regcomp(&ex->ex_re.r_pattern, pattern, rflags)) != 0) {
 		if (errstr != NULL) {
-			regerror(ret, &ex->pattern, buf, sizeof(buf));
+			regerror(ret, &ex->ex_re.r_pattern, buf, sizeof(buf));
 			*errstr = buf;
 		}
 		return 1;
 	}
-	ex->nmatches = ex->pattern.re_nsub + 1;
-	ex->matches = reallocarray(NULL, ex->nmatches, sizeof(*ex->matches));
-	if (ex->matches == NULL)
+	ex->ex_re.r_nmatches = ex->ex_re.r_pattern.re_nsub + 1;
+	ex->ex_re.r_matches = reallocarray(NULL, ex->ex_re.r_nmatches,
+	    sizeof(*ex->ex_re.r_matches));
+	if (ex->ex_re.r_matches == NULL)
 		err(1, NULL);
 
 	return 0;
@@ -321,7 +322,7 @@ static int
 expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	assert(ex->nmatches > 0);
+	assert(ex->ex_re.r_nmatches > 0);
 
 	if (msg->body == NULL)
 		return 1;
@@ -420,7 +421,7 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 	const struct string *key, *val;
 
 	assert(ex->strings != NULL);
-	assert(ex->nmatches > 0);
+	assert(ex->ex_re.r_nmatches > 0);
 
 	TAILQ_FOREACH(key, ex->strings, entry) {
 		values = message_get_header(msg, key->val);
@@ -567,9 +568,9 @@ expr_inspect_header(const struct expr *ex, FILE *fh,
 	match = ex->match;
 	indent = strlen(match->mh_key) + 2;
 
-	for (i = 0; i < ex->nmatches; i++) {
-		beg = ex->matches[i].rm_so;
-		end = ex->matches[i].rm_eo;
+	for (i = 0; i < ex->ex_re.r_nmatches; i++) {
+		beg = ex->ex_re.r_matches[i].rm_so;
+		end = ex->ex_re.r_matches[i].rm_eo;
 
 		lbeg = match->mh_val;
 		for (;;) {
@@ -627,12 +628,13 @@ static int
 expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
     const char *val, int dryrun)
 {
-	if (regexec(&ex->pattern, val, ex->nmatches, ex->matches, 0))
+	if (regexec(&ex->ex_re.r_pattern, val, ex->ex_re.r_nmatches,
+	    ex->ex_re.r_matches, 0))
 		return 1;
 
 	matches_append(ml, ex->match);
 
-	match_copy(ex->match, val, ex->matches, ex->nmatches);
+	match_copy(ex->match, val, ex->ex_re.r_matches, ex->ex_re.r_nmatches);
 	if (dryrun) {
 		ex->match->mh_key = strdup(key);
 		if (ex->match->mh_key == NULL)
