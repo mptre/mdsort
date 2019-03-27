@@ -42,6 +42,12 @@ static char *parseboundary(const char *);
 static const char *skipline(const char *);
 static int strword(const char *, const char *);
 
+/*
+ * Parse the message located at path.
+ *
+ * The caller is responsible for freeing the returned memory using
+ * message_free().
+ */
 struct message *
 message_parse(const char *path)
 {

@@ -24,6 +24,23 @@ static const char *msgflags(const struct maildir *, const struct maildir *,
     struct message *);
 static int parsesubdir(const char *, enum subdir *);
 
+/*
+ * Open the maildir directory located at path.
+ *
+ * The flags may be any combination of the following values:
+ *
+ *     MAILDIR_WALK      Invoking maildir_walk() will traverse all messages
+ *                       present in the cur and new subdirectories rooted at
+ *                       path.
+ *
+ *     MAILDIR_ROOT      The given path refers to a maildir root, as opposed of
+ *                       referencing a subdirectory (cur, new or tmp).
+ *
+ *     MAILDIR_STDIN     Read messages from stdin.
+ *
+ * The caller is responsible for freeing the returned memory using
+ * maildir_close().
+ */
 struct maildir *
 maildir_open(const char *path, int flags, const struct environment *env)
 {
@@ -90,6 +107,11 @@ maildir_close(struct maildir *md)
 	free(md);
 }
 
+/*
+ * Returns the path to the next file located in the maildir.
+ * Calling it repeatedly will traverse all the files.
+ * Once all files have been traversed, NULL is returned.
+ */
 const char *
 maildir_walk(struct maildir *md)
 {
@@ -113,6 +135,11 @@ maildir_walk(struct maildir *md)
 	}
 }
 
+/*
+ * Move the message located in src to dst.
+ *
+ * Returns zero on success, non-zero otherwise.
+ */
 int
 maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env)
@@ -166,6 +193,11 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	return error;
 }
 
+/*
+ * Remove the message located in the given maildir.
+ *
+ * Returns zero on success, non-zero otherwise.
+ */
 int
 maildir_unlink(const struct maildir *md, const struct message *msg)
 {

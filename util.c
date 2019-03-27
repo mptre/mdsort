@@ -11,6 +11,12 @@
 
 static int verbose;
 
+/*
+ * Allocate a list of strings.
+ *
+ * The caller is responsible for freeing the returned memory using
+ * strings_free().
+ */
 struct string_list *
 strings_alloc(void)
 {
@@ -51,6 +57,11 @@ strings_append(struct string_list *strings, char *val)
 	TAILQ_INSERT_TAIL(strings, str, entry);
 }
 
+/*
+ * Join root, dirname and filename into a path written to buf which must be at
+ * least of size PATH_MAX.
+ * The filename may optionally be NULL.
+ */
 char *
 pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
 {
@@ -69,6 +80,13 @@ pathjoin(char *buf, const char *root, const char *dirname, const char *filename)
 	return buf;
 }
 
+/*
+ * Writes the given number of components from path to buf which must be at least
+ * of size PATH_MAX.
+ * The component range as given by beg and end may either be positive (start
+ * from the beginning) or negative (start from the end).
+ * If beg is equal to end, only a single component of the path is extract.
+ */
 char *
 pathslice(const char *path, char *buf, int beg, int end)
 {

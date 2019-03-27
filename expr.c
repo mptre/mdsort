@@ -41,6 +41,12 @@ static int expr_regexec(struct expr *, struct match_list *, const char *,
 
 static size_t append(char **, size_t *, size_t *, const char *);
 
+/*
+ * Allocate a new expression with the given type.
+ *
+ * The caller is responsible for freeing the returned memory using
+ * expr_free().
+ */
 struct expr *
 expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 {
@@ -111,6 +117,20 @@ expr_set_strings(struct expr *ex, struct string_list *strings)
 	ex->strings = strings;
 }
 
+/*
+ * Associate the given pattern with the expression.
+ *
+ * The flags may be any combination of the following values:
+ *
+ *     EXPR_PATTERN_ICASE    Ignore case.
+ *
+ *     EXPR_PATTERN_FORCE    Force usage of matches belonging to the
+ *                           given pattern during interpolation.
+ *
+ * Returns zero if pattern is successfully compiled into a regular expression.
+ * Otherwise, returns non-zero and if errstr is not NULL it will point to an
+ * explanation on why the compilation failed.
+ */
 int
 expr_set_pattern(struct expr *ex, const char *pattern, int flags,
     const char **errstr)
@@ -147,6 +167,11 @@ expr_set_pattern(struct expr *ex, const char *pattern, int flags,
 	return 0;
 }
 
+/*
+ * Returns 0 if the expression matches the given message. The given match list
+ * will be populated with the matching expressions.
+ * Otherwise, non-zero is returned.
+ */
 int
 expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
@@ -189,6 +214,9 @@ expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
 	return 1;
 }
 
+/*
+ * Returns the number of expressions with the given type.
+ */
 int
 expr_count(const struct expr *ex, enum expr_type type)
 {
@@ -202,6 +230,9 @@ expr_count(const struct expr *ex, enum expr_type type)
 	return n + expr_count(ex->lhs, type) + expr_count(ex->rhs, type);
 }
 
+/*
+ * Returns the number of actions.
+ */
 int
 expr_count_actions(const struct expr *ex)
 {
@@ -251,6 +282,9 @@ expr_count_patterns(const struct expr *ex, unsigned int flags)
 	    expr_count_patterns(ex->rhs, flags);
 }
 
+/*
+ * Writes a human readable representation of the latest match to fh.
+ */
 void
 expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 {

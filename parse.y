@@ -311,6 +311,11 @@ nl		: '\n' optnl
 
 %%
 
+/*
+ * Parses the configuration located at path and returns a config list on
+ * success.
+ * Otherwise, NULL is returned.
+ */
 struct config_list *
 parse_config(const char *path, const struct environment *envp)
 {

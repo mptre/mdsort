@@ -12,6 +12,10 @@ static int tzparse(const char *, time_t *, const struct environment *);
 static int tzabbr(const char *, time_t *, const struct environment *);
 static int tzoff(const char *, time_t *);
 
+/*
+ * Parse the given formatted timestamp.
+ * Returns zero on success, non-zero otherwise.
+ */
 int
 time_parse(const char *str, time_t *res, const struct environment *env)
 {
