@@ -105,7 +105,7 @@ message_free(struct message *msg)
 
 	for (i = 0; i < msg->nheaders; i++) {
 		strings_free(msg->headers[i].values);
-		if ((msg->headers[i].flags & HEADER_FLAG_DIRTY))
+		if (msg->headers[i].flags & HEADER_FLAG_DIRTY)
 			free(msg->headers[i].val);
 	}
 
@@ -142,7 +142,7 @@ message_writeat(struct message *msg, int dirfd, const char *path)
 
 	for (i = 0; i < msg->nheaders; i++) {
 		hdr = &msg->headers[i];
-		if ((hdr->flags & HEADER_FLAG_NOWR))
+		if (hdr->flags & HEADER_FLAG_NOWR)
 			continue;
 
 		if (fprintf(fh, "%s: %s\n", hdr->key, hdr->val) < 0) {
@@ -235,7 +235,7 @@ message_set_header(struct message *msg, const char *header, char *val)
 		}
 
 		hdr = &msg->headers[idx];
-		if ((hdr->flags & HEADER_FLAG_DIRTY))
+		if (hdr->flags & HEADER_FLAG_DIRTY)
 			free(hdr->val);
 		else
 			hdr->flags |= HEADER_FLAG_DIRTY;
@@ -271,7 +271,7 @@ message_get_flags(const struct message *msg)
 	buf[i++] = '2';
 	buf[i++] = ',';
 	for (flags = msg->flags; flags > 0; flags >>= 1) {
-		if ((flags & 0x1))
+		if (flags & 0x1)
 			buf[i++] = 'A' + bit;
 		bit++;
 	}

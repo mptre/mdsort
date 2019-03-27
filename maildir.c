@@ -35,11 +35,11 @@ maildir_open(const char *path, int flags, const struct environment *env)
 	md->subdir = SUBDIR_NEW;
 	md->flags = flags;
 
-	if ((md->flags & MAILDIR_STDIN)) {
+	if (md->flags & MAILDIR_STDIN) {
 		if (maildir_stdin(md, env))
 			goto fail;
 	} else {
-		if ((md->flags & MAILDIR_WALK)) {
+		if (md->flags & MAILDIR_WALK) {
 			md->path = strdup(path);
 			if (md->path == NULL)
 				err(1, NULL);
@@ -74,7 +74,7 @@ maildir_close(struct maildir *md)
 	if (md == NULL)
 		return;
 
-	if ((md->flags & MAILDIR_STDIN)) {
+	if (md->flags & MAILDIR_STDIN) {
 		dir = maildir_path(md, NULL);
 		if (maildir_opendir(md, dir) == 0) {
 			while ((path = maildir_walk(md)))
@@ -203,7 +203,7 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 static int
 maildir_next(struct maildir *md)
 {
-	if ((md->flags & MAILDIR_STDIN))
+	if (md->flags & MAILDIR_STDIN)
 		return 1;
 
 	switch (md->subdir) {

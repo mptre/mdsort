@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 		error = 1;
 		goto done;
 	}
-	if ((env.options & OPTION_SYNTAX))
+	if (env.options & OPTION_SYNTAX)
 		goto done;
 
 	TAILQ_FOREACH(conf, config, entry) {
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 
 			log_info("%s -> %s\n",
 			    dostdin ? "<stdin>" : path, matches.ml_path);
-			if ((env.options & OPTION_DRYRUN)) {
+			if (env.options & OPTION_DRYRUN) {
 				matches_inspect(&matches, stdout, &env);
 				message_free(msg);
 				continue;

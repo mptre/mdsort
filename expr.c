@@ -386,7 +386,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 		break;
 	}
 
-	if ((env->options & OPTION_DRYRUN)) {
+	if (env->options & OPTION_DRYRUN) {
 		match_reset(ex->match);
 
 		ex->match->mh_key = strdup("Date");
