@@ -137,7 +137,6 @@ maildir_walk(struct maildir *md)
 
 /*
  * Move the message located in src to dst.
- *
  * Returns zero on success, non-zero otherwise.
  */
 int
@@ -195,7 +194,6 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 
 /*
  * Remove the message located in the given maildir.
- *
  * Returns zero on success, non-zero otherwise.
  */
 int
