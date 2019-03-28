@@ -11,7 +11,6 @@
 
 static char *expandtilde(char *);
 static void expr_validate(const struct expr *);
-static void expr_validate_actions(const struct expr *);
 static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 static int yygetc(void);
@@ -132,7 +131,10 @@ exprs		: /* empty */ {
 		;
 
 expr		: MATCH expr1 expr2 {
-			expr_validate($2);
+			if (expr_count_patterns($2, EXPR_PATTERN_FORCE) > 1)
+				yyerror("pattern force flag cannot be used "
+				    "more than once");
+
 			$$ = expr_alloc(EXPR_TYPE_AND, lineno, $2, $3);
 		}
 		;
@@ -215,7 +217,7 @@ expractions	: /* empty */ {
 				$$ = $2;
 			} else {
 				$$ = expr_alloc(EXPR_TYPE_AND, lineno, $1, $2);
-				expr_validate_actions($$);
+				expr_validate($$);
 			}
 		}
 		;
@@ -559,13 +561,6 @@ expandtilde(char *str)
 
 static void
 expr_validate(const struct expr *ex)
-{
-	if (expr_count_patterns(ex, EXPR_PATTERN_FORCE) > 1)
-		yyerror("pattern force flag cannot be used more than once");
-}
-
-static void
-expr_validate_actions(const struct expr *ex)
 {
 	int nactions;
 
