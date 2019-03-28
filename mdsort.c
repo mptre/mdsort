@@ -31,10 +31,10 @@ main(int argc, char *argv[])
 	struct maildir *md;
 	struct message *msg;
 	const char *path;
+	unsigned int mdflags = MAILDIR_WALK | MAILDIR_ROOT;
 	int c;
 	int error = 0;
 	int dostdin = 0;
-	int mdflags = MAILDIR_WALK | MAILDIR_ROOT;
 	int verbose = 0;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)

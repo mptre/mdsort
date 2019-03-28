@@ -44,7 +44,7 @@ struct maildir {
 	char *path;
 	DIR *dir;
 	enum subdir subdir;
-	int flags;
+	unsigned int flags;
 	char buf[PATH_MAX];
 };
 
@@ -52,7 +52,7 @@ struct maildir {
 #define MAILDIR_ROOT	0x2
 #define MAILDIR_STDIN	0x4
 
-struct maildir *maildir_open(const char *path, int flags,
+struct maildir *maildir_open(const char *path, unsigned int flags,
     const struct environment *env);
 
 void maildir_close(struct maildir *md);

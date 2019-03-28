@@ -42,7 +42,8 @@ static int parsesubdir(const char *, enum subdir *);
  * maildir_close().
  */
 struct maildir *
-maildir_open(const char *path, int flags, const struct environment *env)
+maildir_open(const char *path, unsigned int flags,
+    const struct environment *env)
 {
 	struct maildir *md;
 
