@@ -39,7 +39,7 @@ static int lineno, lineno_save, parse_errors;
 
 	struct {
 		char *str;
-		int flags;
+		unsigned int flags;
 	} pattern;
 }
 

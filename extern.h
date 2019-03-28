@@ -192,7 +192,7 @@ void expr_set_date(struct expr *ex, enum expr_cmp cmp, time_t age);
 
 void expr_set_strings(struct expr *ex, struct string_list *strings);
 
-int expr_set_pattern(struct expr *ex, const char *pattern, int flags,
+int expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
     const char **errstr);
 
 int expr_count(const struct expr *ex, enum expr_type type);

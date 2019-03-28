@@ -132,7 +132,7 @@ expr_set_strings(struct expr *ex, struct string_list *strings)
  * explanation on why the compilation failed.
  */
 int
-expr_set_pattern(struct expr *ex, const char *pattern, int flags,
+expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
     const char **errstr)
 {
 	static char buf[1024];
