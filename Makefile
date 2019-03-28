@@ -76,7 +76,7 @@ ${PROG}: ${OBJS}
 	${CC} ${DEBUG} -o ${PROG} ${OBJS} ${LDFLAGS}
 
 clean:
-	rm -f ${DEPS} ${OBJS} ${PROG} parse.c
+	rm -f ${DEPS} ${OBJS} ${PROG} parse.c y.tab.h
 .PHONY: clean
 
 dist:
