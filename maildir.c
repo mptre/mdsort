@@ -20,6 +20,7 @@ static int maildir_stdin(struct maildir *, const struct environment *);
 static const char *maildir_path(struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
+static int isfile(int, const char *);
 static const char *msgflags(const struct maildir *, const struct maildir *,
     struct message *);
 static int parsesubdir(const char *, enum subdir *);
@@ -375,11 +376,34 @@ maildir_read(struct maildir *md)
 		ent = readdir(md->dir);
 		if (ent == NULL)
 			return 0;
-		if (ent->d_type != DT_REG)
+		switch (ent->d_type) {
+		case DT_UNKNOWN:
+			/*
+			 * Some filesystems like XFS does not return the file
+			 * type and stat(2) must instead be used.
+			 */
+			if (!isfile(dirfd(md->dir), ent->d_name))
+				continue;
+			break;
+		case DT_REG:
+			break;
+		default:
 			continue;
+		}
 
 		return maildir_path(md, ent->d_name);
 	}
+}
+
+static int
+isfile(int dirfd, const char *path)
+{
+	struct stat sb;
+
+	if (fstatat(dirfd, path, &sb, AT_SYMLINK_NOFOLLOW) == -1)
+		return 0;
+
+	return (sb.st_mode & S_IFMT) == S_IFREG;
 }
 
 static const char *
