@@ -44,12 +44,6 @@ matrix:
           packages:
             - musl-tools
 
-    - os: osx
-      compiler: clang
-      env:
-        - T=macos-clang
-        - CFLAGS=-Werror
-
     - os: linux
       compiler: clang
       env:
@@ -63,6 +57,12 @@ matrix:
         apt:
           packages:
             - valgrind
+
+    - os: osx
+      compiler: clang
+      env:
+        - T=macos-clang
+        - CFLAGS=-Werror
 
 script:
   - |
