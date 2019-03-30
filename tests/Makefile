@@ -16,9 +16,9 @@ TESTS+=	match-new.sh
 TESTS+=	match-old.sh
 TESTS+=	stdin.sh
 
-.SUFFIXES: .sh .out
+.SUFFIXES: .sh .fake
 
-.sh.out:
+.sh.fake:
 	sh ${.CURDIR}/t.sh ${TESTFLAGS} ${.CURDIR}/util.sh ${.CURDIR}/$<
 
-all: ${TESTS:.sh=.out}
+all: ${TESTS:.sh=.fake}
