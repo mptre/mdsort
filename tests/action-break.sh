@@ -1,4 +1,4 @@
-if testcase -t leaky "break is mutually exclusive with all other actions"; then
+if testcase "break is mutually exclusive with all other actions"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match all move "dst" break

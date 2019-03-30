@@ -249,12 +249,12 @@ if testcase "destination interpolation too long"; then
 		fail - "expected destination to be too long" <$TMP1
 fi
 
-if testcase -t leaky "unknown option"; then
+if testcase "unknown option"; then
 	mdsort -e -- -1 >$TMP1
 	grep -q 'usage' $TMP1 || fail - "expected usage output" <$TMP1
 fi
 
-if testcase -t leaky "extraneous option"; then
+if testcase "extraneous option"; then
 	mdsort -e -- extraneous >$TMP1
 	grep -q 'usage' $TMP1 || fail - "expected usage output" <$TMP1
 fi

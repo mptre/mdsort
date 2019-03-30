@@ -1,4 +1,4 @@
-if testcase -t leaky "stdin may only be defined once"; then
+if testcase "stdin may only be defined once"; then
 	cat <<-EOF >$CONF
 	stdin {
 		match all move "dst"

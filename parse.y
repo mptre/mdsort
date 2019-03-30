@@ -332,9 +332,27 @@ config_parse(const char *path, const struct environment *envp)
 	lineno = 1;
 	yyparse();
 	fclose(fh);
-	if (parse_errors > 0)
+	if (parse_errors > 0) {
+		config_free(&config);
 		return NULL;
+	}
 	return &config;
+}
+
+void
+config_free(struct config_list *config)
+{
+	struct config *conf;
+
+	if (config == NULL)
+		return;
+
+	while ((conf = TAILQ_FIRST(config)) != NULL) {
+		TAILQ_REMOVE(config, conf, entry);
+		expr_free(conf->expr);
+		free(conf->maildir);
+		free(conf);
+	}
 }
 
 void

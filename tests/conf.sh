@@ -104,7 +104,7 @@ if testcase -t leaky "rule must end with newline"; then
 	EOF
 fi
 
-if testcase -t leaky "empty maildir path"; then
+if testcase "empty maildir path"; then
 	cat <<-EOF >$CONF
 	maildir "" {}
 	EOF
@@ -113,7 +113,7 @@ if testcase -t leaky "empty maildir path"; then
 	EOF
 fi
 
-if testcase -t leaky "unknown keyword"; then
+if testcase "unknown keyword"; then
 	cat <<-EOF >$CONF
 	noway
 	EOF
@@ -141,13 +141,13 @@ if testcase "default path"; then
 	HOME=$WRKDIR mdsort -D -- -n
 fi
 
-if testcase -t leaky "missing file"; then
+if testcase "missing file"; then
 	mdsort -e - -- -n -f missing.conf <<-EOF
 	mdsort: missing.conf: No such file or directory
 	EOF
 fi
 
-if testcase -t leaky "invalid pattern"; then
+if testcase "invalid pattern"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match body /(/ move "~/Maildir/test2"
@@ -157,7 +157,7 @@ if testcase -t leaky "invalid pattern"; then
 	mdsort -e -- -n >/dev/null
 fi
 
-if testcase -t leaky "missing header name"; then
+if testcase "missing header name"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "" /./ move "~/Maildir/test2"
@@ -170,7 +170,7 @@ if testcase -t leaky "missing header name"; then
 	EOF
 fi
 
-if testcase -t leaky "empty move destination"; then
+if testcase "empty move destination"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match new move ""
@@ -193,7 +193,7 @@ if testcase -t leaky "keyword too long"; then
 	EOF
 fi
 
-if testcase -t leaky "string too long"; then
+if testcase "string too long"; then
 	cat <<-EOF >$CONF
 	maildir "$(genstr $BUFSIZ)" {}
 	EOF
@@ -203,7 +203,7 @@ if testcase -t leaky "string too long"; then
 	EOF
 fi
 
-if testcase -t leaky "string unterminated"; then
+if testcase "string unterminated"; then
 	cat <<-EOF >$CONF
 	maildir "
 	EOF
@@ -238,7 +238,7 @@ if testcase -t leaky "pattern unterminated"; then
 	EOF
 fi
 
-if testcase -t leaky -t tilde "maildir path too long after tilde expansion"; then
+if testcase -t tilde "maildir path too long after tilde expansion"; then
 	cat <<-EOF >$CONF
 	maildir "~/$(genstr $((PATH_MAX - 10)))" {}
 	EOF
@@ -247,7 +247,7 @@ if testcase -t leaky -t tilde "maildir path too long after tilde expansion"; the
 	EOF
 fi
 
-if testcase -t leaky -t tilde "destination path too long after tilde expansion"; then
+if testcase -t tilde "destination path too long after tilde expansion"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /./ \
@@ -281,7 +281,7 @@ if testcase -t leaky "missing right-hand expr with and"; then
 	EOF
 fi
 
-if testcase -t leaky "empty match block"; then
+if testcase "empty match block"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 	}
@@ -291,7 +291,7 @@ if testcase -t leaky "empty match block"; then
 	EOF
 fi
 
-if testcase -t leaky "empty nested match block"; then
+if testcase "empty nested match block"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new {
@@ -303,7 +303,7 @@ if testcase -t leaky "empty nested match block"; then
 	EOF
 fi
 
-if testcase -t leaky "missing action"; then
+if testcase "missing action"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new
@@ -314,7 +314,7 @@ if testcase -t leaky "missing action"; then
 	EOF
 fi
 
-if testcase -t leaky "duplicate move actions"; then
+if testcase "duplicate move actions"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new move "~/Maildir/one" move "~/Maildir/two"
@@ -325,7 +325,7 @@ if testcase -t leaky "duplicate move actions"; then
 	EOF
 fi
 
-if testcase -t leaky "duplicate force pattern flag"; then
+if testcase "duplicate force pattern flag"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match header "From" /a/f and header "To" /b/f discard

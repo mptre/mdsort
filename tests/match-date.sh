@@ -23,7 +23,7 @@ if testcase -t leaky "scalar abbreviation ambiguous"; then
 	EOF
 fi
 
-if testcase -t leaky "age too large"; then
+if testcase "age too large"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match date > 4294967296 seconds  move "dst"

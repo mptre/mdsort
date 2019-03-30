@@ -10,7 +10,7 @@ assert_label() {
 	assert_eq "$1" "$_got"
 }
 
-if testcase -t leaky "duplicate label actions"; then
+if testcase "duplicate label actions"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new label "one" label "two"

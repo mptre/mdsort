@@ -141,12 +141,7 @@ main(int argc, char *argv[])
 	}
 
 done:
-	while (config != NULL && (conf = TAILQ_FIRST(config)) != NULL) {
-		TAILQ_REMOVE(config, conf, entry);
-		expr_free(conf->expr);
-		free(conf->maildir);
-		free(conf);
-	}
+	config_free(config);
 
 	if (error && dostdin)
 		return EX_TEMPFAIL;

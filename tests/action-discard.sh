@@ -1,4 +1,4 @@
-if testcase -t leaky "discard is mutually exclusive with all other actions"; then
+if testcase "discard is mutually exclusive with all other actions"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match all move "dst" discard
