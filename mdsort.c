@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 
 	if (env.confpath == NULL)
 		env.confpath = defaultconf(&env);
-	config = parse_config(env.confpath, &env);
+	config = config_parse(env.confpath, &env);
 	if (config == NULL) {
 		error = 1;
 		goto done;

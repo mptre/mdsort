@@ -251,7 +251,7 @@ struct config {
 
 TAILQ_HEAD(config_list, config);
 
-struct config_list *parse_config(const char *path,
+struct config_list *config_parse(const char *path,
     const struct environment *env);
 
 char *pathjoin(char *buf, const char *root, const char *dirname,

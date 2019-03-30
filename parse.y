@@ -319,7 +319,7 @@ nl		: '\n' optnl
  * Otherwise, NULL is returned.
  */
 struct config_list *
-parse_config(const char *path, const struct environment *envp)
+config_parse(const char *path, const struct environment *envp)
 {
 	fh = fopen(path, "r");
 	if (fh == NULL) {
