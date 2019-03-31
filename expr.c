@@ -348,7 +348,7 @@ expr_eval_attachment(struct expr *ex, struct match_list *ml,
 		log_debug("%s: %s\n", __func__, type);
 
 		if (expr_regexec(ex, ml, "Content-Type", type,
-			    env->options & OPTION_DRYRUN))
+			    env->ev_options & OPTION_DRYRUN))
 			continue;
 
 		message_list_free(attachments);
@@ -378,7 +378,7 @@ expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
 	if (expr_regexec(ex, ml, "Body", msg->body,
-		    env->options & OPTION_DRYRUN))
+		    env->ev_options & OPTION_DRYRUN))
 		return 1;
 	return 0;
 }
@@ -404,7 +404,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 	if (time_parse(date, &tim, env))
 		return 1;
 
-	delta = env->now - tim;
+	delta = env->ev_now - tim;
 	switch (ex->date.cmp) {
 	case EXPR_CMP_LT:
 		if (!(delta < ex->date.age))
@@ -416,7 +416,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 		break;
 	}
 
-	if (env->options & OPTION_DRYRUN) {
+	if (env->ev_options & OPTION_DRYRUN) {
 		match_reset(ex->match);
 
 		ex->match->mh_key = strdup("Date");
@@ -478,7 +478,7 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 
 		TAILQ_FOREACH(val, values, entry) {
 			if (expr_regexec(ex, ml, key->val, val->val,
-				    env->options & OPTION_DRYRUN))
+				    env->ev_options & OPTION_DRYRUN))
 				continue;
 			return 0;
 		}
@@ -658,9 +658,9 @@ expr_inspect_prefix(const struct expr *ex, FILE *fh,
 	int n;
 	int nwrite = 0;
 
-	path = env->confpath;
-	len = strlen(env->home);
-	if (strncmp(path, env->home, len) == 0) {
+	path = env->ev_confpath;
+	len = strlen(env->ev_home);
+	if (strncmp(path, env->ev_home, len) == 0) {
 		n = fprintf(fh, "~");
 		if (n > 0)
 			nwrite += n;

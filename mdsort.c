@@ -45,13 +45,13 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "dnvf:")) != -1)
 		switch (c) {
 		case 'd':
-			env.options |= OPTION_DRYRUN;
+			env.ev_options |= OPTION_DRYRUN;
 			break;
 		case 'f':
-			env.confpath = optarg;
+			env.ev_confpath = optarg;
 			break;
 		case 'n':
-			env.options |= OPTION_SYNTAX;
+			env.ev_options |= OPTION_SYNTAX;
 			break;
 		case 'v':
 			verbose++;
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	}
 	if (argc > 0)
 		usage();
-	if ((env.options & OPTION_DRYRUN) && verbose < 1)
+	if ((env.ev_options & OPTION_DRYRUN) && verbose < 1)
 		verbose = 1;
 	log_init(verbose);
 
@@ -81,14 +81,14 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 		err(1, "pledge");
 
-	if (env.confpath == NULL)
-		env.confpath = defaultconf(&env);
-	config = config_parse(env.confpath, &env);
+	if (env.ev_confpath == NULL)
+		env.ev_confpath = defaultconf(&env);
+	config = config_parse(env.ev_confpath, &env);
 	if (config == NULL) {
 		error = 1;
 		goto done;
 	}
-	if (env.options & OPTION_SYNTAX)
+	if (env.ev_options & OPTION_SYNTAX)
 		goto done;
 
 	TAILQ_FOREACH(conf, config, entry) {
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 
 			log_info("%s -> %s\n",
 			    dostdin ? "<stdin>" : path, matches.ml_path);
-			if (env.options & OPTION_DRYRUN) {
+			if (env.ev_options & OPTION_DRYRUN) {
 				matches_inspect(&matches, stdout, &env);
 				message_free(msg);
 				continue;
@@ -163,7 +163,7 @@ defaultconf(const struct environment *env)
 	int len, n;
 
 	len = sizeof(buf);
-	n = snprintf(buf, len, "%s/.mdsort.conf", env->home);
+	n = snprintf(buf, len, "%s/.mdsort.conf", env->ev_home);
 	if (n < 0 || n >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
@@ -175,10 +175,11 @@ readenv(struct environment *env)
 	struct passwd *pw;
 	struct tm *tm;
 	char *p;
+	size_t siz;
 
-	if (gethostname(env->hostname, sizeof(env->hostname)) == -1)
+	if (gethostname(env->ev_hostname, sizeof(env->ev_hostname)) == -1)
 		err(1, "gethostname");
-	else if ((p = strchr(env->hostname, '.')) != NULL)
+	else if ((p = strchr(env->ev_hostname, '.')) != NULL)
 		*p = '\0';
 
 	if ((p = getenv("HOME")) == NULL || *p == '\0') {
@@ -191,32 +192,35 @@ readenv(struct environment *env)
 	}
 	if (p == NULL)
 		errx(1, "%s: cannot find home directory", __func__);
-	if (strlcpy(env->home, p, sizeof(env->home)) >= sizeof(env->home))
+	siz = sizeof(env->ev_home);
+	if (strlcpy(env->ev_home, p, siz) >= siz)
 		errc(1, ENAMETOOLONG, "%s: HOME", __func__);
 
 	if ((p = getenv("TMPDIR")) == NULL || *p == '\0')
 		p = _PATH_TMP;
-	if (strlcpy(env->tmpdir, p, sizeof(env->tmpdir)) >= sizeof(env->tmpdir))
+	siz = sizeof(env->ev_tmpdir);
+	if (strlcpy(env->ev_tmpdir, p, siz) >= siz)
 		errc(1, ENAMETOOLONG, "%s: TMPDIR", __func__);
 
 	if ((p = getenv("TZ")) == NULL) {
-		env->tz_state = TZ_STATE_LOCAL;
+		env->ev_tz.t_state = TZ_STATE_LOCAL;
 	} else {
 		if (*p == '\0')
-			env->tz_state = TZ_STATE_UTC;
+			env->ev_tz.t_state = TZ_STATE_UTC;
 		else
-			env->tz_state = TZ_STATE_SET;
-		if (strlcpy(env->tz_buf, p, sizeof(env->tz_buf)) >= sizeof(env->tz_buf))
+			env->ev_tz.t_state = TZ_STATE_SET;
+		siz = sizeof(env->ev_tz.t_buf);
+		if (strlcpy(env->ev_tz.t_buf, p, siz) >= siz)
 			errc(1, ENAMETOOLONG, "%s: TZ", __func__);
 	}
 
-	env->now = time(NULL);
-	tm = localtime(&env->now);
+	env->ev_now = time(NULL);
+	tm = localtime(&env->ev_now);
 	if (tm == NULL)
 		err(1, "localtime");
-	env->tz_offset = tm->tm_gmtoff;
+	env->ev_tz.t_offset = tm->tm_gmtoff;
 
 	log_debug("%s: home=\"%s\", hostname=\"%s\", tmpdir=\"%s\", now=%lld, "
-	    "tz_offset=%ld\n", __func__, env->home, env->hostname, env->tmpdir,
-	    (long long)env->now, env->tz_offset);
+	    "tz_offset=%ld\n", __func__, env->ev_home, env->ev_hostname,
+	    env->ev_tmpdir, (long long)env->ev_now, env->ev_tz.t_offset);
 }

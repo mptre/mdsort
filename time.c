@@ -42,7 +42,7 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 		return 1;
 	}
 
-	*res = tim - tz + env->tz_offset;
+	*res = tim - tz + env->ev_tz.t_offset;
 	return 0;
 }
 
@@ -90,7 +90,7 @@ tzabbr(const char *str, time_t *tz, const struct environment *env)
 		return 1;
 	}
 	tzset();
-	tm = localtime(&env->now);
+	tm = localtime(&env->ev_now);
 	if (tm == NULL) {
 		warn("localtime");
 		error = 1;
@@ -99,7 +99,7 @@ tzabbr(const char *str, time_t *tz, const struct environment *env)
 	}
 
 	/* Reset timezone. */
-	switch (env->tz_state) {
+	switch (env->ev_tz.t_state) {
 	case TZ_STATE_LOCAL:
 		if (unsetenv("TZ") == -1) {
 			warn("unsetenv: TZ");
@@ -108,7 +108,7 @@ tzabbr(const char *str, time_t *tz, const struct environment *env)
 		break;
 	case TZ_STATE_UTC:
 	case TZ_STATE_SET:
-		if (setenv("TZ", env->tz_buf, 1) == -1) {
+		if (setenv("TZ", env->ev_tz.t_buf, 1) == -1) {
 			warn("setenv: TZ");
 			return 1;
 		}

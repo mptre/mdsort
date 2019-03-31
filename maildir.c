@@ -279,7 +279,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 	for (;;) {
 		count++;
 		n = snprintf(buf, bufsiz, "%lld.%d_%d.%s%s",
-		    ts, pid, count, env->hostname, flags);
+		    ts, pid, count, env->ev_hostname, flags);
 		if (n < 0 || n >= NAME_MAX)
 			errc(1, ENAMETOOLONG, "%s", __func__);
 		fd = openat(dirfd(dst->dir), buf, O_WRONLY | O_CREAT | O_EXCL,
@@ -325,7 +325,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	md->path = malloc(PATH_MAX);
 	if (md->path == NULL)
 		err(1, NULL);
-	pathjoin(md->path, env->tmpdir, "mdsort-XXXXXXXX", NULL);
+	pathjoin(md->path, env->ev_tmpdir, "mdsort-XXXXXXXX", NULL);
 	if (mkdtemp(md->path) == NULL) {
 		warn("mkdtemp");
 		return 1;

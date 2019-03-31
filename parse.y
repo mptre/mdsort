@@ -570,7 +570,7 @@ expandtilde(char *str)
 	buf = malloc(len);
 	if (buf == NULL)
 		err(1, NULL);
-	n = snprintf(buf, len, "%s%s", env->home, str + 1);
+	n = snprintf(buf, len, "%s%s", env->ev_home, str + 1);
 	if (n < 0 || n >= len)
 		yyerror("path too long");
 	free(str);

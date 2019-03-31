@@ -16,21 +16,24 @@
 struct message;
 
 struct environment {
-	char home[PATH_MAX];
-	char hostname[HOST_NAME_MAX + 1];
-	char tmpdir[PATH_MAX];
-	const char *confpath;
+	char ev_home[PATH_MAX];
+	char ev_hostname[HOST_NAME_MAX + 1];
+	char ev_tmpdir[PATH_MAX];
+	const char *ev_confpath;
 
-	enum {
-		TZ_STATE_LOCAL,	/* getenv("TZ") == NULL */
-		TZ_STATE_UTC,	/* strlen(getenv("TZ")) == 0 */
-		TZ_STATE_SET,	/* strlen(getenv("TZ")) > 0 */
-	} tz_state;
-	char tz_buf[256];
-	long tz_offset;
-	time_t now;
+	struct {
+		enum {
+			TZ_STATE_LOCAL,	/* getenv("TZ") == NULL */
+			TZ_STATE_UTC,	/* strlen(getenv("TZ")) == 0 */
+			TZ_STATE_SET,	/* strlen(getenv("TZ")) > 0 */
+		} t_state;
+		char t_buf[256];
+		long t_offset;
+	} ev_tz;
 
-	unsigned int options;
+	time_t ev_now;
+
+	unsigned int ev_options;
 #define OPTION_DRYRUN	0x1
 #define OPTION_SYNTAX	0x2
 };
