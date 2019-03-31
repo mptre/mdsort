@@ -36,6 +36,7 @@ struct environment {
 	unsigned int ev_options;
 #define OPTION_DRYRUN	0x1
 #define OPTION_SYNTAX	0x2
+#define OPTION_STDIN	0x4
 };
 
 enum subdir {

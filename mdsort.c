@@ -34,7 +34,6 @@ main(int argc, char *argv[])
 	unsigned int mdflags = MAILDIR_WALK | MAILDIR_ROOT;
 	int c;
 	int error = 0;
-	int dostdin = 0;
 	int verbose = 0;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
@@ -66,7 +65,7 @@ main(int argc, char *argv[])
 			usage();
 		argc--;
 		argv++;
-		dostdin = 1;
+		env.ev_options |= OPTION_STDIN;
 		mdflags |= MAILDIR_STDIN;
 	}
 	if (argc > 0)
@@ -92,11 +91,12 @@ main(int argc, char *argv[])
 		goto done;
 
 	TAILQ_FOREACH(conf, config, entry) {
-		if (conf->maildir != NULL && dostdin) {
+		if (conf->maildir != NULL && (env.ev_options & OPTION_STDIN)) {
 			log_debug("%s: %s: skip\n",
 			    __func__, conf->maildir);
 			continue;
-		} else if (conf->maildir == NULL && !dostdin) {
+		} else if (conf->maildir == NULL &&
+		    (env.ev_options & OPTION_STDIN) == 0) {
 			log_debug("%s: <stdin>: skip\n", __func__);
 			continue;
 		}
@@ -125,8 +125,10 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			log_info("%s -> %s\n",
-			    dostdin ? "<stdin>" : path, matches.ml_path);
+			if (env.ev_options & OPTION_STDIN)
+				log_info("<stdin> -> %s\n", matches.ml_path);
+			else
+				log_info("%s -> %s\n", path, matches.ml_path);
 			if (env.ev_options & OPTION_DRYRUN) {
 				matches_inspect(&matches, stdout, &env);
 				message_free(msg);
@@ -143,7 +145,7 @@ main(int argc, char *argv[])
 done:
 	config_free(config);
 
-	if (error && dostdin)
+	if (error && (env.ev_options & OPTION_STDIN))
 		return EX_TEMPFAIL;
 
 	return error;
