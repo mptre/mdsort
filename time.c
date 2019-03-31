@@ -27,6 +27,8 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 	end = timeparse(str, &tm);
 	if (end == NULL)
 		return 1;
+	/* Let mktime figure out if DST is in effect. */
+	tm.tm_isdst = -1;
 	tim = mktime(&tm);
 	if (tim == -1) {
 		warn("%s", str);
