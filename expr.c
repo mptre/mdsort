@@ -377,8 +377,6 @@ static int
 expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	if (msg->body == NULL)
-		return 1;
 	if (expr_regexec(ex, ml, "Body", msg->body,
 		    env->options & OPTION_DRYRUN))
 		return 1;
