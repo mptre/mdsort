@@ -85,10 +85,10 @@ main(int argc, char *argv[])
 	config = config_parse(env.ev_confpath, &env);
 	if (config == NULL) {
 		error = 1;
-		goto done;
+		goto out;
 	}
 	if (env.ev_options & OPTION_SYNTAX)
-		goto done;
+		goto out;
 
 	TAILQ_FOREACH(conf, config, entry) {
 		if (conf->maildir != NULL && (env.ev_options & OPTION_STDIN)) {
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 		maildir_close(md);
 	}
 
-done:
+out:
 	config_free(config);
 
 	if (error && (env.ev_options & OPTION_STDIN))
