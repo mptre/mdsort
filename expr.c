@@ -377,8 +377,6 @@ static int
 expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	assert(ex->ex_re.r_nmatches > 0);
-
 	if (msg->body == NULL)
 		return 1;
 	if (expr_regexec(ex, ml, "Body", msg->body,
@@ -474,9 +472,6 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 {
 	const struct string_list *values;
 	const struct string *key, *val;
-
-	assert(ex->strings != NULL);
-	assert(ex->ex_re.r_nmatches > 0);
 
 	TAILQ_FOREACH(key, ex->strings, entry) {
 		values = message_get_header(msg, key->val);
