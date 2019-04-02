@@ -26,13 +26,24 @@ fi
 if testcase "age too large"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
-		match date > 4294967296 seconds  move "dst"
-		match date > 9999999999 seconds  move "dst"
+		match date > 4294967296 seconds move "dst"
+		match date > 9999999999 seconds move "dst"
 	}
 	EOF
 	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: integer too large
 	mdsort.conf:3: integer too large
+	EOF
+fi
+
+if testcase "age and scalar too large"; then
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date > 4294967295 years move "dst"
+	}
+	EOF
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:2: integer too large
 	EOF
 fi
 

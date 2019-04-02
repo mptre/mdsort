@@ -292,7 +292,12 @@ date_cmp	: '<' {
 		;
 
 date_age	: INT SCALAR {
-			$$ = $1 * $2;
+			if ($1 > UINT_MAX / $2) {
+				yyerror("integer too large");
+				$$ = 0;
+			} else {
+				$$ = $1 * $2;
+			}
 		}
 		;
 
