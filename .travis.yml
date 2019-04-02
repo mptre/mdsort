@@ -16,7 +16,7 @@ matrix:
       env:
         - T=linux-clang-ubsan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=all'
+        - DEBUG='-g -fsanitize=undefined,unsigned-integer-overflow -fno-sanitize-recover=all'
 
     - os: linux
       compiler: gcc
