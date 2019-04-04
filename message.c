@@ -524,10 +524,10 @@ findheader(char *str, char **keybeg, char **keyend, char **valbeg,
 	}
 	*keybeg = str;
 	*keyend = str + i;
+	i++;	/* consume ';' */
 
 	/* Skip leading whitespace in value. */
-	for (i++; str[i] == ' ' || str[i] == '\t'; i++)
-		continue;
+	i += nspaces(&str[i]);
 	*valbeg = str + i;
 
 	for (;; i++) {
@@ -642,9 +642,7 @@ parseboundary(const char *str)
 	if (*str == '\0')
 		return NULL;
 	str++;
-
-	for (; *str == ' ' || *str == '\t'; str++)
-		continue;
+	str += nspaces(str);
 
 	needle = "boundary=\"";
 	len = strlen(needle);

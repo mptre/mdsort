@@ -138,6 +138,16 @@ pathslice(const char *path, char *buf, int beg, int end)
 	return buf;
 }
 
+int
+nspaces(const char *str)
+{
+	int n = 0;
+
+	for (; *str == ' ' || *str == '\t'; str++)
+		n++;
+	return n;
+}
+
 void
 log_init(int v)
 {

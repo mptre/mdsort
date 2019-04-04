@@ -40,7 +40,6 @@ static int expr_regexec(struct expr *, struct match_list *, const char *,
     const char *, int);
 
 static size_t append(char **, size_t *, size_t *, const char *);
-static int nspaces(const char *);
 
 /*
  * Allocate a new expression with the given type.
@@ -719,14 +718,4 @@ append(char **buf, size_t *bufsiz, size_t *buflen, const char *str)
 	*buflen += len;
 
 	return len;
-}
-
-static int
-nspaces(const char *str)
-{
-	int n = 0;
-
-	for (; *str == ' ' || *str == '\t'; str++)
-		n++;
-	return n;
 }

@@ -35,8 +35,7 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 		return 1;
 	}
 
-	for (; *end == ' ' || *end == '\t'; end++)
-		continue;
+	end += nspaces(end);
 	if (tzparse(end, &tz, env)) {
 		warnc(EINVAL, "tzparse: %s", str);
 		return 1;

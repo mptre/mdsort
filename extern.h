@@ -265,6 +265,8 @@ char *pathjoin(char *buf, const char *root, const char *dirname,
 
 char *pathslice(const char *path, char *buf, int beg, int end);
 
+int nspaces(const char *str);
+
 void log_init(int v);
 
 void log_debug(const char *fmt, ...)
