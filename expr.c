@@ -40,6 +40,7 @@ static int expr_regexec(struct expr *, struct match_list *, const char *,
     const char *, int);
 
 static size_t append(char **, size_t *, size_t *, const char *);
+static int nspaces(const char *);
 
 /*
  * Allocate a new expression with the given type.
@@ -610,11 +611,11 @@ expr_inspect_header(const struct expr *ex, FILE *fh,
 	const struct match *match;
 	const char *lbeg, *lend, *p;
 	unsigned int i;
-	int beg, end, indent, len, lindent, plen;
+	int beg, end, len, indent, pindent;
 	int printkey = 1;
 
 	match = ex->match;
-	indent = strlen(match->mh_key) + 2;
+	pindent = strlen(match->mh_key) + 2;
 
 	for (i = 0; i < ex->ex_re.r_nmatches; i++) {
 		beg = ex->ex_re.r_matches[i].rm_so;
@@ -627,25 +628,25 @@ expr_inspect_header(const struct expr *ex, FILE *fh,
 				break;
 			lbeg = p + 1;
 		}
+		lbeg += nspaces(lbeg);
 		lend = strchr(lbeg, '\n');
 		if (lend == NULL)
 			lend = match->mh_val + strlen(match->mh_val);
 
-		lindent = beg - (lbeg - match->mh_val) + indent;
 		len = end - beg;
 		if (len >= 2)
 			len -= 2;
 
 		if (printkey) {
-			plen = expr_inspect_prefix(ex, fh, env);
+			pindent += expr_inspect_prefix(ex, fh, env);
 			printkey = 0;
 			fprintf(fh, "%s: ", match->mh_key);
 		} else {
-			fprintf(fh, "%*s", indent + plen, "");
+			fprintf(fh, "%*s", pindent, "");
 		}
-		lindent += plen;
+		indent = beg - (lbeg - match->mh_val) + pindent;
 		fprintf(fh, "%.*s\n%*s^%*s$\n",
-		    (int)(lend - lbeg), lbeg, lindent, "", len, "");
+		    (int)(lend - lbeg), lbeg, indent, "", len, "");
 	}
 }
 
@@ -718,4 +719,14 @@ append(char **buf, size_t *bufsiz, size_t *buflen, const char *str)
 	*buflen += len;
 
 	return len;
+}
+
+static int
+nspaces(const char *str)
+{
+	int n = 0;
+
+	for (; *str == ' ' || *str == '\t'; str++)
+		n++;
+	return n;
 }

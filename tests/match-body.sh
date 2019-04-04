@@ -129,3 +129,23 @@ EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	assert_file $TMP1 $TMP2
 fi
+
+if testcase "dry run tabs in body"; then
+	mkmd "src"
+	mkmsg -b "src/new" <<EOF
+	src/tests/modules: t_kcov.c
+EOF
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match body /(kcov)/ label "\1"
+	}
+	EOF
+	cat <<EOF >$TMP1
+mdsort.conf:2: Body: src/tests/modules: t_kcov.c
+                                          ^  $
+                     src/tests/modules: t_kcov.c
+                                          ^  $
+EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	assert_file $TMP1 $TMP2
+fi
