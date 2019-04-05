@@ -370,7 +370,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 static const char *
 maildir_read(struct maildir *md)
 {
-	struct dirent *ent;
+	const struct dirent *ent;
 
 	for (;;) {
 		ent = readdir(md->dir);
