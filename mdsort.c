@@ -31,7 +31,7 @@ main(int argc, char *argv[])
 	struct maildir *md;
 	struct message *msg;
 	const char *path;
-	unsigned int mdflags = MAILDIR_WALK | MAILDIR_ROOT;
+	unsigned int mdflags = MAILDIR_WALK;
 	int c;
 	int error = 0;
 	int verbose = 0;

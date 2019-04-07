@@ -53,8 +53,7 @@ struct maildir {
 };
 
 #define MAILDIR_WALK	0x1
-#define MAILDIR_ROOT	0x2
-#define MAILDIR_STDIN	0x4
+#define MAILDIR_STDIN	0x2
 
 struct maildir *maildir_open(const char *path, unsigned int flags,
     const struct environment *env);

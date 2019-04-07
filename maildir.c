@@ -34,9 +34,6 @@ static int parsesubdir(const char *, enum subdir *);
  *                       present in the cur and new subdirectories rooted at
  *                       path.
  *
- *     MAILDIR_ROOT      The given path refers to a maildir root, as opposed of
- *                       referencing a subdirectory (cur, new or tmp).
- *
  *     MAILDIR_STDIN     Read messages from stdin.
  *
  * The caller is responsible for freeing the returned memory using
