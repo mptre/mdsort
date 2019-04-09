@@ -9,7 +9,7 @@
 
 #include "extern.h"
 
-static char *expandtilde(char *);
+static char *expandtilde(char *, const struct environment *);
 static void expr_validate(const struct expr *);
 static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
@@ -97,7 +97,7 @@ maildir		: maildir_path exprblock {
 		;
 
 maildir_path	: MAILDIR STRING {
-			  $$ = expandtilde($2);
+			  $$ = expandtilde($2, env);
 			  if ($$ == NULL)
 				  YYERROR;
 		}
@@ -230,7 +230,7 @@ expraction	: BREAK {
 			char *path;
 
 			$$ = expr_alloc(EXPR_TYPE_MOVE, lineno, NULL, NULL);
-			path = expandtilde($2);
+			path = expandtilde($2, env);
 			if (path == NULL)
 				YYERROR;
 			strings = strings_alloc();
@@ -563,7 +563,7 @@ again:
 }
 
 static char *
-expandtilde(char *str)
+expandtilde(char *str, const struct environment *env)
 {
 	char *buf;
 	int len, n;
