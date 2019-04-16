@@ -49,11 +49,10 @@ struct maildir {
 	DIR *dir;
 	enum subdir subdir;
 	unsigned int flags;
-	char buf[PATH_MAX];
-};
-
 #define MAILDIR_WALK	0x1
 #define MAILDIR_STDIN	0x2
+	char buf[PATH_MAX];
+};
 
 struct maildir *maildir_open(const char *path, unsigned int flags,
     const struct environment *env);
