@@ -19,7 +19,6 @@ struct header {
 
 	unsigned int flags;
 #define HEADER_FLAG_DIRTY	0x1	/* val must be freed */
-#define HEADER_FLAG_NOWR	0x2	/* omit during message_writeat() */
 
 	const char *key;
 	char *val;
@@ -148,9 +147,6 @@ message_writeat(struct message *msg, int dirfd, const char *path)
 
 	for (i = 0; i < msg->nheaders; i++) {
 		hdr = &msg->headers[i];
-		if (hdr->flags & HEADER_FLAG_NOWR)
-			continue;
-
 		if (fprintf(fh, "%s: %s\n", hdr->key, hdr->val) < 0) {
 			warn("fprintf");
 			error = 1;
@@ -210,7 +206,7 @@ message_set_header(struct message *msg, const char *header, char *val)
 {
 	struct header *hdr;
 	ssize_t idx;
-	size_t i, nfound;
+	size_t nfound, tail;
 
 	idx = searchheader(msg->headers, msg->nheaders, header, &nfound);
 	if (idx == -1) {
@@ -230,14 +226,16 @@ message_set_header(struct message *msg, const char *header, char *val)
 		qsort(msg->headers, msg->nheaders, sizeof(*msg->headers),
 		    cmpheaderkey);
 	} else {
-		/*
-		 * Multiple occurrences of the given header.
-		 * Prevent all occurrences other than the first one to be
-		 * written by message_writeat().
-		 */
-		for (i = 1; i < nfound; i++) {
-			hdr = &msg->headers[idx + i];
-			hdr->flags |= HEADER_FLAG_NOWR;
+		if (nfound > 1) {
+			/*
+			 * Multiple occurrences of the given header.
+			 * Remove all occurrences except the first one.
+			 */
+			tail = msg->nheaders - (idx + nfound);
+			memmove(&msg->headers[idx + 1],
+			    &msg->headers[idx + nfound],
+			    tail * sizeof(*msg->headers));
+			msg->nheaders -= nfound - 1;
 		}
 
 		hdr = &msg->headers[idx];
