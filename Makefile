@@ -102,9 +102,9 @@ install: all
 	@mkdir -p ${DESTDIR}${BINDIR}
 	${INSTALL} ${PROG} ${DESTDIR}${BINDIR}
 	@mkdir -p ${DESTDIR}${MANDIR}/man1
-	${INSTALL} ${.CURDIR}/mdsort.1 ${DESTDIR}${MANDIR}/man1
+	${INSTALL_MAN} ${.CURDIR}/mdsort.1 ${DESTDIR}${MANDIR}/man1
 	@mkdir -p ${DESTDIR}${MANDIR}/man5
-	${INSTALL} ${.CURDIR}/mdsort.conf.5 ${DESTDIR}${MANDIR}/man5
+	${INSTALL_MAN} ${.CURDIR}/mdsort.conf.5 ${DESTDIR}${MANDIR}/man5
 .PHONY: install
 
 lint:
