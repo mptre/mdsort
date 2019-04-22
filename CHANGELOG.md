@@ -1,3 +1,53 @@
+# v3.1.0 - 2019-04-22
+
+## Changes
+
+- Honor `BINDIR` and `MANDIR` during configure and install.
+  (3354bd0)
+  (Anton Lindqvist)
+
+- Exit non-zero on path interpolation failure.
+  (ddc85f4)
+  (Anton Lindqvist)
+
+## News
+
+- Add label action used to append labels to the `X-Label` header.
+  (a8cf5c1)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    # Label messages with the plus portion of the address.
+    match header "From" /(user|admin)@example.com/ and \
+      header "To" /user\+(.+)@example.com/ label "\1"
+  }
+  ```
+
+- Optionally specify the pattern to use during interpolation, useful when a rule
+  consists of multiple patterns.
+  (0e1ec8b)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    match header "List-ID" /tech.openbsd.org/ {
+      match "Subject" /(csh|ksh)/f label "\1"
+    }
+  }
+  ```
+
+## Bug fixes
+
+- Add fallback for unknown file types. Some file systems like XFS does not
+  return the file type from `readdir(3)`.
+  (3c3d35f)
+  (Anton Lindqvist)
+
+- Let `mktime(3)` figure out if DST is in effect.
+  (3cd7378)
+  (Anton Lindqvist)
+
 # v3.0.0 - 2019-02-13
 
 ## Changes
@@ -77,7 +127,7 @@
 
 # v2.0.0 - 2018-10-27
 
-## Deprecations
+## Changes
 
 - Remove `-C` option used to create missing maildirs.
   (c574ecc)
