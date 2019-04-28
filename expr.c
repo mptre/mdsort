@@ -15,6 +15,8 @@
 static int expr_eval_all(EXPR_EVAL_ARGS);
 static int expr_eval_and(EXPR_EVAL_ARGS);
 static int expr_eval_attachment(EXPR_EVAL_ARGS);
+static int expr_eval_attachment_body(EXPR_EVAL_ARGS);
+static int expr_eval_attachment_header(EXPR_EVAL_ARGS);
 static int expr_eval_block(EXPR_EVAL_ARGS);
 static int expr_eval_body(EXPR_EVAL_ARGS);
 static int expr_eval_break(EXPR_EVAL_ARGS);
@@ -60,7 +62,8 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	ex->lhs = lhs;
 	ex->rhs = rhs;
 	switch (ex->type) {
-	case EXPR_TYPE_ATTACHMENT:
+	case EXPR_TYPE_ATTACHMENT_BODY:
+	case EXPR_TYPE_ATTACHMENT_HEADER:
 	case EXPR_TYPE_BLOCK:
 	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_DATE:
@@ -75,6 +78,7 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 			err(1, NULL);
 		ex->match->mh_expr = ex;
 		break;
+	case EXPR_TYPE_ATTACHMENT:
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
 	case EXPR_TYPE_NEG:
@@ -187,6 +191,10 @@ expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
 		return expr_eval_neg(ex, ml, msg, env);
 	case EXPR_TYPE_ATTACHMENT:
 		return expr_eval_attachment(ex, ml, msg, env);
+	case EXPR_TYPE_ATTACHMENT_BODY:
+		return expr_eval_attachment_body(ex, ml, msg, env);
+	case EXPR_TYPE_ATTACHMENT_HEADER:
+		return expr_eval_attachment_header(ex, ml, msg, env);
 	case EXPR_TYPE_ALL:
 		return expr_eval_all(ex, ml, msg, env);
 	case EXPR_TYPE_BODY:
@@ -243,6 +251,8 @@ expr_count_actions(const struct expr *ex)
 
 	switch (ex->type) {
 	case EXPR_TYPE_ATTACHMENT:
+	case EXPR_TYPE_ATTACHMENT_BODY:
+	case EXPR_TYPE_ATTACHMENT_HEADER:
 	case EXPR_TYPE_BLOCK:
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
@@ -292,11 +302,13 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 	case EXPR_TYPE_DATE:
 		expr_inspect_date(ex, fh, env);
 		break;
-	case EXPR_TYPE_ATTACHMENT:
+	case EXPR_TYPE_ATTACHMENT_BODY:
+	case EXPR_TYPE_ATTACHMENT_HEADER:
 	case EXPR_TYPE_BODY:
 	case EXPR_TYPE_HEADER:
 		expr_inspect_header(ex, fh, env);
 		break;
+	case EXPR_TYPE_ATTACHMENT:
 	case EXPR_TYPE_BLOCK:
 	case EXPR_TYPE_AND:
 	case EXPR_TYPE_OR:
@@ -330,25 +342,56 @@ expr_eval_and(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_attachment(struct expr *ex, struct match_list *ml,
+expr_eval_attachment(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
+    struct message *msg, const struct environment *UNUSED(env))
+{
+	struct message_list *attachments;
+
+	attachments = message_get_attachments(msg);
+	if (attachments == NULL)
+		return 1;
+
+	/* Presence of attachments is considered a match. */
+	message_list_free(attachments);
+	return 0;
+}
+
+static int
+expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
 	struct message_list *attachments;
 	struct message *attach;
-	const char *type;
 
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
 		return 1;
 
 	TAILQ_FOREACH(attach, attachments, entry) {
-		type = message_get_header1(attach, "Content-Type");
-		if (type == NULL)
+		if (expr_eval_body(ex, ml, attach, env))
 			continue;
-		log_debug("%s: %s\n", __func__, type);
 
-		if (expr_regexec(ex, ml, "Content-Type", type,
-			    env->ev_options & OPTION_DRYRUN))
+		message_list_free(attachments);
+		return 0;
+	}
+
+	message_list_free(attachments);
+	return 1;
+}
+
+static int
+expr_eval_attachment_header(struct expr *ex, struct match_list *ml,
+    struct message *msg, const struct environment *env)
+{
+	struct message_list *attachments;
+	struct message *attach;
+
+	attachments = message_get_attachments(msg);
+	if (attachments == NULL)
+		return 1;
+
+	TAILQ_FOREACH(attach, attachments, entry) {
+		if (expr_eval_header(ex, ml, attach, env))
 			continue;
 
 		message_list_free(attachments);

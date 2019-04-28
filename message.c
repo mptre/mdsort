@@ -35,6 +35,8 @@ static int findheader(char *, char **, char **, char **, char **);
 static ssize_t searchheader(const struct header *, size_t, const char *,
     size_t *);
 
+static int parseattachments(const struct message *, struct message_list *,
+    int);
 static const char *findboundary(const char *, const char *, int *);
 static char *parseboundary(const char *);
 
@@ -331,55 +333,15 @@ message_has_label(const struct message *msg, const char *label)
 struct message_list *
 message_get_attachments(const struct message *msg)
 {
-	struct message_list *attachments = NULL;
-	struct message *attach;
-	const char *b, *beg, *body, *end, *type;
-	char *boundary;
-	int term;
+	struct message_list *attachments;
 
-	type = message_get_header1(msg, "Content-Type");
-	if (type == NULL)
-		return NULL;
-	boundary = parseboundary(type);
-	if (boundary == NULL)
-		return NULL;
+	attachments = malloc(sizeof(*attachments));
+	if (attachments == NULL)
+		err(1, NULL);
+	TAILQ_INIT(attachments);
 
-	body = msg->body;
-	beg = end = NULL;
-	term = 0;
-	for (;;) {
-		b = findboundary(boundary, body, &term);
-		if (b == NULL)
-			break;
-		if (beg == NULL)
-			beg = b = skipline(b);
-		else
-			end = b;
-		body = b;
-		if (beg == NULL || end == NULL)
-			continue;
-
-		if (attachments == NULL) {
-			attachments = malloc(sizeof(*attachments));
-			if (attachments == NULL)
-				err(1, NULL);
-			TAILQ_INIT(attachments);
-		}
-		attach = calloc(1, sizeof(*attach));
-		if (attach == NULL)
-			err(1, NULL);
-		attach->buf = strndup(beg, end - beg);
-		if (attach->buf == NULL)
-			err(1, NULL);
-		attach->body = message_parse_headers(attach);
-		TAILQ_INSERT_TAIL(attachments, attach, entry);
-
-		beg = end = NULL;
-		if (term)
-			break;
-	}
-	free(boundary);
-	if (!term) {
+	if (parseattachments(msg, attachments, 0) ||
+	    TAILQ_EMPTY(attachments)) {
 		message_list_free(attachments);
 		return NULL;
 	}
@@ -583,6 +545,71 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 	return -1;
 }
 
+static int
+parseattachments(const struct message *msg, struct message_list *attachments,
+    int depth)
+{
+	struct message *attach;
+	const char *b, *beg, *body, *end, *type;
+	char *boundary;
+	int term;
+
+	if (depth > 8) {
+		warnx("%s: message contains too many nested attachments",
+		    msg->path);
+		return 1;
+	}
+
+	type = message_get_header1(msg, "Content-Type");
+	if (type == NULL)
+		return 0;
+	boundary = parseboundary(type);
+	if (boundary == NULL)
+		return 0;
+
+	log_debug("%s: boundary=%s, depth=%d\n", __func__, boundary, depth);
+
+	body = msg->body;
+	beg = end = NULL;
+	term = 0;
+	for (;;) {
+		b = findboundary(boundary, body, &term);
+		if (b == NULL)
+			break;
+		if (beg == NULL)
+			beg = b = skipline(b);
+		else
+			end = b;
+		body = b;
+		if (beg == NULL || end == NULL)
+			continue;
+
+		attach = calloc(1, sizeof(*attach));
+		if (attach == NULL)
+			err(1, NULL);
+		attach->buf = strndup(beg, end - beg);
+		if (attach->buf == NULL)
+			err(1, NULL);
+		attach->path = msg->path;
+		attach->body = message_parse_headers(attach);
+		TAILQ_INSERT_TAIL(attachments, attach, entry);
+
+		if (parseattachments(attach, attachments, depth + 1)) {
+			term = 0;
+			break;
+		}
+
+		beg = end = NULL;
+		if (term)
+			break;
+	}
+	free(boundary);
+	if (!term)
+		return 1;
+	return 0;
+
+}
+
 static const char *
 findboundary(const char *boundary, const char *s, int *term)
 {
@@ -627,8 +654,6 @@ parseboundary(const char *str)
 	const char *needle, *p;
 	char *boundary;
 	size_t len;
-
-	log_debug("%s: %s\n", __func__, str);
 
 	needle = "multipart/";
 	len = strlen(needle);

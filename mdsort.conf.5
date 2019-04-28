@@ -73,14 +73,25 @@ keyword will force usage of subexpressions from the corresponding
 .Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
-.It Oo Ic \&! Oc Ic body No / Ns Ar pattern Ns / Ns Op fi
+.It Xo Op Ic \&!
+.Op Ic attachment
+.Ic body
+.Pf / Ar pattern Ns Pf / Op fi
+.Xc
 Evaluates to true if the message body matches
 .Ar pattern .
+.Pp
+If
+.Ic attachment
+is present, evalutes to true if the body of an attachment matches
+.Ar pattern .
 .It Xo Op Ic \&!
+.Op Ic attachment
 .Ic header Dq Ar name
 .Pf / Ar pattern Ns Pf / Op fi
 .Xc
 .It Xo Op Ic \&!
+.Op Ic attachment
 .Ic header No { Do Ar name Dc Ar ... No }
 .Pf / Ar pattern Ns Pf / Op fi
 .Xc
@@ -91,16 +102,17 @@ in message matches
 Finding the header with
 .Ar name
 in message is done case insensitive.
+.Pp
+If
+.Ic attachment
+is present, evalutes to true if any of the headers with
+.Ar name
+in an attachment matches
+.Ar pattern .
 .It Xo Op Ic \&!
 .Ic attachment
 .Xc
 Evaluates to true if the message has attachments.
-.It Xo Op Ic \&!
-.Ic attachment
-.Pf / Ar pattern Ns Pf / Op fi
-.Xc
-Evaluates to true if the message has attachments with a content type matching
-.Ar pattern .
 .It Xo Op Ic \&!
 .Ic date \&> Ar age scale
 .Xc

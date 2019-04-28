@@ -63,7 +63,7 @@ static int lineno, lineno_save, parse_errors;
 %token STRING
 
 %type <str> STRING flag maildir_path
-%type <i> INT SCALAR optneg
+%type <i> INT SCALAR attachment optneg
 %type <t> date_age
 %type <cmp> date_cmp
 %type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
@@ -162,34 +162,27 @@ expr2		: expractions {
 		}
 		;
 
-expr3		: BODY PATTERN {
+expr3		: attachment BODY PATTERN {
 			const char *errstr;
+			enum expr_type type = $1 ?
+				EXPR_TYPE_ATTACHMENT_BODY : EXPR_TYPE_BODY;
 
-			$$ = expr_alloc(EXPR_TYPE_BODY, lineno, NULL, NULL);
-			if (expr_set_pattern($$, $2.str, $2.flags, &errstr))
-				yyerror("invalid pattern: %s", errstr);
-		}
-		| HEADER strings PATTERN {
-			const char *errstr;
-
-			$$ = expr_alloc(EXPR_TYPE_HEADER, lineno, NULL, NULL);
+			$$ = expr_alloc(type, lineno, NULL, NULL);
 			if (expr_set_pattern($$, $3.str, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
-			expr_set_strings($$, $2);
+		}
+		| attachment HEADER strings PATTERN {
+			const char *errstr;
+			enum expr_type type = $1 ?
+				EXPR_TYPE_ATTACHMENT_HEADER : EXPR_TYPE_HEADER;
+
+			$$ = expr_alloc(type, lineno, NULL, NULL);
+			if (expr_set_pattern($$, $4.str, $4.flags, &errstr))
+				yyerror("invalid pattern: %s", errstr);
+			expr_set_strings($$, $3);
 		}
 		| ATTACHMENT {
-			const char *errstr;
-
 			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, lineno, NULL, NULL);
-			if (expr_set_pattern($$, ".*", 0, &errstr))
-				yyerror("invalid pattern: %s", errstr);
-		}
-		| ATTACHMENT PATTERN {
-			const char *errstr;
-
-			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, lineno, NULL, NULL);
-			if (expr_set_pattern($$, $2.str, $2.flags, &errstr))
-				yyerror("invalid pattern: %s", errstr);
 		}
 		| DATE date_cmp date_age {
 			$$ = expr_alloc(EXPR_TYPE_DATE, lineno, NULL, NULL);
@@ -270,6 +263,14 @@ stringblock	: /* empty */ {
 		| stringblock STRING {
 			$$ = $1;
 			strings_append($$, $2);
+		}
+		;
+
+attachment	: /* empty */ {
+			$$ = 0;
+		}
+		| ATTACHMENT {
+			$$ = 1;
 		}
 		;
 
