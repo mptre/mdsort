@@ -398,6 +398,7 @@ yylex(void)
 		{ "old",	OLD },
 		{ "or",		OR },
 		{ "stdin",	STDIN },
+
 		{ NULL,		0 },
 	};
 	static struct {
@@ -411,6 +412,7 @@ yylex(void)
 		{ "weeks",	60 * 60 * 24 * 7 },
 		{ "months",	60 * 60 * 24 * 30 },
 		{ "years",	60 * 60 * 24 * 365 },
+
 		{ NULL,		0 },
 	};
 	static char lexeme[BUFSIZ], kw[16];
