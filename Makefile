@@ -64,6 +64,7 @@ DISTFILES+=	tests/match-header.sh
 DISTFILES+=	tests/match-logical.sh
 DISTFILES+=	tests/match-new.sh
 DISTFILES+=	tests/match-old.sh
+DISTFILES+=	tests/match-reject.sh
 DISTFILES+=	tests/stdin.sh
 DISTFILES+=	tests/t.sh
 DISTFILES+=	tests/util.sh

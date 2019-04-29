@@ -56,8 +56,9 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 	char *label, *path;
 	size_t len;
 
-	/* Discard is mutually exclusive with all other actions. */
-	if (matches_find(ml, EXPR_TYPE_DISCARD) != NULL)
+	/* Actions lacking support for interpolation. */
+	if (matches_find(ml, EXPR_TYPE_DISCARD) != NULL ||
+	    matches_find(ml, EXPR_TYPE_REJECT) != NULL)
 		return 0;
 
 	if (ml->ml_maildir[0] == '\0') {
@@ -96,7 +97,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 
 int
 matches_exec(const struct match_list *ml, struct maildir *src,
-    struct message *msg, const struct environment *env)
+    struct message *msg, int *reject, const struct environment *env)
 {
 	char path[NAME_MAX];
 	struct maildir *dst;
@@ -136,6 +137,9 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 				error = 1;
 			else
 				msg->path = path;
+			break;
+		case EXPR_TYPE_REJECT:
+			*reject = 1;
 			break;
 		default:
 			break;

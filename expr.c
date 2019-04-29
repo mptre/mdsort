@@ -30,6 +30,7 @@ static int expr_eval_neg(EXPR_EVAL_ARGS);
 static int expr_eval_new(EXPR_EVAL_ARGS);
 static int expr_eval_old(EXPR_EVAL_ARGS);
 static int expr_eval_or(EXPR_EVAL_ARGS);
+static int expr_eval_reject(EXPR_EVAL_ARGS);
 
 static void expr_inspect_date(const struct expr *, FILE *,
     const struct environment *);
@@ -73,6 +74,7 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_BREAK:
 	case EXPR_TYPE_LABEL:
+	case EXPR_TYPE_REJECT:
 		ex->match = calloc(1, sizeof(*ex->match));
 		if (ex->match == NULL)
 			err(1, NULL);
@@ -217,6 +219,8 @@ expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
 		return expr_eval_break(ex, ml, msg, env);
 	case EXPR_TYPE_LABEL:
 		return expr_eval_label(ex, ml, msg, env);
+	case EXPR_TYPE_REJECT:
+		return expr_eval_reject(ex, ml, msg, env);
 	}
 
 	return 1;
@@ -269,6 +273,7 @@ expr_count_actions(const struct expr *ex)
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_BREAK:
 	case EXPR_TYPE_LABEL:
+	case EXPR_TYPE_REJECT:
 		n = 1;
 		break;
 	}
@@ -321,6 +326,7 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_BREAK:
 	case EXPR_TYPE_LABEL:
+	case EXPR_TYPE_REJECT:
 		break;
 	}
 }
@@ -627,6 +633,21 @@ expr_eval_or(struct expr *ex, struct match_list *ml, struct message *msg,
 	if (expr_eval(ex->lhs, ml, msg, env) == 0)
 		return 0; /* match, short-circuit */
 	return expr_eval(ex->rhs, ml, msg, env);
+}
+
+static int
+expr_eval_reject(struct expr *ex, struct match_list *ml,
+    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+{
+	size_t len;
+
+	matches_append(ml, ex->match);
+
+	len = sizeof(ml->ml_path);
+	if (strlcpy(ml->ml_path, "<reject>", len) >= len)
+		errc(1, ENAMETOOLONG, "%s", __func__);
+
+	return 0;
 }
 
 static void

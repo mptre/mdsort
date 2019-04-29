@@ -58,6 +58,7 @@ static int lineno, lineno_save, parse_errors;
 %token NEW
 %token OLD
 %token PATTERN
+%token REJECT
 %token SCALAR
 %token STDIN
 %token STRING
@@ -86,6 +87,10 @@ maildir		: maildir_path exprblock {
 			/* Favor more specific error messages. */
 			if (parse_errors == 0 && expr_count_actions($2) == 0)
 				yyerror("empty match block");
+
+			if ($1 != NULL &&
+			    expr_count($2, EXPR_TYPE_REJECT) > 0)
+				yyerror("reject cannot be used outside stdin");
 
 			conf = malloc(sizeof(*conf));
 			if (conf == NULL)
@@ -245,6 +250,9 @@ expraction	: BREAK {
 			$$ = expr_alloc(EXPR_TYPE_LABEL, lineno, NULL, NULL);
 			expr_set_strings($$, $2);
 		}
+		| REJECT {
+			$$ = expr_alloc(EXPR_TYPE_REJECT, lineno, NULL, NULL);
+		}
 		;
 
 
@@ -398,6 +406,7 @@ yylex(void)
 		{ "new",	NEW },
 		{ "old",	OLD },
 		{ "or",		OR },
+		{ "reject",	REJECT },
 		{ "stdin",	STDIN },
 
 		{ NULL,		0 },
@@ -602,6 +611,8 @@ expr_validate(const struct expr *ex)
 		yyerror("break cannot be combined with another action");
 	if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
 		yyerror("discard cannot be combined with another action");
+	if (expr_count(ex, EXPR_TYPE_REJECT) > 0)
+		yyerror("reject cannot be combined with another action");
 }
 
 static int

@@ -17,6 +17,14 @@
  */
 #define EX_TEMPFAIL	75
 
+/*
+ * When reading messages from stdin and a reject rule is matched, always exit
+ * non-zero indicating permanent failure.
+ * The actual number is quite arbitrary but something that at least OpenSMTPD
+ * will interpret as a permanent failure during mda delivery.
+ */
+#define EX_PERMFAIL	1
+
 static const char *defaultconf(const struct environment *);
 static void readenv(struct environment *);
 static __dead void usage(void);
@@ -34,6 +42,7 @@ main(int argc, char *argv[])
 	unsigned int mdflags = MAILDIR_WALK;
 	int c;
 	int error = 0;
+	int reject = 0;
 	int verbose = 0;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
@@ -135,7 +144,7 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			if (matches_exec(&matches, md, msg, &env))
+			if (matches_exec(&matches, md, msg, &reject, &env))
 				error = 1;
 			message_free(msg);
 		}
@@ -145,8 +154,12 @@ main(int argc, char *argv[])
 out:
 	config_free(config);
 
-	if (error && (env.ev_options & OPTION_STDIN))
-		return EX_TEMPFAIL;
+	if (env.ev_options & OPTION_STDIN) {
+		if (error)
+			return EX_TEMPFAIL;
+		if (reject)
+			return EX_PERMFAIL;
+	}
 
 	return error;
 }

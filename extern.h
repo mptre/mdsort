@@ -131,6 +131,7 @@ enum expr_type {
 	EXPR_TYPE_DISCARD,
 	EXPR_TYPE_BREAK,
 	EXPR_TYPE_LABEL,
+	EXPR_TYPE_REJECT,
 };
 
 enum expr_cmp {
@@ -218,7 +219,7 @@ void matches_clear(struct match_list *ml);
 int matches_interpolate(struct match_list *ml, struct message *msg);
 
 int matches_exec(const struct match_list *ml, struct maildir *md,
-    struct message *msg, const struct environment *env);
+    struct message *msg, int *reject, const struct environment *env);
 
 void matches_inspect(const struct match_list *ml, FILE *fh,
     const struct environment *env);

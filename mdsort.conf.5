@@ -203,6 +203,20 @@ Only one
 .Ic move
 action can be defined per rule.
 .El
+.Pp
+In addition,
+.Ic stdin
+also supports the following actions:
+.Bl -tag -width Ds
+.It Ic reject
+Reject the message by causing
+.Xr mdsort 1
+to exit non-zero.
+.Pp
+Only one
+.Ic reject
+action can be defined per rule.
+.El
 .It Ic match Ar condition No { Ar rule ... No }
 The nested block of rules
 is only evaluated if
