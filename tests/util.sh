@@ -151,9 +151,13 @@ mkmsg() {
 			shift 2
 		done
 	fi
-	[ $_headers -eq 1 ] && printf 'Content-Type: text/plain\n' >>$_path
+	if [ $_headers -eq 1 ]; then
+		printf 'Content-Type: text/plain\n' >>$_path
+	fi
 	echo >>$_path
-	[ $_body -eq 1 ] && cat >>$_path || true
+	if [ $_body -eq 1 ]; then
+		cat >>$_path
+	fi
 }
 
 now() {
