@@ -31,7 +31,7 @@ rrand(const char *path, uint32_t *r)
 	ssize_t n;
 	int fd, len;
 
-	fd = open(path, O_RDONLY | O_CLOEXEC);
+	fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
 	if (fd == -1)
 		return 1;
 	len = sizeof(*r);
