@@ -277,7 +277,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 		count++;
 		n = snprintf(buf, bufsiz, "%lld.%d_%d.%s%s",
 		    ts, pid, count, env->ev_hostname, flags);
-		if (n < 0 || n >= NAME_MAX)
+		if (n < 0 || (size_t)n >= bufsiz)
 			errc(1, ENAMETOOLONG, "%s", __func__);
 		fd = openat(dirfd(dst->dir), buf, O_WRONLY | O_CREAT | O_EXCL,
 		    S_IRUSR | S_IWUSR);
