@@ -22,25 +22,25 @@ static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
 static const struct environment *env;
 static FILE *fh;
 static const char *confpath;
-static int lineno, lineno_save, parse_errors;
+static int lineno, parse_errors;
+
+typedef struct {
+	union {
+		enum expr_cmp cmp;
+		struct expr *expr;
+		unsigned int number;
+		struct {
+			char *string;
+			unsigned int flags;
+		} pattern;
+		char *string;
+		struct string_list *strings;
+		time_t time;
+	} v;
+	int lineno;
+} YYSTYPE;
 
 %}
-
-%union {
-	char *str;
-	unsigned int i;
-	time_t t;
-
-	enum expr_cmp cmp;
-
-	struct expr *expr;
-	struct string_list *strings;
-
-	struct {
-		char *str;
-		unsigned int flags;
-	} pattern;
-}
 
 %token ALL
 %token ATTACHMENT
@@ -63,13 +63,26 @@ static int lineno, lineno_save, parse_errors;
 %token STDIN
 %token STRING
 
-%type <str> STRING flag maildir_path
-%type <i> INT SCALAR attachment optneg
-%type <t> date_age
-%type <cmp> date_cmp
-%type <expr> expr expr1 expr2 expr3 expractions expraction exprblock exprs
-%type <strings> stringblock strings
-%type <pattern> PATTERN
+%type <v.cmp>		date_cmp
+%type <v.expr>		expr
+%type <v.expr>		expr1
+%type <v.expr>		expr2
+%type <v.expr>		expr3
+%type <v.expr>		expraction
+%type <v.expr>		expractions
+%type <v.expr>		exprblock
+%type <v.expr>		exprs
+%type <v.number>	INT
+%type <v.number>	SCALAR
+%type <v.number>	attachment
+%type <v.number>	optneg
+%type <v.pattern>	PATTERN
+%type <v.string>	STRING
+%type <v.string>	flag
+%type <v.string>	maildir_path
+%type <v.strings>	stringblock
+%type <v.strings>	strings
+%type <v.time>		date_age
 
 %left AND OR
 %left NEG
@@ -173,7 +186,7 @@ expr3		: attachment BODY PATTERN {
 				EXPR_TYPE_ATTACHMENT_BODY : EXPR_TYPE_BODY;
 
 			$$ = expr_alloc(type, lineno, NULL, NULL);
-			if (expr_set_pattern($$, $3.str, $3.flags, &errstr))
+			if (expr_set_pattern($$, $3.string, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
 		| attachment HEADER strings PATTERN {
@@ -182,7 +195,7 @@ expr3		: attachment BODY PATTERN {
 				EXPR_TYPE_ATTACHMENT_HEADER : EXPR_TYPE_HEADER;
 
 			$$ = expr_alloc(type, lineno, NULL, NULL);
-			if (expr_set_pattern($$, $4.str, $4.flags, &errstr))
+			if (expr_set_pattern($$, $4.string, $4.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 			expr_set_strings($$, $3);
 		}
@@ -374,7 +387,7 @@ yyerror(const char *fmt, ...)
 {
 	va_list ap;
 
-	fprintf(stderr, "%s:%d: ", confpath, lineno_save);
+	fprintf(stderr, "%s:%d: ", confpath, yylval.lineno);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
@@ -438,10 +451,8 @@ again:
 	if (c == '\\' && yypeek('\n'))
 		goto again;
 
-	/* Used for more accurate error messages. */
-	lineno_save = lineno;
-
-	yylval.i = c;
+	yylval.lineno = lineno;
+	yylval.v.number = c;
 	if (c == EOF) {
 		return 0;
 	} else if (c == '!') {
@@ -473,10 +484,10 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
-		yylval.str = strdup(lexeme);
-		if (yylval.str == NULL)
+		yylval.v.string = strdup(lexeme);
+		if (yylval.v.string == NULL)
 			err(1, NULL);
-		if (strlen(yylval.str) == 0)
+		if (strlen(yylval.v.string) == 0)
 			yyerror("empty string");
 		return STRING;
 	} else if (c == '/') {
@@ -496,17 +507,17 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
-		yylval.pattern.str = lexeme;
+		yylval.v.pattern.string = lexeme;
 
-		yylval.pattern.flags = 0;
+		yylval.v.pattern.flags = 0;
 		for (;;) {
 			c = yygetc();
 			switch (c) {
 			case 'f':
-				yylval.pattern.flags |= EXPR_PATTERN_FORCE;
+				yylval.v.pattern.flags |= EXPR_PATTERN_FORCE;
 				break;
 			case 'i':
-				yylval.pattern.flags |= EXPR_PATTERN_ICASE;
+				yylval.v.pattern.flags |= EXPR_PATTERN_ICASE;
 				break;
 			default:
 				yyungetc(c);
@@ -514,24 +525,24 @@ again:
 			}
 		}
 	} else if (isdigit(c)) {
-		yylval.i = overflow = 0;
+		yylval.v.number = overflow = 0;
 		for (; isdigit(c); c = yygetc()) {
 			if (overflow)
 				continue;
 
-			if (yylval.i > UINT_MAX / 10) {
+			if (yylval.v.number > UINT_MAX / 10) {
 				yyerror("integer too large");
 				overflow = 1;
 				continue;
 			}
-			yylval.i *= 10;
+			yylval.v.number *= 10;
 
-			if (yylval.i > UINT_MAX - (c - '0')) {
+			if (yylval.v.number > UINT_MAX - (c - '0')) {
 				yyerror("integer too large");
 				overflow = 1;
 				continue;
 			}
-			yylval.i += c - '0';
+			yylval.v.number += c - '0';
 		}
 		yyungetc(c);
 		return INT;
@@ -564,7 +575,7 @@ again:
 		if (ambiguous) {
 			yyerror("ambiguous keyword: %s", kw);
 		} else if (match >= 0) {
-			yylval.i = scalars[match].val;
+			yylval.v.number = scalars[match].val;
 			return SCALAR;
 		} else {
 			yyerror("unknown keyword: %s", kw);
