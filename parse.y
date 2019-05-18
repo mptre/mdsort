@@ -116,8 +116,6 @@ maildir		: maildir_path exprblock {
 
 maildir_path	: MAILDIR STRING {
 			  $$ = expandtilde($2, env);
-			  if ($$ == NULL)
-				  YYERROR;
 		}
 		| STDIN {
 			const struct config *conf;
@@ -242,8 +240,6 @@ expraction	: BREAK {
 
 			$$ = expr_alloc(EXPR_TYPE_MOVE, lineno, NULL, NULL);
 			path = expandtilde($2, env);
-			if (path == NULL)
-				YYERROR;
 			strings = strings_alloc();
 			strings_append(strings, path);
 			expr_set_strings($$, strings);
