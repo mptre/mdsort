@@ -279,7 +279,7 @@ if [ $HAVE_STAT_TIM -eq 0 ]; then
 	printf '#define st_mtim\tst_mtimespec\n'
 fi
 
-[ $HAVE_UTIMENSAT -eq 0 ] && printf '#define UTIME_OMIT -1L\n'
+[ $HAVE_UTIMENSAT -eq 0 ] && printf '#define UTIME_OMIT\t-1L\n'
 
 [ $HAVE_ARC4RANDOM -eq 0 ] &&
 	printf 'uint32_t arc4random(void);\n'
