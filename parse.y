@@ -385,13 +385,31 @@ config_free(struct config_list *config)
 void
 yyerror(const char *fmt, ...)
 {
+	char buf[BUFSIZ];
+	char *cp = buf;
+	size_t bufsiz = sizeof(buf);
 	va_list ap;
+	int n;
 
-	fprintf(stderr, "%s:%d: ", confpath, yylval.lineno);
+	n = snprintf(cp, bufsiz, "%s:%d: ", confpath, yylval.lineno);
+	if (n > 0 && (size_t)n < bufsiz) {
+		cp += n;
+		bufsiz -= n;
+	}
+
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	n = vsnprintf(cp, bufsiz, fmt, ap);
 	va_end(ap);
-	fprintf(stderr, "\n");
+	if (n > 0 && (size_t)n < bufsiz) {
+		cp += n;
+		bufsiz -= n;
+	}
+
+	/* Play it safe if any of the above failed. */
+	if (bufsiz > 0)
+		*cp = '\0';
+
+	fprintf(stderr, "%s\n", buf);
 
 	parse_errors++;
 }
