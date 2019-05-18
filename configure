@@ -188,8 +188,8 @@ check_warnc() {
 	EOF
 }
 
-# Quirk for GNU Bison 2.X present on macOS which unconditionally declares
-# YYSTYPE unless YYSTYPE_IS_DECLARED is defined.
+# Quirk for GNU Bison 2.X present on macOS which declares YYSTYPE unless
+# YYSTYPE_IS_DECLARED is defined.
 check_yystype() {
 	cat <<-EOF >"$TMP1"
 	%{
