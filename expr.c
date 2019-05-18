@@ -40,10 +40,6 @@ static int expr_eval_or(EXPR_EVAL_ARGS);
 static int expr_eval_reject(EXPR_EVAL_ARGS);
 
 static unsigned int expr_flags(const struct expr *);
-static void expr_inspect_date(const struct expr *, FILE *,
-    const struct environment *);
-static void expr_inspect_header(const struct expr *, FILE *,
-    const struct environment *);
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
 
@@ -104,6 +100,9 @@ expr_set_date(struct expr *ex, enum expr_cmp cmp, time_t age)
 
 	ex->date.cmp = cmp;
 	ex->date.age = age;
+
+	/* Cheat a bit by adding a match all pattern used during inspect. */
+	(void)expr_set_pattern(ex, ".*", 0, NULL);
 }
 
 void
@@ -270,12 +269,49 @@ expr_count_patterns(const struct expr *ex, unsigned int flags)
 void
 expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 {
-	if (expr_flags(ex) & EXPR_FLAG_INSPECT)
-		expr_inspect_header(ex, fh, env);
+	const struct match *match;
+	const char *lbeg, *lend, *p;
+	unsigned int i;
+	int beg, end, len, indent, pindent;
+	int printkey = 1;
 
-	/* XXX Ugly hack... */
-	if (ex->type == EXPR_TYPE_DATE)
-		expr_inspect_date(ex, fh, env);
+	if ((expr_flags(ex) & EXPR_FLAG_INSPECT) == 0)
+		return;
+
+	match = ex->match;
+	pindent = strlen(match->mh_key) + 2;
+
+	for (i = 0; i < ex->ex_re.r_nmatches; i++) {
+		beg = ex->ex_re.r_matches[i].rm_so;
+		end = ex->ex_re.r_matches[i].rm_eo;
+
+		lbeg = match->mh_val;
+		for (;;) {
+			if ((p = strchr(lbeg, '\n')) == NULL ||
+			    p > match->mh_val + beg)
+				break;
+			lbeg = p + 1;
+		}
+		lbeg += nspaces(lbeg);
+		lend = strchr(lbeg, '\n');
+		if (lend == NULL)
+			lend = match->mh_val + strlen(match->mh_val);
+
+		len = end - beg;
+		if (len >= 2)
+			len -= 2;
+
+		if (printkey) {
+			pindent += expr_inspect_prefix(ex, fh, env);
+			printkey = 0;
+			fprintf(fh, "%s: ", match->mh_key);
+		} else {
+			fprintf(fh, "%*s", pindent, "");
+		}
+		indent = beg - (lbeg - match->mh_val) + pindent;
+		fprintf(fh, "%.*s\n%*s^%*s$\n",
+		    (int)(lend - lbeg), lbeg, indent, "", len, "");
+	}
 }
 
 static int
@@ -423,7 +459,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 			err(1, NULL);
 	}
 
-	matches_append(ml, ex->match);
+	(void)expr_regexec(ex, ml, "Date", date, env->ev_options & OPTION_DRYRUN);
 
 	return 0;
 }
@@ -620,7 +656,7 @@ expr_flags(const struct expr *ex)
 	case EXPR_TYPE_BODY:
 		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
 	case EXPR_TYPE_DATE:
-		return EXPR_FLAG_MATCH;
+		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
 	case EXPR_TYPE_HEADER:
 		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
 	case EXPR_TYPE_NEW:
@@ -641,69 +677,6 @@ expr_flags(const struct expr *ex)
 		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
 	}
 	return 0;
-}
-
-static void
-expr_inspect_date(const struct expr *ex, FILE *fh,
-    const struct environment *env)
-{
-	const struct match *match;
-	int end, indent;
-
-	match = ex->match;
-	indent = strlen(match->mh_key) + 2;
-	end = strlen(match->mh_val);
-	if (end >= 2)
-		end -= 2;
-	indent += expr_inspect_prefix(ex, fh, env);
-	fprintf(fh, "%s: %s\n", match->mh_key, match->mh_val);
-	fprintf(fh, "%*s^%*s$\n", indent, "", end, "");
-}
-
-static void
-expr_inspect_header(const struct expr *ex, FILE *fh,
-    const struct environment *env)
-{
-	const struct match *match;
-	const char *lbeg, *lend, *p;
-	unsigned int i;
-	int beg, end, len, indent, pindent;
-	int printkey = 1;
-
-	match = ex->match;
-	pindent = strlen(match->mh_key) + 2;
-
-	for (i = 0; i < ex->ex_re.r_nmatches; i++) {
-		beg = ex->ex_re.r_matches[i].rm_so;
-		end = ex->ex_re.r_matches[i].rm_eo;
-
-		lbeg = match->mh_val;
-		for (;;) {
-			if ((p = strchr(lbeg, '\n')) == NULL ||
-			    p > match->mh_val + beg)
-				break;
-			lbeg = p + 1;
-		}
-		lbeg += nspaces(lbeg);
-		lend = strchr(lbeg, '\n');
-		if (lend == NULL)
-			lend = match->mh_val + strlen(match->mh_val);
-
-		len = end - beg;
-		if (len >= 2)
-			len -= 2;
-
-		if (printkey) {
-			pindent += expr_inspect_prefix(ex, fh, env);
-			printkey = 0;
-			fprintf(fh, "%s: ", match->mh_key);
-		} else {
-			fprintf(fh, "%*s", pindent, "");
-		}
-		indent = beg - (lbeg - match->mh_val) + pindent;
-		fprintf(fh, "%.*s\n%*s^%*s$\n",
-		    (int)(lend - lbeg), lbeg, indent, "", len, "");
-	}
 }
 
 static int
