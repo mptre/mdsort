@@ -9,6 +9,13 @@
 
 #include "extern.h"
 
+/*
+ * Flags used to denote properties of expression types.
+ */
+#define EXPR_FLAG_ACTION	0x1
+#define EXPR_FLAG_INSPECT	0x2
+#define EXPR_FLAG_MATCH		0x4
+
 #define EXPR_EVAL_ARGS	struct expr *, struct match_list *,	\
 	struct message *, const struct environment *
 
@@ -32,6 +39,7 @@ static int expr_eval_old(EXPR_EVAL_ARGS);
 static int expr_eval_or(EXPR_EVAL_ARGS);
 static int expr_eval_reject(EXPR_EVAL_ARGS);
 
+static unsigned int expr_flags(const struct expr *);
 static void expr_inspect_date(const struct expr *, FILE *,
     const struct environment *);
 static void expr_inspect_header(const struct expr *, FILE *,
@@ -62,33 +70,14 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	ex->lno = lno;
 	ex->lhs = lhs;
 	ex->rhs = rhs;
-	switch (ex->type) {
-	case EXPR_TYPE_ATTACHMENT_BODY:
-	case EXPR_TYPE_ATTACHMENT_HEADER:
-	case EXPR_TYPE_BLOCK:
-	case EXPR_TYPE_BODY:
-	case EXPR_TYPE_DATE:
-	case EXPR_TYPE_HEADER:
-	case EXPR_TYPE_MOVE:
-	case EXPR_TYPE_FLAG:
-	case EXPR_TYPE_DISCARD:
-	case EXPR_TYPE_BREAK:
-	case EXPR_TYPE_LABEL:
-	case EXPR_TYPE_REJECT:
+
+	if (expr_flags(ex) & EXPR_FLAG_MATCH) {
 		ex->match = calloc(1, sizeof(*ex->match));
 		if (ex->match == NULL)
 			err(1, NULL);
 		ex->match->mh_expr = ex;
-		break;
-	case EXPR_TYPE_ATTACHMENT:
-	case EXPR_TYPE_AND:
-	case EXPR_TYPE_OR:
-	case EXPR_TYPE_NEG:
-	case EXPR_TYPE_ALL:
-	case EXPR_TYPE_NEW:
-	case EXPR_TYPE_OLD:
-		break;
 	}
+
 	return ex;
 }
 
@@ -253,30 +242,8 @@ expr_count_actions(const struct expr *ex)
 	if (ex == NULL)
 		return 0;
 
-	switch (ex->type) {
-	case EXPR_TYPE_ATTACHMENT:
-	case EXPR_TYPE_ATTACHMENT_BODY:
-	case EXPR_TYPE_ATTACHMENT_HEADER:
-	case EXPR_TYPE_BLOCK:
-	case EXPR_TYPE_AND:
-	case EXPR_TYPE_OR:
-	case EXPR_TYPE_NEG:
-	case EXPR_TYPE_ALL:
-	case EXPR_TYPE_BODY:
-	case EXPR_TYPE_DATE:
-	case EXPR_TYPE_HEADER:
-	case EXPR_TYPE_NEW:
-	case EXPR_TYPE_OLD:
-		break;
-	case EXPR_TYPE_MOVE:
-	case EXPR_TYPE_FLAG:
-	case EXPR_TYPE_DISCARD:
-	case EXPR_TYPE_BREAK:
-	case EXPR_TYPE_LABEL:
-	case EXPR_TYPE_REJECT:
+	if (expr_flags(ex) & EXPR_FLAG_ACTION)
 		n = 1;
-		break;
-	}
 	return n + expr_count_actions(ex->lhs) + expr_count_actions(ex->rhs);
 }
 
@@ -303,32 +270,12 @@ expr_count_patterns(const struct expr *ex, unsigned int flags)
 void
 expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 {
-	switch (ex->type) {
-	case EXPR_TYPE_DATE:
-		expr_inspect_date(ex, fh, env);
-		break;
-	case EXPR_TYPE_ATTACHMENT_BODY:
-	case EXPR_TYPE_ATTACHMENT_HEADER:
-	case EXPR_TYPE_BODY:
-	case EXPR_TYPE_HEADER:
+	if (expr_flags(ex) & EXPR_FLAG_INSPECT)
 		expr_inspect_header(ex, fh, env);
-		break;
-	case EXPR_TYPE_ATTACHMENT:
-	case EXPR_TYPE_BLOCK:
-	case EXPR_TYPE_AND:
-	case EXPR_TYPE_OR:
-	case EXPR_TYPE_NEG:
-	case EXPR_TYPE_ALL:
-	case EXPR_TYPE_NEW:
-	case EXPR_TYPE_OLD:
-	case EXPR_TYPE_MOVE:
-	case EXPR_TYPE_FLAG:
-	case EXPR_TYPE_DISCARD:
-	case EXPR_TYPE_BREAK:
-	case EXPR_TYPE_LABEL:
-	case EXPR_TYPE_REJECT:
-		break;
-	}
+
+	/* XXX Ugly hack... */
+	if (ex->type == EXPR_TYPE_DATE)
+		expr_inspect_date(ex, fh, env);
 }
 
 static int
@@ -647,6 +594,52 @@ expr_eval_reject(struct expr *ex, struct match_list *ml,
 	if (strlcpy(ml->ml_path, "<reject>", len) >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 
+	return 0;
+}
+
+static unsigned int
+expr_flags(const struct expr *ex)
+{
+	switch (ex->type) {
+	case EXPR_TYPE_BLOCK:
+		return 0;
+	case EXPR_TYPE_AND:
+		return 0;
+	case EXPR_TYPE_OR:
+		return 0;
+	case EXPR_TYPE_NEG:
+		return 0;
+	case EXPR_TYPE_ALL:
+		return 0;
+	case EXPR_TYPE_ATTACHMENT:
+		return 0;
+	case EXPR_TYPE_ATTACHMENT_BODY:
+		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_ATTACHMENT_HEADER:
+		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_BODY:
+		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_DATE:
+		return EXPR_FLAG_MATCH;
+	case EXPR_TYPE_HEADER:
+		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_NEW:
+		return 0;
+	case EXPR_TYPE_OLD:
+		return 0;
+	case EXPR_TYPE_MOVE:
+		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_FLAG:
+		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_DISCARD:
+		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_BREAK:
+		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_LABEL:
+		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_REJECT:
+		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+	}
 	return 0;
 }
 
