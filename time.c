@@ -36,10 +36,8 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 	}
 
 	end += nspaces(end);
-	if (tzparse(end, &tz, env)) {
-		warnc(EINVAL, "tzparse: %s", str);
+	if (tzparse(end, &tz, env))
 		return 1;
-	}
 
 	*res = tim - tz + env->ev_tz.t_offset;
 	return 0;
@@ -70,8 +68,10 @@ timeparse(const char *str, struct tm *tm)
 static int
 tzparse(const char *str, time_t *tz, const struct environment *env)
 {
-	if (tzoff(str, tz) && tzabbr(str, tz, env))
+	if (tzoff(str, tz) && tzabbr(str, tz, env)) {
+		warnc(EINVAL, "%s: %s", __func__, str);
 		return 1;
+	}
 	return 0;
 }
 
