@@ -211,7 +211,7 @@ expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
 		return expr_eval_reject(ex, ml, msg, env);
 	}
 
-	return 1;
+	return EXPR_NOMATCH;
 }
 
 /*
@@ -318,15 +318,17 @@ static int
 expr_eval_all(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
-	return 0;
+	return EXPR_MATCH;
 }
 
 static int
 expr_eval_and(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
-	if (expr_eval(ex->lhs, ml, msg, env))
-		return 1; /* no match, short-circuit */
+	int e;
+
+	if ((e = expr_eval(ex->lhs, ml, msg, env)))
+		return e; /* no match or error, short-circuit */
 	return expr_eval(ex->rhs, ml, msg, env);
 }
 
@@ -338,11 +340,11 @@ expr_eval_attachment(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
-		return 1;
+		return EXPR_NOMATCH;
 
 	/* Presence of attachments is considered a match. */
 	message_list_free(attachments);
-	return 0;
+	return EXPR_MATCH;
 }
 
 static int
@@ -354,18 +356,18 @@ expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
 
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
-		return 1;
+		return EXPR_NOMATCH;
 
 	TAILQ_FOREACH(attach, attachments, entry) {
 		if (expr_eval_body(ex, ml, attach, env))
 			continue;
 
 		message_list_free(attachments);
-		return 0;
+		return EXPR_MATCH;
 	}
 
 	message_list_free(attachments);
-	return 1;
+	return EXPR_NOMATCH;
 }
 
 static int
@@ -377,32 +379,32 @@ expr_eval_attachment_header(struct expr *ex, struct match_list *ml,
 
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
-		return 1;
+		return EXPR_NOMATCH;
 
 	TAILQ_FOREACH(attach, attachments, entry) {
 		if (expr_eval_header(ex, ml, attach, env))
 			continue;
 
 		message_list_free(attachments);
-		return 0;
+		return EXPR_MATCH;
 	}
 
 	message_list_free(attachments);
-	return 1;
+	return EXPR_NOMATCH;
 }
 
 static int
 expr_eval_block(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	int res;
+	int e;
 
-	res = expr_eval(ex->lhs, ml, msg, env);
+	e = expr_eval(ex->lhs, ml, msg, env);
 	if (matches_find(ml, EXPR_TYPE_BREAK) != NULL) {
 		matches_clear(ml);
-		return 1; /* break, continue evaluation */
+		return EXPR_NOMATCH; /* break, continue evaluation */
 	}
-	return res;
+	return e;
 }
 
 static int
@@ -411,8 +413,8 @@ expr_eval_body(struct expr *ex, struct match_list *ml,
 {
 	if (expr_regexec(ex, ml, "Body", msg->body,
 		    env->ev_options & OPTION_DRYRUN))
-		return 1;
-	return 0;
+		return EXPR_NOMATCH;
+	return EXPR_MATCH;
 }
 
 static int
@@ -420,7 +422,7 @@ expr_eval_break(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	matches_append(ml, ex->match);
-	return 0;
+	return EXPR_MATCH;
 }
 
 static int
@@ -432,19 +434,19 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 
 	date = message_get_header1(msg, "Date");
 	if (date == NULL)
-		return 1;
+		return EXPR_NOMATCH;
 	if (time_parse(date, &tim, env))
-		return 1;
+		return EXPR_ERROR;
 
 	delta = env->ev_now - tim;
 	switch (ex->date.cmp) {
 	case EXPR_CMP_LT:
 		if (!(delta < ex->date.age))
-			return 1;
+			return EXPR_NOMATCH;
 		break;
 	case EXPR_CMP_GT:
 		if (!(delta > ex->date.age))
-			return 1;
+			return EXPR_NOMATCH;
 		break;
 	}
 
@@ -461,7 +463,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 
 	(void)expr_regexec(ex, ml, "Date", date, env->ev_options & OPTION_DRYRUN);
 
-	return 0;
+	return EXPR_MATCH;
 }
 
 static int
@@ -476,7 +478,7 @@ expr_eval_discard(struct expr *ex, struct match_list *ml,
 	if (strlcpy(ml->ml_path, "<discard>", len) >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 
-	return 0;
+	return EXPR_MATCH;
 }
 
 static int
@@ -493,7 +495,7 @@ expr_eval_flag(struct expr *ex, struct match_list *ml,
 
 	matches_append(ml, ex->match);
 
-	return 0;
+	return EXPR_MATCH;
 }
 
 static int
@@ -512,10 +514,10 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 			if (expr_regexec(ex, ml, key->val, val->val,
 				    env->ev_options & OPTION_DRYRUN))
 				continue;
-			return 0;
+			return EXPR_MATCH;
 		}
 	}
-	return 1;
+	return EXPR_NOMATCH;
 }
 
 static int
@@ -551,7 +553,7 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 
 	matches_append(ml, ex->match);
 
-	return 0;
+	return EXPR_MATCH;
 }
 
 static int
@@ -568,7 +570,7 @@ expr_eval_move(struct expr *ex, struct match_list *ml,
 
 	matches_append(ml, ex->match);
 
-	return 0;
+	return EXPR_MATCH;
 }
 
 static int
@@ -577,12 +579,16 @@ expr_eval_neg(struct expr *ex, struct match_list *ml, struct message *msg,
 {
 	assert(ex->rhs == NULL);
 
-	if (expr_eval(ex->lhs, ml, msg, env))
-		return 0;
+	switch (expr_eval(ex->lhs, ml, msg, env)) {
+	case EXPR_ERROR:
+		return EXPR_ERROR;
+	case EXPR_NOMATCH:
+		return EXPR_MATCH;
+	}
 
-	/* Non-match, invalidate match below expression. */
+	/* No match, invalidate match below expression. */
 	matches_clear(ml);
-	return 1;
+	return EXPR_NOMATCH;
 }
 
 static int
@@ -592,8 +598,8 @@ expr_eval_new(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 	char buf[NAME_MAX];
 
 	if (pathslice(msg->path, buf, -2, -2) == NULL || strcmp(buf, "new"))
-		return 1;
-	return 0;
+		return EXPR_NOMATCH;
+	return EXPR_MATCH;
 }
 
 static int
@@ -603,18 +609,20 @@ expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 	char buf[NAME_MAX];
 
 	if (message_has_flags(msg, 'S'))
-		return 1;
+		return EXPR_NOMATCH;
 	if (pathslice(msg->path, buf, -2, -2) == NULL || strcmp(buf, "cur"))
-		return 1;
-	return 0;
+		return EXPR_NOMATCH;
+	return EXPR_MATCH;
 }
 
 static int
 expr_eval_or(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
-	if (expr_eval(ex->lhs, ml, msg, env) == 0)
-		return 0; /* match, short-circuit */
+	int e;
+
+	if ((e = expr_eval(ex->lhs, ml, msg, env)) != EXPR_NOMATCH)
+		return EXPR_MATCH; /* match or error, short-circuit */
 	return expr_eval(ex->rhs, ml, msg, env);
 }
 
@@ -630,7 +638,7 @@ expr_eval_reject(struct expr *ex, struct match_list *ml,
 	if (strlcpy(ml->ml_path, "<reject>", len) >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 
-	return 0;
+	return EXPR_MATCH;
 }
 
 static unsigned int

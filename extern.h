@@ -165,6 +165,11 @@ struct expr {
 	struct expr *rhs;
 };
 
+/* Return values for expr_eval(). */
+#define EXPR_MATCH	0
+#define EXPR_NOMATCH	1
+#define EXPR_ERROR	-1
+
 struct match {
 	const struct expr *mh_expr;
 

@@ -124,7 +124,11 @@ main(int argc, char *argv[])
 			}
 
 			matches_clear(&matches);
-			if (expr_eval(conf->expr, &matches, msg, &env)) {
+			switch (expr_eval(conf->expr, &matches, msg, &env)) {
+			case EXPR_ERROR:
+				error = 1;
+				/* FALLTHROUGH */
+			case EXPR_NOMATCH:
 				message_free(msg);
 				continue;
 			}

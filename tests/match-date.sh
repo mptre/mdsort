@@ -101,7 +101,7 @@ if testcase "invalid date"; then
 		match date > 30 seconds move "dst"
 	}
 	EOF
-	mdsort >/dev/null
+	mdsort -e >/dev/null
 	refute_empty "src/new"
 	assert_empty "dst/new"
 fi
