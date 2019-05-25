@@ -400,6 +400,9 @@ expr_eval_block(struct expr *ex, struct match_list *ml,
 	int e;
 
 	e = expr_eval(ex->lhs, ml, msg, env);
+	if (e == EXPR_ERROR)
+		return EXPR_ERROR;
+
 	if (matches_find(ml, EXPR_TYPE_BREAK) != NULL) {
 		matches_clear(ml);
 		return EXPR_NOMATCH; /* break, continue evaluation */
