@@ -2,6 +2,7 @@ TESTS+=	action-break.sh
 TESTS+=	action-discard.sh
 TESTS+=	action-flag.sh
 TESTS+=	action-label.sh
+TESTS+=	action-pass.sh
 TESTS+=	action-reject.sh
 TESTS+=	basic.sh
 TESTS+=	conf.sh

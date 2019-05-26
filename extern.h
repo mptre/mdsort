@@ -131,6 +131,7 @@ enum expr_type {
 	EXPR_TYPE_DISCARD,
 	EXPR_TYPE_BREAK,
 	EXPR_TYPE_LABEL,
+	EXPR_TYPE_PASS,
 	EXPR_TYPE_REJECT,
 };
 
@@ -235,6 +236,8 @@ void match_copy(struct match *mh, const char *str, const regmatch_t *off,
 void match_reset(struct match *mh);
 
 struct match *matches_find(struct match_list *ml, enum expr_type type);
+
+void matches_remove(struct match_list *ml, struct match *mh);
 
 int time_parse(const char *str, time_t *res, const struct environment *env);
 

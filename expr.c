@@ -37,6 +37,7 @@ static int expr_eval_neg(EXPR_EVAL_ARGS);
 static int expr_eval_new(EXPR_EVAL_ARGS);
 static int expr_eval_old(EXPR_EVAL_ARGS);
 static int expr_eval_or(EXPR_EVAL_ARGS);
+static int expr_eval_pass(EXPR_EVAL_ARGS);
 static int expr_eval_reject(EXPR_EVAL_ARGS);
 
 static unsigned int expr_flags(const struct expr *);
@@ -207,6 +208,8 @@ expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
 		return expr_eval_break(ex, ml, msg, env);
 	case EXPR_TYPE_LABEL:
 		return expr_eval_label(ex, ml, msg, env);
+	case EXPR_TYPE_PASS:
+		return expr_eval_pass(ex, ml, msg, env);
 	case EXPR_TYPE_REJECT:
 		return expr_eval_reject(ex, ml, msg, env);
 	}
@@ -397,6 +400,7 @@ static int
 expr_eval_block(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
+	struct match *mh;
 	int e;
 
 	e = expr_eval(ex->lhs, ml, msg, env);
@@ -407,6 +411,13 @@ expr_eval_block(struct expr *ex, struct match_list *ml,
 		matches_clear(ml);
 		return EXPR_NOMATCH; /* break, continue evaluation */
 	}
+
+	mh = matches_find(ml, EXPR_TYPE_PASS);
+	if (mh != NULL) {
+		matches_remove(ml, mh);
+		return EXPR_MATCH; /* pass, stop evaluation */
+	}
+
 	return e;
 }
 
@@ -630,6 +641,19 @@ expr_eval_or(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
+expr_eval_pass(struct expr *ex, struct match_list *ml,
+    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+{
+	matches_append(ml, ex->match);
+
+	/*
+	 * Return no match in order to continue evaluation. The return value is
+	 * later inverted by expr_eval_block().
+	 */
+	return EXPR_NOMATCH;
+}
+
+static int
 expr_eval_reject(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
@@ -683,6 +707,8 @@ expr_flags(const struct expr *ex)
 	case EXPR_TYPE_BREAK:
 		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
 	case EXPR_TYPE_LABEL:
+		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+	case EXPR_TYPE_PASS:
 		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
 	case EXPR_TYPE_REJECT:
 		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;

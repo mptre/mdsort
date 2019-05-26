@@ -179,6 +179,12 @@ matches_find(struct match_list *ml, enum expr_type type)
 }
 
 void
+matches_remove(struct match_list *ml, struct match *mh)
+{
+	TAILQ_REMOVE(&ml->ml_head, mh, mh_entry);
+}
+
+void
 match_copy(struct match *mh, const char *str, const regmatch_t *off,
     size_t nmemb)
 {

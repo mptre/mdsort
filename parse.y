@@ -57,6 +57,7 @@ typedef struct {
 %token MOVE
 %token NEW
 %token OLD
+%token PASS
 %token PATTERN
 %token REJECT
 %token SCALAR
@@ -259,6 +260,9 @@ expraction	: BREAK {
 			$$ = expr_alloc(EXPR_TYPE_LABEL, lineno, NULL, NULL);
 			expr_set_strings($$, $2);
 		}
+		| PASS {
+			$$ = expr_alloc(EXPR_TYPE_PASS, lineno, NULL, NULL);
+		}
 		| REJECT {
 			$$ = expr_alloc(EXPR_TYPE_REJECT, lineno, NULL, NULL);
 		}
@@ -433,6 +437,7 @@ yylex(void)
 		{ "new",	NEW },
 		{ "old",	OLD },
 		{ "or",		OR },
+		{ "pass",	PASS },
 		{ "reject",	REJECT },
 		{ "stdin",	STDIN },
 
@@ -622,7 +627,7 @@ expandtilde(char *str, const struct environment *env)
 static void
 expr_validate(const struct expr *ex)
 {
-	int nactions;
+	int nactions, nflag, nlabel;
 
 	if (expr_count(ex, EXPR_TYPE_MOVE) > 1)
 		yyerror("move action already defined");
@@ -638,6 +643,13 @@ expr_validate(const struct expr *ex)
 		yyerror("discard cannot be combined with another action");
 	if (expr_count(ex, EXPR_TYPE_REJECT) > 0)
 		yyerror("reject cannot be combined with another action");
+
+	if (expr_count(ex, EXPR_TYPE_PASS) == 0)
+		return;
+	nflag = expr_count(ex, EXPR_TYPE_FLAG);
+	nlabel = expr_count(ex, EXPR_TYPE_LABEL);
+	if (nactions - nflag - nlabel - 1 > 0)
+		yyerror("pass cannot be combined with another action");
 }
 
 static int
