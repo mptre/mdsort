@@ -1,7 +1,6 @@
 #include "config.h"
 
 #include <err.h>
-#include <errno.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,8 +9,9 @@
 
 static const struct match *matches_find_interpolate(const struct match_list *);
 
-static const char *match_get(const struct match *, unsigned long);
+static const char *match_get(const struct match *, unsigned int);
 
+static int backref(const char *, unsigned int *);
 static int bufgrow(char **, size_t *, size_t, int);
 static char *interpolate(const struct match *, const char *, char *, size_t,
     int);
@@ -246,11 +246,28 @@ matches_find_interpolate(const struct match_list *ml)
 }
 
 static const char *
-match_get(const struct match *mh, unsigned long n)
+match_get(const struct match *mh, unsigned int n)
 {
 	if (mh == NULL || n >= mh->mh_nmatches)
 		return NULL;
 	return mh->mh_matches[n];
+}
+
+static int
+backref(const char *str, unsigned int *br)
+{
+	char *end;
+	unsigned long val;
+
+	if (str[0] != '\\' || !isdigit(str[1]))
+		return 0;
+
+	val = strtoul(&str[1], &end, 10);
+	if (val > INT_MAX)
+		return -1;
+
+	*br = val;
+	return end - str;
 }
 
 static int
@@ -277,26 +294,29 @@ interpolate(const struct match *mh, const char *str, char *buf, size_t bufsiz,
     int grow)
 {
 	const char *sub;
-	char *end;
-	unsigned long br;
 	size_t buflen = 0;
 	size_t i = 0;
+	unsigned int br;
+	int n;
 
 	while (str[i] != '\0') {
-		if (str[i] == '\\' && isdigit(str[i + 1])) {
-			errno = 0;
-			br = strtoul(str + i + 1, &end, 10);
-			if ((errno == ERANGE && br == ULONG_MAX) ||
-			    ((sub = match_get(mh, br)) == NULL))
+		n = backref(&str[i], &br);
+		if (n < 0)
+			goto invalid;
+		if (n > 0) {
+			sub = match_get(mh, br);
+			if (sub == NULL)
 				goto invalid;
+
 			for (; *sub != '\0'; sub++) {
 				if (bufgrow(&buf, &bufsiz, buflen, grow))
 					goto toolong;
 				buf[buflen++] = *sub;
 			}
-			i = end - str;
+			i += n;
 			continue;
 		}
+
 		if (bufgrow(&buf, &bufsiz, buflen, grow))
 			goto toolong;
 		buf[buflen++] = str[i++];
