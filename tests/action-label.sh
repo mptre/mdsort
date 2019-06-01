@@ -200,6 +200,22 @@ if testcase "flag and label"; then
 	assert_label label ${WRKDIR}/src/cur/*
 fi
 
+if testcase "label and pass"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" "user@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /user/ label "user" pass
+		match header "To" /example/ label "example" pass
+		match all move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+	assert_label "user example" ${WRKDIR}/dst/new/*
+fi
+
 if testcase "interpolation with no x-label header"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "To" "user+label@example.com"

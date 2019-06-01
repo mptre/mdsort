@@ -99,7 +99,7 @@ int
 matches_exec(const struct match_list *ml, struct maildir *src,
     struct message *msg, int *reject, const struct environment *env)
 {
-	char path[NAME_MAX];
+	char path[NAME_MAX], tmp[NAME_MAX];
 	struct maildir *dst;
 	struct match *mh;
 	const char *path_save;
@@ -131,12 +131,14 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			 * if a move or flag action is up next.
 			 */
 			if (maildir_write(src, src, msg,
-			    path, sizeof(path), env))
+				    tmp, sizeof(tmp), env)) {
 				error = 1;
-			else if (maildir_unlink(src, msg))
+			} else if (maildir_unlink(src, msg)) {
 				error = 1;
-			else
+			} else {
+				(void)strlcpy(path, tmp, sizeof(path));
 				msg->path = path;
+			}
 			break;
 		case EXPR_TYPE_REJECT:
 			*reject = 1;
