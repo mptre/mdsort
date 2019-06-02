@@ -457,7 +457,7 @@ yylex(void)
 
 		{ NULL,		0 },
 	};
-	static char lexeme[BUFSIZ], kw[16];
+	static char lexeme[BUFSIZ];
 	char *buf;
 	size_t len;
 	int ambiguous, c, i, match, overflow;
@@ -566,9 +566,8 @@ again:
 		yyungetc(c);
 		return INT;
 	} else if (islower(c)) {
-		buf = kw;
 		for (; islower(c); c = yygetc()) {
-			if (buf == kw + sizeof(kw) - 1) {
+			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("keyword too long");
 				return 0;
 			}
@@ -578,26 +577,26 @@ again:
 		yyungetc(c);
 
 		for (i = 0; keywords[i].str != NULL; i++)
-			if (strcmp(kw, keywords[i].str) == 0)
+			if (strcmp(lexeme, keywords[i].str) == 0)
 				return keywords[i].type;
 
-		len = strlen(kw);
+		len = strlen(lexeme);
 		ambiguous = 0;
 		match = -1;
 		for (i = 0; scalars[i].str != NULL; i++) {
-			if (strncmp(kw, scalars[i].str, len) == 0) {
+			if (strncmp(lexeme, scalars[i].str, len) == 0) {
 				if (match >= 0)
 					ambiguous++;
 				match = i;
 			}
 		}
 		if (ambiguous) {
-			yyerror("ambiguous keyword: %s", kw);
+			yyerror("ambiguous keyword: %s", lexeme);
 		} else if (match >= 0) {
 			yylval.v.number = scalars[match].val;
 			return SCALAR;
 		} else {
-			yyerror("unknown keyword: %s", kw);
+			yyerror("unknown keyword: %s", lexeme);
 		}
 	}
 
