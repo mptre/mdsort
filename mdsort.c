@@ -25,6 +25,7 @@
  */
 #define EX_PERMFAIL	1
 
+static int config_skip(const struct config *, const struct environment *);
 static const char *defaultconf(const struct environment *);
 static void readenv(struct environment *);
 static __dead void usage(void);
@@ -100,15 +101,8 @@ main(int argc, char *argv[])
 		goto out;
 
 	TAILQ_FOREACH(conf, config, entry) {
-		if (conf->maildir != NULL && (env.ev_options & OPTION_STDIN)) {
-			log_debug("%s: %s: skip\n",
-			    __func__, conf->maildir);
+		if (config_skip(conf, &env))
 			continue;
-		} else if (conf->maildir == NULL &&
-		    (env.ev_options & OPTION_STDIN) == 0) {
-			log_debug("%s: <stdin>: skip\n", __func__);
-			continue;
-		}
 
 		md = maildir_open(conf->maildir, mdflags, &env);
 		if (md == NULL) {
@@ -173,6 +167,20 @@ usage(void)
 {
 	fprintf(stderr, "usage: mdsort [-dnv] [-f file] [-]\n");
 	exit(1);
+}
+
+/*
+ * Returns non-zero if the given configuration must be skipped.
+ * Maildir configurations must be skipped when running in stdin mode and vice
+ * versa.
+ */
+static int
+config_skip(const struct config *conf, const struct environment *env)
+{
+	int dostdin = env->ev_options & OPTION_STDIN;
+
+	return (conf->maildir != NULL && dostdin) ||
+	    (conf->maildir == NULL && !dostdin);
 }
 
 static const char *
