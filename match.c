@@ -63,15 +63,15 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 
 	if (ml->ml_maildir[0] == '\0') {
 		/* No maildir present, infer from message path. */
-		if (pathslice(msg->path, ml->ml_maildir, 0, -2) == NULL)
+		if (pathslice(msg->me_path, ml->ml_maildir, 0, -2) == NULL)
 			errx(1, "%s: %s: maildir not found",
-			    __func__, msg->path);
+			    __func__, msg->me_path);
 	}
 	if (ml->ml_subdir[0] == '\0') {
 		/* No subdir present, infer from message path. */
-		if (pathslice(msg->path, ml->ml_subdir, -2, -2) == NULL)
+		if (pathslice(msg->me_path, ml->ml_subdir, -2, -2) == NULL)
 			errx(1, "%s: %s: subdir not found",
-			    __func__, msg->path);
+			    __func__, msg->me_path);
 	}
 	path = pathjoin(buf, ml->ml_maildir, ml->ml_subdir, NULL);
 
@@ -105,7 +105,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 	const char *path_save;
 	int error = 0;
 
-	path_save = msg->path;
+	path_save = msg->me_path;
 
 	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
 		switch (mh->mh_expr->type) {
@@ -137,7 +137,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 				error = 1;
 			} else {
 				(void)strlcpy(path, tmp, sizeof(path));
-				msg->path = path;
+				msg->me_path = path;
 			}
 			break;
 		case EXPR_TYPE_REJECT:
@@ -151,7 +151,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			break;
 	}
 
-	msg->path = path_save;
+	msg->me_path = path_save;
 
 	return error;
 }

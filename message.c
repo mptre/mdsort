@@ -68,20 +68,20 @@ message_parse(const char *path)
 	msg = calloc(1, sizeof(*msg));
 	if (msg == NULL)
 		err(1, NULL);
-	msg->buf = malloc(msgsize);
-	if (msg->buf == NULL)
+	msg->me_buf = malloc(msgsize);
+	if (msg->me_buf == NULL)
 		err(1, NULL);
-	msg->path = path;
+	msg->me_path = path;
 
 	for (;;) {
 		if (msglen >= msgsize - 1) {
-			msg->buf = reallocarray(msg->buf, 2, msgsize);
-			if (msg->buf == NULL)
+			msg->me_buf = reallocarray(msg->me_buf, 2, msgsize);
+			if (msg->me_buf == NULL)
 				err(1, NULL);
 			msgsize *= 2;
 		}
 
-		n = read(fd, msg->buf + msglen, msgsize - msglen - 1);
+		n = read(fd, msg->me_buf + msglen, msgsize - msglen - 1);
 		if (n == -1) {
 			warn("read: %s", path);
 			close(fd);
@@ -93,10 +93,10 @@ message_parse(const char *path)
 		msglen += n;
 	}
 	assert(msglen < msgsize);
-	msg->buf[msglen] = '\0';
+	msg->me_buf[msglen] = '\0';
 	close(fd);
 
-	msg->body = message_parse_headers(msg);
+	msg->me_body = message_parse_headers(msg);
 
 	message_parse_flags(msg);
 
@@ -117,7 +117,7 @@ message_free(struct message *msg)
 			free(msg->me_headers.h_v[i].val);
 	}
 
-	free(msg->buf);
+	free(msg->me_buf);
 	free(msg->me_headers.h_v);
 	free(msg);
 }
@@ -157,7 +157,7 @@ message_writeat(struct message *msg, int dirfd, const char *path)
 		}
 	}
 
-	if (fprintf(fh, "\n%s", msg->body ? msg->body : "") < 0) {
+	if (fprintf(fh, "\n%s", msg->me_body ? msg->me_body : "") < 0) {
 		warn("fprintf");
 		error = 1;
 	}
@@ -260,23 +260,23 @@ message_get_flags(const struct message *msg)
 	int bit = 0;
 	int i = 0;
 
-	if (msg->flags == FLAGS_BAD) {
+	if (msg->me_flags == FLAGS_BAD) {
 		/*
 		 * Parsing the flags failed, just give back the flags in its
 		 * original form.
 		 */
-		p = strrchr(msg->path, ':');
+		p = strrchr(msg->me_path, ':');
 		if (p == NULL)
 			return "";
 		return p;
-	} else if (msg->flags == 0) {
+	} else if (msg->me_flags == 0) {
 		return "";
 	}
 
 	buf[i++] = ':';
 	buf[i++] = '2';
 	buf[i++] = ',';
-	for (flags = msg->flags; flags > 0; flags >>= 1) {
+	for (flags = msg->me_flags; flags > 0; flags >>= 1) {
 		if (flags & 0x1)
 			buf[i++] = 'A' + bit;
 		bit++;
@@ -289,9 +289,9 @@ message_get_flags(const struct message *msg)
 int
 message_has_flags(const struct message *msg, unsigned char flag)
 {
-	if (msg->flags == FLAGS_BAD)
+	if (msg->me_flags == FLAGS_BAD)
 		return -1;
-	if (msg->flags & FLAG(flag))
+	if (msg->me_flags & FLAG(flag))
 		return 1;
 	return 0;
 }
@@ -299,13 +299,13 @@ message_has_flags(const struct message *msg, unsigned char flag)
 void
 message_set_flags(struct message *msg, unsigned char flag, int add)
 {
-	if (msg->flags == FLAGS_BAD)
+	if (msg->me_flags == FLAGS_BAD)
 		return;
 
 	if (add)
-		msg->flags |= FLAG(flag);
+		msg->me_flags |= FLAG(flag);
 	else
-		msg->flags &= ~FLAG(flag);
+		msg->me_flags &= ~FLAG(flag);
 }
 
 /*
@@ -358,7 +358,7 @@ message_list_free(struct message_list *messages)
 		return;
 
 	while ((msg = TAILQ_FIRST(messages)) != NULL) {
-		TAILQ_REMOVE(messages, msg, entry);
+		TAILQ_REMOVE(messages, msg, me_entry);
 		message_free(msg);
 	}
 	free(messages);
@@ -389,12 +389,12 @@ message_parse_flags(struct message *msg)
 {
 	const char *p;
 
-	p = strrchr(msg->path, ':');
+	p = strrchr(msg->me_path, ':');
 	if (p == NULL) {
-		msg->flags = 0;
+		msg->me_flags = 0;
 		return;
 	} else if (p[1] != '2' || p[2] != ',') {
-		msg->flags = FLAGS_BAD;
+		msg->me_flags = FLAGS_BAD;
 		return;
 	}
 
@@ -402,8 +402,9 @@ message_parse_flags(struct message *msg)
 		if (isupper(*p)) {
 			message_set_flags(msg, *p, 1);
 		} else {
-			msg->flags = FLAGS_BAD;
-			log_debug("%s: %s: invalid flags", __func__, msg->path);
+			msg->me_flags = FLAGS_BAD;
+			log_debug("%s: %s: invalid flags",
+			    __func__, msg->me_path);
 			return;
 		}
 	}
@@ -414,7 +415,7 @@ message_parse_headers(struct message *msg)
 {
 	char *buf, *keybeg, *keyend, *valbeg, *valend;
 
-	buf = msg->buf;
+	buf = msg->me_buf;
 	while (findheader(buf, &keybeg, &keyend, &valbeg, &valend) == 0) {
 		size_t i = msg->me_headers.h_nmemb;
 
@@ -576,7 +577,7 @@ parseattachments(const struct message *msg, struct message_list *attachments,
 
 	if (depth > 8) {
 		warnx("%s: message contains too many nested attachments",
-		    msg->path);
+		    msg->me_path);
 		return 1;
 	}
 
@@ -589,7 +590,7 @@ parseattachments(const struct message *msg, struct message_list *attachments,
 
 	log_debug("%s: boundary=%s, depth=%d\n", __func__, boundary, depth);
 
-	body = msg->body;
+	body = msg->me_body;
 	beg = end = NULL;
 	term = 0;
 	for (;;) {
@@ -607,12 +608,12 @@ parseattachments(const struct message *msg, struct message_list *attachments,
 		attach = calloc(1, sizeof(*attach));
 		if (attach == NULL)
 			err(1, NULL);
-		attach->buf = strndup(beg, end - beg);
-		if (attach->buf == NULL)
+		attach->me_buf = strndup(beg, end - beg);
+		if (attach->me_buf == NULL)
 			err(1, NULL);
-		attach->path = msg->path;
-		attach->body = message_parse_headers(attach);
-		TAILQ_INSERT_TAIL(attachments, attach, entry);
+		attach->me_path = msg->me_path;
+		attach->me_body = message_parse_headers(attach);
+		TAILQ_INSERT_TAIL(attachments, attach, me_entry);
 
 		if (parseattachments(attach, attachments, depth + 1)) {
 			term = 0;

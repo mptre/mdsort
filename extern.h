@@ -71,11 +71,11 @@ int maildir_write(const struct maildir *src, const struct maildir *dst,
     const struct environment *env);
 
 struct message {
-	const char *path;
-	const char *body;
-	char *buf;
+	const char *me_path;
+	const char *me_body;
+	char *me_buf;
 
-	unsigned int flags;
+	unsigned int me_flags;
 
 	struct {
 		struct header *h_v;
@@ -83,7 +83,7 @@ struct message {
 		size_t h_size;
 	} me_headers;
 
-	TAILQ_ENTRY(message) entry;
+	TAILQ_ENTRY(message) me_entry;
 };
 
 TAILQ_HEAD(message_list, message);

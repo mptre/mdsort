@@ -361,7 +361,7 @@ expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
 	if (attachments == NULL)
 		return EXPR_NOMATCH;
 
-	TAILQ_FOREACH(attach, attachments, entry) {
+	TAILQ_FOREACH(attach, attachments, me_entry) {
 		if (expr_eval_body(ex, ml, attach, env))
 			continue;
 
@@ -384,7 +384,7 @@ expr_eval_attachment_header(struct expr *ex, struct match_list *ml,
 	if (attachments == NULL)
 		return EXPR_NOMATCH;
 
-	TAILQ_FOREACH(attach, attachments, entry) {
+	TAILQ_FOREACH(attach, attachments, me_entry) {
 		if (expr_eval_header(ex, ml, attach, env))
 			continue;
 
@@ -425,7 +425,7 @@ static int
 expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	if (expr_regexec(ex, ml, "Body", msg->body,
+	if (expr_regexec(ex, ml, "Body", msg->me_body,
 		    env->ev_options & OPTION_DRYRUN))
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
@@ -611,7 +611,7 @@ expr_eval_new(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 {
 	char buf[NAME_MAX];
 
-	if (pathslice(msg->path, buf, -2, -2) == NULL || strcmp(buf, "new"))
+	if (pathslice(msg->me_path, buf, -2, -2) == NULL || strcmp(buf, "new"))
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
 }
@@ -624,7 +624,7 @@ expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 
 	if (message_has_flags(msg, 'S'))
 		return EXPR_NOMATCH;
-	if (pathslice(msg->path, buf, -2, -2) == NULL || strcmp(buf, "cur"))
+	if (pathslice(msg->me_path, buf, -2, -2) == NULL || strcmp(buf, "cur"))
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
 }
