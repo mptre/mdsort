@@ -25,6 +25,7 @@ struct header {
 	struct string_list *values;	/* list of all values for key */
 };
 
+static void message_headers_realloc(struct message *);
 static void message_parse_flags(struct message *);
 static const char *message_parse_headers(struct message *);
 
@@ -110,14 +111,14 @@ message_free(struct message *msg)
 	if (msg == NULL)
 		return;
 
-	for (i = 0; i < msg->nheaders; i++) {
-		strings_free(msg->headers[i].values);
-		if (msg->headers[i].flags & HEADER_FLAG_DIRTY)
-			free(msg->headers[i].val);
+	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
+		strings_free(msg->me_headers.h_v[i].values);
+		if (msg->me_headers.h_v[i].flags & HEADER_FLAG_DIRTY)
+			free(msg->me_headers.h_v[i].val);
 	}
 
 	free(msg->buf);
-	free(msg->headers);
+	free(msg->me_headers.h_v);
 	free(msg);
 }
 
@@ -143,12 +144,12 @@ message_writeat(struct message *msg, int dirfd, const char *path)
 	}
 
 	/* Preserve ordering of headers. */
-	if (msg->nheaders > 0)
-		qsort(msg->headers, msg->nheaders, sizeof(*msg->headers),
-		    cmpheaderid);
+	if (msg->me_headers.h_nmemb > 0)
+		qsort(msg->me_headers.h_v, msg->me_headers.h_nmemb,
+		    sizeof(*msg->me_headers.h_v), cmpheaderid);
 
-	for (i = 0; i < msg->nheaders; i++) {
-		hdr = &msg->headers[i];
+	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
+		hdr = &msg->me_headers.h_v[i];
 		if (fprintf(fh, "%s: %s\n", hdr->key, hdr->val) < 0) {
 			warn("fprintf");
 			error = 1;
@@ -175,11 +176,12 @@ message_get_header(const struct message *msg, const char *header)
 	ssize_t idx;
 	size_t i, nfound;
 
-	idx = searchheader(msg->headers, msg->nheaders, header, &nfound);
+	idx = searchheader(msg->me_headers.h_v, msg->me_headers.h_nmemb,
+	    header, &nfound);
 	if (idx == -1)
 		return NULL;
 
-	hdr = msg->headers + idx;
+	hdr = msg->me_headers.h_v + idx;
 	if (hdr->values == NULL) {
 		hdr->values = strings_alloc();
 		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
@@ -210,37 +212,35 @@ message_set_header(struct message *msg, const char *header, char *val)
 	ssize_t idx;
 	size_t nfound, tail;
 
-	idx = searchheader(msg->headers, msg->nheaders, header, &nfound);
+	idx = searchheader(msg->me_headers.h_v, msg->me_headers.h_nmemb,
+	    header, &nfound);
 	if (idx == -1) {
-		msg->headers = reallocarray(msg->headers, msg->nheaders + 1,
-		    sizeof(*msg->headers));
-		if (msg->headers == NULL)
-			err(1, NULL);
+		message_headers_realloc(msg);
 
-		hdr = &msg->headers[msg->nheaders];
+		hdr = &msg->me_headers.h_v[msg->me_headers.h_nmemb];
 		hdr->flags = HEADER_FLAG_DIRTY;
-		hdr->id = msg->nheaders;
+		hdr->id = msg->me_headers.h_nmemb;
 		hdr->key = header;
 		hdr->val = val;
 		hdr->values = NULL;
-		msg->nheaders++;
+		msg->me_headers.h_nmemb++;
 
-		qsort(msg->headers, msg->nheaders, sizeof(*msg->headers),
-		    cmpheaderkey);
+		qsort(msg->me_headers.h_v, msg->me_headers.h_nmemb,
+		    sizeof(*msg->me_headers.h_v), cmpheaderkey);
 	} else {
 		if (nfound > 1) {
 			/*
 			 * Multiple occurrences of the given header.
 			 * Remove all occurrences except the first one.
 			 */
-			tail = msg->nheaders - (idx + nfound);
-			memmove(&msg->headers[idx + 1],
-			    &msg->headers[idx + nfound],
-			    tail * sizeof(*msg->headers));
-			msg->nheaders -= nfound - 1;
+			tail = msg->me_headers.h_nmemb - (idx + nfound);
+			memmove(&msg->me_headers.h_v[idx + 1],
+			    &msg->me_headers.h_v[idx + nfound],
+			    tail * sizeof(*msg->me_headers.h_v));
+			msg->me_headers.h_nmemb -= nfound - 1;
 		}
 
-		hdr = &msg->headers[idx];
+		hdr = &msg->me_headers.h_v[idx];
 		if (hdr->flags & HEADER_FLAG_DIRTY)
 			free(hdr->val);
 		else
@@ -365,6 +365,26 @@ message_list_free(struct message_list *messages)
 }
 
 static void
+message_headers_realloc(struct message *msg)
+{
+	size_t newsize;
+
+	if (msg->me_headers.h_nmemb + 1 < msg->me_headers.h_size)
+		return;
+
+	if (msg->me_headers.h_size == 0)
+		newsize = 16;
+	else
+		newsize = msg->me_headers.h_size * 2;
+
+	msg->me_headers.h_v = reallocarray(msg->me_headers.h_v, newsize,
+	    sizeof(*msg->me_headers.h_v));
+	if (msg->me_headers.h_v == NULL)
+		err(1, NULL);
+	msg->me_headers.h_size = newsize;
+}
+
+static void
 message_parse_flags(struct message *msg)
 {
 	const char *p;
@@ -396,25 +416,25 @@ message_parse_headers(struct message *msg)
 
 	buf = msg->buf;
 	while (findheader(buf, &keybeg, &keyend, &valbeg, &valend) == 0) {
+		size_t i = msg->me_headers.h_nmemb;
+
 		*keyend = '\0';
 		*valend = '\0';
 
-		msg->headers = reallocarray(msg->headers, msg->nheaders + 1,
-		    sizeof(*msg->headers));
-		if (msg->headers == NULL)
-			err(1, NULL);
-		msg->headers[msg->nheaders].id = msg->nheaders;
-		msg->headers[msg->nheaders].flags = 0;
-		msg->headers[msg->nheaders].key = keybeg;
-		msg->headers[msg->nheaders].val = valbeg;
-		msg->headers[msg->nheaders].values = NULL;
-		msg->nheaders++;
+		message_headers_realloc(msg);
+
+		msg->me_headers.h_v[i].id = msg->me_headers.h_nmemb;
+		msg->me_headers.h_v[i].flags = 0;
+		msg->me_headers.h_v[i].key = keybeg;
+		msg->me_headers.h_v[i].val = valbeg;
+		msg->me_headers.h_v[i].values = NULL;
+		msg->me_headers.h_nmemb++;
 
 		buf = valend + 1;
 	}
-	if (msg->nheaders > 0)
-		qsort(msg->headers, msg->nheaders, sizeof(*msg->headers),
-		    cmpheaderkey);
+	if (msg->me_headers.h_nmemb > 0)
+		qsort(msg->me_headers.h_v, msg->me_headers.h_nmemb,
+		    sizeof(*msg->me_headers.h_v), cmpheaderkey);
 
 	for (; *buf == '\n'; buf++)
 		continue;

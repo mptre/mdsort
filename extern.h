@@ -77,8 +77,11 @@ struct message {
 
 	unsigned int flags;
 
-	struct header *headers;
-	size_t nheaders;
+	struct {
+		struct header *h_v;
+		size_t h_nmemb;
+		size_t h_size;
+	} me_headers;
 
 	TAILQ_ENTRY(message) entry;
 };
