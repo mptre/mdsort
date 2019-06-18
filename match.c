@@ -275,18 +275,15 @@ backref(const char *str, unsigned int *br)
 static int
 bufgrow(char **buf, size_t *bufsiz, size_t buflen, int grow)
 {
-	size_t newsiz;
-
 	if (*bufsiz > 0 && buflen < *bufsiz - 1)
 		return 0;
 	if (!grow)
 		return 1;
 
-	newsiz = *bufsiz + 64;
-	*buf = realloc(*buf, newsiz);
+	*buf = reallocarray(*buf, 2, *bufsiz);
 	if (*buf == NULL)
 		err(1, NULL);
-	*bufsiz = newsiz;
+	*bufsiz *= 2;
 
 	return 0;
 }
