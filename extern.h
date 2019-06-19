@@ -195,7 +195,7 @@ struct match_list {
 };
 
 #define MATCH_LIST_INITIALIZER(ml)	\
-	{"", "", "", TAILQ_HEAD_INITIALIZER((ml).ml_head) }
+	{ "", "", "", TAILQ_HEAD_INITIALIZER((ml).ml_head) }
 
 struct expr *expr_alloc(enum expr_type type, int lno, struct expr *lhs,
     struct expr *rhs);
