@@ -14,7 +14,7 @@
 
 static char *maildir_genname(const struct maildir *, const char *,
     char *, size_t, const struct environment *);
-static int maildir_next(struct maildir *);
+static const char *maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
 static const char *maildir_path(struct maildir *, const char *);
@@ -126,9 +126,9 @@ maildir_walk(struct maildir *md)
 			return path;
 		}
 
-		if (maildir_next(md))
+		path = maildir_next(md);
+		if (path == NULL)
 			return NULL;
-		path = maildir_path(md, NULL);
 		if (maildir_opendir(md, path))
 			return NULL;
 	}
@@ -229,20 +229,21 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 	return message_writeat(msg, dirfd(dst->dir), buf);
 }
 
-static int
+static const char *
 maildir_next(struct maildir *md)
 {
 	if (md->flags & MAILDIR_STDIN)
-		return 1;
+		return NULL;
 
 	switch (md->subdir) {
 	case SUBDIR_NEW:
 		md->subdir = SUBDIR_CUR;
-		return 0;
-	case SUBDIR_CUR:
 		break;
+	case SUBDIR_CUR:
+		return NULL;
 	}
-	return 1;
+
+	return maildir_path(md, NULL);
 }
 
 static int
