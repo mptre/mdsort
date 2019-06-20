@@ -180,7 +180,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 			 * message.
 			 */
 			error = message_writeat(msg, dstfd, dstname);
-			if (error == 0 && (src->flags & MAILDIR_STDIN) == 0)
+			if (error == 0)
 				error = maildir_unlink(src, msg);
 		} else {
 			warn("renameat");
