@@ -12,6 +12,7 @@
 
 #include "extern.h"
 
+static int maildir_fd(const struct maildir *);
 static char *maildir_genname(const struct maildir *, const char *,
     char *, size_t, const struct environment *);
 static const char *maildir_next(struct maildir *);
@@ -158,7 +159,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		warnx("%s: basename not found", msg->me_path);
 		return 1;
 	}
-	srcfd = dirfd(src->dir);
+	srcfd = maildir_fd(src);
 	if (fstatat(srcfd, srcname, &st, 0) != -1) {
 		times[1] = st.st_mtim;
 		doutime = 1;
@@ -168,7 +169,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 
 	flags = msgflags(src, dst, msg);
 	dstname = maildir_genname(dst, flags, buf[1], sizeof(buf[1]), env);
-	dstfd = dirfd(dst->dir);
+	dstfd = maildir_fd(dst);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
 		error = 1;
@@ -178,7 +179,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 			 * different file systems. Fallback to writing a new
 			 * message.
 			 */
-			error = message_writeat(msg, dirfd(dst->dir), dstname);
+			error = message_writeat(msg, dstfd, dstname);
 			if (error == 0 && (src->flags & MAILDIR_STDIN) == 0)
 				error = maildir_unlink(src, msg);
 		} else {
@@ -205,7 +206,7 @@ maildir_unlink(const struct maildir *md, const struct message *msg)
 		return 1;
 	}
 
-	if (unlinkat(dirfd(md->dir), buf, 0) == -1) {
+	if (unlinkat(maildir_fd(md), buf, 0) == -1) {
 		warn("unlinkat: %s", msg->me_path);
 		return 1;
 	}
@@ -226,7 +227,7 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 	flags = msgflags(dst, src, msg);
 	maildir_genname(dst, flags, buf, bufsiz, env);
 
-	return message_writeat(msg, dirfd(dst->dir), buf);
+	return message_writeat(msg, maildir_fd(dst), buf);
 }
 
 static const char *
@@ -262,6 +263,12 @@ maildir_opendir(struct maildir *md, const char *path)
 	return 0;
 }
 
+static int
+maildir_fd(const struct maildir *md)
+{
+	return dirfd(md->dir);
+}
+
 static char *
 maildir_genname(const struct maildir *dst, const char *flags,
     char *buf, size_t bufsiz, const struct environment *env)
@@ -280,7 +287,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 		    ts, pid, count, env->ev_hostname, flags);
 		if (n < 0 || (size_t)n >= bufsiz)
 			errc(1, ENAMETOOLONG, "%s", __func__);
-		fd = openat(dirfd(dst->dir), buf, O_WRONLY | O_CREAT | O_EXCL,
+		fd = openat(maildir_fd(dst), buf, O_WRONLY | O_CREAT | O_EXCL,
 		    S_IRUSR | S_IWUSR);
 		if (fd == -1) {
 			if (errno == EEXIST) {
@@ -338,7 +345,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 		return 1;
 
 	maildir_genname(md, "", name, sizeof(name), env);
-	fd = openat(dirfd(md->dir), name, O_WRONLY | O_EXCL);
+	fd = openat(maildir_fd(md), name, O_WRONLY | O_EXCL);
 	if (fd == -1) {
 		warn("openat: %s/%s", path, name);
 		return 1;
@@ -380,7 +387,7 @@ maildir_read(struct maildir *md)
 			 * Some filesystems like XFS does not return the file
 			 * type and stat(2) must instead be used.
 			 */
-			if (!isfile(dirfd(md->dir), ent->d_name))
+			if (!isfile(maildir_fd(md), ent->d_name))
 				continue;
 			break;
 		case DT_REG:
