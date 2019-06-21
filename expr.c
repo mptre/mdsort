@@ -636,7 +636,7 @@ expr_eval_or(struct expr *ex, struct match_list *ml, struct message *msg,
 	int e;
 
 	if ((e = expr_eval(ex->lhs, ml, msg, env)) != EXPR_NOMATCH)
-		return EXPR_MATCH; /* match or error, short-circuit */
+		return e; /* match or error, short-circuit */
 	return expr_eval(ex->rhs, ml, msg, env);
 }
 
