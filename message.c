@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -251,14 +252,18 @@ message_set_header(struct message *msg, const char *header, char *val)
 	}
 }
 
-const char *
-message_get_flags(const struct message *msg)
+int
+message_get_flags(const struct message *msg, char *buf, size_t bufsiz)
 {
-	static char buf[32];
 	const char *p;
 	unsigned int flags;
-	int bit = 0;
-	int i = 0;
+	unsigned int bit = 0;
+	unsigned int i = 0;
+
+	/* Ensure room for at least the empty set of flags ":2,\0". */
+	if (bufsiz < 4)
+		goto fail;
+	buf[0] = '\0';
 
 	if (msg->me_flags == FLAGS_BAD) {
 		/*
@@ -267,23 +272,32 @@ message_get_flags(const struct message *msg)
 		 */
 		p = strrchr(msg->me_path, ':');
 		if (p == NULL)
-			return "";
-		return p;
+			return 0;
+		if (strlcpy(buf, p, bufsiz) >= bufsiz)
+			goto fail;
+		return 0;
 	} else if (msg->me_flags == 0) {
-		return "";
+		return 0;
 	}
 
 	buf[i++] = ':';
 	buf[i++] = '2';
 	buf[i++] = ',';
-	for (flags = msg->me_flags; flags > 0; flags >>= 1) {
-		if (flags & 0x1)
-			buf[i++] = 'A' + bit;
-		bit++;
+	for (flags = msg->me_flags; flags > 0; flags >>= 1, bit++) {
+		if ((flags & 0x1) == 0)
+			continue;
+
+		if (i >= bufsiz - 1)
+			goto fail;
+		buf[i++] = 'A' + bit;
 	}
 	buf[i] = '\0';
 
-	return buf;
+	return 0;
+
+fail:
+	warnc(ENAMETOOLONG, "%s", __func__);
+	return 1;
 }
 
 int

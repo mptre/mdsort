@@ -101,7 +101,7 @@ const char *message_get_header1(const struct message *msg, const char *header);
 
 void message_set_header(struct message *msg, const char *header, char *val);
 
-const char *message_get_flags(const struct message *msg);
+int message_get_flags(const struct message *msg, char *buf, size_t bufsiz);
 
 int message_has_flags(const struct message *msg, unsigned char flag);
 

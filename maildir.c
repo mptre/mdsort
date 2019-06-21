@@ -22,8 +22,8 @@ static const char *maildir_path(struct maildir *, const char *);
 static const char *maildir_read(struct maildir *);
 
 static int isfile(int, const char *);
-static const char *msgflags(const struct maildir *, const struct maildir *,
-    struct message *);
+static int msgflags(const struct maildir *, const struct maildir *,
+    struct message *, char *, size_t);
 static int parsesubdir(const char *, enum subdir *);
 
 /*
@@ -143,13 +143,13 @@ int
 maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env)
 {
-	char buf[2][NAME_MAX];
+	char buf[2][NAME_MAX], flags[16];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
 	};
 	struct stat st;
-	const char *dstname, *flags, *srcname;
+	const char *dstname, *srcname;
 	int dstfd, srcfd;
 	int doutime = 0;
 	int error = 0;
@@ -167,7 +167,8 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		warn("fstatat");
 	}
 
-	flags = msgflags(src, dst, msg);
+	if (msgflags(src, dst, msg, flags, sizeof(flags)))
+		return 1;
 	dstname = maildir_genname(dst, flags, buf[1], sizeof(buf[1]), env);
 	dstfd = maildir_fd(dst);
 
@@ -222,9 +223,10 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env)
 {
-	const char *flags;
+	char flags[16];
 
-	flags = msgflags(dst, src, msg);
+	if (msgflags(dst, src, msg, flags, sizeof(flags)))
+		return 1;
 	maildir_genname(dst, flags, buf, bufsiz, env);
 
 	return message_writeat(msg, maildir_fd(dst), buf);
@@ -411,16 +413,16 @@ isfile(int dirfd, const char *path)
 	return (sb.st_mode & S_IFMT) == S_IFREG;
 }
 
-static const char *
+static int
 msgflags(const struct maildir *src, const struct maildir *dst,
-    struct message *msg)
+    struct message *msg, char *buf, size_t bufsiz)
 {
 	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR)
 		message_set_flags(msg, 'S', 1);
 	else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW)
 		message_set_flags(msg, 'S', 0);
 
-	return message_get_flags(msg);
+	return message_get_flags(msg, buf, bufsiz);
 }
 
 static int
