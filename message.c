@@ -157,7 +157,7 @@ message_writeat(struct message *msg, int dirfd, const char *path)
 		}
 	}
 
-	if (fprintf(fh, "\n%s", msg->me_body ? msg->me_body : "") < 0) {
+	if (fprintf(fh, "\n%s", msg->me_body) < 0) {
 		warn("fprintf");
 		error = 1;
 	}
