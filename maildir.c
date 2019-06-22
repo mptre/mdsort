@@ -23,7 +23,7 @@ static const char *maildir_read(struct maildir *);
 
 static int isfile(int, const char *);
 static int msgflags(const struct maildir *, const struct maildir *,
-    struct message *, char *, size_t);
+    const struct message *, char *, size_t);
 static int parsesubdir(const char *, enum subdir *);
 
 /*
@@ -415,14 +415,22 @@ isfile(int dirfd, const char *path)
 
 static int
 msgflags(const struct maildir *src, const struct maildir *dst,
-    struct message *msg, char *buf, size_t bufsiz)
+    const struct message *msg, char *buf, size_t bufsiz)
 {
-	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR)
-		message_set_flags(msg, 'S', 1);
-	else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW)
-		message_set_flags(msg, 'S', 0);
+	struct message_flags flags = msg->me_flags;
 
-	return message_get_flags(msg, buf, bufsiz);
+	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR) {
+		if (message_flags_set(&flags, 'S', 1))
+			return 1;
+	} else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW) {
+		if (message_flags_set(&flags, 'S', 0))
+			return 1;
+	}
+
+	if (message_flags_str(&flags, buf, bufsiz) == NULL)
+		return 1;
+
+	return 0;
 }
 
 static int

@@ -70,12 +70,27 @@ int maildir_write(const struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env);
 
+struct message_flags {
+	const char *mf_path;
+	const char *mf_fallback;
+	unsigned int mf_flags;
+};
+
+char *message_flags_str(const struct message_flags *flags, char *buf,
+    size_t bufsiz);
+
+int message_flags_isset(const struct message_flags *flags,
+    unsigned char flag);
+
+int message_flags_set(struct message_flags *flags, unsigned char flag,
+    int add);
+
 struct message {
 	const char *me_path;
 	const char *me_body;
 	char *me_buf;
 
-	unsigned int me_flags;
+	struct message_flags me_flags;
 
 	struct {
 		struct header *h_v;
@@ -100,12 +115,6 @@ const struct string_list *message_get_header(const struct message *msg,
 const char *message_get_header1(const struct message *msg, const char *header);
 
 void message_set_header(struct message *msg, const char *header, char *val);
-
-int message_get_flags(const struct message *msg, char *buf, size_t bufsiz);
-
-int message_has_flags(const struct message *msg, unsigned char flag);
-
-void message_set_flags(struct message *msg, unsigned char flag, int add);
 
 int message_has_label(const struct message *msg, const char *label);
 

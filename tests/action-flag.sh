@@ -73,11 +73,11 @@ if testcase "flag as not new when path flags are invalid"; then
 		match new flag !new
 	}
 	EOF
-	mdsort
-	assert_empty "src/new"
-	refute_empty "src/cur"
-	assert_find "src/cur" "*:1,S"
-	assert_find "src/cur" "*:2,s"
+	mdsort -e >/dev/null
+	assert_empty "src/cur"
+	refute_empty "src/new"
+	assert_find "src/new" "*:1,S"
+	assert_find "src/new" "*:2,s"
 fi
 
 if testcase "flag as not new when path flags are already present"; then

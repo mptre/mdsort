@@ -45,7 +45,7 @@ if testcase "invalid flags"; then
 		match old move "dst"
 	}
 	EOF
-	mdsort
+	mdsort -e >/dev/null
 	refute_empty "src/cur"
 	assert_find "src/cur" "*:1,"
 	assert_empty "dst/cur"

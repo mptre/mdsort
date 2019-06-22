@@ -13,7 +13,6 @@
 #include "extern.h"
 
 #define FLAG(c)		(isupper((c)) ? 1 << ((c) - 'A') : 0)
-#define FLAGS_BAD	((unsigned int)-1)
 
 struct header {
 	unsigned int id;
@@ -26,8 +25,8 @@ struct header {
 	struct string_list *values;	/* list of all values for key */
 };
 
+static void message_flags_parse(struct message_flags *, const char *);
 static void message_headers_realloc(struct message *);
-static void message_parse_flags(struct message *);
 static const char *message_parse_headers(struct message *);
 
 static int cmpheaderid(const void *, const void *);
@@ -44,6 +43,73 @@ static char *parseboundary(const char *);
 
 static const char *skipline(const char *);
 static int strword(const char *, const char *);
+
+char *
+message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
+{
+	unsigned int mask;
+	unsigned int bit = 0;
+	unsigned int i = 0;
+
+	if (flags->mf_fallback != NULL) {
+		if (strlcpy(buf, flags->mf_fallback, bufsiz) >= bufsiz)
+			goto fail;
+		return buf;
+	}
+
+	/* Ensure room for at least the empty set of flags ":2,\0". */
+	if (bufsiz < 4)
+		goto fail;
+
+	buf[i++] = ':';
+	buf[i++] = '2';
+	buf[i++] = ',';
+	for (mask = flags->mf_flags; mask > 0; mask >>= 1, bit++) {
+		if ((mask & 0x1) == 0)
+			continue;
+
+		if (i >= bufsiz - 1)
+			goto fail;
+		buf[i++] = 'A' + bit;
+	}
+	buf[i] = '\0';
+
+	return buf;
+
+fail:
+	warnc(ENAMETOOLONG, "%s: %s", __func__, flags->mf_path);
+	return NULL;
+}
+
+int
+message_flags_isset(const struct message_flags *flags, unsigned char flag)
+{
+	if (flags->mf_fallback != NULL) {
+		warnx("%s: invalid flags", flags->mf_path);
+		return -1;
+	}
+
+	if (flags->mf_flags & FLAG(flag))
+		return 1;
+	return 0;
+}
+
+int
+message_flags_set(struct message_flags *flags, unsigned char flag, int add)
+{
+	if (flags->mf_fallback != NULL) {
+		warnx("%s: invalid flags", flags->mf_path);
+		return 1;
+	}
+	if (!isupper(flag))
+		return 1;
+
+	if (add)
+		flags->mf_flags |= FLAG(flag);
+	else
+		flags->mf_flags &= ~FLAG(flag);
+	return 0;
+}
 
 /*
  * Parse the message located at path.
@@ -99,7 +165,7 @@ message_parse(const char *path)
 
 	msg->me_body = message_parse_headers(msg);
 
-	message_parse_flags(msg);
+	message_flags_parse(&msg->me_flags, msg->me_path);
 
 	return msg;
 }
@@ -252,76 +318,6 @@ message_set_header(struct message *msg, const char *header, char *val)
 	}
 }
 
-int
-message_get_flags(const struct message *msg, char *buf, size_t bufsiz)
-{
-	const char *p;
-	unsigned int flags;
-	unsigned int bit = 0;
-	unsigned int i = 0;
-
-	/* Ensure room for at least the empty set of flags ":2,\0". */
-	if (bufsiz < 4)
-		goto fail;
-	buf[0] = '\0';
-
-	if (msg->me_flags == FLAGS_BAD) {
-		/*
-		 * Parsing the flags failed, just give back the flags in its
-		 * original form.
-		 */
-		p = strrchr(msg->me_path, ':');
-		if (p == NULL)
-			return 0;
-		if (strlcpy(buf, p, bufsiz) >= bufsiz)
-			goto fail;
-		return 0;
-	} else if (msg->me_flags == 0) {
-		return 0;
-	}
-
-	buf[i++] = ':';
-	buf[i++] = '2';
-	buf[i++] = ',';
-	for (flags = msg->me_flags; flags > 0; flags >>= 1, bit++) {
-		if ((flags & 0x1) == 0)
-			continue;
-
-		if (i >= bufsiz - 1)
-			goto fail;
-		buf[i++] = 'A' + bit;
-	}
-	buf[i] = '\0';
-
-	return 0;
-
-fail:
-	warnc(ENAMETOOLONG, "%s", __func__);
-	return 1;
-}
-
-int
-message_has_flags(const struct message *msg, unsigned char flag)
-{
-	if (msg->me_flags == FLAGS_BAD)
-		return -1;
-	if (msg->me_flags & FLAG(flag))
-		return 1;
-	return 0;
-}
-
-void
-message_set_flags(struct message *msg, unsigned char flag, int add)
-{
-	if (msg->me_flags == FLAGS_BAD)
-		return;
-
-	if (add)
-		msg->me_flags |= FLAG(flag);
-	else
-		msg->me_flags &= ~FLAG(flag);
-}
-
 /*
  * Returns non-zero if label is present in the X-Label header, with respect
  * to word boundaries.
@@ -379,6 +375,32 @@ message_list_free(struct message_list *messages)
 }
 
 static void
+message_flags_parse(struct message_flags *flags, const char *path)
+{
+	const char *p;
+	int i;
+
+	flags->mf_path = path;
+
+	p = strrchr(path, ':');
+	if (p == NULL)
+		return;
+	if (p[1] != '2' || p[2] != ',')
+		goto bad;
+
+	for (i = 3; p[i] != '\0'; i++) {
+		if (message_flags_set(flags, p[i], 1))
+			goto bad;
+	}
+
+	return;
+
+bad:
+	/* Malformed, give back the flags in its original form. */
+	flags->mf_fallback = p;
+}
+
+static void
 message_headers_realloc(struct message *msg)
 {
 	size_t newsize;
@@ -396,32 +418,6 @@ message_headers_realloc(struct message *msg)
 	if (msg->me_headers.h_v == NULL)
 		err(1, NULL);
 	msg->me_headers.h_size = newsize;
-}
-
-static void
-message_parse_flags(struct message *msg)
-{
-	const char *p;
-
-	p = strrchr(msg->me_path, ':');
-	if (p == NULL) {
-		msg->me_flags = 0;
-		return;
-	} else if (p[1] != '2' || p[2] != ',') {
-		msg->me_flags = FLAGS_BAD;
-		return;
-	}
-
-	for (p += 3; *p != '\0'; p++) {
-		if (isupper(*p)) {
-			message_set_flags(msg, *p, 1);
-		} else {
-			msg->me_flags = FLAGS_BAD;
-			log_debug("%s: %s: invalid flags",
-			    __func__, msg->me_path);
-			return;
-		}
-	}
 }
 
 static const char *
