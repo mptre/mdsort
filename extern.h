@@ -73,7 +73,7 @@ int maildir_write(const struct maildir *src, const struct maildir *dst,
 struct message_flags {
 	const char *mf_path;
 	const char *mf_fallback;
-	unsigned int mf_flags;
+	unsigned int mf_flags[2];	/* 0: uppercase, 1: lowercase */
 };
 
 char *message_flags_str(const struct message_flags *flags, char *buf,

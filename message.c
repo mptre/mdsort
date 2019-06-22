@@ -12,8 +12,6 @@
 
 #include "extern.h"
 
-#define FLAG(c)		(isupper((c)) ? 1 << ((c) - 'A') : 0)
-
 struct header {
 	unsigned int id;
 
@@ -25,7 +23,11 @@ struct header {
 	struct string_list *values;	/* list of all values for key */
 };
 
+static ssize_t message_flags_fill(const struct message_flags *, unsigned int,
+    char *, size_t);
 static void message_flags_parse(struct message_flags *, const char *);
+static int message_flags_resolve(const struct message_flags *, unsigned char,
+    unsigned int *, unsigned int *);
 static void message_headers_realloc(struct message *);
 static const char *message_parse_headers(struct message *);
 
@@ -47,9 +49,8 @@ static int strword(const char *, const char *);
 char *
 message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
 {
-	unsigned int mask;
-	unsigned int bit = 0;
-	unsigned int i = 0;
+	ssize_t n;
+	size_t i = 0;
 
 	if (flags->mf_fallback != NULL) {
 		if (strlcpy(buf, flags->mf_fallback, bufsiz) >= bufsiz)
@@ -64,14 +65,14 @@ message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
 	buf[i++] = ':';
 	buf[i++] = '2';
 	buf[i++] = ',';
-	for (mask = flags->mf_flags; mask > 0; mask >>= 1, bit++) {
-		if ((mask & 0x1) == 0)
-			continue;
-
-		if (i >= bufsiz - 1)
-			goto fail;
-		buf[i++] = 'A' + bit;
-	}
+	n = message_flags_fill(flags, 0, &buf[i], bufsiz - i);
+	if (n == -1)
+		goto fail;
+	i += n;
+	n = message_flags_fill(flags, 1, &buf[i], bufsiz - i);
+	if (n == -1)
+		goto fail;
+	i += n;
 	buf[i] = '\0';
 
 	return buf;
@@ -84,12 +85,12 @@ fail:
 int
 message_flags_isset(const struct message_flags *flags, unsigned char flag)
 {
-	if (flags->mf_fallback != NULL) {
-		warnx("%s: invalid flags", flags->mf_path);
-		return -1;
-	}
+	unsigned int idx, mask;
 
-	if (flags->mf_flags & FLAG(flag))
+	if (message_flags_resolve(flags, flag, &idx, &mask))
+		return -1;
+
+	if (flags->mf_flags[idx] & mask)
 		return 1;
 	return 0;
 }
@@ -97,17 +98,15 @@ message_flags_isset(const struct message_flags *flags, unsigned char flag)
 int
 message_flags_set(struct message_flags *flags, unsigned char flag, int add)
 {
-	if (flags->mf_fallback != NULL) {
-		warnx("%s: invalid flags", flags->mf_path);
-		return 1;
-	}
-	if (!isupper(flag))
+	unsigned int idx, mask;
+
+	if (message_flags_resolve(flags, flag, &idx, &mask))
 		return 1;
 
 	if (add)
-		flags->mf_flags |= FLAG(flag);
+		flags->mf_flags[idx] |= mask;
 	else
-		flags->mf_flags &= ~FLAG(flag);
+		flags->mf_flags[idx] &= ~mask;
 	return 0;
 }
 
@@ -374,6 +373,28 @@ message_list_free(struct message_list *messages)
 	free(messages);
 }
 
+static ssize_t message_flags_fill(const struct message_flags *flags,
+    unsigned int typ, char *buf, size_t bufsiz)
+{
+	size_t i = 0;
+	unsigned int flg;
+	unsigned int bit = 0;
+
+	for (flg = flags->mf_flags[typ]; flg > 0; flg >>= 1, bit++) {
+		if ((flg & 0x1) == 0)
+			continue;
+
+		if (i >= bufsiz - 1)
+			return -1;
+		if (typ == 0)
+			buf[i++] = 'A' + bit;
+		else if (typ == 1)
+			buf[i++] = 'a' + bit;
+	}
+
+	return i;
+}
+
 static void
 message_flags_parse(struct message_flags *flags, const char *path)
 {
@@ -398,6 +419,28 @@ message_flags_parse(struct message_flags *flags, const char *path)
 bad:
 	/* Malformed, give back the flags in its original form. */
 	flags->mf_fallback = p;
+}
+
+static int
+message_flags_resolve(const struct message_flags *flags, unsigned char flag,
+    unsigned int *idx, unsigned int *mask)
+{
+	if (flags->mf_fallback != NULL) {
+		warnx("%s: invalid flags", flags->mf_path);
+		return 1;
+	}
+
+	if (isupper(flag)) {
+		*idx = 0;
+		*mask = 1 << (flag - 'A');
+		return 0;
+	}
+	if (islower(flag)) {
+		*idx = 1;
+		*mask = 1 << (flag - 'a');
+		return 0;
+	}
+	return 1;
 }
 
 static void
