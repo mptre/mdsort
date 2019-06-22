@@ -12,6 +12,8 @@
 
 #include "extern.h"
 
+#define FLAGS_MAX	64
+
 static int maildir_fd(const struct maildir *);
 static char *maildir_genname(const struct maildir *, const char *,
     char *, size_t, const struct environment *);
@@ -143,7 +145,7 @@ int
 maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env)
 {
-	char buf[2][NAME_MAX], flags[16];
+	char buf[2][NAME_MAX], flags[FLAGS_MAX];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
@@ -223,7 +225,7 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env)
 {
-	char flags[16];
+	char flags[FLAGS_MAX];
 
 	if (msgflags(dst, src, msg, flags, sizeof(flags)))
 		return 1;
