@@ -475,7 +475,8 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 			err(1, NULL);
 	}
 
-	(void)expr_regexec(ex, ml, "Date", date, env->ev_options & OPTION_DRYRUN);
+	(void)expr_regexec(ex, ml, "Date", date,
+	    env->ev_options & OPTION_DRYRUN);
 
 	return EXPR_MATCH;
 }
