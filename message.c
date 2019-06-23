@@ -23,8 +23,6 @@ struct header {
 	struct string_list *values;	/* list of all values for key */
 };
 
-static ssize_t message_flags_fill(const struct message_flags *, unsigned int,
-    char *, size_t);
 static void message_flags_parse(struct message_flags *, const char *);
 static int message_flags_resolve(const struct message_flags *, unsigned char,
     unsigned int *, unsigned int *);
@@ -44,6 +42,7 @@ static const char *findboundary(const char *, const char *, int *);
 static char *parseboundary(const char *);
 
 static const char *skipline(const char *);
+static ssize_t strflags(unsigned int, unsigned char, char *, size_t);
 static int strword(const char *, const char *);
 
 char *
@@ -65,11 +64,11 @@ message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
 	buf[i++] = ':';
 	buf[i++] = '2';
 	buf[i++] = ',';
-	n = message_flags_fill(flags, 0, &buf[i], bufsiz - i);
+	n = strflags(flags->mf_flags[0], 'A', &buf[i], bufsiz - i);
 	if (n == -1)
 		goto fail;
 	i += n;
-	n = message_flags_fill(flags, 1, &buf[i], bufsiz - i);
+	n = strflags(flags->mf_flags[1], 'a', &buf[i], bufsiz - i);
 	if (n == -1)
 		goto fail;
 	i += n;
@@ -371,28 +370,6 @@ message_list_free(struct message_list *messages)
 		message_free(msg);
 	}
 	free(messages);
-}
-
-static ssize_t message_flags_fill(const struct message_flags *flags,
-    unsigned int typ, char *buf, size_t bufsiz)
-{
-	size_t i = 0;
-	unsigned int flg;
-	unsigned int bit = 0;
-
-	for (flg = flags->mf_flags[typ]; flg > 0; flg >>= 1, bit++) {
-		if ((flg & 0x1) == 0)
-			continue;
-
-		if (i >= bufsiz - 1)
-			return -1;
-		if (typ == 0)
-			buf[i++] = 'A' + bit;
-		else if (typ == 1)
-			buf[i++] = 'a' + bit;
-	}
-
-	return i;
 }
 
 static void
@@ -766,6 +743,24 @@ skipline(const char *s)
 	if (*s != '\0')
 		s++;
 	return s;
+}
+
+static ssize_t
+strflags(unsigned int flags, unsigned char offset, char *buf, size_t bufsiz)
+{
+	size_t i = 0;
+	unsigned int bit = 0;
+
+	for (; flags > 0; flags >>= 1, bit++) {
+		if ((flags & 0x1) == 0)
+			continue;
+
+		if (i >= bufsiz - 1)
+			return -1;
+		buf[i++] = offset + bit;
+	}
+
+	return i;
 }
 
 static int
