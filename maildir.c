@@ -51,25 +51,25 @@ maildir_open(const char *path, unsigned int flags,
 	md = calloc(1, sizeof(*md));
 	if (md == NULL)
 		err(1, NULL);
-	md->subdir = SUBDIR_NEW;
-	md->flags = flags;
+	md->md_subdir = SUBDIR_NEW;
+	md->md_flags = flags;
 
-	if (md->flags & MAILDIR_STDIN) {
+	if (md->md_flags & MAILDIR_STDIN) {
 		if (maildir_stdin(md, env))
 			goto fail;
 	} else {
-		if (md->flags & MAILDIR_WALK) {
-			md->path = strdup(path);
-			if (md->path == NULL)
+		if (md->md_flags & MAILDIR_WALK) {
+			md->md_path = strdup(path);
+			if (md->md_path == NULL)
 				err(1, NULL);
 		} else {
-			if (parsesubdir(path, &md->subdir))
+			if (parsesubdir(path, &md->md_subdir))
 				goto fail;
 
-			md->path = malloc(PATH_MAX);
-			if (md->path == NULL)
+			md->md_path = malloc(PATH_MAX);
+			if (md->md_path == NULL)
 				err(1, NULL);
-			if (pathslice(path, md->path, 0, -1) == NULL)
+			if (pathslice(path, md->md_path, 0, -1) == NULL)
 				goto fail;
 		}
 	}
@@ -93,19 +93,19 @@ maildir_close(struct maildir *md)
 	if (md == NULL)
 		return;
 
-	if (md->flags & MAILDIR_STDIN) {
+	if (md->md_flags & MAILDIR_STDIN) {
 		dir = maildir_path(md, NULL);
 		if (maildir_opendir(md, dir) == 0) {
 			while ((path = maildir_walk(md)))
 				(void)unlink(path);
 			(void)rmdir(maildir_path(md, NULL));
-			(void)rmdir(md->path);
+			(void)rmdir(md->md_path);
 		}
 	}
 
-	if (md->dir != NULL)
-		closedir(md->dir);
-	free(md->path);
+	if (md->md_dir != NULL)
+		closedir(md->md_dir);
+	free(md->md_path);
 	free(md);
 }
 
@@ -119,7 +119,7 @@ maildir_walk(struct maildir *md)
 {
 	const char *path;
 
-	if ((md->flags & MAILDIR_WALK) == 0)
+	if ((md->md_flags & MAILDIR_WALK) == 0)
 		return NULL;
 
 	for (;;) {
@@ -237,12 +237,12 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 static const char *
 maildir_next(struct maildir *md)
 {
-	if (md->flags & MAILDIR_STDIN)
+	if (md->md_flags & MAILDIR_STDIN)
 		return NULL;
 
-	switch (md->subdir) {
+	switch (md->md_subdir) {
 	case SUBDIR_NEW:
-		md->subdir = SUBDIR_CUR;
+		md->md_subdir = SUBDIR_CUR;
 		break;
 	case SUBDIR_CUR:
 		return NULL;
@@ -254,13 +254,13 @@ maildir_next(struct maildir *md)
 static int
 maildir_opendir(struct maildir *md, const char *path)
 {
-	if (md->dir != NULL)
-		closedir(md->dir);
+	if (md->md_dir != NULL)
+		closedir(md->md_dir);
 
 	log_debug("%s: %s\n", __func__, path);
 
-	md->dir = opendir(path);
-	if (md->dir == NULL) {
+	md->md_dir = opendir(path);
+	if (md->md_dir == NULL) {
 		warn("opendir: %s", path);
 		return 1;
 	}
@@ -270,7 +270,7 @@ maildir_opendir(struct maildir *md, const char *path)
 static int
 maildir_fd(const struct maildir *md)
 {
-	return dirfd(md->dir);
+	return dirfd(md->md_dir);
 }
 
 static char *
@@ -311,7 +311,7 @@ maildir_path(struct maildir *md, const char *filename)
 {
 	const char *dirname = NULL;
 
-	switch (md->subdir) {
+	switch (md->md_subdir) {
 	case SUBDIR_NEW:
 		dirname = "new";
 		break;
@@ -319,7 +319,7 @@ maildir_path(struct maildir *md, const char *filename)
 		dirname = "cur";
 		break;
 	}
-	return pathjoin(md->buf, md->path, dirname, filename);
+	return pathjoin(md->md_buf, md->md_path, dirname, filename);
 }
 
 static int
@@ -331,11 +331,11 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	int fd;
 	int error = 0;
 
-	md->path = malloc(PATH_MAX);
-	if (md->path == NULL)
+	md->md_path = malloc(PATH_MAX);
+	if (md->md_path == NULL)
 		err(1, NULL);
-	pathjoin(md->path, env->ev_tmpdir, "mdsort-XXXXXXXX", NULL);
-	if (mkdtemp(md->path) == NULL) {
+	pathjoin(md->md_path, env->ev_tmpdir, "mdsort-XXXXXXXX", NULL);
+	if (mkdtemp(md->md_path) == NULL) {
 		warn("mkdtemp");
 		return 1;
 	}
@@ -382,7 +382,7 @@ maildir_read(struct maildir *md)
 	const struct dirent *ent;
 
 	for (;;) {
-		ent = readdir(md->dir);
+		ent = readdir(md->md_dir);
 		if (ent == NULL)
 			return 0;
 		switch (ent->d_type) {
@@ -421,10 +421,11 @@ msgflags(const struct maildir *src, const struct maildir *dst,
 {
 	struct message_flags flags = msg->me_flags;
 
-	if (src->subdir == SUBDIR_NEW && dst->subdir == SUBDIR_CUR) {
+	if (src->md_subdir == SUBDIR_NEW && dst->md_subdir == SUBDIR_CUR) {
 		if (message_flags_set(&flags, 'S', 1))
 			return 1;
-	} else if (src->subdir == SUBDIR_CUR && dst->subdir == SUBDIR_NEW) {
+	} else if (src->md_subdir == SUBDIR_CUR &&
+	    dst->md_subdir == SUBDIR_NEW) {
 		if (message_flags_set(&flags, 'S', 0))
 			return 1;
 	}

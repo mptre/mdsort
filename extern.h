@@ -45,13 +45,13 @@ enum subdir {
 };
 
 struct maildir {
-	char *path;
-	DIR *dir;
-	enum subdir subdir;
-	unsigned int flags;
+	char md_buf[PATH_MAX];
+	char *md_path;
+	DIR *md_dir;
+	enum subdir md_subdir;
+	unsigned int md_flags;
 #define MAILDIR_WALK	0x00000001
 #define MAILDIR_STDIN	0x00000002
-	char buf[PATH_MAX];
 };
 
 struct maildir *maildir_open(const char *path, unsigned int flags,
