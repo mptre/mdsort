@@ -12,9 +12,9 @@
 /*
  * Flags used to denote properties of expression types.
  */
-#define EXPR_FLAG_ACTION	0x1
-#define EXPR_FLAG_INSPECT	0x2
-#define EXPR_FLAG_MATCH		0x4
+#define EXPR_FLAG_ACTION	0x00000001
+#define EXPR_FLAG_INSPECT	0x00000002
+#define EXPR_FLAG_MATCH		0x00000004
 
 #define EXPR_EVAL_ARGS	struct expr *, struct match_list *,	\
 	struct message *, const struct environment *

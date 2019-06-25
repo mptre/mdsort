@@ -34,9 +34,9 @@ struct environment {
 	time_t ev_now;
 
 	unsigned int ev_options;
-#define OPTION_DRYRUN	0x1
-#define OPTION_SYNTAX	0x2
-#define OPTION_STDIN	0x4
+#define OPTION_DRYRUN	0x00000001
+#define OPTION_SYNTAX	0x00000002
+#define OPTION_STDIN	0x00000004
 };
 
 enum subdir {
@@ -49,8 +49,8 @@ struct maildir {
 	DIR *dir;
 	enum subdir subdir;
 	unsigned int flags;
-#define MAILDIR_WALK	0x1
-#define MAILDIR_STDIN	0x2
+#define MAILDIR_WALK	0x00000001
+#define MAILDIR_STDIN	0x00000002
 	char buf[PATH_MAX];
 };
 
@@ -163,8 +163,8 @@ struct expr {
 		regmatch_t *r_matches;
 		size_t r_nmatches;
 		unsigned int r_flags;
-#define EXPR_PATTERN_ICASE	0x1
-#define EXPR_PATTERN_FORCE	0x2
+#define EXPR_PATTERN_ICASE	0x00000001
+#define EXPR_PATTERN_FORCE	0x00000002
 	} ex_re;
 
 	struct {
