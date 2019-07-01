@@ -382,9 +382,17 @@ maildir_read(struct maildir *md)
 	const struct dirent *ent;
 
 	for (;;) {
+		/*
+		 * Necessary to reset errno in order to distinguish between
+		 * reaching end of directory and errors.
+		 */
+		errno = 0;
 		ent = readdir(md->md_dir);
-		if (ent == NULL)
-			return 0;
+		if (ent == NULL) {
+			if (errno)
+				warn("readdir");
+			return NULL;
+		}
 		switch (ent->d_type) {
 		case DT_UNKNOWN:
 			/*
