@@ -33,11 +33,11 @@ static int parsesubdir(const char *, enum subdir *);
  *
  * The flags may be any combination of the following values:
  *
- *     MAILDIR_WALK      Invoking maildir_walk() will traverse all messages
- *                       present in the cur and new subdirectories rooted at
- *                       path.
+ *     MAILDIR_WALK     Invoking maildir_walk() will traverse all messages
+ *                      present in the cur and new subdirectories rooted at
+ *                      path.
  *
- *     MAILDIR_STDIN     Read messages from stdin.
+ *     MAILDIR_STDIN    Read messages from stdin.
  *
  * The caller is responsible for freeing the returned memory using
  * maildir_close().
@@ -95,6 +95,7 @@ maildir_close(struct maildir *md)
 		return;
 
 	if (md->md_flags & MAILDIR_STDIN) {
+		/* Best effort removal of the temporary maildir. */
 		dir = maildir_path(md, NULL);
 		if (maildir_opendir(md, dir) == 0) {
 			while (maildir_walk(md, &me) == 1)
