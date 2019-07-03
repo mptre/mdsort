@@ -21,7 +21,7 @@ static const char *maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
 static const char *maildir_path(struct maildir *, const char *);
-static const char *maildir_read(struct maildir *);
+static int maildir_read(struct maildir *, struct maildir_entry *);
 
 static int isfile(int, const char *);
 static int msgflags(const struct maildir *, const struct maildir *,
@@ -97,7 +97,7 @@ maildir_close(struct maildir *md)
 	if (md->md_flags & MAILDIR_STDIN) {
 		dir = maildir_path(md, NULL);
 		if (maildir_opendir(md, dir) == 0) {
-			while (maildir_walk(md, &me))
+			while (maildir_walk(md, &me) == 1)
 				(void)unlinkat(maildir_fd(md), me.e_path, 0);
 			(void)rmdir(dir);
 			(void)rmdir(md->md_path);
@@ -111,26 +111,27 @@ maildir_close(struct maildir *md)
 }
 
 /*
- * Traverse the given maildir. Returns non-zero if a new file is encountered.
- * Once all files have been traversed, zero is returned.
+ * Traverse the given maildir. Returns one of the following:
+ *
+ *     1    A new file was encountered and the maildir entry is populated with
+ *          the details.
+ *
+ *     0    All files have been traversed.
+ *
+ *     -1   An error occurred.
  */
 int
 maildir_walk(struct maildir *md, struct maildir_entry *me)
 {
 	const char *path;
+	int r;
 
 	if ((md->md_flags & MAILDIR_WALK) == 0)
 		return 0;
 
 	for (;;) {
-		path = maildir_read(md);
-		if (path != NULL) {
-			log_debug("%s: %s\n", __func__, path);
-			me->e_dir = md->md_buf;
-			me->e_dirfd = maildir_fd(md);
-			me->e_path = path;
-			return 1;
-		}
+		if ((r = maildir_read(md, me)))
+			return r;
 
 		path = maildir_next(md);
 		if (path == NULL)
@@ -379,8 +380,8 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	return error;
 }
 
-static const char *
-maildir_read(struct maildir *md)
+static int
+maildir_read(struct maildir *md, struct maildir_entry *me)
 {
 	const struct dirent *ent;
 
@@ -392,9 +393,11 @@ maildir_read(struct maildir *md)
 		errno = 0;
 		ent = readdir(md->md_dir);
 		if (ent == NULL) {
-			if (errno)
+			if (errno) {
 				warn("readdir");
-			return NULL;
+				return -1;
+			}
+			return 0;
 		}
 		switch (ent->d_type) {
 		case DT_UNKNOWN:
@@ -411,7 +414,11 @@ maildir_read(struct maildir *md)
 			continue;
 		}
 
-		return ent->d_name;
+		log_debug("%s: %s/%s\n", __func__, md->md_buf, ent->d_name);
+		me->e_dir = md->md_buf;
+		me->e_dirfd = maildir_fd(md);
+		me->e_path = ent->d_name;
+		return 1;
 	}
 }
 

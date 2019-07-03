@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 	struct maildir *md;
 	struct message *msg;
 	unsigned int mdflags = MAILDIR_WALK;
-	int c;
+	int c, w;
 	int error = 0;
 	int reject = 0;
 	int verbose = 0;
@@ -110,7 +110,12 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		while (maildir_walk(md, &me)) {
+		while ((w = maildir_walk(md, &me))) {
+			if (w == -1) {
+				error = 1;
+				break;
+			}
+
 			msg = message_parse(me.e_dir, me.e_dirfd, me.e_path);
 			if (msg == NULL) {
 				error = 1;
