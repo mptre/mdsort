@@ -288,8 +288,7 @@ struct config_list *config_parse(const char *path,
 
 void config_free(struct config_list *config);
 
-char *pathjoin(char *buf, const char *root, const char *dirname,
-    const char *filename);
+char *pathjoin(char *buf, const char *dirname, const char *filename);
 
 char *pathslice(const char *path, char *buf, int beg, int end);
 
