@@ -20,7 +20,7 @@ static char *maildir_genname(const struct maildir *, const char *,
 static const char *maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
-static const char *maildir_path(struct maildir *, const char *);
+static const char *maildir_path(struct maildir *);
 static int maildir_read(struct maildir *, struct maildir_entry *);
 
 static int isfile(int, const char *);
@@ -74,7 +74,7 @@ maildir_open(const char *path, unsigned int flags,
 		}
 	}
 
-	path = maildir_path(md, NULL);
+	path = maildir_path(md);
 	if (maildir_opendir(md, path))
 		goto fail;
 
@@ -96,7 +96,7 @@ maildir_close(struct maildir *md)
 
 	if (md->md_flags & MAILDIR_STDIN) {
 		/* Best effort removal of the temporary maildir. */
-		dir = maildir_path(md, NULL);
+		dir = maildir_path(md);
 		if (maildir_opendir(md, dir) == 0) {
 			while (maildir_walk(md, &me) == 1)
 				(void)unlinkat(maildir_fd(md), me.e_path, 0);
@@ -253,7 +253,7 @@ maildir_next(struct maildir *md)
 		return NULL;
 	}
 
-	return maildir_path(md, NULL);
+	return maildir_path(md);
 }
 
 static int
@@ -312,7 +312,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 }
 
 static const char *
-maildir_path(struct maildir *md, const char *filename)
+maildir_path(struct maildir *md)
 {
 	const char *dirname = NULL;
 
@@ -324,7 +324,7 @@ maildir_path(struct maildir *md, const char *filename)
 		dirname = "cur";
 		break;
 	}
-	return pathjoin(md->md_buf, md->md_path, dirname, filename);
+	return pathjoin(md->md_buf, md->md_path, dirname, NULL);
 }
 
 static int
@@ -345,7 +345,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 		return 1;
 	}
 
-	path = maildir_path(md, NULL);
+	path = maildir_path(md);
 	if (mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
 		warn("mkdir");
 		return 1;
