@@ -54,12 +54,18 @@ struct maildir {
 #define MAILDIR_STDIN	0x00000002
 };
 
+struct maildir_entry {
+	const char *e_dir;
+	const char *e_path;
+	int e_dirfd;
+};
+
 struct maildir *maildir_open(const char *path, unsigned int flags,
     const struct environment *env);
 
 void maildir_close(struct maildir *md);
 
-const char *maildir_walk(struct maildir *md);
+int maildir_walk(struct maildir *md, struct maildir_entry *me);
 
 int maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env);
@@ -86,6 +92,7 @@ int message_flags_set(struct message_flags *flags, unsigned char flag,
     int add);
 
 struct message {
+	char me_pbuf[PATH_MAX];	/* path buffer */
 	const char *me_path;
 	const char *me_body;
 	char *me_buf;
@@ -103,7 +110,7 @@ struct message {
 
 TAILQ_HEAD(message_list, message);
 
-struct message *message_parse(const char *path);
+struct message *message_parse(const char *dir, int dirfd, const char *path);
 
 void message_free(struct message *msg);
 

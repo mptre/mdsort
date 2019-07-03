@@ -35,11 +35,11 @@ main(int argc, char *argv[])
 {
 	struct match_list matches = MATCH_LIST_INITIALIZER(matches);
 	struct environment env;
+	struct maildir_entry me;
 	struct config_list *config;
 	struct config *conf;
 	struct maildir *md;
 	struct message *msg;
-	const char *path;
 	unsigned int mdflags = MAILDIR_WALK;
 	int c;
 	int error = 0;
@@ -110,8 +110,8 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		while ((path = maildir_walk(md))) {
-			msg = message_parse(path);
+		while (maildir_walk(md, &me)) {
+			msg = message_parse(me.e_dir, me.e_dirfd, me.e_path);
 			if (msg == NULL) {
 				error = 1;
 				continue;
@@ -135,7 +135,7 @@ main(int argc, char *argv[])
 			if (env.ev_options & OPTION_STDIN)
 				log_info("<stdin> -> %s\n", matches.ml_path);
 			else
-				log_info("%s -> %s\n", path, matches.ml_path);
+				log_info("%s -> %s\n", msg->me_path, matches.ml_path);
 			if (env.ev_options & OPTION_DRYRUN) {
 				matches_inspect(&matches, stdout, &env);
 				message_free(msg);

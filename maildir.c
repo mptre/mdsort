@@ -88,7 +88,8 @@ fail:
 void
 maildir_close(struct maildir *md)
 {
-	const char *dir, *path;
+	struct maildir_entry me;
+	const char *dir;
 
 	if (md == NULL)
 		return;
@@ -96,9 +97,9 @@ maildir_close(struct maildir *md)
 	if (md->md_flags & MAILDIR_STDIN) {
 		dir = maildir_path(md, NULL);
 		if (maildir_opendir(md, dir) == 0) {
-			while ((path = maildir_walk(md)))
-				(void)unlink(path);
-			(void)rmdir(maildir_path(md, NULL));
+			while (maildir_walk(md, &me))
+				(void)unlinkat(maildir_fd(md), me.e_path, 0);
+			(void)rmdir(dir);
 			(void)rmdir(md->md_path);
 		}
 	}
@@ -110,30 +111,32 @@ maildir_close(struct maildir *md)
 }
 
 /*
- * Returns the path to the next file located in the maildir.
- * Calling it repeatedly will traverse all the files.
- * Once all files have been traversed, NULL is returned.
+ * Traverse the given maildir. Returns non-zero if a new file is encountered.
+ * Once all files have been traversed, zero is returned.
  */
-const char *
-maildir_walk(struct maildir *md)
+int
+maildir_walk(struct maildir *md, struct maildir_entry *me)
 {
 	const char *path;
 
 	if ((md->md_flags & MAILDIR_WALK) == 0)
-		return NULL;
+		return 0;
 
 	for (;;) {
 		path = maildir_read(md);
 		if (path != NULL) {
 			log_debug("%s: %s\n", __func__, path);
-			return path;
+			me->e_dir = md->md_buf;
+			me->e_dirfd = maildir_fd(md);
+			me->e_path = path;
+			return 1;
 		}
 
 		path = maildir_next(md);
 		if (path == NULL)
-			return NULL;
+			return 0;
 		if (maildir_opendir(md, path))
-			return NULL;
+			return 0;
 	}
 }
 
@@ -408,7 +411,7 @@ maildir_read(struct maildir *md)
 			continue;
 		}
 
-		return maildir_path(md, ent->d_name);
+		return ent->d_name;
 	}
 }
 

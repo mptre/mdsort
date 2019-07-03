@@ -116,7 +116,7 @@ message_flags_set(struct message_flags *flags, unsigned char flag, int add)
  * message_free().
  */
 struct message *
-message_parse(const char *path)
+message_parse(const char *dir, int dirfd, const char *path)
 {
 	struct message *msg;
 	ssize_t n;
@@ -124,9 +124,9 @@ message_parse(const char *path)
 	size_t msgsize = BUFSIZ;
 	int fd;
 
-	fd = open(path, O_RDONLY | O_CLOEXEC);
+	fd = openat(dirfd, path, O_RDONLY | O_CLOEXEC);
 	if (fd == -1) {
-		warn("open: %s", path);
+		warn("open: %s/%s", dir, path);
 		return NULL;
 	}
 
@@ -136,7 +136,7 @@ message_parse(const char *path)
 	msg->me_buf = malloc(msgsize);
 	if (msg->me_buf == NULL)
 		err(1, NULL);
-	msg->me_path = path;
+	msg->me_path = pathjoin(msg->me_pbuf, dir, path, NULL);
 
 	for (;;) {
 		if (msglen >= msgsize - 1) {
