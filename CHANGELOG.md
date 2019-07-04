@@ -1,3 +1,44 @@
+# v4.0.0 - 2019-07-04
+
+## Changes
+
+- Make attachment grammar more flexible by reusing existing grammar constructs.
+  It's now possible to match any header(s) or body of an attachment.
+  (c72a5e8)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    match attachment header "Content-Type" /text\/calendar/ \
+      move "~/Maildir/Calendar"
+  }
+  ```
+
+## News
+
+- Add reject action used to reject a message read from stdin by letting
+  `mdsort(1)` exit non-zero.
+  (fcac5e6)
+  (Anton Lindqvist)
+
+  ```
+  stdin {
+    match header "Spam-Score" /[1-9]/ reject
+  }
+  ```
+
+- Add pass action used to continue evaluation of the current block of
+  rules up to the next matching rule.
+  (ade4316)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    match header "From" /example/ label "\1" pass
+    match all move "~/Maildir/Archive"
+  }
+  ```
+
 # v3.1.0 - 2019-04-22
 
 ## Changes
