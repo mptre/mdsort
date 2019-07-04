@@ -68,7 +68,8 @@ void maildir_close(struct maildir *md);
 int maildir_walk(struct maildir *md, struct maildir_entry *me);
 
 int maildir_move(const struct maildir *src, const struct maildir *dst,
-    struct message *msg, const struct environment *env);
+    struct message *msg, char *buf, size_t bufsiz,
+    const struct environment *env);
 
 int maildir_unlink(const struct maildir *md, const struct message *msg);
 

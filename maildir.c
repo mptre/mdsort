@@ -143,14 +143,16 @@ maildir_walk(struct maildir *md, struct maildir_entry *me)
 }
 
 /*
- * Move the message located in src to dst.
+ * Move the message located in src to dst. The destination filename will be
+ * written to buf, which must have a capacity of at least NAME_MAX.
  * Returns zero on success, non-zero otherwise.
  */
 int
 maildir_move(const struct maildir *src, const struct maildir *dst,
-    struct message *msg, const struct environment *env)
+    struct message *msg, char *buf, size_t bufsiz,
+    const struct environment *env)
 {
-	char buf[2][NAME_MAX], flags[FLAGS_MAX];
+	char flags[FLAGS_MAX], sbuf[NAME_MAX];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
@@ -161,7 +163,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	int doutime = 0;
 	int error = 0;
 
-	srcname = pathslice(msg->me_path, buf[0], -1, -1);
+	srcname = pathslice(msg->me_path, sbuf, -1, -1);
 	if (srcname == NULL) {
 		warnx("%s: basename not found", msg->me_path);
 		return 1;
@@ -176,7 +178,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 
 	if (msgflags(src, dst, msg, flags, sizeof(flags)))
 		return 1;
-	dstname = maildir_genname(dst, flags, buf[1], sizeof(buf[1]), env);
+	dstname = maildir_genname(dst, flags, buf, bufsiz, env);
 	dstfd = maildir_fd(dst);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {

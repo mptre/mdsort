@@ -116,7 +116,8 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 				error = 1;
 				break;
 			}
-			if (maildir_move(src, dst, msg, env))
+			if (maildir_move(src, dst, msg,
+				    tmp, sizeof(tmp), env))
 				error = 1;
 			maildir_close(dst);
 			break;
