@@ -128,10 +128,12 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			}
 			src = dst;
 			break;
+
 		case EXPR_TYPE_DISCARD:
 			if (maildir_unlink(src, msg))
 				error = 1;
 			break;
+
 		case EXPR_TYPE_LABEL:
 			/*
 			 * Write message with new labels to the source maildir
@@ -148,9 +150,11 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 				msg->me_path = path;
 			}
 			break;
+
 		case EXPR_TYPE_REJECT:
 			*reject = 1;
 			break;
+
 		default:
 			break;
 		}
