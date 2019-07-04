@@ -29,10 +29,7 @@ matches_append(struct match_list *ml, struct match *mh)
 	    (matches_find(ml, EXPR_TYPE_MOVE) || matches_find(ml, EXPR_TYPE_FLAG)))
 		return;
 
-	if (type == EXPR_TYPE_LABEL)
-		TAILQ_INSERT_HEAD(&ml->ml_head, mh, mh_entry);
-	else
-		TAILQ_INSERT_TAIL(&ml->ml_head, mh, mh_entry);
+	TAILQ_INSERT_TAIL(&ml->ml_head, mh, mh_entry);
 }
 
 void
@@ -100,7 +97,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
     struct message *msg, int *reject, const struct environment *env)
 {
 	char path[NAME_MAX], tmp[NAME_MAX];
-	struct maildir *dst;
+	struct maildir *dst = NULL;
 	struct match *mh;
 	const char *path_save;
 	int error = 0;
@@ -111,15 +108,25 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 		switch (mh->mh_expr->type) {
 		case EXPR_TYPE_FLAG:
 		case EXPR_TYPE_MOVE:
+			/*
+			 * Move message and update the source maildir and
+			 * message path. This is of importance if a move or flag
+			 * action is up next.
+			 */
+			maildir_close(dst);
 			dst = maildir_open(ml->ml_path, 0, env);
 			if (dst == NULL) {
 				error = 1;
 				break;
 			}
 			if (maildir_move(src, dst, msg,
-				    tmp, sizeof(tmp), env))
+				    tmp, sizeof(tmp), env)) {
 				error = 1;
-			maildir_close(dst);
+			} else {
+				(void)strlcpy(path, tmp, sizeof(path));
+				msg->me_path = path;
+			}
+			src = dst;
 			break;
 		case EXPR_TYPE_DISCARD:
 			if (maildir_unlink(src, msg))
@@ -152,6 +159,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			break;
 	}
 
+	maildir_close(dst);
 	msg->me_path = path_save;
 
 	return error;
