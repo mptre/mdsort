@@ -23,9 +23,8 @@ struct header {
 	struct string_list *values;	/* list of all values for key */
 };
 
-static void message_flags_parse(struct message_flags *, const char *);
-static int message_flags_resolve(const struct message_flags *, unsigned char,
-    unsigned int *, unsigned int *);
+static int message_flags_parse(struct message_flags *, const char *);
+static int message_flags_resolve(unsigned char, unsigned int *, unsigned int *);
 static void message_headers_realloc(struct message *);
 static const char *message_parse_headers(struct message *);
 
@@ -51,12 +50,6 @@ message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
 	ssize_t n;
 	size_t i = 0;
 
-	if (flags->mf_fallback != NULL) {
-		if (strlcpy(buf, flags->mf_fallback, bufsiz) >= bufsiz)
-			goto fail;
-		return buf;
-	}
-
 	/* Ensure room for at least the empty set of flags ":2,\0". */
 	if (bufsiz < 4)
 		goto fail;
@@ -77,7 +70,7 @@ message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
 	return buf;
 
 fail:
-	warnc(ENAMETOOLONG, "%s: %s", __func__, flags->mf_path);
+	warnc(ENAMETOOLONG, "%s", __func__);
 	return NULL;
 }
 
@@ -86,7 +79,7 @@ message_flags_isset(const struct message_flags *flags, unsigned char flag)
 {
 	unsigned int idx, mask;
 
-	if (message_flags_resolve(flags, flag, &idx, &mask))
+	if (message_flags_resolve(flag, &idx, &mask))
 		return -1;
 
 	if (flags->mf_flags[idx] & mask)
@@ -99,7 +92,7 @@ message_flags_set(struct message_flags *flags, unsigned char flag, int add)
 {
 	unsigned int idx, mask;
 
-	if (message_flags_resolve(flags, flag, &idx, &mask))
+	if (message_flags_resolve(flag, &idx, &mask))
 		return 1;
 
 	if (add)
@@ -163,7 +156,10 @@ message_parse(const char *dir, int dirfd, const char *path)
 
 	msg->me_body = message_parse_headers(msg);
 
-	message_flags_parse(&msg->me_flags, msg->me_path);
+	if (message_flags_parse(&msg->me_flags, msg->me_path)) {
+		message_free(msg);
+		return NULL;
+	}
 
 	return msg;
 }
@@ -372,41 +368,31 @@ message_list_free(struct message_list *messages)
 	free(messages);
 }
 
-static void
+static int
 message_flags_parse(struct message_flags *flags, const char *path)
 {
 	const char *p;
 	int i;
 
-	flags->mf_path = path;
-
 	p = strrchr(path, ':');
 	if (p == NULL)
-		return;
-	if (p[1] != '2' || p[2] != ',')
-		goto bad;
-
-	for (i = 3; p[i] != '\0'; i++) {
-		if (message_flags_set(flags, p[i], 1))
-			goto bad;
-	}
-
-	return;
-
-bad:
-	/* Malformed, give back the flags in its original form. */
-	flags->mf_fallback = p;
-}
-
-static int
-message_flags_resolve(const struct message_flags *flags, unsigned char flag,
-    unsigned int *idx, unsigned int *mask)
-{
-	if (flags->mf_fallback != NULL) {
-		warnx("%s: invalid flags", flags->mf_path);
+		return 0;
+	if (p[1] != '2' || p[2] != ',') {
+		warnx("%s: invalid flags", path);
 		return 1;
 	}
 
+	for (i = 3; p[i] != '\0'; i++) {
+		if (message_flags_set(flags, p[i], 1))
+			return 1;
+	}
+
+	return 0;
+}
+
+static int
+message_flags_resolve(unsigned char flag, unsigned int *idx, unsigned int *mask)
+{
 	if (isupper(flag)) {
 		*idx = 0;
 		*mask = 1 << (flag - 'A');
@@ -417,6 +403,8 @@ message_flags_resolve(const struct message_flags *flags, unsigned char flag,
 		*mask = 1 << (flag - 'a');
 		return 0;
 	}
+
+	warnx("%c: unknown flag", flag);
 	return 1;
 }
 
