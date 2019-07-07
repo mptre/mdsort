@@ -190,7 +190,9 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 			 * message.
 			 */
 			error = message_writeat(msg, dstfd, dstname);
-			if (error == 0)
+			if (error)
+				(void)unlinkat(dstfd, dstname, 0);
+			else
 				error = maildir_unlink(src, msg);
 		} else {
 			warn("renameat");
@@ -238,7 +240,11 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 		return 1;
 	maildir_genname(dst, flags, buf, bufsiz, env);
 
-	return message_writeat(msg, maildir_fd(dst), buf);
+	if (message_writeat(msg, maildir_fd(dst), buf)) {
+		(void)unlinkat(maildir_fd(dst), buf, 0);
+		return 1;
+	}
+	return 0;
 }
 
 static const char *
@@ -355,6 +361,10 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	if (maildir_opendir(md, path))
 		return 1;
 
+	/*
+	 * No need to remove the created file in case of an error since
+	 * maildir_close() removes the complete temporary directory.
+	 */
 	maildir_genname(md, "", name, sizeof(name), env);
 	fd = openat(maildir_fd(md), name, O_WRONLY | O_EXCL);
 	if (fd == -1) {
