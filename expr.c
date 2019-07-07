@@ -43,7 +43,6 @@ static int expr_eval_reject(EXPR_EVAL_ARGS);
 static unsigned int expr_flags(const struct expr *);
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
-
 static int expr_regexec(struct expr *, struct match_list *, const char *,
     const char *, int);
 
@@ -558,6 +557,7 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 		if (message_has_label(msg, str->val))
 			continue;
 
+		/* The label cannot be empty, enforced by the config parser */
 		append(&buf, &bufsiz, &buflen, str->val);
 		append(&buf, &bufsiz, &buflen, " ");
 	}
