@@ -503,7 +503,7 @@ expr_eval_flag(struct expr *ex, struct match_list *ml,
 	size_t len;
 
 	str = TAILQ_FIRST(ex->strings);
-	len = sizeof(ml->ml_maildir);
+	len = sizeof(ml->ml_subdir);
 	if (strlcpy(ml->ml_subdir, str->val, len) >= len)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 
