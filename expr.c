@@ -557,7 +557,7 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 		if (message_has_label(msg, str->val))
 			continue;
 
-		/* The label cannot be empty, enforced by the config parser */
+		/* The label cannot be empty, enforced by the config parser. */
 		append(&buf, &bufsiz, &buflen, str->val);
 		append(&buf, &bufsiz, &buflen, " ");
 	}
