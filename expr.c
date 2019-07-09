@@ -361,11 +361,12 @@ expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
 		return EXPR_NOMATCH;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
-		if (expr_eval_body(ex, ml, attach, env))
+		int e = expr_eval_body(ex, ml, attach, env);
+		if (e == EXPR_NOMATCH)
 			continue;
 
 		message_list_free(attachments);
-		return EXPR_MATCH;
+		return e;
 	}
 
 	message_list_free(attachments);
@@ -384,11 +385,12 @@ expr_eval_attachment_header(struct expr *ex, struct match_list *ml,
 		return EXPR_NOMATCH;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
-		if (expr_eval_header(ex, ml, attach, env))
+		int e = expr_eval_header(ex, ml, attach, env);
+		if (e == EXPR_NOMATCH)
 			continue;
 
 		message_list_free(attachments);
-		return EXPR_MATCH;
+		return e;
 	}
 
 	message_list_free(attachments);
@@ -424,10 +426,8 @@ static int
 expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	if (expr_regexec(ex, ml, "Body", msg->me_body,
-		    env->ev_options & OPTION_DRYRUN))
-		return EXPR_NOMATCH;
-	return EXPR_MATCH;
+	return expr_regexec(ex, ml, "Body", msg->me_body,
+	    env->ev_options & OPTION_DRYRUN);
 }
 
 static int
@@ -530,10 +530,12 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 			continue;
 
 		TAILQ_FOREACH(val, values, entry) {
-			if (expr_regexec(ex, ml, key->val, val->val,
-				    env->ev_options & OPTION_DRYRUN))
+			int e = expr_regexec(ex, ml, key->val, val->val,
+			    env->ev_options & OPTION_DRYRUN);
+			if (e == EXPR_NOMATCH)
 				continue;
-			return EXPR_MATCH;
+
+			return e;
 		}
 	}
 	return EXPR_NOMATCH;
@@ -753,9 +755,14 @@ static int
 expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
     const char *val, int dryrun)
 {
-	if (regexec(&ex->ex_re.r_pattern, val, ex->ex_re.r_nmatches,
-	    ex->ex_re.r_matches, 0))
-		return 1;
+	int error;
+
+	error = regexec(&ex->ex_re.r_pattern, val, ex->ex_re.r_nmatches,
+	    ex->ex_re.r_matches, 0);
+	if (error == REG_NOMATCH)
+		return EXPR_NOMATCH;
+	if (error != 0)
+		return EXPR_ERROR;
 
 	matches_append(ml, ex->match);
 
@@ -769,7 +776,7 @@ expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
 			err(1, NULL);
 	}
 
-	return 0;
+	return EXPR_MATCH;
 }
 
 /*
