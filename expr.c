@@ -329,7 +329,7 @@ expr_eval_and(struct expr *ex, struct match_list *ml, struct message *msg,
 {
 	int e;
 
-	if ((e = expr_eval(ex->lhs, ml, msg, env)))
+	if ((e = expr_eval(ex->lhs, ml, msg, env)) != EXPR_MATCH)
 		return e; /* no match or error, short-circuit */
 	return expr_eval(ex->rhs, ml, msg, env);
 }
@@ -435,6 +435,11 @@ expr_eval_break(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	matches_append(ml, ex->match);
+
+	/*
+	 * Return match in order to continue evaluation. The return value is
+	 * later inverted by expr_eval_block().
+	 */
 	return EXPR_MATCH;
 }
 
@@ -601,7 +606,7 @@ expr_eval_neg(struct expr *ex, struct match_list *ml, struct message *msg,
 		return EXPR_MATCH;
 	}
 
-	/* No match, invalidate match below expression. */
+	/* No match, invalidate match below current expression. */
 	matches_clear(ml);
 	return EXPR_NOMATCH;
 }
