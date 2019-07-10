@@ -19,7 +19,7 @@ static char *interpolate(const struct match *, const char *, char *, size_t,
 void
 matches_append(struct match_list *ml, struct match *mh)
 {
-	enum expr_type type = mh->mh_expr->type;
+	enum expr_type type = mh->mh_expr->ex_type;
 
 	/*
 	 * A message only needs to moved or flagged once since both actions
@@ -105,7 +105,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 	path_save = msg->me_path;
 
 	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
-		switch (mh->mh_expr->type) {
+		switch (mh->mh_expr->ex_type) {
 		case EXPR_TYPE_FLAG:
 		case EXPR_TYPE_MOVE:
 			/*
@@ -186,7 +186,7 @@ matches_find(struct match_list *ml, enum expr_type type)
 	struct match *mh;
 
 	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
-		if (mh->mh_expr->type == type)
+		if (mh->mh_expr->ex_type == type)
 			return mh;
 	}
 

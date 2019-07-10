@@ -159,10 +159,10 @@ enum expr_cmp {
 };
 
 struct expr {
-	enum expr_type type;
-	int lno;
+	enum expr_type ex_type;
+	int ex_lno;
 
-	struct string_list *strings;
+	struct string_list *ex_strings;
 
 	struct {
 		regex_t r_pattern;
@@ -174,14 +174,14 @@ struct expr {
 	} ex_re;
 
 	struct {
-		enum expr_cmp cmp;
-		time_t age;
-	} date;
+		enum expr_cmp d_cmp;
+		time_t d_age;
+	} ex_date;
 
-	struct match *match;
+	struct match *ex_match;
 
-	struct expr *lhs;
-	struct expr *rhs;
+	struct expr *ex_lhs;
+	struct expr *ex_rhs;
 };
 
 /* Return values for expr_eval(). */
