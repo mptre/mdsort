@@ -80,8 +80,7 @@ message_flags_isset(const struct message_flags *flags, unsigned char flag)
 	unsigned int idx, mask;
 
 	if (message_flags_resolve(flag, &idx, &mask))
-		return -1;
-
+		return 0;
 	if (flags->mf_flags[idx] & mask)
 		return 1;
 	return 0;
