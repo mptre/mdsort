@@ -1,4 +1,4 @@
-if testcase "all matches any message"; then
+if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF

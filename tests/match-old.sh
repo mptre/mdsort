@@ -1,4 +1,4 @@
-if testcase "old"; then
+if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/cur"
 	cat <<-EOF >$CONF
@@ -38,7 +38,7 @@ if testcase "seen flag present"; then
 fi
 
 if testcase "invalid flags"; then
-	mkmd "src" "dst"
+	mkmd "src"
 	mkmsg -s ":1," "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -48,5 +48,4 @@ if testcase "invalid flags"; then
 	mdsort -e >/dev/null
 	refute_empty "src/cur"
 	assert_find "src/cur" "*:1,"
-	assert_empty "dst/cur"
 fi
