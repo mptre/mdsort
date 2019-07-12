@@ -645,7 +645,6 @@ parseattachments(const struct message *msg, struct message_list *attachments,
 	if (!term)
 		return 1;
 	return 0;
-
 }
 
 static const char *
