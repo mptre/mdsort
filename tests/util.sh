@@ -92,7 +92,7 @@ mdsort() {
 	(cd "$WRKDIR" && env "TMPDIR=${_tmpdir}" ${EXEC:-} "$MDSORT" $_args "$@") \
 		>"$_tmp" 2>&1 || _exit2="$?"
 	if [ "$_exit1" -ne "$_exit2" ]; then
-		fail "want exit ${_exit1}, got ${_exit2}" <"$_tmp"
+		fail - "want exit ${_exit1}, got ${_exit2}" <"$_tmp"
 	fi
 
 	assert_empty "$_tmpdir" "temporary directory not empty"
