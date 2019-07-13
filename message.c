@@ -38,7 +38,7 @@ static ssize_t searchheader(const struct header *, size_t, const char *,
 static int parseattachments(const struct message *, struct message_list *,
     int);
 static const char *findboundary(const char *, const char *, int *);
-static char *parseboundary(const char *);
+static int parseboundary(const char *, char **);
 
 static const char *skipline(const char *);
 static ssize_t strflags(unsigned int, unsigned char, char *, size_t);
@@ -333,23 +333,29 @@ message_has_label(const struct message *msg, const char *label)
 	return 0;
 }
 
-struct message_list *
-message_get_attachments(const struct message *msg)
+/*
+ * Parse all attachments in message into the given message list.
+ * Returns zero on success, even if no attachments where found.
+ * The caller is responsible for freeing the message list using
+ * message_list_free().
+ *
+ * Otherwise, non-zero is returned.
+ */
+int
+message_get_attachments(const struct message *msg,
+    struct message_list **attachments)
 {
-	struct message_list *attachments;
-
-	attachments = malloc(sizeof(*attachments));
-	if (attachments == NULL)
+	*attachments = malloc(sizeof(**attachments));
+	if (*attachments == NULL)
 		err(1, NULL);
-	TAILQ_INIT(attachments);
+	TAILQ_INIT(*attachments);
 
-	if (parseattachments(msg, attachments, 0) ||
-	    TAILQ_EMPTY(attachments)) {
-		message_list_free(attachments);
-		return NULL;
+	if (parseattachments(msg, *attachments, 0)) {
+		message_list_free(*attachments);
+		return 1;
 	}
 
-	return attachments;
+	return 0;
 }
 
 void
@@ -592,7 +598,7 @@ parseattachments(const struct message *msg, struct message_list *attachments,
 	char *boundary;
 	int term;
 
-	if (depth > 8) {
+	if (depth > 4) {
 		warnx("%s: message contains too many nested attachments",
 		    msg->me_path);
 		return 1;
@@ -601,16 +607,20 @@ parseattachments(const struct message *msg, struct message_list *attachments,
 	type = message_get_header1(msg, "Content-Type");
 	if (type == NULL)
 		return 0;
-	boundary = parseboundary(type);
-	if (boundary == NULL)
+	switch (parseboundary(type, &boundary)) {
+	case 0:
 		return 0;
+	case -1:
+		warnx("%s: invalid boundary", msg->me_path);
+		return 1;
+	}
 
 	log_debug("%s: boundary=%s, depth=%d\n", __func__, boundary, depth);
 
 	body = msg->me_body;
 	beg = end = NULL;
 	term = 0;
-	for (;;) {
+	while (!term) {
 		b = findboundary(boundary, body, &term);
 		if (b == NULL)
 			break;
@@ -638,13 +648,10 @@ parseattachments(const struct message *msg, struct message_list *attachments,
 		}
 
 		beg = end = NULL;
-		if (term)
-			break;
 	}
 	free(boundary);
-	if (!term)
-		return 1;
-	return 0;
+
+	return term ? 0 : 1;
 }
 
 static const char *
@@ -685,40 +692,41 @@ findboundary(const char *boundary, const char *s, int *term)
 	return NULL;
 }
 
-static char *
-parseboundary(const char *str)
+static int
+parseboundary(const char *str, char **boundary)
 {
 	const char *needle, *p;
-	char *boundary;
 	size_t len;
 
 	needle = "multipart/";
 	len = strlen(needle);
 	if (strncmp(str, needle, len))
-		return NULL;
+		return 0;
 	str += len;
 	for (; *str != '\0' && *str != ';'; str++)
 		continue;
 	if (*str == '\0')
-		return NULL;
+		return 0;
 	str++;
 	str += nspaces(str);
 
 	needle = "boundary=\"";
 	len = strlen(needle);
 	if (strncmp(str, needle, len))
-		return NULL;
+		return 0;
 	str += len;
 	p = str;
 	for (; *p != '\0' && *p != '"'; p++)
 		continue;
+	if (*p != '"')
+		return -1;
 	len = p - str;
 	if (len == 0)
-		return NULL;
-	boundary = strndup(str, len);
-	if (boundary == NULL)
+		return -1;
+	*boundary = strndup(str, len);
+	if (*boundary == NULL)
 		err(1, NULL);
-	return boundary;
+	return 1;
 }
 
 static const char *

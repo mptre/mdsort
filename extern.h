@@ -124,7 +124,8 @@ void message_set_header(struct message *msg, const char *header, char *val);
 
 int message_has_label(const struct message *msg, const char *label);
 
-struct message_list *message_get_attachments(const struct message *msg);
+int message_get_attachments(const struct message *msg,
+    struct message_list **attachments);
 
 void message_list_free(struct message_list *messages);
 

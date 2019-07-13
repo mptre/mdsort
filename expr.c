@@ -340,14 +340,15 @@ expr_eval_attachment(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     struct message *msg, const struct environment *UNUSED(env))
 {
 	struct message_list *attachments;
+	int e;
 
-	attachments = message_get_attachments(msg);
-	if (attachments == NULL)
-		return EXPR_NOMATCH;
+	if (message_get_attachments(msg, &attachments))
+		return EXPR_ERROR;
 
 	/* Presence of attachments is considered a match. */
+	e = TAILQ_EMPTY(attachments) ? EXPR_NOMATCH : EXPR_MATCH;
 	message_list_free(attachments);
-	return EXPR_MATCH;
+	return e;
 }
 
 static int
@@ -357,9 +358,8 @@ expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
 	struct message_list *attachments;
 	struct message *attach;
 
-	attachments = message_get_attachments(msg);
-	if (attachments == NULL)
-		return EXPR_NOMATCH;
+	if (message_get_attachments(msg, &attachments))
+		return EXPR_ERROR;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
 		int e = expr_eval_body(ex, ml, attach, env);
@@ -381,9 +381,8 @@ expr_eval_attachment_header(struct expr *ex, struct match_list *ml,
 	struct message_list *attachments;
 	struct message *attach;
 
-	attachments = message_get_attachments(msg);
-	if (attachments == NULL)
-		return EXPR_NOMATCH;
+	if (message_get_attachments(msg, &attachments))
+		return EXPR_ERROR;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
 		int e = expr_eval_header(ex, ml, attach, env);

@@ -194,7 +194,7 @@ if testcase "content type boundary empty"; then
 		match attachment move "dst"
 	}
 	EOF
-	mdsort
+	mdsort -e >/dev/null
 	refute_empty "src/new"
 fi
 
@@ -206,7 +206,7 @@ if testcase "content type boundary invalid"; then
 		match attachment move "dst"
 	}
 	EOF
-	mdsort
+	mdsort -e >/dev/null
 	refute_empty "src/new"
 fi
 
@@ -233,7 +233,7 @@ if testcase "content type boundary without attachments"; then
 		match attachment move "dst"
 	}
 	EOF
-	mdsort
+	mdsort -e >/dev/null
 	refute_empty "src/new"
 fi
 
@@ -252,7 +252,7 @@ if testcase "terminating boundary invalid"; then
 		match attachment move "dst"
 	}
 	EOF
-	mdsort
+	mdsort -e >/dev/null
 	refute_empty "src/new"
 fi
 
@@ -310,7 +310,7 @@ if testcase "nested too deep"; then
 		match attachment move "dst"
 	}
 	EOF
-	mdsort >/dev/null
+	mdsort -e >/dev/null
 	refute_empty "src/new"
 fi
 
