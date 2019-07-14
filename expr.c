@@ -426,7 +426,13 @@ static int
 expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	return expr_regexec(ex, ml, "Body", msg->me_body,
+	const char *body;
+
+	body = message_get_body(msg);
+	if (body == NULL)
+		return EXPR_ERROR;
+
+	return expr_regexec(ex, ml, "Body", body,
 	    env->ev_options & OPTION_DRYRUN);
 }
 

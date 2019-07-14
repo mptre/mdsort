@@ -115,6 +115,8 @@ void message_free(struct message *msg);
 
 int message_writeat(struct message *msg, int dirfd, const char *path);
 
+const char *message_get_body(struct message *msg);
+
 const struct string_list *message_get_header(const struct message *msg,
     const char *header);
 

@@ -229,6 +229,12 @@ out:
 	return error;
 }
 
+const char *
+message_get_body(struct message *msg)
+{
+	return msg->me_body;
+}
+
 const struct string_list *
 message_get_header(const struct message *msg, const char *header)
 {
