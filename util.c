@@ -58,16 +58,15 @@ strings_append(struct string_list *strings, char *val)
 }
 
 /*
- * Join dirname and filename into a path written to buf which must be at least
- * of size PATH_MAX.
+ * Join dirname and filename into a path written to buf.
  */
 char *
-pathjoin(char *buf, const char *dirname, const char *filename)
+pathjoin(char *buf, size_t bufsiz, const char *dirname, const char *filename)
 {
 	int n;
 
-	n = snprintf(buf, PATH_MAX, "%s/%s", dirname, filename);
-	if (n < 0 || n >= PATH_MAX)
+	n = snprintf(buf, bufsiz, "%s/%s", dirname, filename);
+	if (n < 0 || (size_t)n >= bufsiz)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
 }

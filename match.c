@@ -70,7 +70,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			errx(1, "%s: %s: subdir not found",
 			    __func__, msg->me_path);
 	}
-	path = pathjoin(buf, ml->ml_maildir, ml->ml_subdir);
+	path = pathjoin(buf, sizeof(buf), ml->ml_maildir, ml->ml_subdir);
 
 	mh = matches_find_interpolate(ml);
 	len = sizeof(ml->ml_path);

@@ -128,7 +128,8 @@ message_parse(const char *dir, int dirfd, const char *path)
 	msg->me_buf = malloc(msgsize);
 	if (msg->me_buf == NULL)
 		err(1, NULL);
-	msg->me_path = pathjoin(msg->me_pbuf, dir, path);
+	msg->me_path = pathjoin(msg->me_pbuf, sizeof(msg->me_pbuf), dir,
+	    path);
 
 	for (;;) {
 		if (msglen >= msgsize - 1) {

@@ -333,7 +333,7 @@ maildir_path(struct maildir *md)
 		subdir = "cur";
 		break;
 	}
-	return pathjoin(md->md_buf, md->md_path, subdir);
+	return pathjoin(md->md_buf, sizeof(md->md_buf), md->md_path, subdir);
 }
 
 static int
@@ -348,7 +348,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	md->md_path = malloc(PATH_MAX);
 	if (md->md_path == NULL)
 		err(1, NULL);
-	pathjoin(md->md_path, env->ev_tmpdir, "mdsort-XXXXXXXX");
+	pathjoin(md->md_path, PATH_MAX, env->ev_tmpdir, "mdsort-XXXXXXXX");
 	if (mkdtemp(md->md_path) == NULL) {
 		warn("mkdtemp");
 		return 1;
