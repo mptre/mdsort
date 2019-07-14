@@ -258,3 +258,16 @@ if testcase "extraneous option"; then
 	mdsort -e -- extraneous >$TMP1
 	grep -q 'usage' $TMP1 || fail - "expected usage output" <$TMP1
 fi
+
+if testcase "long filename"; then
+	mkmd "src" "dst"
+	touch "${WRKDIR}/src/new/$(genstr "$NAME_MAX")"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi

@@ -191,6 +191,7 @@ TMP2="${WRKDIR}/tmp2"
 
 # Platform specific values.
 BUFSIZ=$(cppvar BUFSIZ || echo 0)
+NAME_MAX=$(cppvar NAME_MAX || echo 0)
 PATH_MAX=$(cppvar PATH_MAX || echo 0)
 
 # Number of messages created by mkmsg.
