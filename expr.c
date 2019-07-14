@@ -617,7 +617,7 @@ static int
 expr_eval_new(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     struct message *msg, const struct environment *UNUSED(env))
 {
-	char buf[NAME_MAX];
+	char buf[NAME_MAX + 1];
 
 	if (pathslice(msg->me_path, buf, -2, -2) == NULL || strcmp(buf, "new"))
 		return EXPR_NOMATCH;
@@ -628,7 +628,7 @@ static int
 expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     struct message *msg, const struct environment *UNUSED(env))
 {
-	char buf[NAME_MAX];
+	char buf[NAME_MAX + 1];
 
 	if (message_flags_isset(&msg->me_flags, 'S'))
 		return EXPR_NOMATCH;

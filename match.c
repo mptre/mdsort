@@ -96,7 +96,7 @@ int
 matches_exec(const struct match_list *ml, struct maildir *src,
     struct message *msg, int *reject, const struct environment *env)
 {
-	char path[NAME_MAX], tmp[NAME_MAX];
+	char path[NAME_MAX + 1], tmp[NAME_MAX + 1];
 	struct maildir *dst = NULL;
 	struct match *mh;
 	const char *path_save;

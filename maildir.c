@@ -144,7 +144,7 @@ maildir_walk(struct maildir *md, struct maildir_entry *me)
 
 /*
  * Move the message located in src to dst. The destination filename will be
- * written to buf, which must have a capacity of at least NAME_MAX.
+ * written to buf, which must have a capacity of at least NAME_MAX plus one.
  * Returns zero on success, non-zero otherwise.
  */
 int
@@ -152,7 +152,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env)
 {
-	char flags[FLAGS_MAX], sbuf[NAME_MAX];
+	char flags[FLAGS_MAX], sbuf[NAME_MAX + 1];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
@@ -211,7 +211,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 int
 maildir_unlink(const struct maildir *md, const struct message *msg)
 {
-	char buf[NAME_MAX];
+	char buf[NAME_MAX + 1];
 
 	if (pathslice(msg->me_path, buf, -1, -1) == NULL) {
 		warnx("%s: basename not found", msg->me_path);
@@ -227,7 +227,8 @@ maildir_unlink(const struct maildir *md, const struct message *msg)
 
 /*
  * Write message to a new file in the given maildir. The destination filename
- * will be written to buf, which must have a capacity of at least NAME_MAX.
+ * will be written to buf, which must have a capacity of at least NAME_MAX plus
+ * one.
  */
 int
 maildir_write(const struct maildir *src, const struct maildir *dst,
@@ -338,7 +339,7 @@ maildir_path(struct maildir *md)
 static int
 maildir_stdin(struct maildir *md, const struct environment *env)
 {
-	char buf[BUFSIZ], name[NAME_MAX];
+	char buf[BUFSIZ], name[NAME_MAX + 1];
 	const char *path;
 	ssize_t nr, nw;
 	int fd;
@@ -470,7 +471,7 @@ msgflags(const struct maildir *src, const struct maildir *dst,
 static int
 parsesubdir(const char *path, enum subdir *subdir)
 {
-	char buf[NAME_MAX];
+	char buf[NAME_MAX + 1];
 
 	if (pathslice(path, buf, -1, -1) == NULL) {
 		return 1;
