@@ -619,7 +619,8 @@ expr_eval_new(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 {
 	char buf[NAME_MAX + 1];
 
-	if (pathslice(msg->me_path, buf, -2, -2) == NULL || strcmp(buf, "new"))
+	if (pathslice(msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
+	    strcmp(buf, "new"))
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
 }
@@ -632,7 +633,8 @@ expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 
 	if (message_flags_isset(&msg->me_flags, 'S'))
 		return EXPR_NOMATCH;
-	if (pathslice(msg->me_path, buf, -2, -2) == NULL || strcmp(buf, "cur"))
+	if (pathslice(msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
+	    strcmp(buf, "cur"))
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
 }

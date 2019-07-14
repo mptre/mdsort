@@ -60,13 +60,15 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 
 	if (ml->ml_maildir[0] == '\0') {
 		/* No maildir present, infer from message path. */
-		if (pathslice(msg->me_path, ml->ml_maildir, 0, -2) == NULL)
+		len = sizeof(ml->ml_maildir);
+		if (pathslice(msg->me_path, ml->ml_maildir, len, 0, -2) == NULL)
 			errx(1, "%s: %s: maildir not found",
 			    __func__, msg->me_path);
 	}
 	if (ml->ml_subdir[0] == '\0') {
 		/* No subdir present, infer from message path. */
-		if (pathslice(msg->me_path, ml->ml_subdir, -2, -2) == NULL)
+		len = sizeof(ml->ml_subdir);
+		if (pathslice(msg->me_path, ml->ml_subdir, len, -2, -2) == NULL)
 			errx(1, "%s: %s: subdir not found",
 			    __func__, msg->me_path);
 	}

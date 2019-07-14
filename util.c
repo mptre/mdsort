@@ -72,14 +72,13 @@ pathjoin(char *buf, size_t bufsiz, const char *dirname, const char *filename)
 }
 
 /*
- * Writes the given number of components from path to buf which must be at least
- * of size PATH_MAX.
+ * Writes the given number of components from path to buf.
  * The component range as given by beg and end may either be positive (start
  * from the beginning) or negative (start from the end).
  * If beg is equal to end, only a single component of the path is extract.
  */
 char *
-pathslice(const char *path, char *buf, int beg, int end)
+pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end)
 {
 	const char *p;
 	char *bp;
@@ -113,17 +112,29 @@ pathslice(const char *path, char *buf, int beg, int end)
 
 		docopy = i >= beg && i <= end;
 		if (docopy) {
-			if (isabs && isrange)
+			if (bufsiz == 0)
+				return NULL;
+			if (isabs && isrange) {
 				*bp++ = '/';
-			else if (!isabs)
+				bufsiz--;
+			} else if (!isabs) {
 				*bp++ = *p;
+				bufsiz--;
+			}
 		}
 		isabs = 1;
 		for (p++; *p != '/' && *p != '\0'; p++) {
-			if (docopy)
-				*bp++ = *p;
+			if (!docopy)
+				continue;
+			if (bufsiz == 0)
+				return NULL;
+
+			*bp++ = *p;
+			bufsiz--;
 		}
 	}
+	if (bufsiz == 0)
+		return NULL;
 	*bp = '\0';
 
 	return buf;

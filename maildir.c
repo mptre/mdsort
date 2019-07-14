@@ -47,6 +47,7 @@ maildir_open(const char *path, unsigned int flags,
     const struct environment *env)
 {
 	struct maildir *md;
+	size_t len;
 
 	md = calloc(1, sizeof(*md));
 	if (md == NULL)
@@ -66,10 +67,11 @@ maildir_open(const char *path, unsigned int flags,
 			if (parsesubdir(path, &md->md_subdir))
 				goto fail;
 
-			md->md_path = malloc(PATH_MAX);
+			len = PATH_MAX;
+			md->md_path = malloc(len);
 			if (md->md_path == NULL)
 				err(1, NULL);
-			if (pathslice(path, md->md_path, 0, -1) == NULL)
+			if (pathslice(path, md->md_path, len, 0, -1) == NULL)
 				goto fail;
 		}
 	}
@@ -163,7 +165,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	int doutime = 0;
 	int error = 0;
 
-	srcname = pathslice(msg->me_path, sbuf, -1, -1);
+	srcname = pathslice(msg->me_path, sbuf, sizeof(sbuf), -1, -1);
 	if (srcname == NULL) {
 		warnx("%s: basename not found", msg->me_path);
 		return 1;
@@ -213,7 +215,7 @@ maildir_unlink(const struct maildir *md, const struct message *msg)
 {
 	char buf[NAME_MAX + 1];
 
-	if (pathslice(msg->me_path, buf, -1, -1) == NULL) {
+	if (pathslice(msg->me_path, buf, sizeof(buf), -1, -1) == NULL) {
 		warnx("%s: basename not found", msg->me_path);
 		return 1;
 	}
@@ -473,7 +475,7 @@ parsesubdir(const char *path, enum subdir *subdir)
 {
 	char buf[NAME_MAX + 1];
 
-	if (pathslice(path, buf, -1, -1) == NULL) {
+	if (pathslice(path, buf, sizeof(buf), -1, -1) == NULL) {
 		return 1;
 	} else if (strcmp(buf, "new") == 0) {
 		*subdir = SUBDIR_NEW;

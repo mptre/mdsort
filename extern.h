@@ -291,7 +291,7 @@ void config_free(struct config_list *config);
 char *pathjoin(char *buf, size_t bufsiz, const char *dirname,
     const char *filename);
 
-char *pathslice(const char *path, char *buf, int beg, int end);
+char *pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end);
 
 int nspaces(const char *str);
 
