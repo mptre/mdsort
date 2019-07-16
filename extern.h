@@ -95,6 +95,7 @@ struct message {
 	const char *me_path;
 	const char *me_body;
 	char *me_buf;
+	char *me_buf_dec;	/* decoded body */
 
 	struct message_flags me_flags;
 

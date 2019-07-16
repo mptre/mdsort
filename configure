@@ -16,7 +16,7 @@ atexit() {
 }
 
 compile() {
-	$CC -Werror -o /dev/null -x c -
+	$CC -Werror -o /dev/null -x c - $@
 }
 
 fatal() {
@@ -50,6 +50,27 @@ check_arc4random() {
 		return !(arc4random() <= 0xffffffff);
 	}
 	EOF
+}
+
+# Check presence of b64_pton(3) which is reflected by the exit status:
+#   0  present
+#   1  provided by libresolv
+#   2  absent
+check_b64_pton() {
+	cat <<-EOF >"$TMP1"
+	#include <netinet/in.h>
+	#include <resolv.h>
+
+	int main(void) {
+		const char *src = "";
+		unsigned char dst[1];
+		return !(b64_pton(src, dst, sizeof(dst)) != -1);
+	}
+	EOF
+
+	compile <"$TMP1" && return 0
+	compile -lresolv <"$TMP1" && return 1
+	return 2
 }
 
 check_dead() {
@@ -233,6 +254,7 @@ set -u
 set -x
 
 HAVE_ARC4RANDOM=0
+HAVE_B64_PTON=0
 HAVE_DEAD=0
 HAVE_ERRC=0
 HAVE_GNU_SOURCE=0
@@ -278,6 +300,12 @@ check_utimensat && HAVE_UTIMENSAT=1
 check_warnc && HAVE_WARNC=1
 check_yystype && HAVE_YYSTYPE=1
 
+HAVE_B64_PTON=1
+check_b64_pton || case "$?" in
+1)	LDFLAGS="${LDFLAGS} -lresolv";;
+2)	HAVE_B64_PTON=0;;
+esac
+
 MALLOC_OPTIONS=$(check_malloc_options)
 
 # Redirect stdout to config.h.
@@ -289,6 +317,7 @@ exec 1>config.h
 # Headers needed for function prototypes.
 (
 [ $HAVE_ARC4RANDOM -eq 0 ] && echo stdint.h
+[ $HAVE_B64_PTON -eq 0 ] && echo stdlib.h
 [ $HAVE_PLEDGE -eq 0 ] && echo stdlib.h
 [ $HAVE_REALLOCARRAY -eq 0 ] && echo stdlib.h
 [ $HAVE_STRLCPY -eq 0 ] && echo stdlib.h
@@ -296,6 +325,7 @@ exec 1>config.h
 ) | sort | uniq | headers
 
 [ $HAVE_ARC4RANDOM -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
+[ $HAVE_B64_PTON -eq 1 ] && printf '#define HAVE_B64_PTON\t1\n'
 [ $HAVE_ERRC -eq 1 ] && printf '#define HAVE_ERRC\t1\n'
 [ $HAVE_PLEDGE -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
 [ $HAVE_QUEUE -eq 1 ] && printf '#define HAVE_QUEUE\t1\n'
@@ -322,6 +352,8 @@ fi
 
 [ $HAVE_ARC4RANDOM -eq 0 ] &&
 	printf 'uint32_t arc4random(void);\n'
+[ $HAVE_B64_PTON -eq 0 ] &&
+	printf 'int b64_pton(const char *src, unsigned char *dst, size_t dstsiz);\n'
 [ $HAVE_ERRC -eq 0 ] && {
 	printf 'void errc(int eval, int code, const char *fmt, ...)\n';
 	printf '\t__attribute__((__noreturn__, __format__ (printf, 3, 4)));\n'; }

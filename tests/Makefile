@@ -10,6 +10,7 @@ TESTS+=	dry.sh
 TESTS+=	exdev.sh
 TESTS+=	match-all.sh
 TESTS+=	match-attachment.sh
+TESTS+=	match-body-b64.sh
 TESTS+=	match-body.sh
 TESTS+=	match-date.sh
 TESTS+=	match-header.sh

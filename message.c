@@ -1,5 +1,8 @@
 #include "config.h"
 
+#include <netinet/in.h>
+#include <resolv.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -26,6 +29,7 @@ struct header {
 static int message_flags_parse(struct message_flags *, const char *);
 static int message_flags_resolve(unsigned char, unsigned int *, unsigned int *);
 static void message_headers_realloc(struct message *);
+static int message_is_content_type(const struct message *, const char *);
 static const char *message_parse_headers(struct message *);
 
 static int cmpheaderid(const void *, const void *);
@@ -40,6 +44,7 @@ static int parseattachments(const struct message *, struct message_list *,
 static const char *findboundary(const char *, const char *, int *);
 static int parseboundary(const char *, char **);
 
+static char *b64decode(const char *);
 static const char *skipline(const char *);
 static ssize_t strflags(unsigned int, unsigned char, char *, size_t);
 static int strword(const char *, const char *);
@@ -179,6 +184,7 @@ message_free(struct message *msg)
 	}
 
 	free(msg->me_buf);
+	free(msg->me_buf_dec);
 	free(msg->me_headers.h_v);
 	free(msg);
 }
@@ -229,10 +235,60 @@ out:
 	return error;
 }
 
+/*
+ * Get the message body. If the message contains alternative representations,
+ * text is favored over HTML.
+ * Returns a non-NULL pointer on success, NULL otherwise.
+ */
 const char *
 message_get_body(struct message *msg)
 {
-	return msg->me_body;
+	struct message_list *attachments;
+	const struct message *attach;
+	const struct message *found = NULL;
+	const char *encoding;
+
+	if (msg->me_buf_dec != NULL)
+		return msg->me_buf_dec;
+	if (!message_is_content_type(msg, "multipart/alternative"))
+		return msg->me_body;
+
+	/* Attachment parsing errors are considered fatal. */
+	if (message_get_attachments(msg, &attachments))
+		return NULL;
+
+	/* Scan attachments, favor plain text over HTML. */
+	TAILQ_FOREACH(attach, attachments, me_entry) {
+		if (message_is_content_type(attach, "text/plain")) {
+			found = attach;
+			break;
+		} else if (message_is_content_type(attach, "text/html")) {
+			if (found == NULL)
+				found = attach;
+		}
+	}
+	if (found == NULL) {
+		message_list_free(attachments);
+		return msg->me_body;
+	}
+
+	/*
+	 * Attachments are resolved recursively above, it's therefore fine to
+	 * access the body of the attachment directly.
+	 */
+	encoding = message_get_header1(found, "Content-Transfer-Encoding");
+	if (encoding == NULL || strcmp(encoding, "base64")) {
+		msg->me_buf_dec = strdup(found->me_body);
+		if (msg->me_buf_dec == NULL)
+			err(1, NULL);
+	} else {
+		msg->me_buf_dec = b64decode(found->me_body);
+		if (msg->me_buf_dec == NULL)
+			warnx("%s: failed to decode body", msg->me_path);
+	}
+	message_list_free(attachments);
+
+	return msg->me_buf_dec;
 }
 
 const struct string_list *
@@ -438,6 +494,24 @@ message_headers_realloc(struct message *msg)
 	if (msg->me_headers.h_v == NULL)
 		err(1, NULL);
 	msg->me_headers.h_size = newsize;
+}
+
+static int
+message_is_content_type(const struct message *msg, const char *needle)
+{
+	const char *type;
+	size_t len;
+
+	type = message_get_header1(msg, "Content-Type");
+	if (type == NULL)
+		return 0;
+
+	len = strlen(needle);
+	if (strncmp(type, needle, len) ||
+	    (type[len] != ';' && type[len] != '\0'))
+		return 0;
+
+	return 1;
 }
 
 static const char *
@@ -734,6 +808,27 @@ parseboundary(const char *str, char **boundary)
 	if (*boundary == NULL)
 		err(1, NULL);
 	return 1;
+}
+
+static char *
+b64decode(const char *str)
+{
+	unsigned char *buf;
+	size_t siz;
+	int n;
+
+	siz = strlen(str) + 1;
+	buf = malloc(siz);
+	if (buf == NULL)
+		err(1, NULL);
+	n = b64_pton(str, buf, siz);
+	if (n == -1) {
+		free(buf);
+		return NULL;
+	}
+	buf[n] = '\0';
+
+	return (char *)buf;
 }
 
 static const char *
