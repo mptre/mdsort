@@ -204,7 +204,7 @@ struct match {
 
 struct match_list {
 	char ml_maildir[PATH_MAX];
-	char ml_subdir[PATH_MAX];
+	char ml_subdir[NAME_MAX + 1];
 	char ml_path[PATH_MAX];
 
 	TAILQ_HEAD(, match) ml_head;
