@@ -54,11 +54,11 @@ _assert_file() {
 	cmp -s "$1" "$2"
 }
 
-# fail [message]
+# fail [-] [message]
 fail() {
 	echo >>"$NERR"
 
-	report -f -p FAIL "$@"
+	_report -f -p FAIL "$@"
 }
 
 # testcase [-t tag] description
@@ -66,7 +66,7 @@ testcase() {
 	local _tags=""
 
 	# Report on behalf of the previous test case.
-	[ -s "$NTEST" ] && report -p PASS
+	[ -s "$NTEST" ] && _report -p PASS
 
 	echo >>"$NTEST"
 
@@ -94,21 +94,21 @@ testcase() {
 	else
 		return 0
 	fi
-	report -p SKIP
+	_report -p SKIP
 	return 1
 }
 
 # Everything below is part of the private API, relying on it is a bad idea.
 
-# fatal message
-fatal() {
+# _fatal message
+_fatal() {
 	echo "t.sh: ${*}" 1>&2
 	exit 1
 }
 
-# report [-] [-f] -p prefix [message]
-report() {
-	local _force=0  _prefix="" _stdin=0 _tmp="${WRKDIR}/report"
+# _report [-] [-f] -p prefix [message]
+_report() {
+	local _force=0  _prefix="" _stdin=0 _tmp="${WRKDIR}/_report"
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -142,9 +142,9 @@ atexit() {
 	if [ -s "$NTEST" ]; then
 		# Report on behalf of the previous test case.
 		if [ "$_err" -eq 0 ]; then
-			report -p PASS
+			_report -p PASS
 		else
-			report -p FAIL
+			_report -p FAIL
 		fi
 	fi
 
@@ -195,7 +195,7 @@ done
 shift $((OPTIND - 1))
 [ $# -eq 0 ] && usage
 if [ -s "$INCLUDE" ] && [ -s "$EXCLUDE" ]; then
-	fatal "including and excluding tests is mutually exclusive"
+	_fatal "including and excluding tests is mutually exclusive"
 fi
 
 for a; do
