@@ -291,16 +291,16 @@ if testcase "nested too deep"; then
 				break
 			elif [ $i -gt 0 ]; then
 				printf 'Content-Type: multipart/alternative; boundary="%d"\n\n' $i
-				printf '--%d\n' $i
+				printf -- '--%d\n' $i
 			else
-				printf '--%d\n' $i
+				printf -- '--%d\n' $i
 			fi
 			i=$((i + 1))
 		done
 
 		while :; do
 			i=$((i - 1))
-			printf '--%d--\n\n' $i
+			printf -- '--%d--\n\n' $i
 			[ $i = 0 ] && break
 		done
 	} | mkmsg -b -H "src/new" -- "Content-Type" "multipart/alternative; boundary=\"0\""
