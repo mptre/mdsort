@@ -60,17 +60,14 @@ maildir_open(const char *path, unsigned int flags,
 			goto fail;
 	} else {
 		if (md->md_flags & MAILDIR_WALK) {
-			md->md_path = strdup(path);
-			if (md->md_path == NULL)
-				err(1, NULL);
+			len = sizeof(md->md_path);
+			if (strlcpy(md->md_path, path, len) >= len)
+				errc(1, ENAMETOOLONG, "%s", __func__);
 		} else {
 			if (parsesubdir(path, &md->md_subdir))
 				goto fail;
 
-			len = PATH_MAX;
-			md->md_path = malloc(len);
-			if (md->md_path == NULL)
-				err(1, NULL);
+			len = sizeof(md->md_path);
 			if (pathslice(path, md->md_path, len, 0, -1) == NULL)
 				goto fail;
 		}
@@ -109,7 +106,6 @@ maildir_close(struct maildir *md)
 
 	if (md->md_dir != NULL)
 		closedir(md->md_dir);
-	free(md->md_path);
 	free(md);
 }
 
@@ -347,10 +343,8 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	int fd;
 	int error = 0;
 
-	md->md_path = malloc(PATH_MAX);
-	if (md->md_path == NULL)
-		err(1, NULL);
-	pathjoin(md->md_path, PATH_MAX, env->ev_tmpdir, "mdsort-XXXXXXXX");
+	pathjoin(md->md_path, sizeof(md->md_path), env->ev_tmpdir,
+	    "mdsort-XXXXXXXX");
 	if (mkdtemp(md->md_path) == NULL) {
 		warn("mkdtemp");
 		return 1;

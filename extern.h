@@ -46,7 +46,7 @@ enum subdir {
 
 struct maildir {
 	char md_buf[PATH_MAX];
-	char *md_path;
+	char md_path[PATH_MAX];
 	DIR *md_dir;
 	enum subdir md_subdir;
 	unsigned int md_flags;
