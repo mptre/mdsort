@@ -81,6 +81,15 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 
 	if (matches_find(ml, EXPR_TYPE_LABEL)) {
 		str = message_get_header1(msg, "X-Label");
+		if (str == NULL) {
+			/*
+			 * This should never happen since a label action always
+			 * sets the X-Label header in expr_eval_label(). But
+			 * some static analysis tools interpret usage of str
+			 * below as a potential NULL deference.
+			 */
+			return 1;
+		}
 		len = strlen(str) + 1;
 		label = malloc(len);
 		if (label == NULL)
