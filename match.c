@@ -121,8 +121,8 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 		case EXPR_TYPE_MOVE:
 			/*
 			 * Move message and update the source maildir and
-			 * message path. This is of importance if a move or flag
-			 * action is up next.
+			 * message path. This is of importance if a following
+			 * action requires a source maildir.
 			 */
 			maildir_close(dst);
 			dst = maildir_open(ml->ml_path, 0, env);
@@ -148,8 +148,8 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 		case EXPR_TYPE_LABEL:
 			/*
 			 * Write message with new labels to the source maildir
-			 * and update the message path. This is of importance
-			 * if a move or flag action is up next.
+			 * and update the message path. This is of importance if
+			 * a following action requires a source maildir.
 			 */
 			if (maildir_write(src, src, msg,
 				    tmp, sizeof(tmp), env)) {
