@@ -10,17 +10,6 @@ assert_label() {
 	assert_eq "$1" "$_got"
 }
 
-if testcase "duplicate label actions"; then
-	cat <<-EOF >$CONF
-	maildir "~/Maildir/INBOX" {
-		match new label "one" label "two"
-	}
-	EOF
-	mdsort -e - -- -n <<-EOF
-	mdsort.conf:2: label action already defined
-	EOF
-fi
-
 if testcase "word boundary begin"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" "label"
@@ -142,6 +131,19 @@ if testcase "multiple labels already present"; then
 	mdsort
 	refute_empty "src/new"
 	assert_label "one two three" ${WRKDIR}/src/new/*
+fi
+
+if testcase "many label actions"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match new label "1" label "2" label { "3" "4" }
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+	assert_label "1 2 3 4" ${WRKDIR}/src/new/*
 fi
 
 if testcase "label and move"; then

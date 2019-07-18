@@ -630,8 +630,6 @@ expr_validate(const struct expr *ex)
 
 	if (expr_count(ex, EXPR_TYPE_MOVE) > 1)
 		yyerror("move action already defined");
-	if (expr_count(ex, EXPR_TYPE_LABEL) > 1)
-		yyerror("label action already defined");
 
 	nactions = expr_count_actions(ex);
 	if (nactions <= 1)
