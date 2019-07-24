@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <err.h>
-#include <errno.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,7 +66,7 @@ pathjoin(char *buf, size_t bufsiz, const char *dirname, const char *filename)
 
 	n = snprintf(buf, bufsiz, "%s/%s", dirname, filename);
 	if (n < 0 || (size_t)n >= bufsiz)
-		errc(1, ENAMETOOLONG, "%s", __func__);
+		return NULL;
 	return buf;
 }
 

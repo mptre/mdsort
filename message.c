@@ -135,6 +135,8 @@ message_parse(const char *dir, int dirfd, const char *path)
 		err(1, NULL);
 	msg->me_path = pathjoin(msg->me_pbuf, sizeof(msg->me_pbuf), dir,
 	    path);
+	if (msg->me_path == NULL)
+		errc(1, ENAMETOOLONG, "%s", __func__);
 
 	for (;;) {
 		if (msglen >= msgsize - 1) {

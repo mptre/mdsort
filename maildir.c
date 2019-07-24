@@ -321,6 +321,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 static const char *
 maildir_path(struct maildir *md)
 {
+	const char *path;
 	const char *subdir = NULL;
 
 	switch (md->md_subdir) {
@@ -331,7 +332,10 @@ maildir_path(struct maildir *md)
 		subdir = "cur";
 		break;
 	}
-	return pathjoin(md->md_buf, sizeof(md->md_buf), md->md_path, subdir);
+	path = pathjoin(md->md_buf, sizeof(md->md_buf), md->md_path, subdir);
+	if (path == NULL)
+		errc(1, ENAMETOOLONG, "%s", __func__);
+	return path;
 }
 
 static int
@@ -343,8 +347,9 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	int fd;
 	int error = 0;
 
-	pathjoin(md->md_path, sizeof(md->md_path), env->ev_tmpdir,
-	    "mdsort-XXXXXXXX");
+	if (pathjoin(md->md_path, sizeof(md->md_path), env->ev_tmpdir,
+		    "mdsort-XXXXXXXX") == NULL)
+		errc(1, ENAMETOOLONG, "%s", __func__);
 	if (mkdtemp(md->md_path) == NULL) {
 		warn("mkdtemp");
 		return 1;

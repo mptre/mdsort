@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include <err.h>
+#include <errno.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -73,6 +74,8 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			    __func__, msg->me_path);
 	}
 	path = pathjoin(buf, sizeof(buf), ml->ml_maildir, ml->ml_subdir);
+	if (path == NULL)
+		errc(1, ENAMETOOLONG, "%s", __func__);
 
 	mh = matches_find_interpolate(ml);
 	len = sizeof(ml->ml_path);
