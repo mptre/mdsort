@@ -500,8 +500,10 @@ expr_eval_discard(struct expr *ex, struct match_list *ml,
 	matches_append(ml, ex->ex_match);
 
 	len = sizeof(ml->ml_path);
-	if (strlcpy(ml->ml_path, "<discard>", len) >= len)
-		errc(1, ENAMETOOLONG, "%s", __func__);
+	if (strlcpy(ml->ml_path, "<discard>", len) >= len) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return EXPR_ERROR;
+	}
 
 	return EXPR_MATCH;
 }
@@ -515,8 +517,10 @@ expr_eval_flag(struct expr *ex, struct match_list *ml,
 
 	str = TAILQ_FIRST(ex->ex_strings);
 	len = sizeof(ml->ml_subdir);
-	if (strlcpy(ml->ml_subdir, str->val, len) >= len)
-		errc(1, ENAMETOOLONG, "%s", __func__);
+	if (strlcpy(ml->ml_subdir, str->val, len) >= len) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return EXPR_ERROR;
+	}
 
 	matches_append(ml, ex->ex_match);
 
@@ -593,8 +597,10 @@ expr_eval_move(struct expr *ex, struct match_list *ml,
 
 	str = TAILQ_FIRST(ex->ex_strings);
 	len = sizeof(ml->ml_maildir);
-	if (strlcpy(ml->ml_maildir, str->val, len) >= len)
-		errc(1, ENAMETOOLONG, "%s", __func__);
+	if (strlcpy(ml->ml_maildir, str->val, len) >= len) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return EXPR_ERROR;
+	}
 
 	matches_append(ml, ex->ex_match);
 
@@ -678,8 +684,10 @@ expr_eval_reject(struct expr *ex, struct match_list *ml,
 	matches_append(ml, ex->ex_match);
 
 	len = sizeof(ml->ml_path);
-	if (strlcpy(ml->ml_path, "<reject>", len) >= len)
-		errc(1, ENAMETOOLONG, "%s", __func__);
+	if (strlcpy(ml->ml_path, "<reject>", len) >= len) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return EXPR_ERROR;
+	}
 
 	return EXPR_MATCH;
 }
