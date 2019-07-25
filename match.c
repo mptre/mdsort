@@ -62,20 +62,26 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 	if (ml->ml_maildir[0] == '\0') {
 		/* No maildir present, infer from message path. */
 		len = sizeof(ml->ml_maildir);
-		if (pathslice(msg->me_path, ml->ml_maildir, len, 0, -2) == NULL)
-			errx(1, "%s: %s: maildir not found",
+		if (pathslice(msg->me_path, ml->ml_maildir, len, 0, -2) == NULL) {
+			warnx("%s: %s: maildir not found",
 			    __func__, msg->me_path);
+			return 1;
+		}
 	}
 	if (ml->ml_subdir[0] == '\0') {
 		/* No subdir present, infer from message path. */
 		len = sizeof(ml->ml_subdir);
-		if (pathslice(msg->me_path, ml->ml_subdir, len, -2, -2) == NULL)
-			errx(1, "%s: %s: subdir not found",
+		if (pathslice(msg->me_path, ml->ml_subdir, len, -2, -2) == NULL) {
+			warnx("%s: %s: subdir not found",
 			    __func__, msg->me_path);
+			return 1;
+		}
 	}
 	path = pathjoin(buf, sizeof(buf), ml->ml_maildir, ml->ml_subdir);
-	if (path == NULL)
-		errc(1, ENAMETOOLONG, "%s", __func__);
+	if (path == NULL) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return 1;
+	}
 
 	mh = matches_find_interpolate(ml);
 	len = sizeof(ml->ml_path);

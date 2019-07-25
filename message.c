@@ -119,7 +119,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 	ssize_t n;
 	size_t msglen = 0;
 	size_t msgsize = BUFSIZ;
-	int fd;
+	int fd = -1;
 
 	fd = openat(dirfd, path, O_RDONLY | O_CLOEXEC);
 	if (fd == -1) {
@@ -135,8 +135,10 @@ message_parse(const char *dir, int dirfd, const char *path)
 		err(1, NULL);
 	msg->me_path = pathjoin(msg->me_pbuf, sizeof(msg->me_pbuf), dir,
 	    path);
-	if (msg->me_path == NULL)
-		errc(1, ENAMETOOLONG, "%s", __func__);
+	if (msg->me_path == NULL) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		goto err;
+	}
 
 	for (;;) {
 		if (msglen >= msgsize - 1) {
@@ -149,9 +151,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 		n = read(fd, msg->me_buf + msglen, msgsize - msglen - 1);
 		if (n == -1) {
 			warn("read: %s", path);
-			close(fd);
-			message_free(msg);
-			return NULL;
+			goto err;
 		} else if (n == 0) {
 			break;
 		}
@@ -160,15 +160,20 @@ message_parse(const char *dir, int dirfd, const char *path)
 	assert(msglen < msgsize);
 	msg->me_buf[msglen] = '\0';
 	close(fd);
+	fd = -1;
 
 	msg->me_body = message_parse_headers(msg);
 
-	if (message_flags_parse(&msg->me_flags, msg->me_path)) {
-		message_free(msg);
-		return NULL;
-	}
+	if (message_flags_parse(&msg->me_flags, msg->me_path))
+		goto err;
 
 	return msg;
+
+err:
+	if (fd != -1)
+		close(fd);
+	message_free(msg);
+	return NULL;
 }
 
 void
