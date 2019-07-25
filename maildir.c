@@ -179,6 +179,8 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	if (msgflags(src, dst, msg, flags, sizeof(flags)))
 		return 1;
 	dstname = maildir_genname(dst, flags, buf, bufsiz, env);
+	if (dstname == NULL)
+		return 1;
 	dstfd = maildir_fd(dst);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
@@ -239,7 +241,8 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 
 	if (msgflags(dst, src, msg, flags, sizeof(flags)))
 		return 1;
-	maildir_genname(dst, flags, buf, bufsiz, env);
+	if (maildir_genname(dst, flags, buf, bufsiz, env) == NULL)
+		return 1;
 
 	if (message_writeat(msg, maildir_fd(dst), buf)) {
 		(void)unlinkat(maildir_fd(dst), buf, 0);
@@ -303,8 +306,10 @@ maildir_genname(const struct maildir *dst, const char *flags,
 		count++;
 		n = snprintf(buf, bufsiz, "%lld.%d_%d.%s%s",
 		    ts, pid, count, env->ev_hostname, flags);
-		if (n < 0 || (size_t)n >= bufsiz)
-			errc(1, ENAMETOOLONG, "%s", __func__);
+		if (n < 0 || (size_t)n >= bufsiz) {
+			warnc(ENAMETOOLONG, "%s", __func__);
+			return NULL;
+		}
 		fd = openat(maildir_fd(dst), buf, O_WRONLY | O_CREAT | O_EXCL,
 		    S_IRUSR | S_IWUSR);
 		if (fd == -1) {
@@ -313,7 +318,8 @@ maildir_genname(const struct maildir *dst, const char *flags,
 				    __func__, buf);
 				continue;
 			}
-			err(1, "openat: %s", buf);
+			warn("openat: %s", buf);
+			return NULL;
 		}
 		close(fd);
 		return buf;
@@ -371,7 +377,8 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	 * No need to remove the created file in case of an error since
 	 * maildir_close() removes the complete temporary directory.
 	 */
-	maildir_genname(md, "", name, sizeof(name), env);
+	if (maildir_genname(md, "", name, sizeof(name), env) == NULL)
+		return 1;
 	fd = openat(maildir_fd(md), name, O_WRONLY | O_EXCL);
 	if (fd == -1) {
 		warn("openat: %s/%s", path, name);
