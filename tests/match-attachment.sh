@@ -1,7 +1,7 @@
 if testcase "presence"; then
 	mkmd "src" "dst"
 	mkmsg -b -H "src/new" <<-EOF -- \
-		"Content-Type" "multipart/alternative;\n\tboundary=\"deadbeef\""
+		"Content-Type" "multipart/alternative; boundary=\"deadbeef\""
 	--deadbeef
 	Content-Type: text/plain
 
