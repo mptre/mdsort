@@ -26,6 +26,11 @@ struct header {
 	struct string_list *values;	/* list of all values for key */
 };
 
+struct slice {
+	char *s_beg;
+	char *s_end;
+};
+
 static int message_flags_parse(struct message_flags *, const char *);
 static int message_flags_resolve(unsigned char, unsigned int *, unsigned int *);
 static void message_headers_realloc(struct message *);
@@ -35,7 +40,7 @@ static const char *message_parse_headers(struct message *);
 static int cmpheaderid(const void *, const void *);
 static int cmpheaderkey(const void *, const void *);
 static char *decodeheader(const char *);
-static int findheader(char *, char **, char **, char **, char **);
+static int findheader(char *, struct slice *, struct slice *);
 static ssize_t searchheader(const struct header *, size_t, const char *,
     size_t *);
 
@@ -524,25 +529,23 @@ message_is_content_type(const struct message *msg, const char *needle)
 static const char *
 message_parse_headers(struct message *msg)
 {
-	char *buf, *keybeg, *keyend, *valbeg, *valend;
+	char *buf;
+	struct slice ks, vs;
 
 	buf = msg->me_buf;
-	while (findheader(buf, &keybeg, &keyend, &valbeg, &valend) == 0) {
+	while (findheader(buf, &ks, &vs) == 0) {
 		size_t i = msg->me_headers.h_nmemb;
-
-		*keyend = '\0';
-		*valend = '\0';
 
 		message_headers_realloc(msg);
 
 		msg->me_headers.h_v[i].id = msg->me_headers.h_nmemb;
 		msg->me_headers.h_v[i].flags = 0;
-		msg->me_headers.h_v[i].key = keybeg;
-		msg->me_headers.h_v[i].val = valbeg;
+		msg->me_headers.h_v[i].key = ks.s_beg;
+		msg->me_headers.h_v[i].val = vs.s_beg;
 		msg->me_headers.h_v[i].values = NULL;
 		msg->me_headers.h_nmemb++;
 
-		buf = valend + 1;
+		buf = vs.s_end + 1;
 	}
 	if (msg->me_headers.h_nmemb > 0)
 		qsort(msg->me_headers.h_v, msg->me_headers.h_nmemb,
@@ -605,8 +608,7 @@ decodeheader(const char *str)
 }
 
 static int
-findheader(char *str, char **keybeg, char **keyend, char **valbeg,
-    char **valend)
+findheader(char *str, struct slice *ks, struct slice *vs)
 {
 	size_t i;
 
@@ -614,13 +616,14 @@ findheader(char *str, char **keybeg, char **keyend, char **valbeg,
 		if (str[i] == '\0' || isspace(str[i]))
 			return 1;
 	}
-	*keybeg = str;
-	*keyend = str + i;
-	i++;	/* consume ';' */
+	ks->s_beg = str;
+	ks->s_end = str + i;
+	*ks->s_end = '\0';
 
-	/* Skip leading whitespace in value. */
+	/* Consume ':' and skip leading whitespace in value. */
+	i++;
 	i += nspaces(&str[i]);
-	*valbeg = str + i;
+	vs->s_beg = str + i;
 
 	for (;; i++) {
 		if (str[i] == '\0')
@@ -632,7 +635,8 @@ findheader(char *str, char **keybeg, char **keyend, char **valbeg,
 			continue;
 		break;
 	}
-	*valend = str + i;
+	vs->s_end = str + i;
+	*vs->s_end = '\0';
 
 	return 0;
 }
