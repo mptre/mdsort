@@ -33,7 +33,7 @@ struct slice {
 
 static int message_flags_parse(struct message_flags *, const char *);
 static int message_flags_resolve(unsigned char, unsigned int *, unsigned int *);
-static void message_headers_realloc(struct message *);
+static struct header *message_headers_alloc(struct message *);
 static int message_is_content_type(const struct message *, const char *);
 static const char *message_parse_headers(struct message *);
 
@@ -350,15 +350,10 @@ message_set_header(struct message *msg, const char *header, char *val)
 	idx = searchheader(msg->me_headers.h_v, msg->me_headers.h_nmemb,
 	    header, &nfound);
 	if (idx == -1) {
-		message_headers_realloc(msg);
-
-		hdr = &msg->me_headers.h_v[msg->me_headers.h_nmemb];
+		hdr = message_headers_alloc(msg);
 		hdr->flags = HEADER_FLAG_DIRTY;
-		hdr->id = msg->me_headers.h_nmemb;
 		hdr->key = header;
 		hdr->val = val;
-		hdr->values = NULL;
-		msg->me_headers.h_nmemb++;
 
 		qsort(msg->me_headers.h_v, msg->me_headers.h_nmemb,
 		    sizeof(*msg->me_headers.h_v), cmpheaderkey);
@@ -488,13 +483,14 @@ message_flags_resolve(unsigned char flag, unsigned int *idx, unsigned int *mask)
 	return 1;
 }
 
-static void
-message_headers_realloc(struct message *msg)
+static struct header *
+message_headers_alloc(struct message *msg)
 {
+	struct header *hdr;
 	size_t newsize;
 
 	if (msg->me_headers.h_nmemb + 1 < msg->me_headers.h_size)
-		return;
+		goto out;
 
 	if (msg->me_headers.h_size == 0)
 		newsize = 16;
@@ -506,6 +502,13 @@ message_headers_realloc(struct message *msg)
 	if (msg->me_headers.h_v == NULL)
 		err(1, NULL);
 	msg->me_headers.h_size = newsize;
+
+out:
+	hdr = &msg->me_headers.h_v[msg->me_headers.h_nmemb];
+	memset(hdr, 0, sizeof(*hdr));
+	hdr->id = msg->me_headers.h_nmemb;
+	msg->me_headers.h_nmemb++;
+	return hdr;
 }
 
 static int
@@ -534,16 +537,10 @@ message_parse_headers(struct message *msg)
 
 	buf = msg->me_buf;
 	while (findheader(buf, &ks, &vs) == 0) {
-		size_t i = msg->me_headers.h_nmemb;
+		struct header *hdr = message_headers_alloc(msg);
 
-		message_headers_realloc(msg);
-
-		msg->me_headers.h_v[i].id = msg->me_headers.h_nmemb;
-		msg->me_headers.h_v[i].flags = 0;
-		msg->me_headers.h_v[i].key = ks.s_beg;
-		msg->me_headers.h_v[i].val = vs.s_beg;
-		msg->me_headers.h_v[i].values = NULL;
-		msg->me_headers.h_nmemb++;
+		hdr->key = ks.s_beg;
+		hdr->val = vs.s_beg;
 
 		buf = vs.s_end + 1;
 	}
