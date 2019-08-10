@@ -580,13 +580,18 @@ decodeheader(const char *str)
 {
 	const char *end;
 	char *dec;
-	size_t len;
 	size_t i = 0;
 
-	len = strlen(str);
-	dec = malloc(len + 1);
+	dec = strdup(str);
 	if (dec == NULL)
 		err(1, NULL);
+	/*
+	 * Optimize for the common case where a header does not span multiple
+	 * lines.
+	 */
+	if (strchr(str, '\n') == NULL)
+		return dec;
+
 	for (;;) {
 		if (*str == '\0')
 			break;
