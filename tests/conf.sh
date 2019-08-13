@@ -335,3 +335,16 @@ if testcase "duplicate force pattern flag"; then
 	mdsort.conf:3: pattern force flag cannot be used more than once
 	EOF
 fi
+
+if testcase "lower and upper case flags are mutually exclusive"; then
+	cat <<-EOF >$CONF
+	maildir "~/Maildir/INBOX" {
+		match header "From" /a/lu move "dst"
+		match header "From" /a/ul move "dst"
+	}
+	EOF
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:2: \`l' and \`u' flags cannot be combined
+	mdsort.conf:3: \`l' and \`u' flags cannot be combined
+	EOF
+fi

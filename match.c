@@ -10,6 +10,7 @@
 
 static const struct match *matches_find_interpolate(const struct match_list *);
 
+static unsigned char match_char(const struct match *, unsigned char);
 static const char *match_get(const struct match *, unsigned int);
 
 static int backref(const char *, unsigned int *);
@@ -280,6 +281,20 @@ matches_find_interpolate(const struct match_list *ml)
 	return found;
 }
 
+static unsigned char
+match_char(const struct match *mh, unsigned char c)
+{
+	if (mh == NULL)
+		return c;
+
+	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_LCASE)
+		return tolower(c);
+	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_UCASE)
+		return toupper(c);
+	return c;
+
+}
+
 static const char *
 match_get(const struct match *mh, unsigned int n)
 {
@@ -343,7 +358,8 @@ interpolate(const struct match *mh, const char *str, char *buf, size_t bufsiz,
 			for (; *sub != '\0'; sub++) {
 				if (bufgrow(&buf, &bufsiz, buflen, grow))
 					goto toolong;
-				buf[buflen++] = *sub;
+
+				buf[buflen++] = match_char(mh, *sub);
 			}
 			i += n;
 			continue;

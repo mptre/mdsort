@@ -65,13 +65,22 @@ By default, subexpressions of the first matching
 is used.
 Each
 .Ar pattern
-also accepts any combination of the following flags:
+optionally accepts one or many of the following
+.Ar flags :
 .Bl -tag -width Ds -offset indent
 .It f
 Force usage of subexpressions from the corresponding pattern,
 as opposed of using the ones from the first matching pattern.
 .It i
 Make pattern case insensitive.
+.It l
+Lowercase the matched string from a subexpression before interpolation.
+Mutually exclusive with
+.Sq u .
+.It u
+Uppercase the matched string from a subexpression before interpolation.
+Mutually exclusive with
+.Sq l .
 .El
 .Pp
 The conditions are as follows and may be negated:
@@ -79,7 +88,7 @@ The conditions are as follows and may be negated:
 .It Xo Op Ic \&!
 .Op Ic attachment
 .Ic body
-.Pf / Ar pattern Ns Pf / Op fi
+.Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
 Evaluates to true if the message body matches
 .Ar pattern .
@@ -91,12 +100,12 @@ is present, evalutes to true if the body of an attachment matches
 .It Xo Op Ic \&!
 .Op Ic attachment
 .Ic header Dq Ar name
-.Pf / Ar pattern Ns Pf / Op fi
+.Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
 .It Xo Op Ic \&!
 .Op Ic attachment
 .Ic header No { Do Ar name Dc Ar ... No }
-.Pf / Ar pattern Ns Pf / Op fi
+.Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
 Evaluates to true if the value of any of the headers with
 .Ar name
@@ -240,7 +249,7 @@ maildir "~/Maildir/INBOX" {
 		move "~/Maildir/Spam"
 
 	# Label messages with the plus portion of the address.
-	match header "To" /user\e+(.+)@example.com/ label "\e1"
+	match header "To" /user\e+(.+)@example.com/l label "\e1"
 
 	# Archive read messages.
 	match ! new move "~/Maildir/Archive"

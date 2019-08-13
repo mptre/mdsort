@@ -538,6 +538,16 @@ again:
 			case 'i':
 				yylval.v.pattern.flags |= EXPR_PATTERN_ICASE;
 				break;
+			case 'l':
+				if (yylval.v.pattern.flags & EXPR_PATTERN_UCASE)
+					yyerror("`l' and `u' flags cannot be combined");
+				yylval.v.pattern.flags |= EXPR_PATTERN_LCASE;
+				break;
+			case 'u':
+				if (yylval.v.pattern.flags & EXPR_PATTERN_LCASE)
+					yyerror("`l' and `u' flags cannot be combined");
+				yylval.v.pattern.flags |= EXPR_PATTERN_UCASE;
+				break;
 			default:
 				yyungetc(c);
 				return PATTERN;

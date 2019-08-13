@@ -143,6 +143,14 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 		ex->ex_re.r_flags |= EXPR_PATTERN_FORCE;
 		flags &= ~EXPR_PATTERN_FORCE;
 	}
+	if (flags & EXPR_PATTERN_LCASE) {
+		ex->ex_re.r_flags |= EXPR_PATTERN_LCASE;
+		flags &= ~EXPR_PATTERN_LCASE;
+	}
+	if (flags & EXPR_PATTERN_UCASE) {
+		ex->ex_re.r_flags |= EXPR_PATTERN_UCASE;
+		flags &= ~EXPR_PATTERN_UCASE;
+	}
 	assert(flags == 0);
 
 	if ((ret = regcomp(&ex->ex_re.r_pattern, pattern, rflags)) != 0) {

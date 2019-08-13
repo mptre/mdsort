@@ -25,7 +25,7 @@ maildir "~/Maildir/INBOX" {
 		move "~/Maildir/Spam"
 
 	# Label messages with the plus portion of the address.
-	match header "To" /user\+(.+)@example.com/ label "\1"
+	match header "To" /user\+(.+)@example.com/l label "\1"
 
 	# Archive read messages.
 	match ! new move "~/Maildir/Archive"

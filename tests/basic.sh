@@ -131,6 +131,32 @@ if testcase "match force"; then
 	refute_empty "dst/new"
 fi
 
+if testcase "match lowercase"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" "user@DST.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /dst/il move "\0"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "match uppercase"; then
+	mkmd "src" "DST"
+	mkmsg "src/new" -- "To" "user@dst.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /dst/u move "\0"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "DST/new"
+fi
+
 if testcase "unique suffix is preserved when valid"; then
 	mkmd "src" "dst"
 	mkmsg -s ":2,S" "src/new" -- "To" "user@example.com"

@@ -175,6 +175,8 @@ struct expr {
 		unsigned int r_flags;
 #define EXPR_PATTERN_ICASE	0x00000001
 #define EXPR_PATTERN_FORCE	0x00000002
+#define EXPR_PATTERN_LCASE	0x00000004
+#define EXPR_PATTERN_UCASE	0x00000008
 	} ex_re;
 
 	struct {
