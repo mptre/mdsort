@@ -47,10 +47,7 @@ lines using a backslash
 .Pp
 A
 .Ar pattern
-used within a condition is interpreted as an extended regular expression and can
-be made case insensitive using the
-.Sq i
-keyword.
+used within a condition is interpreted as an extended regular expression.
 Subexpressions in
 .Ar pattern
 can be used to interpolate arguments to
@@ -66,10 +63,16 @@ and will be replaced with the matched string.
 By default, subexpressions of the first matching
 .Ar pattern
 is used.
-Using the
-.Sq f
-keyword will force usage of subexpressions from the corresponding
-.Ar pattern .
+Each
+.Ar pattern
+also accepts any combination of the following flags:
+.Bl -tag -width Ds -offset indent
+.It f
+Force usage of subexpressions from the corresponding pattern,
+as opposed of using the ones from the first matching pattern.
+.It i
+Make pattern case insensitive.
+.El
 .Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
