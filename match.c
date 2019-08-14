@@ -284,9 +284,6 @@ matches_find_interpolate(const struct match_list *ml)
 static unsigned char
 match_char(const struct match *mh, unsigned char c)
 {
-	if (mh == NULL)
-		return c;
-
 	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_LCASE)
 		return tolower(c);
 	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_UCASE)
