@@ -239,7 +239,7 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 {
 	char flags[FLAGS_MAX];
 
-	if (msgflags(dst, src, msg, flags, sizeof(flags)))
+	if (msgflags(src, dst, msg, flags, sizeof(flags)))
 		return 1;
 	if (maildir_genname(dst, flags, buf, bufsiz, env) == NULL)
 		return 1;
