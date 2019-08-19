@@ -242,7 +242,7 @@ expraction	: BREAK {
 			$$ = expr_alloc(EXPR_TYPE_MOVE, lineno, NULL, NULL);
 			path = expandtilde($2, env);
 			strings = strings_alloc();
-			strings_append(strings, path);
+			strings_append(strings, DISOWN(path));
 			expr_set_strings($$, strings);
 		}
 		| FLAG flag {
@@ -250,7 +250,7 @@ expraction	: BREAK {
 
 			$$ = expr_alloc(EXPR_TYPE_FLAG, lineno, NULL, NULL);
 			strings = strings_alloc();
-			strings_append(strings, $2);
+			strings_append(strings, DISOWN($2));
 			expr_set_strings($$, strings);
 		}
 		| DISCARD {
@@ -274,7 +274,7 @@ strings		: '{' stringblock '}' {
 		}
 		| STRING {
 			$$ = strings_alloc();
-			strings_append($$, $1);
+			strings_append($$, DISOWN($1));
 		}
 		;
 
@@ -283,7 +283,7 @@ stringblock	: /* empty */ {
 		}
 		| stringblock STRING {
 			$$ = $1;
-			strings_append($$, $2);
+			strings_append($$, DISOWN($2));
 		}
 		;
 

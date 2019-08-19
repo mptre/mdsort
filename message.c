@@ -321,7 +321,7 @@ message_get_header(const struct message *msg, const char *header)
 		hdr->values = strings_alloc();
 		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
 			val = decodeheader(tmp->val);
-			strings_append(hdr->values, val);
+			strings_append(hdr->values, DISOWN(val));
 		}
 	}
 	return hdr->values;
