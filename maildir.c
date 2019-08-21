@@ -300,7 +300,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 	int fd, n;
 	int count;
 
-	ts = time(NULL);
+	ts = env->ev_now;
 	count = arc4random() % 128;
 	for (;;) {
 		count++;
