@@ -1,3 +1,25 @@
+# v4.1.0 - 2019-08-21
+
+## Bug fixes
+
+- Add missing space for NUL-terminator when using `NAME_MAX` sized buffers.
+  (9a59987)
+  (Anton Lindqvist)
+
+## News
+
+- Parse alternative body representations, favoring plain text over HTML.
+  (90a3cf2)
+  (Anton Lindqvist)
+
+- Infer `INSTALL_MAN` from `INSTALL` if not present.
+  (badd5bc)
+  (Anton Lindqvist)
+
+- Lower or upper case a matched string used during interpolation.
+  (8aa5be6)
+  (Anton Lindqvist)
+
 # v4.0.0 - 2019-07-04
 
 ## Changes
