@@ -202,7 +202,7 @@ message_free(struct message *msg)
 }
 
 int
-message_writeat(struct message *msg, int dirfd, const char *path)
+message_writeat(struct message *msg, int dirfd, const char *path, int dosync)
 {
 	const struct header *hdr;
 	FILE *fh;
@@ -238,6 +238,15 @@ message_writeat(struct message *msg, int dirfd, const char *path)
 
 	if (fprintf(fh, "\n%s", msg->me_body) < 0) {
 		warn("fprintf");
+		error = 1;
+		goto out;
+	}
+
+	if (fflush(fh) == EOF) {
+		warn("fflush");
+		error = 1;
+	} else if (dosync && fsync(fd) == -1) {
+		warn("fsync");
 		error = 1;
 	}
 

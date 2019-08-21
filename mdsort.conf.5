@@ -20,6 +20,7 @@ order where the first matching rule is favored.
 .Bl -tag -width Ds
 .It Xo Ic maildir
 .Dq Ar path
+.Op Ar options
 .Brq \& Ar rule ... \&
 .Xc
 A maildir rooted in
@@ -30,13 +31,28 @@ iterates over each message present in the
 and
 .Pa new
 directory.
+The
+.Ar options
+may be any combination of the following:
+.Bl -tag -width Ds
+.It Ic sync
+Call
+.Xr fsync 2
+after moving a message.
+.El
 .It Xo Ic stdin
+.Op Ar options
 .Brq \& Ar rule ... \&
 .Xc
 Accepts a message from stdin.
-This type of maildir will only be evaluted if
+This type of maildir will only be evaluated if
 .Xr mdsort 1
 is invoked with the stdin option.
+Accepts the same
+.Ar options
+as listed above with
+.Ic sync
+being implicitly enabled.
 .El
 .Pp
 A rule is defined as follows:
