@@ -295,6 +295,7 @@ void strings_append(struct string_list *strings, char *val);
 struct config {
 	struct {
 		char *path;
+		unsigned int flags;
 	} maildir;
 	struct expr *expr;
 

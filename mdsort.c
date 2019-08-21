@@ -40,7 +40,6 @@ main(int argc, char *argv[])
 	struct config *conf;
 	struct maildir *md;
 	struct message *msg;
-	unsigned int mdflags = MAILDIR_WALK;
 	int c, w;
 	int error = 0;
 	int reject = 0;
@@ -76,7 +75,6 @@ main(int argc, char *argv[])
 		argc--;
 		argv++;
 		env.ev_options |= OPTION_STDIN;
-		mdflags |= MAILDIR_STDIN;
 	}
 	if (argc > 0)
 		usage();
@@ -104,7 +102,8 @@ main(int argc, char *argv[])
 		if (config_skip(conf, &env))
 			continue;
 
-		md = maildir_open(conf->maildir.path, mdflags, &env);
+		md = maildir_open(conf->maildir.path, conf->maildir.flags,
+		    &env);
 		if (md == NULL) {
 			error = 1;
 			continue;
@@ -184,8 +183,8 @@ config_skip(const struct config *conf, const struct environment *env)
 {
 	int dostdin = env->ev_options & OPTION_STDIN;
 
-	return (conf->maildir.path != NULL && dostdin) ||
-	    (conf->maildir.path == NULL && !dostdin);
+	return (dostdin && (conf->maildir.flags & MAILDIR_STDIN) == 0) ||
+	    (!dostdin && (conf->maildir.flags & MAILDIR_STDIN));
 }
 
 static const char *

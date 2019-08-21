@@ -97,19 +97,22 @@ grammar		: /* empty */
 
 maildir		: maildir_path exprblock {
 			struct config *conf;
+			unsigned int flags = MAILDIR_WALK;
 
 			/* Favor more specific error messages. */
 			if (parse_errors == 0 && expr_count_actions($2) == 0)
 				yyerror("empty match block");
 
-			if ($1 != NULL &&
-			    expr_count($2, EXPR_TYPE_REJECT) > 0)
+			if ($1 == NULL)
+				flags |= MAILDIR_STDIN;
+			else if (expr_count($2, EXPR_TYPE_REJECT) > 0)
 				yyerror("reject cannot be used outside stdin");
 
 			conf = malloc(sizeof(*conf));
 			if (conf == NULL)
 				err(1, NULL);
 			conf->maildir.path = $1;
+			conf->maildir.flags = flags;
 			conf->expr = $2;
 			TAILQ_INSERT_TAIL(&config, conf, entry);
 		}
@@ -123,7 +126,7 @@ maildir_path	: MAILDIR STRING {
 
 			$$ = NULL;
 			TAILQ_FOREACH(conf, &config, entry)
-				if (conf->maildir.path == NULL)
+				if (conf->maildir.flags & MAILDIR_STDIN)
 					yyerror("stdin already defined");
 		}
 		;
