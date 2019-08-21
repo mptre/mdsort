@@ -293,7 +293,9 @@ void strings_free(struct string_list *strings);
 void strings_append(struct string_list *strings, char *val);
 
 struct config {
-	char *maildir;
+	struct {
+		char *path;
+	} maildir;
 	struct expr *expr;
 
 	TAILQ_ENTRY(config) entry;

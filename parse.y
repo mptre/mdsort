@@ -109,7 +109,7 @@ maildir		: maildir_path exprblock {
 			conf = malloc(sizeof(*conf));
 			if (conf == NULL)
 				err(1, NULL);
-			conf->maildir = $1;
+			conf->maildir.path = $1;
 			conf->expr = $2;
 			TAILQ_INSERT_TAIL(&config, conf, entry);
 		}
@@ -123,7 +123,7 @@ maildir_path	: MAILDIR STRING {
 
 			$$ = NULL;
 			TAILQ_FOREACH(conf, &config, entry)
-				if (conf->maildir == NULL)
+				if (conf->maildir.path == NULL)
 					yyerror("stdin already defined");
 		}
 		;
@@ -377,7 +377,7 @@ config_free(struct config_list *config)
 	while ((conf = TAILQ_FIRST(config)) != NULL) {
 		TAILQ_REMOVE(config, conf, entry);
 		expr_free(conf->expr);
-		free(conf->maildir);
+		free(conf->maildir.path);
 		free(conf);
 	}
 }

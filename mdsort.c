@@ -104,7 +104,7 @@ main(int argc, char *argv[])
 		if (config_skip(conf, &env))
 			continue;
 
-		md = maildir_open(conf->maildir, mdflags, &env);
+		md = maildir_open(conf->maildir.path, mdflags, &env);
 		if (md == NULL) {
 			error = 1;
 			continue;
@@ -184,8 +184,8 @@ config_skip(const struct config *conf, const struct environment *env)
 {
 	int dostdin = env->ev_options & OPTION_STDIN;
 
-	return (conf->maildir != NULL && dostdin) ||
-	    (conf->maildir == NULL && !dostdin);
+	return (conf->maildir.path != NULL && dostdin) ||
+	    (conf->maildir.path == NULL && !dostdin);
 }
 
 static const char *
