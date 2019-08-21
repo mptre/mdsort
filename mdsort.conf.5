@@ -18,7 +18,10 @@ Each maildir is associated with a block of rules.
 For each message present in a maildir, each rule is evaluated in sequential
 order where the first matching rule is favored.
 .Bl -tag -width Ds
-.It Ic maildir Do Ar path Dc No { Ar rule ... No }
+.It Xo Ic maildir
+.Dq Ar path
+.Brq \& Ar rule ... \&
+.Xc
 A maildir rooted in
 .Ar path ;
 .Xr mdsort 1
@@ -27,7 +30,9 @@ iterates over each message present in the
 and
 .Pa new
 directory.
-.It Ic stdin No { Ar rule ... No }
+.It Xo Ic stdin
+.Brq \& Ar rule ... \&
+.Xc
 Accepts a message from stdin.
 This type of maildir will only be evaluted if
 .Xr mdsort 1
