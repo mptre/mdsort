@@ -251,8 +251,12 @@ message_writeat(struct message *msg, int dirfd, const char *path, int dosync)
 	}
 
 out:
+	/*
+	 * According to POSIX, fclose(3) must close the underlying file
+	 * descriptor.
+	 */
 	fclose(fh);
-	close(fd);
+
 	return error;
 }
 
