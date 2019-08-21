@@ -297,17 +297,15 @@ maildir_genname(const struct maildir *dst, const char *flags,
     char *buf, size_t bufsiz, const struct environment *env)
 {
 	long long ts;
-	pid_t pid;
 	int fd, n;
 	int count;
 
 	ts = time(NULL);
-	pid = getpid();
 	count = arc4random() % 128;
 	for (;;) {
 		count++;
 		n = snprintf(buf, bufsiz, "%lld.%d_%d.%s%s",
-		    ts, pid, count, env->ev_hostname, flags);
+		    ts, env->ev_pid, count, env->ev_hostname, flags);
 		if (n < 0 || (size_t)n >= bufsiz) {
 			warnc(ENAMETOOLONG, "%s", __func__);
 			return NULL;

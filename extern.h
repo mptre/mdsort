@@ -45,6 +45,7 @@ struct environment {
 	} ev_tz;
 
 	time_t ev_now;
+	pid_t ev_pid;
 
 	unsigned int ev_options;
 #define OPTION_DRYRUN	0x00000001

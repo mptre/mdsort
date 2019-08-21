@@ -251,6 +251,8 @@ readenv(struct environment *env)
 		err(1, "localtime");
 	env->ev_tz.t_offset = tm->tm_gmtoff;
 
+	env->ev_pid = getpid();
+
 	log_debug("%s: home=\"%s\", hostname=\"%s\", tmpdir=\"%s\", now=%lld, "
 	    "tz_offset=%ld\n", __func__, env->ev_home, env->ev_hostname,
 	    env->ev_tmpdir, (long long)env->ev_now, env->ev_tz.t_offset);
