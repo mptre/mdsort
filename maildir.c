@@ -101,7 +101,7 @@ maildir_close(struct maildir *md)
 		dir = maildir_path(md);
 		if (maildir_opendir(md, dir) == 0) {
 			while (maildir_walk(md, &me) == 1)
-				(void)unlinkat(maildir_fd(md), me.e_path, 0);
+				(void)unlinkat(me.e_dirfd, me.e_path, 0);
 			(void)rmdir(dir);
 			(void)rmdir(md->md_path);
 		}
