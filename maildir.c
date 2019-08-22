@@ -408,6 +408,8 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 			break;
 		}
 	}
+	if (error == 0 && (md->md_flags & MAILDIR_SYNC))
+		error = fsync(fd);
 	close(fd);
 
 	return error;
