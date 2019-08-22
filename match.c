@@ -55,9 +55,11 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 	char *label, *path;
 	size_t len;
 
-	/* Actions lacking support for interpolation. */
-	if (matches_find(ml, EXPR_TYPE_DISCARD) != NULL ||
-	    matches_find(ml, EXPR_TYPE_REJECT) != NULL)
+	/*
+	 * Some actions sets the path during expression evaluation and are
+	 * therefore not eligible for interpolation.
+	 */
+	if (ml->ml_path[0] != '\0')
 		return 0;
 
 	if (ml->ml_maildir[0] == '\0') {
