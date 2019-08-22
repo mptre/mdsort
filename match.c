@@ -107,7 +107,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 		label = interpolate(mh, str, label, len, 1);
 		if (label == NULL)
 			return 1;
-		message_set_header(msg, "X-Label", label);
+		message_set_header(msg, "X-Label", DISOWN(label));
 	}
 
 	return 0;
