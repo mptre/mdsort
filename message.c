@@ -202,22 +202,16 @@ message_free(struct message *msg)
 }
 
 int
-message_writeat(struct message *msg, int dirfd, const char *path, int dosync)
+message_writeat(struct message *msg, int fd, int dosync)
 {
 	const struct header *hdr;
 	FILE *fh;
 	unsigned int i;
-	int fd;
 	int error = 0;
 
-	fd = openat(dirfd, path, O_WRONLY | O_CLOEXEC);
-	if (fd == -1) {
-		warn("open: %s", path);
-		return 1;
-	}
 	fh = fdopen(fd, "we");
 	if (fh == NULL) {
-		warn("fdopen: %s", path);
+		warn("fdopen");
 		close(fd);
 		return 1;
 	}

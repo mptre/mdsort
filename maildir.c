@@ -15,7 +15,7 @@
 #define FLAGS_MAX	64
 
 static int maildir_fd(const struct maildir *);
-static char *maildir_genname(const struct maildir *, const char *,
+static int maildir_genname(const struct maildir *, const char *,
     char *, size_t, const struct environment *);
 static const char *maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
@@ -159,7 +159,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	};
 	struct stat st;
 	const char *dstname, *srcname;
-	int dstfd, srcfd;
+	int dstfd, fd, srcfd;
 	int doutime = 0;
 	int error = 0;
 
@@ -178,9 +178,10 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 
 	if (msgflags(src, dst, msg, flags, sizeof(flags)))
 		return 1;
-	dstname = maildir_genname(dst, flags, buf, bufsiz, env);
-	if (dstname == NULL)
+	fd = maildir_genname(dst, flags, buf, bufsiz, env);
+	if (fd == -1)
 		return 1;
+	dstname = buf;
 	dstfd = maildir_fd(dst);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
@@ -191,8 +192,9 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 			 * different file systems. Fallback to writing a new
 			 * message.
 			 */
-			error = message_writeat(msg, dstfd, dstname,
+			error = message_writeat(msg, fd,
 			    src->md_flags & MAILDIR_SYNC);
+			fd = -1;
 			if (error)
 				(void)unlinkat(dstfd, dstname, 0);
 			else
@@ -204,6 +206,9 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		warn("utimensat");
 		error = 1;
 	}
+	if (fd != -1)
+		close(fd);
+
 	return error;
 }
 
@@ -239,18 +244,19 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
     const struct environment *env)
 {
 	char flags[FLAGS_MAX];
+	int error, fd;
 
 	if (msgflags(src, dst, msg, flags, sizeof(flags)))
 		return 1;
-	if (maildir_genname(dst, flags, buf, bufsiz, env) == NULL)
+	fd = maildir_genname(dst, flags, buf, bufsiz, env);
+	if (fd == -1)
 		return 1;
 
-	if (message_writeat(msg, maildir_fd(dst), buf,
-		    src->md_flags & MAILDIR_SYNC)) {
+	error = message_writeat(msg, fd, src->md_flags & MAILDIR_SYNC);
+	if (error)
 		(void)unlinkat(maildir_fd(dst), buf, 0);
-		return 1;
-	}
-	return 0;
+
+	return error;
 }
 
 static const char *
@@ -292,7 +298,12 @@ maildir_fd(const struct maildir *md)
 	return dirfd(md->md_dir);
 }
 
-static char *
+/*
+ * Create a new file rooted in the given maildir.
+ * Returns a write-only file descriptor to the newly created file.
+ * Otherwise, -1 is returned.
+ */
+static int
 maildir_genname(const struct maildir *dst, const char *flags,
     char *buf, size_t bufsiz, const struct environment *env)
 {
@@ -308,7 +319,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 		    ts, env->ev_pid, count, env->ev_hostname, flags);
 		if (n < 0 || (size_t)n >= bufsiz) {
 			warnc(ENAMETOOLONG, "%s", __func__);
-			return NULL;
+			return -1;
 		}
 		fd = openat(maildir_fd(dst), buf, O_WRONLY | O_CREAT | O_EXCL,
 		    S_IRUSR | S_IWUSR);
@@ -319,10 +330,9 @@ maildir_genname(const struct maildir *dst, const char *flags,
 				continue;
 			}
 			warn("openat: %s", buf);
-			return NULL;
+			return -1;
 		}
-		close(fd);
-		return buf;
+		return fd;
 	}
 }
 
@@ -377,13 +387,10 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	 * No need to remove the created file in case of an error since
 	 * maildir_close() removes the complete temporary directory.
 	 */
-	if (maildir_genname(md, "", name, sizeof(name), env) == NULL)
+	fd = maildir_genname(md, "", name, sizeof(name), env);
+	if (fd == -1)
 		return 1;
-	fd = openat(maildir_fd(md), name, O_WRONLY | O_EXCL);
-	if (fd == -1) {
-		warn("openat: %s/%s", path, name);
-		return 1;
-	}
+
 	for (;;) {
 		nr = read(STDIN_FILENO, buf, sizeof(buf));
 		if (nr == -1) {
