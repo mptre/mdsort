@@ -58,23 +58,24 @@ maildir_open(const char *path, unsigned int flags,
 	if (md->md_flags & MAILDIR_STDIN) {
 		if (maildir_stdin(md, env))
 			goto err;
-	} else {
-		if (md->md_flags & MAILDIR_WALK) {
-			len = sizeof(md->md_path);
-			if (strlcpy(md->md_path, path, len) >= len) {
-				warnc(ENAMETOOLONG, "%s", __func__);
-				goto err;
-			}
-		} else {
-			if (parsesubdir(path, &md->md_subdir))
-				goto err;
 
-			len = sizeof(md->md_path);
-			if (pathslice(path, md->md_path, len, 0, -1) == NULL)
-				goto err;
-		}
+		return md;
 	}
 
+	if (md->md_flags & MAILDIR_WALK) {
+		len = sizeof(md->md_path);
+		if (strlcpy(md->md_path, path, len) >= len) {
+			warnc(ENAMETOOLONG, "%s", __func__);
+			goto err;
+		}
+	} else {
+		if (parsesubdir(path, &md->md_subdir))
+			goto err;
+
+		len = sizeof(md->md_path);
+		if (pathslice(path, md->md_path, len, 0, -1) == NULL)
+			goto err;
+	}
 	path = maildir_path(md);
 	if (maildir_opendir(md, path))
 		goto err;
@@ -408,8 +409,15 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 			break;
 		}
 	}
-	if (error == 0 && (md->md_flags & MAILDIR_SYNC))
-		error = fsync(fd);
+	if (error) {
+		close(fd);
+		return error;
+	}
+
+	if ((md->md_flags & MAILDIR_SYNC) && fsync(fd) == -1) {
+		warn("fsync");
+		error = 1;
+	}
 	close(fd);
 
 	return error;
