@@ -16,9 +16,9 @@ refute_empty() {
 _assert_empty() {
 	local _dir="$1"
 
-	# Append WRKDIR if relative.
+	# Append TSHDIR if relative.
 	if [ "$_dir" = "${_dir#/}" ]; then
-		_dir="${WRKDIR}/${_dir}"
+		_dir="${TSHDIR}/${_dir}"
 	fi
 
 	ls "${_dir}" 2>/dev/null | cmp -s - /dev/null
@@ -40,11 +40,11 @@ refute_find() {
 
 # _assert_find dir pattern
 _assert_find() {
-	! find "${WRKDIR}/${1}" -type f -name "$2" | cmp -s - /dev/null
+	! find "${TSHDIR}/${1}" -type f -name "$2" | cmp -s - /dev/null
 }
 
 cppvar() {
-	local _tmp="${WRKDIR}/cppvar"
+	local _tmp="${TSHDIR}/cppvar"
 
 	cpp - <<-EOF >"$_tmp" 2>/dev/null
 	#include <limits.h>
@@ -63,11 +63,11 @@ genstr() {
 
 # mdsort [-D] [-e | -t] [-] [-- mdsort-argument ...]
 mdsort() {
-	local _args="-f mdsort.conf" _exit1=0 _exit2=0 _input="" _tmp="${WRKDIR}/mdsort" _tmpdir
+	local _args="-f mdsort.conf" _exit1=0 _exit2=0 _input="" _tmp="${TSHDIR}/mdsort" _tmpdir
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
-		-)	_input="${WRKDIR}/input"
+		-)	_input="${TSHDIR}/input"
 			cat >"$_input"
 			;;
 		-D)	_args=""
@@ -86,10 +86,10 @@ mdsort() {
 		shift
 	done
 
-	_tmpdir="${WRKDIR}/_tmpdir"
+	_tmpdir="${TSHDIR}/_tmpdir"
 	mkdir "$_tmpdir"
 
-	(cd "$WRKDIR" && env "TMPDIR=${_tmpdir}" ${EXEC:-} "$MDSORT" $_args "$@") \
+	(cd "$TSHDIR" && env "TMPDIR=${_tmpdir}" ${EXEC:-} "$MDSORT" $_args "$@") \
 		>"$_tmp" 2>&1 || _exit2="$?"
 	if [ "$_exit1" -ne "$_exit2" ]; then
 		fail - "want exit ${_exit1}, got ${_exit2}" <"$_tmp"
@@ -110,7 +110,7 @@ mkmd() {
 
 	for _a; do
 		for _b in cur new tmp; do
-			mkdir -p "${WRKDIR}/${_a}/${_b}"
+			mkdir -p "${TSHDIR}/${_a}/${_b}"
 		done
 	done
 }
@@ -131,7 +131,7 @@ mkmsg() {
 		shift
 	done
 
-	_dir="${WRKDIR}/${1}"; shift
+	_dir="${TSHDIR}/${1}"; shift
 
 	_i=0
 	while :; do
@@ -185,9 +185,9 @@ now() {
 ls "$MDSORT" >/dev/null || exit 1
 
 # Temporary files used in tests.
-CONF="${WRKDIR}/mdsort.conf"
-TMP1="${WRKDIR}/tmp1"
-TMP2="${WRKDIR}/tmp2"
+CONF="${TSHDIR}/mdsort.conf"
+TMP1="${TSHDIR}/tmp1"
+TMP2="${TSHDIR}/tmp2"
 
 # Platform specific values.
 BUFSIZ=$(cppvar BUFSIZ || echo 0)

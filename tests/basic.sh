@@ -6,7 +6,7 @@ if testcase "tilde expansion"; then
 		match body /Bob/ move "~/dst"
 	}
 	EOF
-	HOME=$WRKDIR mdsort
+	HOME=$TSHDIR mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
 fi
@@ -287,7 +287,7 @@ fi
 
 if testcase "long filename"; then
 	mkmd "src" "dst"
-	touch "${WRKDIR}/src/new/$(genstr "$NAME_MAX")"
+	touch "${TSHDIR}/src/new/$(genstr "$NAME_MAX")"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match all move "dst"

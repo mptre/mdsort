@@ -4,7 +4,7 @@
 
 xmkmd() {
 	XDIR="$(env "TMPDIR=${PWD}" mktemp -d -t mdsort.XXXXXX)"
-	(WRKDIR=$XDIR mkmd "$@")
+	(TSHDIR=$XDIR mkmd "$@")
 }
 
 if testcase "move from disk"; then

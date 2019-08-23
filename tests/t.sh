@@ -70,7 +70,7 @@ testcase() {
 
 	echo >>"$NTEST"
 
-	find "$WRKDIR" -mindepth 1 -delete
+	find "$TSHDIR" -mindepth 1 -delete
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -108,7 +108,7 @@ _fatal() {
 
 # _report [-] [-f] -p prefix [message]
 _report() {
-	local _force=0  _prefix="" _stdin=0 _tmp="${WRKDIR}/_report"
+	local _force=0  _prefix="" _stdin=0 _tmp="${TSHDIR}/_report"
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -169,8 +169,8 @@ INCLUDE="$(mktemp -t t.sh.XXXXXX)"
 EXCLUDE="$(mktemp -t t.sh.XXXXXX)"
 NERR="$(mktemp -t t.sh.XXXXXX)"
 NTEST="$(mktemp -t t.sh.XXXXXX)"
-WRKDIR="$(mktemp -d -t t.sh.XXXXXX)"
-trap 'atexit $INCLUDE $EXCLUDE $NERR $NTEST $WRKDIR' EXIT
+TSHDIR="$(mktemp -d -t t.sh.XXXXXX)"
+trap 'atexit $INCLUDE $EXCLUDE $NERR $NTEST $TSHDIR' EXIT
 
 # Filter mode.
 FILTER=""
@@ -179,7 +179,7 @@ NAME=""
 # Current test case description.
 TCDESC=""
 # Current test case called report indicator.
-TCREPORT="${WRKDIR}/_tcreport"
+TCREPORT="${TSHDIR}/_tcreport"
 
 while getopts "F:f:t:T:" opt; do
 	case "$opt" in

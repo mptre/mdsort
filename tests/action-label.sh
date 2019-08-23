@@ -20,7 +20,7 @@ if testcase "word boundary begin"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label label ${WRKDIR}/src/new/*
+	assert_label label ${TSHDIR}/src/new/*
 fi
 
 if testcase "word boundary middle"; then
@@ -33,7 +33,7 @@ if testcase "word boundary middle"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "first label last" ${WRKDIR}/src/new/*
+	assert_label "first label last" ${TSHDIR}/src/new/*
 fi
 
 if testcase "word boundary end"; then
@@ -46,7 +46,7 @@ if testcase "word boundary end"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "first label" ${WRKDIR}/src/new/*
+	assert_label "first label" ${TSHDIR}/src/new/*
 fi
 
 if testcase "word boundary substring"; then
@@ -59,7 +59,7 @@ if testcase "word boundary substring"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "llabell label" ${WRKDIR}/src/new/*
+	assert_label "llabell label" ${TSHDIR}/src/new/*
 fi
 
 if testcase "no x-label header"; then
@@ -72,7 +72,7 @@ if testcase "no x-label header"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label label ${WRKDIR}/src/new/*
+	assert_label label ${TSHDIR}/src/new/*
 fi
 
 if testcase "x-label header present but empty"; then
@@ -85,7 +85,7 @@ if testcase "x-label header present but empty"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label label ${WRKDIR}/src/new/*
+	assert_label label ${TSHDIR}/src/new/*
 fi
 
 if testcase "multiple x-label headers"; then
@@ -103,8 +103,8 @@ if testcase "multiple x-label headers"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "one two label" ${WRKDIR}/src/new/*
-	assert_file ${WRKDIR}/src/new/* $TMP1
+	assert_label "one two label" ${TSHDIR}/src/new/*
+	assert_file ${TSHDIR}/src/new/* $TMP1
 fi
 
 if testcase "multiple labels"; then
@@ -117,7 +117,7 @@ if testcase "multiple labels"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "one two three" ${WRKDIR}/src/new/*
+	assert_label "one two three" ${TSHDIR}/src/new/*
 fi
 
 if testcase "multiple labels already present"; then
@@ -130,7 +130,7 @@ if testcase "multiple labels already present"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "one two three" ${WRKDIR}/src/new/*
+	assert_label "one two three" ${TSHDIR}/src/new/*
 fi
 
 if testcase "many label actions"; then
@@ -143,7 +143,7 @@ if testcase "many label actions"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "1 2 3 4" ${WRKDIR}/src/new/*
+	assert_label "1 2 3 4" ${TSHDIR}/src/new/*
 fi
 
 if testcase "label and move"; then
@@ -157,7 +157,7 @@ if testcase "label and move"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	assert_label label ${WRKDIR}/dst/new/*
+	assert_label label ${TSHDIR}/dst/new/*
 fi
 
 if testcase "move and label"; then
@@ -171,7 +171,7 @@ if testcase "move and label"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	assert_label label ${WRKDIR}/dst/new/*
+	assert_label label ${TSHDIR}/dst/new/*
 fi
 
 if testcase "label and flag"; then
@@ -185,7 +185,7 @@ if testcase "label and flag"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "src/cur"
-	assert_label label ${WRKDIR}/src/cur/*
+	assert_label label ${TSHDIR}/src/cur/*
 fi
 
 if testcase "flag and label"; then
@@ -199,7 +199,7 @@ if testcase "flag and label"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "src/cur"
-	assert_label label ${WRKDIR}/src/cur/*
+	assert_label label ${TSHDIR}/src/cur/*
 fi
 
 if testcase "label and pass"; then
@@ -215,7 +215,7 @@ if testcase "label and pass"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	assert_label "user example" ${WRKDIR}/dst/new/*
+	assert_label "user example" ${TSHDIR}/dst/new/*
 fi
 
 if testcase "interpolation with no x-label header"; then
@@ -228,7 +228,7 @@ if testcase "interpolation with no x-label header"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label label ${WRKDIR}/src/new/*
+	assert_label label ${TSHDIR}/src/new/*
 fi
 
 if testcase "interpolation with x-label header"; then
@@ -241,5 +241,5 @@ if testcase "interpolation with x-label header"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "label label" ${WRKDIR}/src/new/*
+	assert_label "label label" ${TSHDIR}/src/new/*
 fi
