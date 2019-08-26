@@ -476,17 +476,6 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 		break;
 	}
 
-	if (env->ev_options & OPTION_DRYRUN) {
-		match_reset(ex->ex_match);
-
-		ex->ex_match->mh_key = strdup("Date");
-		if (ex->ex_match->mh_key == NULL)
-			err(1, NULL);
-		ex->ex_match->mh_val = strdup(date);
-		if (ex->ex_match->mh_val == NULL)
-			err(1, NULL);
-	}
-
 	(void)expr_regexec(ex, ml, "Date", date,
 	    env->ev_options & OPTION_DRYRUN);
 

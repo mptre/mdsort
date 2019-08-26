@@ -271,10 +271,12 @@ matches_find_interpolate(const struct match_list *ml)
 	const struct match *found = NULL;
 
 	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
-		if (mh->mh_nmatches == 0)
+		const struct expr *ex = mh->mh_expr;
+
+		if ((ex->ex_flags & EXPR_FLAG_INTERPOLATE) == 0)
 			continue;
 
-		if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_FORCE)
+		if (ex->ex_re.r_flags & EXPR_PATTERN_FORCE)
 			found = mh;
 		else if (found == NULL)
 			found = mh;

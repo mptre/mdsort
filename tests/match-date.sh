@@ -106,6 +106,19 @@ if testcase "invalid date"; then
 	assert_empty "dst/new"
 fi
 
+if testcase "interpolation regression"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "Date" "$(now -60)" "From" "dst"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date > 30 seconds and header "From" /dst/ move "\0"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
 if testcase "dry run"; then
 	_d="$(now -120)"
 	mkmd "src" "dst"
