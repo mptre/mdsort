@@ -9,13 +9,6 @@
 
 #include "extern.h"
 
-/*
- * Flags used to denote properties of expression types.
- */
-#define EXPR_FLAG_ACTION	0x00000001
-#define EXPR_FLAG_INSPECT	0x00000002
-#define EXPR_FLAG_MATCH		0x00000004
-
 #define EXPR_EVAL_ARGS	struct expr *, struct match_list *,	\
 	struct message *, const struct environment *
 
@@ -66,8 +59,9 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	ex->ex_lno = lno;
 	ex->ex_lhs = lhs;
 	ex->ex_rhs = rhs;
+	ex->ex_flags = expr_flags(ex);
 
-	if (expr_flags(ex) & EXPR_FLAG_MATCH) {
+	if (ex->ex_flags & EXPR_FLAG_MATCH) {
 		ex->ex_match = calloc(1, sizeof(*ex->ex_match));
 		if (ex->ex_match == NULL)
 			err(1, NULL);
@@ -251,7 +245,7 @@ expr_count_actions(const struct expr *ex)
 	if (ex == NULL)
 		return 0;
 
-	if (expr_flags(ex) & EXPR_FLAG_ACTION)
+	if (ex->ex_flags & EXPR_FLAG_ACTION)
 		n = 1;
 	return n + expr_count_actions(ex->ex_lhs) +
 	    expr_count_actions(ex->ex_rhs);
@@ -286,7 +280,7 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 	int beg, end, len, indent, pindent;
 	int printkey = 1;
 
-	if ((expr_flags(ex) & EXPR_FLAG_INSPECT) == 0)
+	if ((ex->ex_flags & EXPR_FLAG_INSPECT) == 0)
 		return;
 
 	match = ex->ex_match;
