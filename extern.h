@@ -184,6 +184,7 @@ struct expr {
 #define EXPR_FLAG_ACTION	0x00000001
 #define EXPR_FLAG_INSPECT	0x00000002
 #define EXPR_FLAG_MATCH		0x00000004
+#define EXPR_FLAG_INTERPOLATE	0x00000008
 
 	struct string_list *ex_strings;
 
