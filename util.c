@@ -165,6 +165,7 @@ log_debug(const char *fmt, ...)
 	va_start(ap, fmt);
 	vfprintf(stdout, fmt, ap);
 	va_end(ap);
+	fflush(stdout);
 }
 
 void
@@ -177,4 +178,5 @@ log_info(const char *fmt, ...)
 	va_start(ap, fmt);
 	vfprintf(stdout, fmt, ap);
 	va_end(ap);
+	fflush(stdout);
 }
