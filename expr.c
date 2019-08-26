@@ -94,7 +94,7 @@ expr_free(struct expr *ex)
 }
 
 void
-expr_set_date(struct expr *ex, enum expr_cmp cmp, time_t age)
+expr_set_date(struct expr *ex, enum expr_date_cmp cmp, time_t age)
 {
 	assert(ex->ex_type == EXPR_TYPE_DATE);
 

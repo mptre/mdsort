@@ -26,7 +26,7 @@ static int lineno, parse_errors;
 
 typedef struct {
 	union {
-		enum expr_cmp cmp;
+		enum expr_date_cmp cmp;
 		struct expr *expr;
 		unsigned int number;
 		struct {

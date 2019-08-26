@@ -172,7 +172,7 @@ enum expr_type {
 	EXPR_TYPE_REJECT,
 };
 
-enum expr_cmp {
+enum expr_date_cmp {
 	EXPR_CMP_LT,
 	EXPR_CMP_GT,
 };
@@ -195,7 +195,7 @@ struct expr {
 	} ex_re;
 
 	struct {
-		enum expr_cmp d_cmp;
+		enum expr_date_cmp d_cmp;
 		time_t d_age;
 	} ex_date;
 
@@ -238,7 +238,7 @@ struct expr *expr_alloc(enum expr_type type, int lno, struct expr *lhs,
 
 void expr_free(struct expr *ex);
 
-void expr_set_date(struct expr *ex, enum expr_cmp cmp, time_t age);
+void expr_set_date(struct expr *ex, enum expr_date_cmp cmp, time_t age);
 
 void expr_set_strings(struct expr *ex, struct string_list *strings);
 
