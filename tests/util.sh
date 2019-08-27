@@ -191,8 +191,7 @@ now() {
 		_tim=$((_tim + $1))
 	fi
 
-	(date -r "$_tim" "+${_fmt}" 2>/dev/null ||
-		date -d "@${_tim}" "+${_fmt}")
+	$(printf "%s%s" "$DATE" "$_tim") "+${_fmt}"
 }
 
 ls "$MDSORT" >/dev/null || exit 1
@@ -206,6 +205,13 @@ TMP2="${TSHDIR}/tmp2"
 BUFSIZ=$(cppvar BUFSIZ || echo 0)
 NAME_MAX=$(cppvar NAME_MAX || echo 0)
 PATH_MAX=$(cppvar PATH_MAX || echo 0)
+
+# Figure out date(1) seconds option.
+if date -r 0 >/dev/null 2>&1; then
+	DATE="date -r"
+else
+	DATE="date -d@"
+fi
 
 # Number of messages created by mkmsg.
 NMSG=0
