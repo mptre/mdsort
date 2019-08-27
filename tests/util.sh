@@ -63,13 +63,13 @@ genstr() {
 
 # mdsort [-D] [-e | -t] [-] [-- mdsort-argument ...]
 mdsort() {
+	local _tmpdir
 	local _args="-f mdsort.conf"
 	local _exit1=0
 	local _exit2=0
-	local _fail=0
 	local _input=""
+	local _output=1
 	local _tmp="${TSHDIR}/mdsort"
-	local _tmpdir
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -100,14 +100,14 @@ mdsort() {
 	if [ "$_exit1" -ne "$_exit2" ]; then
 		fail - "want exit ${_exit1}, got ${_exit2}" <"$_tmp"
 		# Output already displayed, prevent from doing it twice.
-		_fail=1
+		_output=0
 	fi
 
 	assert_empty "$_tmpdir" "temporary directory not empty"
 
 	if [ -n "$_input" ]; then
 		assert_file "$_input" "$_tmp"
-	elif [ "$_fail" -eq 0 ]; then
+	elif [ "$_output" -eq 1 ]; then
 		cat "$_tmp"
 	fi
 }
