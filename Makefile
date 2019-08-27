@@ -118,7 +118,6 @@ lint:
 
 test: all
 	${MAKE} -C ${.CURDIR}/tests \
-		"MALLOC_OPTIONS=${MALLOC_OPTIONS}" \
 		"MDSORT=${.OBJDIR}/${PROG}" \
 		"TESTFLAGS=${TESTFLAGS}"
 .PHONY: test

@@ -213,6 +213,11 @@ else
 	DATE="date -d@"
 fi
 
+# Enable hardening malloc(3) options on OpenBSD.
+case "$(uname -s)" in
+OpenBSD)	export MALLOC_OPTIONS="RS";;
+esac
+
 # Number of messages created by mkmsg.
 NMSG=0
 

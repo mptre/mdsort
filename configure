@@ -123,12 +123,6 @@ check_host_name_max() {
 	EOF
 }
 
-check_malloc_options() {
-	case "$(uname -s)" in
-	OpenBSD)	echo "RS";;
-	esac
-}
-
 check_pledge() {
 	compile <<-EOF
 	#include <unistd.h>
@@ -306,8 +300,6 @@ check_b64_pton || case "$?" in
 2)	HAVE_B64_PTON=0;;
 esac
 
-MALLOC_OPTIONS=$(check_malloc_options)
-
 # Redirect stdout to config.h.
 exec 1>config.h
 
@@ -379,7 +371,6 @@ CFLAGS=		$(echo $CFLAGS)
 CPPFLAGS=	$(echo $CPPFLAGS)
 DEBUG=		$(echo $DEBUG)
 LDFLAGS=	$(echo $LDFLAGS)
-MALLOC_OPTIONS=	$(echo $MALLOC_OPTIONS)
 YACC=		$(echo $YACC)
 YFLAGS=		$(echo $YFLAGS)
 
