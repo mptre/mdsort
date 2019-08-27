@@ -125,7 +125,10 @@ mkmd() {
 
 # mkmsg [-H] [-b] [-s suffix] dir [-- headers ...]
 mkmsg() {
-	local _body=0 _headers=1 _suffix="" _dir _i _name _path
+	local _dir _i _name _path
+	local _body=0
+	local _headers=1
+	local _suffix=""
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -169,7 +172,8 @@ mkmsg() {
 }
 
 now() {
-	local _fmt='%a, %d %b %Y %H:%M:%S %z' _tim=$(date +%s)
+	local _tim
+	local _fmt='%a, %d %b %Y %H:%M:%S %z'
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -182,6 +186,7 @@ now() {
 		shift
 	done
 
+	_tim=$(date +%s)
 	if [ $# -eq 1 ]; then
 		_tim=$((_tim + $1))
 	fi
