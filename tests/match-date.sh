@@ -11,7 +11,7 @@ if testcase "scalar abbreviation"; then
 	mdsort -- -n
 fi
 
-if testcase -t leaky "scalar abbreviation ambiguous"; then
+if testcase "scalar abbreviation ambiguous"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match date > 1m move "dst"
@@ -19,7 +19,6 @@ if testcase -t leaky "scalar abbreviation ambiguous"; then
 	EOF
 	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: ambiguous keyword: m
-	mdsort.conf:2: syntax error
 	EOF
 fi
 

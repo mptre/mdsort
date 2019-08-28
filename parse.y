@@ -624,12 +624,12 @@ again:
 		}
 		if (ambiguous) {
 			yyerror("ambiguous keyword: %s", lexeme);
+			return SCALAR;
 		} else if (match >= 0) {
 			yylval.v.number = scalars[match].val;
 			return SCALAR;
-		} else {
-			yyerror("unknown keyword: %s", lexeme);
 		}
+		yyerror("unknown keyword: %s", lexeme);
 	}
 
 	return c;
