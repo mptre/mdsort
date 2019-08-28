@@ -481,8 +481,7 @@ yylex(void)
 	};
 	static char lexeme[BUFSIZ];
 	char *buf;
-	size_t len;
-	int ambiguous, c, i, match, overflow;
+	int c, i;
 
 	buf = lexeme;
 
@@ -576,7 +575,9 @@ again:
 			}
 		}
 	} else if (isdigit(c)) {
-		yylval.v.number = overflow = 0;
+		int overflow = 0;
+
+		yylval.v.number = 0;
 		for (; isdigit(c); c = yygetc()) {
 			if (overflow)
 				continue;
@@ -598,6 +599,10 @@ again:
 		yyungetc(c);
 		return INT;
 	} else if (islower(c)) {
+		size_t len;
+		int ambiguous = 0;
+		int match = -1;
+
 		for (; islower(c); c = yygetc()) {
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("keyword too long");
@@ -613,8 +618,6 @@ again:
 				return keywords[i].type;
 
 		len = strlen(lexeme);
-		ambiguous = 0;
-		match = -1;
 		for (i = 0; scalars[i].str != NULL; i++) {
 			if (strncmp(lexeme, scalars[i].str, len) == 0) {
 				if (match >= 0)
