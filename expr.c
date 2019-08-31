@@ -466,11 +466,11 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 
 	delta = env->ev_now - tim;
 	switch (ex->ex_date.d_cmp) {
-	case EXPR_CMP_LT:
+	case EXPR_DATE_CMP_LT:
 		if (!(delta < ex->ex_date.d_age))
 			return EXPR_NOMATCH;
 		break;
-	case EXPR_CMP_GT:
+	case EXPR_DATE_CMP_GT:
 		if (!(delta > ex->ex_date.d_age))
 			return EXPR_NOMATCH;
 		break;

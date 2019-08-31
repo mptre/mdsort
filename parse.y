@@ -327,10 +327,10 @@ flag		: optneg NEW {
 		;
 
 date_cmp	: '<' {
-			$$ = EXPR_CMP_LT;
+			$$ = EXPR_DATE_CMP_LT;
 		}
 		| '>' {
-			$$ = EXPR_CMP_GT;
+			$$ = EXPR_DATE_CMP_GT;
 		}
 		;
 
