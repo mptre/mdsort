@@ -123,17 +123,21 @@ mkmd() {
 	done
 }
 
-# mkmsg [-H] [-b] [-s suffix] dir [-- headers ...]
+# mkmsg [-H] [-b] [-m modified-time] [-s suffix] dir [-- headers ...]
 mkmsg() {
 	local _dir _i _name _path
 	local _body=0
 	local _headers=1
 	local _suffix=""
+	local _tim=""
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
 		-b)	_body=1;;
 		-H)	_headers=0;;
+		-m)	shift
+			_tim="$1"
+			;;
 		-s)	shift
 			_suffix="$1"
 			;;
@@ -169,8 +173,13 @@ mkmsg() {
 	if [ $_body -eq 1 ]; then
 		cat >>$_path
 	fi
+
+	if [ -n "$_tim" ]; then
+		touch -m -t "$_tim" "$_path"
+	fi
 }
 
+# now [-f format] [delta]
 now() {
 	local _tim
 	local _fmt='%a, %d %b %Y %H:%M:%S %z'

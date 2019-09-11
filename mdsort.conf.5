@@ -147,14 +147,33 @@ in an attachment matches
 .Xc
 Evaluates to true if the message has attachments.
 .It Xo Op Ic \&!
-.Ic date \&> Ar age scale
+.Ic date
+.Op Ar field
+.Ic \&>
+.Ar age scale
 .Xc
 .It Xo Op Ic \&!
-.Ic date \&< Ar age scale
+.Ic date
+.Op Ar field
+.Ic \&<
+.Ar age scale
 .Xc
-Evalutes to true if the date header in message is either greater or less than
-.Ar age ,
-which must be a positive number.
+Evaluates to true if the message date
+.Ar field
+is either greater or less than
+.Ar age .
+The
+.Ar field
+must be either
+.Ic header , access , modified
+or
+.Ic created
+and defaults to
+.Ic header
+in which the date header in message is used.
+The
+.Ar age
+must be a positive number.
 The
 .Ar scale
 must be either

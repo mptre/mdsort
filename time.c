@@ -12,6 +12,30 @@ static int tzparse(const char *, time_t *, const struct environment *);
 static int tzabbr(const char *, time_t *, const struct environment *);
 static int tzoff(const char *, time_t *);
 
+static const char *formats[] = {
+	"%a, %d %b %Y %H:%M:%S",
+	"%a, %d %b %Y %H:%M",
+	"%d %b %Y %H:%M:%S",
+	NULL,
+};
+
+/*
+ * Format the given timestamp into a human readable representation.
+ */
+char *
+time_format(time_t tim, char *buf, size_t bufsiz)
+{
+	struct tm *tm;
+
+	tm = localtime(&tim);
+	if (strftime(buf, bufsiz, formats[0], tm) == 0) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return NULL;
+	}
+
+	return buf;
+}
+
 /*
  * Parse the given formatted timestamp.
  * Returns zero on success, non-zero otherwise.
@@ -46,12 +70,6 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 static const char *
 timeparse(const char *str, struct tm *tm)
 {
-	static const char *formats[] = {
-		"%a, %d %b %Y %H:%M:%S",
-		"%a, %d %b %Y %H:%M",
-		"%d %b %Y %H:%M:%S",
-		NULL,
-	};
 	const char *end;
 	int i;
 

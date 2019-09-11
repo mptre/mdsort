@@ -57,6 +57,15 @@ if testcase "discard"; then
 	mdsort -- - </dev/null
 fi
 
+if testcase "match date modified"; then
+	cat <<-EOF >$CONF
+	stdin {
+		match date modified > 30 seconds move "dst"
+	}
+	EOF
+	mdsort -- - </dev/null
+fi
+
 if testcase "temporary failure"; then
 	cat <<-EOF >$CONF
 	stdin {

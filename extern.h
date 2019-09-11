@@ -177,6 +177,13 @@ enum expr_date_cmp {
 	EXPR_DATE_CMP_GT,
 };
 
+enum expr_date_field {
+	EXPR_DATE_FIELD_HEADER,
+	EXPR_DATE_FIELD_ACCESS,
+	EXPR_DATE_FIELD_MODIFIED,
+	EXPR_DATE_FIELD_CREATED,
+};
+
 struct expr {
 	enum expr_type ex_type;
 	int ex_lno;
@@ -201,6 +208,7 @@ struct expr {
 
 	struct {
 		enum expr_date_cmp d_cmp;
+		enum expr_date_field d_field;
 		time_t d_age;
 	} ex_date;
 
@@ -243,7 +251,8 @@ struct expr *expr_alloc(enum expr_type type, int lno, struct expr *lhs,
 
 void expr_free(struct expr *ex);
 
-void expr_set_date(struct expr *ex, enum expr_date_cmp cmp, time_t age);
+void expr_set_date(struct expr *ex, enum expr_date_field field,
+    enum expr_date_cmp cmp, time_t age);
 
 void expr_set_strings(struct expr *ex, struct string_list *strings);
 
@@ -280,6 +289,8 @@ void match_copy(struct match *mh, const char *str, const regmatch_t *off,
 void match_reset(struct match *mh);
 
 struct match *matches_find(struct match_list *ml, enum expr_type type);
+
+char *time_format(time_t tim, char *buf, size_t bufsiz);
 
 void matches_remove(struct match_list *ml, struct match *mh);
 

@@ -27,6 +27,7 @@ static int lineno, parse_errors;
 typedef struct {
 	union {
 		enum expr_date_cmp cmp;
+		enum expr_date_field field;
 		struct expr *expr;
 		unsigned int number;
 		struct {
@@ -42,10 +43,12 @@ typedef struct {
 
 %}
 
+%token ACCESS
 %token ALL
 %token ATTACHMENT
 %token BODY
 %token BREAK
+%token CREATED
 %token DATE
 %token DISCARD
 %token FLAG
@@ -54,6 +57,7 @@ typedef struct {
 %token LABEL
 %token MAILDIR
 %token MATCH
+%token MODIFIED
 %token MOVE
 %token NEW
 %token OLD
@@ -66,6 +70,7 @@ typedef struct {
 %token SYNC
 
 %type <v.cmp>		date_cmp
+%type <v.field>		date_field
 %type <v.expr>		expr
 %type <v.expr>		expr1
 %type <v.expr>		expr2
@@ -222,9 +227,9 @@ expr3		: attachment BODY PATTERN {
 		| ATTACHMENT {
 			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, lineno, NULL, NULL);
 		}
-		| DATE date_cmp date_age {
+		| DATE date_field date_cmp date_age {
 			$$ = expr_alloc(EXPR_TYPE_DATE, lineno, NULL, NULL);
-			expr_set_date($$, $2, $3);
+			expr_set_date($$, $2, $3, $4);
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW, lineno, NULL, NULL);
@@ -323,6 +328,23 @@ flag		: optneg NEW {
 				$$ = strdup("new");
 			if ($$ == NULL)
 				err(1, NULL);
+		}
+		;
+
+date_field	: /* empty */ {
+			$$ = EXPR_DATE_FIELD_HEADER;
+		}
+		| HEADER {
+			$$ = EXPR_DATE_FIELD_HEADER;
+		}
+		| ACCESS {
+			$$ = EXPR_DATE_FIELD_ACCESS;
+		}
+		| MODIFIED {
+			$$ = EXPR_DATE_FIELD_MODIFIED;
+		}
+		| CREATED {
+			$$ = EXPR_DATE_FIELD_CREATED;
 		}
 		;
 
@@ -442,11 +464,13 @@ yylex(void)
 		const char *str;
 		int type;
 	} keywords[] = {
+		{ "access",	ACCESS },
 		{ "all",	ALL },
 		{ "and",	AND },
 		{ "attachment",	ATTACHMENT },
 		{ "body",	BODY },
 		{ "break",	BREAK },
+		{ "created",	CREATED },
 		{ "date",	DATE },
 		{ "discard",	DISCARD },
 		{ "flag",	FLAG },
@@ -454,6 +478,7 @@ yylex(void)
 		{ "label",	LABEL },
 		{ "maildir",	MAILDIR },
 		{ "match",	MATCH },
+		{ "modified",	MODIFIED },
 		{ "move",	MOVE },
 		{ "new",	NEW },
 		{ "old",	OLD },

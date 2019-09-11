@@ -1,5 +1,7 @@
 #include "config.h"
 
+#include <sys/stat.h>
+
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
@@ -88,10 +90,12 @@ expr_free(struct expr *ex)
 }
 
 void
-expr_set_date(struct expr *ex, enum expr_date_cmp cmp, time_t age)
+expr_set_date(struct expr *ex, enum expr_date_field field,
+    enum expr_date_cmp cmp, time_t age)
 {
 	assert(ex->ex_type == EXPR_TYPE_DATE);
 
+	ex->ex_date.d_field = field;
 	ex->ex_date.d_cmp = cmp;
 	ex->ex_date.d_age = age;
 
@@ -455,14 +459,42 @@ static int
 expr_eval_date(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
+	char buf[32];
 	const char *date;
 	time_t delta, tim;
 
-	date = message_get_header1(msg, "Date");
-	if (date == NULL)
-		return EXPR_NOMATCH;
-	if (time_parse(date, &tim, env))
-		return EXPR_ERROR;
+	if (ex->ex_date.d_field == EXPR_DATE_FIELD_HEADER) {
+		date = message_get_header1(msg, "Date");
+		if (date == NULL)
+			return EXPR_NOMATCH;
+		if (time_parse(date, &tim, env))
+			return EXPR_ERROR;
+	} else {
+		struct stat st;
+		struct timespec *ts;
+
+		switch (ex->ex_date.d_field) {
+		case EXPR_DATE_FIELD_HEADER:
+			return EXPR_ERROR; /* UNREACHABLE */
+		case EXPR_DATE_FIELD_ACCESS:
+			ts = &st.st_atim;
+			break;
+		case EXPR_DATE_FIELD_MODIFIED:
+			ts = &st.st_mtim;
+			break;
+		case EXPR_DATE_FIELD_CREATED:
+			ts = &st.st_ctim;
+			break;
+		}
+		if (stat(msg->me_path, &st) == -1) {
+			warn("stat: %s", msg->me_path);
+			return EXPR_ERROR;
+		}
+		tim = ts->tv_sec;
+		date = time_format(tim, buf, sizeof(buf));
+		if (date == NULL)
+			return EXPR_ERROR;
+	}
 
 	delta = env->ev_now - tim;
 	switch (ex->ex_date.d_cmp) {

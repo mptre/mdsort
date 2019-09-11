@@ -134,3 +134,67 @@ EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	assert_file $TMP1 $TMP2
 fi
+
+
+# Constructing the expected output is quite tedious, just exercise the code
+# path.
+if testcase "dry run modified"; then
+	mkmd "src" "dst"
+	mkmsg -m "$(now -f "%Y%m%d%H%M.%S" -120)" "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date modified > 1 minute move "dst"
+	}
+	EOF
+	mdsort -- -d >/dev/null
+fi
+
+if testcase "header"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "Date" "$(now -60)"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date header > 30 seconds move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+# Just ensure the config is accepted.
+if testcase "access"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date access > 30 seconds move "dst"
+	}
+	EOF
+	mdsort
+fi
+
+# Just ensure the config is accepted.
+if testcase "created"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date created > 30 seconds move "dst"
+	}
+	EOF
+	mdsort
+fi
+
+if testcase "modified"; then
+	mkmd "src" "dst"
+	mkmsg -m "$(now -f "%Y%m%d%H%M.%S" -60)" "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match date modified > 30 seconds move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
