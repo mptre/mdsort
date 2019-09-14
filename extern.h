@@ -26,6 +26,7 @@
 #define UNUSED(x)	__##x __attribute__((__unused__))
 
 /* Forward declarations. */
+struct match_list;
 struct message;
 
 struct environment {
@@ -192,6 +193,9 @@ struct expr {
 #define EXPR_FLAG_INSPECT	0x00000002
 #define EXPR_FLAG_MATCH		0x00000004
 #define EXPR_FLAG_INTERPOLATE	0x00000008
+
+	int (*ex_eval)(struct expr *, struct match_list *, struct message *,
+			const struct environment *);
 
 	struct string_list *ex_strings;
 

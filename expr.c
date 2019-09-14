@@ -35,7 +35,6 @@ static int expr_eval_or(EXPR_EVAL_ARGS);
 static int expr_eval_pass(EXPR_EVAL_ARGS);
 static int expr_eval_reject(EXPR_EVAL_ARGS);
 
-static unsigned int expr_flags(const struct expr *);
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
 static int expr_regexec(struct expr *, struct match_list *, const char *,
@@ -61,7 +60,84 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	ex->ex_lno = lno;
 	ex->ex_lhs = lhs;
 	ex->ex_rhs = rhs;
-	ex->ex_flags = expr_flags(ex);
+	switch (ex->ex_type) {
+	case EXPR_TYPE_BLOCK:
+		ex->ex_eval = &expr_eval_block;
+		break;
+	case EXPR_TYPE_AND:
+		ex->ex_eval = &expr_eval_and;
+		break;
+	case EXPR_TYPE_OR:
+		ex->ex_eval = &expr_eval_or;
+		break;
+	case EXPR_TYPE_NEG:
+		ex->ex_eval = &expr_eval_neg;
+		break;
+	case EXPR_TYPE_ALL:
+		ex->ex_eval = &expr_eval_all;
+		break;
+	case EXPR_TYPE_ATTACHMENT:
+		ex->ex_eval = &expr_eval_attachment;
+		break;
+	case EXPR_TYPE_ATTACHMENT_BODY:
+		ex->ex_eval = &expr_eval_attachment_body;
+		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
+		    EXPR_FLAG_INTERPOLATE;
+		break;
+	case EXPR_TYPE_ATTACHMENT_HEADER:
+		ex->ex_eval = &expr_eval_attachment_header;
+		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
+		    EXPR_FLAG_INTERPOLATE;
+		break;
+	case EXPR_TYPE_BODY:
+		ex->ex_eval = &expr_eval_body;
+		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
+		    EXPR_FLAG_INTERPOLATE;
+		break;
+	case EXPR_TYPE_DATE:
+		ex->ex_eval = &expr_eval_date;
+		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
+		break;
+	case EXPR_TYPE_HEADER:
+		ex->ex_eval = &expr_eval_header;
+		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
+		    EXPR_FLAG_INTERPOLATE;
+		break;
+	case EXPR_TYPE_NEW:
+		ex->ex_eval = &expr_eval_new;
+		break;
+	case EXPR_TYPE_OLD:
+		ex->ex_eval = &expr_eval_old;
+		break;
+	case EXPR_TYPE_MOVE:
+		ex->ex_eval = &expr_eval_move;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		break;
+	case EXPR_TYPE_FLAG:
+		ex->ex_eval = &expr_eval_flag;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		break;
+	case EXPR_TYPE_DISCARD:
+		ex->ex_eval = &expr_eval_discard;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		break;
+	case EXPR_TYPE_BREAK:
+		ex->ex_eval = &expr_eval_break;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		break;
+	case EXPR_TYPE_LABEL:
+		ex->ex_eval = &expr_eval_label;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		break;
+	case EXPR_TYPE_PASS:
+		ex->ex_eval = &expr_eval_pass;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		break;
+	case EXPR_TYPE_REJECT:
+		ex->ex_eval = &expr_eval_reject;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		break;
+	}
 
 	if (ex->ex_flags & EXPR_FLAG_MATCH) {
 		ex->ex_match = calloc(1, sizeof(*ex->ex_match));
@@ -176,50 +252,7 @@ int
 expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
-	switch (ex->ex_type) {
-	case EXPR_TYPE_BLOCK:
-		return expr_eval_block(ex, ml, msg, env);
-	case EXPR_TYPE_AND:
-		return expr_eval_and(ex, ml, msg, env);
-	case EXPR_TYPE_OR:
-		return expr_eval_or(ex, ml, msg, env);
-	case EXPR_TYPE_NEG:
-		return expr_eval_neg(ex, ml, msg, env);
-	case EXPR_TYPE_ATTACHMENT:
-		return expr_eval_attachment(ex, ml, msg, env);
-	case EXPR_TYPE_ATTACHMENT_BODY:
-		return expr_eval_attachment_body(ex, ml, msg, env);
-	case EXPR_TYPE_ATTACHMENT_HEADER:
-		return expr_eval_attachment_header(ex, ml, msg, env);
-	case EXPR_TYPE_ALL:
-		return expr_eval_all(ex, ml, msg, env);
-	case EXPR_TYPE_BODY:
-		return expr_eval_body(ex, ml, msg, env);
-	case EXPR_TYPE_DATE:
-		return expr_eval_date(ex, ml, msg, env);
-	case EXPR_TYPE_HEADER:
-		return expr_eval_header(ex, ml, msg, env);
-	case EXPR_TYPE_NEW:
-		return expr_eval_new(ex, ml, msg, env);
-	case EXPR_TYPE_OLD:
-		return expr_eval_old(ex, ml, msg, env);
-	case EXPR_TYPE_MOVE:
-		return expr_eval_move(ex, ml, msg, env);
-	case EXPR_TYPE_FLAG:
-		return expr_eval_flag(ex, ml, msg, env);
-	case EXPR_TYPE_DISCARD:
-		return expr_eval_discard(ex, ml, msg, env);
-	case EXPR_TYPE_BREAK:
-		return expr_eval_break(ex, ml, msg, env);
-	case EXPR_TYPE_LABEL:
-		return expr_eval_label(ex, ml, msg, env);
-	case EXPR_TYPE_PASS:
-		return expr_eval_pass(ex, ml, msg, env);
-	case EXPR_TYPE_REJECT:
-		return expr_eval_reject(ex, ml, msg, env);
-	}
-
-	return EXPR_NOMATCH;
+	return ex->ex_eval(ex, ml, msg, env);
 }
 
 /*
@@ -713,58 +746,6 @@ expr_eval_reject(struct expr *ex, struct match_list *ml,
 	}
 
 	return EXPR_MATCH;
-}
-
-static unsigned int
-expr_flags(const struct expr *ex)
-{
-	switch (ex->ex_type) {
-	case EXPR_TYPE_BLOCK:
-		return 0;
-	case EXPR_TYPE_AND:
-		return 0;
-	case EXPR_TYPE_OR:
-		return 0;
-	case EXPR_TYPE_NEG:
-		return 0;
-	case EXPR_TYPE_ALL:
-		return 0;
-	case EXPR_TYPE_ATTACHMENT:
-		return 0;
-	case EXPR_TYPE_ATTACHMENT_BODY:
-		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_INTERPOLATE;
-	case EXPR_TYPE_ATTACHMENT_HEADER:
-		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_INTERPOLATE;
-	case EXPR_TYPE_BODY:
-		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_INTERPOLATE;
-	case EXPR_TYPE_DATE:
-		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
-	case EXPR_TYPE_HEADER:
-		return EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_INTERPOLATE;
-	case EXPR_TYPE_NEW:
-		return 0;
-	case EXPR_TYPE_OLD:
-		return 0;
-	case EXPR_TYPE_MOVE:
-		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
-	case EXPR_TYPE_FLAG:
-		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
-	case EXPR_TYPE_DISCARD:
-		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
-	case EXPR_TYPE_BREAK:
-		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
-	case EXPR_TYPE_LABEL:
-		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
-	case EXPR_TYPE_PASS:
-		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
-	case EXPR_TYPE_REJECT:
-		return EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
-	}
-	return 0;
 }
 
 static int
