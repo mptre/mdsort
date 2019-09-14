@@ -190,9 +190,11 @@ message_free(struct message *msg)
 		return;
 
 	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
-		strings_free(msg->me_headers.h_v[i].values);
-		if (msg->me_headers.h_v[i].flags & HEADER_FLAG_DIRTY)
-			free(msg->me_headers.h_v[i].val);
+		struct header *hdr = &msg->me_headers.h_v[i];
+
+		strings_free(hdr->values);
+		if (hdr->flags & HEADER_FLAG_DIRTY)
+			free(hdr->val);
 	}
 
 	free(msg->me_buf);
@@ -204,7 +206,6 @@ message_free(struct message *msg)
 int
 message_writeat(struct message *msg, int fd, int dosync)
 {
-	const struct header *hdr;
 	FILE *fh;
 	unsigned int i;
 	int error = 0;
@@ -222,7 +223,8 @@ message_writeat(struct message *msg, int fd, int dosync)
 		    sizeof(*msg->me_headers.h_v), cmpheaderid);
 
 	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
-		hdr = &msg->me_headers.h_v[i];
+		const struct header *hdr = &msg->me_headers.h_v[i];
+
 		if (fprintf(fh, "%s: %s\n", hdr->key, hdr->val) < 0) {
 			warn("fprintf");
 			error = 1;
