@@ -1,3 +1,32 @@
+# v4.2.0 - 2019-09-14
+
+## Bug fixes
+
+- Using a date condition followed by another condition that produces matches to
+  be used during interpolation did not work since the matches from the date
+  condition erroneously was favored.
+  (f464cd1)
+  (Anton Lindqvist)
+
+## News
+
+- Call `fsync(2)` after writing out messages read from stdin.
+  The same behavior can also optionally be enabled for an ordinary maildir.
+  (7b0822f)
+  (Anton Lindqvist)
+
+- The date matcher can now match based on either the access, modified or created
+  file timestamp.
+  By default, the date header is still used.
+  (07cdf17)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/Trash" {
+    match date created > 2 weeks discard
+  }
+  ```
+
 # v4.1.0 - 2019-08-21
 
 ## Bug fixes
