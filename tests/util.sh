@@ -203,7 +203,7 @@ now() {
 	$(printf "%s%s" "$DATE" "$_tim") "+${_fmt}"
 }
 
-ls "$MDSORT" >/dev/null || exit 1
+ls "${MDSORT:?}" >/dev/null || exit 1
 
 # Temporary files used in tests.
 CONF="${TSHDIR}/mdsort.conf"
