@@ -8,7 +8,7 @@ matrix:
       env:
         - T=linux-clang-asan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=address -fno-sanitize-recover=all'
+        - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
 
     - os: linux
@@ -16,14 +16,14 @@ matrix:
       env:
         - T=linux-clang-ubsan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=undefined,unsigned-integer-overflow -fno-sanitize-recover=all'
+        - DEBUG='-g -O2 -fsanitize=undefined,unsigned-integer-overflow -fno-sanitize-recover=all'
 
     - os: linux
       compiler: gcc
       env:
         - T=linux-gcc-asan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=address -fno-sanitize-recover=all'
+        - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
 
     - os: linux
@@ -31,7 +31,7 @@ matrix:
       env:
         - T=linux-gcc-ubsan
         - CFLAGS=-Werror
-        - DEBUG='-g -fsanitize=undefined -fno-sanitize-recover=all'
+        - DEBUG='-g -O2 -fsanitize=undefined -fno-sanitize-recover=all'
 
     - os: linux
       compiler: musl-gcc
@@ -49,7 +49,7 @@ matrix:
       env:
         - T=linux-valgrind
         - CFLAGS=-Werror
-        - DEBUG=-g
+        - DEBUG='-g -O2'
         - EXEC=valgrind
         - TESTFLAGS='-T leaky'
         - VALGRIND_OPTS='--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all'
@@ -63,6 +63,7 @@ matrix:
       env:
         - T=macos-clang
         - CFLAGS=-Werror
+        - DEBUG='-g -O2'
 
 script:
   - |
