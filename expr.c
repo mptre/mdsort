@@ -504,7 +504,11 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 			return EXPR_ERROR;
 	} else {
 		struct stat st;
-		struct timespec *ts;
+		/*
+		 * Initial value might look redundant but otherwise GCC will
+		 * complain about it might being used uninitialized.
+		 */
+		struct timespec *ts = NULL;
 
 		switch (ex->ex_date.d_field) {
 		case EXPR_DATE_FIELD_HEADER:
