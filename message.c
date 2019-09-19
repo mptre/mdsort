@@ -631,20 +631,26 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 	ks->s_end = str + i;
 	*ks->s_end = '\0';
 
-	/* Consume ':' and skip leading whitespace in value. */
+	/* Consume ':' and skip leading spaces in value. */
 	i++;
 	i += nspaces(&str[i]);
 	vs->s_beg = str + i;
 
-	for (;; i++) {
-		if (str[i] == '\0')
-			return 1;
-		if (str[i] != '\n')
-			continue;
+	/* Find the end of the value, with respect to line continuations. */
+	for (;;) {
+		const char *p;
+		int n;
 
-		if (str[i + 1] == ' ' || str[i + 1] == '\t')
-			continue;
-		break;
+		p = strchr(&str[i], '\n');
+		if (p == NULL)
+			return 1;
+		i += p - &str[i];
+
+		/* If '\n' is followed by spaces, assume line continuation. */
+		n = nspaces(&str[i + 1]);
+		if (n == 0)
+			break;
+		i += n + 1;
 	}
 	vs->s_end = str + i;
 	*vs->s_end = '\0';
