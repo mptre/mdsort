@@ -8,6 +8,7 @@ matrix:
       env:
         - T=linux-clang-asan
         - CFLAGS=-Werror
+        - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
 
@@ -16,6 +17,7 @@ matrix:
       env:
         - T=linux-clang-ubsan
         - CFLAGS=-Werror
+        - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=undefined,unsigned-integer-overflow -fno-sanitize-recover=all'
 
     - os: linux
@@ -23,6 +25,7 @@ matrix:
       env:
         - T=linux-gcc-asan
         - CFLAGS=-Werror
+        - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
 
@@ -31,6 +34,7 @@ matrix:
       env:
         - T=linux-gcc-ubsan
         - CFLAGS=-Werror
+        - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=undefined -fno-sanitize-recover=all'
 
     - os: linux
@@ -49,6 +53,7 @@ matrix:
       env:
         - T=linux-valgrind
         - CFLAGS=-Werror
+        - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2'
         - EXEC=valgrind
         - TESTFLAGS='-T leaky'
@@ -63,6 +68,7 @@ matrix:
       env:
         - T=macos-clang
         - CFLAGS=-Werror
+        - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2'
 
 script:
@@ -75,7 +81,7 @@ script:
       cat config.log
       make test
       # Ensure assertions are free from side effects.
-      env CPPFLAGS=-DNDEBUG ./configure || true
+      env CPPFLAGS="${CPPFLAGS} -DNDEBUG" ./configure || true
       cat config.log
       make test
       ;;
