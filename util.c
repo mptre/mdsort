@@ -139,10 +139,10 @@ pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end)
 	return buf;
 }
 
-int
+unsigned int
 nspaces(const char *str)
 {
-	int n = 0;
+	unsigned int n = 0;
 
 	for (; *str == ' ' || *str == '\t'; str++)
 		n++;
