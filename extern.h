@@ -49,9 +49,9 @@ struct environment {
 	pid_t ev_pid;
 
 	unsigned int ev_options;
-#define OPTION_DRYRUN	0x00000001
-#define OPTION_SYNTAX	0x00000002
-#define OPTION_STDIN	0x00000004
+#define OPTION_DRYRUN	0x00000001u
+#define OPTION_SYNTAX	0x00000002u
+#define OPTION_STDIN	0x00000004u
 };
 
 enum subdir {
@@ -65,9 +65,9 @@ struct maildir {
 	DIR *md_dir;
 	enum subdir md_subdir;
 	unsigned int md_flags;
-#define MAILDIR_WALK	0x00000001
-#define MAILDIR_STDIN	0x00000002
-#define MAILDIR_SYNC	0x00000004
+#define MAILDIR_WALK	0x00000001u
+#define MAILDIR_STDIN	0x00000002u
+#define MAILDIR_SYNC	0x00000004u
 };
 
 struct maildir_entry {
@@ -189,10 +189,10 @@ struct expr {
 	enum expr_type ex_type;
 	int ex_lno;
 	unsigned int ex_flags;
-#define EXPR_FLAG_ACTION	0x00000001
-#define EXPR_FLAG_INSPECT	0x00000002
-#define EXPR_FLAG_MATCH		0x00000004
-#define EXPR_FLAG_INTERPOLATE	0x00000008
+#define EXPR_FLAG_ACTION	0x00000001u
+#define EXPR_FLAG_INSPECT	0x00000002u
+#define EXPR_FLAG_MATCH		0x00000004u
+#define EXPR_FLAG_INTERPOLATE	0x00000008u
 
 	int (*ex_eval)(struct expr *, struct match_list *, struct message *,
 			const struct environment *);
@@ -204,10 +204,10 @@ struct expr {
 		regmatch_t *r_matches;
 		size_t r_nmatches;
 		unsigned int r_flags;
-#define EXPR_PATTERN_ICASE	0x00000001
-#define EXPR_PATTERN_FORCE	0x00000002
-#define EXPR_PATTERN_LCASE	0x00000004
-#define EXPR_PATTERN_UCASE	0x00000008
+#define EXPR_PATTERN_ICASE	0x00000001u
+#define EXPR_PATTERN_FORCE	0x00000002u
+#define EXPR_PATTERN_LCASE	0x00000004u
+#define EXPR_PATTERN_UCASE	0x00000008u
 	} ex_re;
 
 	struct {

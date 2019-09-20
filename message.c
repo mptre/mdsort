@@ -19,7 +19,7 @@ struct header {
 	unsigned int id;
 
 	unsigned int flags;
-#define HEADER_FLAG_DIRTY	0x00000001	/* val must be freed */
+#define HEADER_FLAG_DIRTY	0x00000001u	/* val must be freed */
 
 	const char *key;
 	char *val;
