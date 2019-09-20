@@ -326,7 +326,7 @@ exec 1>config.h
 [ $HAVE_UTIMENSAT -eq 1 ] && printf '#define HAVE_UTIMENSAT\t1\n'
 [ $HAVE_WARNC -eq 1 ] && printf '#define HAVE_WARNC\t1\n'
 
-[ $HAVE_DEAD -eq 0 ] && printf '#define __dead\n'
+[ $HAVE_DEAD -eq 0 ] && printf '#define __dead\t__attribute__((__noreturn__))\n'
 
 [ $HAVE_HOST_NAME_MAX -eq 0 ] && printf '#define HOST_NAME_MAX\t255\n'
 
