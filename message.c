@@ -862,11 +862,13 @@ b64decode(const char *str)
 static const char *
 skipline(const char *s)
 {
-	for (; *s != '\0' && *s != '\n'; s++)
-		continue;
-	if (*s != '\0')
+	for (;;) {
+		if (*s == '\0')
+			return s;
+		if (*s == '\n')
+			return ++s;
 		s++;
-	return s;
+	}
 }
 
 static ssize_t
