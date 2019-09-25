@@ -70,7 +70,6 @@ typedef struct {
 %token SYNC
 
 %type <v.cmp>		date_cmp
-%type <v.field>		date_field
 %type <v.expr>		expr
 %type <v.expr>		expr1
 %type <v.expr>		expr2
@@ -79,6 +78,7 @@ typedef struct {
 %type <v.expr>		expractions
 %type <v.expr>		exprblock
 %type <v.expr>		exprs
+%type <v.field>		date_field
 %type <v.number>	INT
 %type <v.number>	SCALAR
 %type <v.number>	attachment
