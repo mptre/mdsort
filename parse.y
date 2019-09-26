@@ -22,7 +22,7 @@ static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
 static const struct environment *env;
 static FILE *fh;
 static const char *confpath;
-static int lineno, parse_errors;
+static int lineno, parse_errors, pflag;
 
 typedef struct {
 	union {
@@ -86,6 +86,7 @@ typedef struct {
 %type <v.number>	maildir_flags
 %type <v.number>	optneg
 %type <v.pattern>	PATTERN
+%type <v.pattern>	pattern
 %type <v.string>	STRING
 %type <v.string>	flag
 %type <v.string>	maildir_path
@@ -205,7 +206,7 @@ expr2		: expractions {
 		}
 		;
 
-expr3		: attachment BODY PATTERN {
+expr3		: attachment BODY pattern {
 			const char *errstr;
 			enum expr_type type = $1 ?
 				EXPR_TYPE_ATTACHMENT_BODY : EXPR_TYPE_BODY;
@@ -214,7 +215,7 @@ expr3		: attachment BODY PATTERN {
 			if (expr_set_pattern($$, $3.string, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
-		| attachment HEADER strings PATTERN {
+		| attachment HEADER strings pattern {
 			const char *errstr;
 			enum expr_type type = $1 ?
 				EXPR_TYPE_ATTACHMENT_HEADER : EXPR_TYPE_HEADER;
@@ -363,6 +364,14 @@ date_age	: INT SCALAR {
 			} else {
 				$$ = $1 * $2;
 			}
+		}
+		;
+
+pattern		: /* backdoor */ {
+			pflag = 1;
+		} PATTERN {
+			pflag = 0;
+			$$ = $2;
 		}
 		;
 
@@ -555,9 +564,11 @@ again:
 		if (strlen(yylval.v.string) == 0)
 			yyerror("empty string");
 		return STRING;
-	} else if (c == '/') {
+	} else if (pflag) {
+		unsigned char delim = c;
+
 		for (;;) {
-			if (yypeek('/'))
+			if (yypeek(delim))
 				break;
 			c = yygetc();
 			if (c == EOF) {

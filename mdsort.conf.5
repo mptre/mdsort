@@ -104,6 +104,20 @@ Mutually exclusive with
 .Sq l .
 .El
 .Pp
+A
+.Ar pattern
+is by default expected to be enclosed in a pair of
+.Sq /
+delimiters.
+A literal
+.Sq /
+can be expressed as
+.Sq \e/
+inside a
+.Ar pattern .
+However, any character can be used as the delimiter and same escaping principle
+also applies.
+.Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
 .It Xo Op Ic \&!

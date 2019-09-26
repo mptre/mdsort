@@ -297,3 +297,16 @@ if testcase "long filename"; then
 	assert_empty "src/new"
 	refute_empty "dst/new"
 fi
+
+if testcase "pattern delimiter"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "From" "/dst@example.com/"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "From" @/(dst)\@example.com/@ move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
