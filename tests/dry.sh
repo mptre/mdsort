@@ -1,5 +1,5 @@
 if testcase "match body many subexpressions"; then
-	mkmd "src" "dst"
+	mkmd "src"
 	mkmsg -b "src/new" <<-EOF
 	foo bar
 	EOF
@@ -19,7 +19,7 @@ EOF
 fi
 
 if testcase "match many headers and body"; then
-	mkmd "src" "dst"
+	mkmd "src"
 	echo "Hello!" | mkmsg -b "src/new" -- \
 		"Cc" "admin@example.com" "To" "user@example.com"
 	cat <<-EOF >$CONF
@@ -41,7 +41,7 @@ EOF
 fi
 
 if testcase "matches from previous evaluations are discarded"; then
-	mkmd "src" "dst"
+	mkmd "src"
 	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	echo "Hello!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
 	cat <<-EOF >$CONF
@@ -61,7 +61,7 @@ EOF
 fi
 
 if testcase "matches from previous evaluations are discarded, inverted"; then
-	mkmd "src" "dst"
+	mkmd "src"
 	echo "Bye!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
@@ -81,7 +81,7 @@ EOF
 fi
 
 if testcase "match nested rules"; then
-	mkmd "src" "dst"
+	mkmd "src"
 	echo "Bye!" | mkmsg -b "src/new" -- "Cc" "admin@example.com"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
