@@ -102,3 +102,19 @@ EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	assert_file $TMP1 $TMP2
 fi
+
+if testcase "single character"; then
+	mkmd "src"
+	mkmsg "src/new" -- "To" "user@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /./ move "dst"
+	}
+	EOF
+	cat <<EOF >$TMP1
+mdsort.conf:2: To: user@example.com
+                   ^$
+EOF
+	mdsort -- -d | tail -n +2 >$TMP2
+	assert_file $TMP1 $TMP2
+fi

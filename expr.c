@@ -340,8 +340,11 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 			lend = match->mh_val + strlen(match->mh_val);
 
 		len = end - beg;
+		/* Try to compensate for the "^$" markers. */
 		if (len >= 2)
 			len -= 2;
+		else
+			len = 0;
 
 		if (printkey) {
 			pindent += expr_inspect_prefix(ex, fh, env);
