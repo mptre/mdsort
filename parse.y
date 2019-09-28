@@ -527,11 +527,12 @@ again:
 
 	yylval.lineno = lineno;
 	yylval.v.number = c;
-	if (c == EOF) {
+	if (c == EOF)
 		return 0;
-	} else if (c == '!') {
+	if (c == '!')
 		return NEG;
-	} else if (c == '#') {
+
+	if (c == '#') {
 		for (;;) {
 			c = yygetc();
 			if (c == '\n') {
@@ -541,7 +542,9 @@ again:
 			if (c == EOF)
 				return 0;
 		}
-	} else if (c == '"') {
+	}
+
+	if (c == '"') {
 		for (;;) {
 			if (yypeek('"'))
 				break;
@@ -564,7 +567,9 @@ again:
 		if (strlen(yylval.v.string) == 0)
 			yyerror("empty string");
 		return STRING;
-	} else if (pflag) {
+	}
+
+	if (pflag) {
 		unsigned char delim = c;
 
 		for (;;) {
@@ -610,7 +615,9 @@ again:
 				return PATTERN;
 			}
 		}
-	} else if (isdigit(c)) {
+	}
+
+	if (isdigit(c)) {
 		int overflow = 0;
 
 		yylval.v.number = 0;
@@ -634,7 +641,9 @@ again:
 		}
 		yyungetc(c);
 		return INT;
-	} else if (islower(c)) {
+	}
+
+	if (islower(c)) {
 		size_t len;
 		int ambiguous = 0;
 		int match = -1;
