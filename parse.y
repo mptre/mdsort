@@ -734,17 +734,16 @@ yygetc(void)
 static int
 yypeek(int want)
 {
-	int c;
+	int c, cc;
 
 	c = yygetc();
-	if (c == '\\') {
-		c = yygetc();
-		yyungetc(c);
-		if (c == want)
-			return 0;
-		c = '\\';
-	} else if (c == want) {
+	if (c == want)
 		return 1;
+	if (c == '\\') {
+		cc = yygetc();
+		yyungetc(cc);
+		if (cc == want)
+			return 0; /* escaped want */
 	}
 	yyungetc(c);
 	return 0;
