@@ -398,9 +398,9 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 			error = 1;
 			warn("read");
 			break;
-		} else if (nr == 0) {
-			break;
 		}
+		if (nr == 0)
+			break;
 
 		nw = write(fd, buf, nr);
 		if (nw == -1) {

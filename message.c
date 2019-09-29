@@ -283,7 +283,9 @@ message_get_body(struct message *msg)
 		if (message_is_content_type(attach, "text/plain")) {
 			found = attach;
 			break;
-		} else if (message_is_content_type(attach, "text/html")) {
+		}
+
+		if (message_is_content_type(attach, "text/html")) {
 			if (found == NULL)
 				found = attach;
 		}

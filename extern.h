@@ -281,7 +281,7 @@ void matches_clear(struct match_list *ml);
 
 int matches_interpolate(struct match_list *ml, struct message *msg);
 
-int matches_exec(const struct match_list *ml, struct maildir *md,
+int matches_exec(const struct match_list *ml, struct maildir *src,
     struct message *msg, int *reject, const struct environment *env);
 
 void matches_inspect(const struct match_list *ml, FILE *fh,
