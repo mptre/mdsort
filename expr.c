@@ -152,6 +152,7 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 void
 expr_free(struct expr *ex)
 {
+
 	if (ex == NULL)
 		return;
 
@@ -169,6 +170,7 @@ void
 expr_set_date(struct expr *ex, enum expr_date_field field,
     enum expr_date_cmp cmp, time_t age)
 {
+
 	assert(ex->ex_type == EXPR_TYPE_DATE);
 
 	ex->ex_date.d_field = field;
@@ -182,6 +184,7 @@ expr_set_date(struct expr *ex, enum expr_date_field field,
 void
 expr_set_strings(struct expr *ex, struct string_list *strings)
 {
+
 	ex->ex_strings = strings;
 }
 
@@ -252,6 +255,7 @@ int
 expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
+
 	return ex->ex_eval(ex, ml, msg, env);
 }
 
@@ -363,6 +367,7 @@ static int
 expr_eval_all(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
+
 	return EXPR_MATCH;
 }
 
@@ -482,6 +487,7 @@ static int
 expr_eval_break(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
+
 	if (matches_append(ml, ex->ex_match, NULL))
 		return EXPR_ERROR;
 
@@ -682,6 +688,7 @@ static int
 expr_eval_neg(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
+
 	assert(ex->ex_rhs == NULL);
 
 	switch (expr_eval(ex->ex_lhs, ml, msg, env)) {
@@ -737,6 +744,7 @@ static int
 expr_eval_pass(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
+
 	if (matches_append(ml, ex->ex_match, NULL))
 		return EXPR_ERROR;
 

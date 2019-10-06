@@ -263,6 +263,7 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 static const char *
 maildir_next(struct maildir *md)
 {
+
 	if (md->md_flags & MAILDIR_STDIN)
 		return NULL;
 
@@ -280,6 +281,7 @@ maildir_next(struct maildir *md)
 static int
 maildir_opendir(struct maildir *md, const char *path)
 {
+
 	if (md->md_dir != NULL)
 		closedir(md->md_dir);
 
@@ -296,6 +298,7 @@ maildir_opendir(struct maildir *md, const char *path)
 static int
 maildir_fd(const struct maildir *md)
 {
+
 	return dirfd(md->md_dir);
 }
 

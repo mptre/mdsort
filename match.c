@@ -272,6 +272,7 @@ matches_find(struct match_list *ml, enum expr_type type)
 void
 matches_remove(struct match_list *ml, struct match *mh)
 {
+
 	TAILQ_REMOVE(ml, mh, mh_entry);
 }
 
@@ -363,6 +364,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 static unsigned char
 match_char(const struct match *mh, unsigned char c)
 {
+
 	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_LCASE)
 		return tolower(c);
 	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_UCASE)
@@ -374,6 +376,7 @@ match_char(const struct match *mh, unsigned char c)
 static const char *
 match_get(const struct match *mh, unsigned int n)
 {
+
 	if (mh == NULL || n >= mh->mh_nmatches)
 		return NULL;
 	return mh->mh_matches[n];
@@ -399,6 +402,7 @@ backref(const char *str, unsigned int *br)
 static int
 bufgrow(char **buf, size_t *bufsiz, size_t buflen, int grow)
 {
+
 	if (*bufsiz > 0 && buflen < *bufsiz - 1)
 		return 0;
 	if (!grow)

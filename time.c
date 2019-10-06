@@ -86,6 +86,7 @@ timeparse(const char *str, struct tm *tm)
 static int
 tzparse(const char *str, time_t *tz, const struct environment *env)
 {
+
 	if (tzoff(str, tz) && tzabbr(str, tz, env)) {
 		warnc(EINVAL, "%s: %s", __func__, str);
 		return 1;

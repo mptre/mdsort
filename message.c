@@ -426,6 +426,7 @@ int
 message_get_attachments(const struct message *msg,
     struct message_list **attachments)
 {
+
 	*attachments = malloc(sizeof(**attachments));
 	if (*attachments == NULL)
 		err(1, NULL);
@@ -479,6 +480,7 @@ message_flags_parse(struct message_flags *flags, const char *path)
 static int
 message_flags_resolve(unsigned char flag, unsigned int *idx, unsigned int *mask)
 {
+
 	if (isupper(flag)) {
 		*idx = 0;
 		*mask = 1 << (flag - 'A');
@@ -864,6 +866,7 @@ b64decode(const char *str)
 static const char *
 skipline(const char *s)
 {
+
 	for (;;) {
 		if (*s == '\0')
 			return s;

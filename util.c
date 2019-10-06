@@ -152,6 +152,7 @@ nspaces(const char *str)
 void
 log_init(int v)
 {
+
 	verbose = v;
 }
 
