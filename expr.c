@@ -566,10 +566,10 @@ expr_eval_discard(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	struct match *mh = ex->ex_match;
-	size_t len;
+	size_t siz;
 
-	len = sizeof(mh->mh_path);
-	if (strlcpy(mh->mh_path, "<discard>", len) >= len) {
+	siz = sizeof(mh->mh_path);
+	if (strlcpy(mh->mh_path, "<discard>", siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return EXPR_ERROR;
 	}
@@ -760,10 +760,10 @@ expr_eval_reject(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
 	struct match *mh = ex->ex_match;
-	size_t len;
+	size_t siz;
 
-	len = sizeof(mh->mh_path);
-	if (strlcpy(mh->mh_path, "<reject>", len) >= len) {
+	siz = sizeof(mh->mh_path);
+	if (strlcpy(mh->mh_path, "<reject>", siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return EXPR_ERROR;
 	}

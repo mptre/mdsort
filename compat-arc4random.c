@@ -29,15 +29,15 @@ static int
 rrand(const char *path, uint32_t *r)
 {
 	ssize_t n;
-	int fd, len;
+	int fd, siz;
 
 	fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
 	if (fd == -1)
 		return 1;
-	len = sizeof(*r);
-	n = read(fd, r, len);
+	siz = sizeof(*r);
+	n = read(fd, r, siz);
 	close(fd);
-	if (n != len)
+	if (n != siz)
 		return 1;
 	return 0;
 }

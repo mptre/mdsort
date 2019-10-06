@@ -47,7 +47,7 @@ maildir_open(const char *path, unsigned int flags,
     const struct environment *env)
 {
 	struct maildir *md;
-	size_t len;
+	size_t siz;
 
 	md = calloc(1, sizeof(*md));
 	if (md == NULL)
@@ -63,8 +63,8 @@ maildir_open(const char *path, unsigned int flags,
 	}
 
 	if (md->md_flags & MAILDIR_WALK) {
-		len = sizeof(md->md_path);
-		if (strlcpy(md->md_path, path, len) >= len) {
+		siz = sizeof(md->md_path);
+		if (strlcpy(md->md_path, path, siz) >= siz) {
 			warnc(ENAMETOOLONG, "%s", __func__);
 			goto err;
 		}
@@ -72,8 +72,8 @@ maildir_open(const char *path, unsigned int flags,
 		if (parsesubdir(path, &md->md_subdir))
 			goto err;
 
-		len = sizeof(md->md_path);
-		if (pathslice(path, md->md_path, len, 0, -1) == NULL)
+		siz = sizeof(md->md_path);
+		if (pathslice(path, md->md_path, siz, 0, -1) == NULL)
 			goto err;
 	}
 	path = maildir_path(md);

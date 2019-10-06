@@ -188,11 +188,11 @@ static const char *
 defaultconf(const struct environment *env)
 {
 	static char buf[PATH_MAX];
-	int len, n;
+	int siz, n;
 
-	len = sizeof(buf);
-	n = snprintf(buf, len, "%s/.mdsort.conf", env->ev_home);
-	if (n < 0 || n >= len)
+	siz = sizeof(buf);
+	n = snprintf(buf, siz, "%s/.mdsort.conf", env->ev_home);
+	if (n < 0 || n >= siz)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return buf;
 }

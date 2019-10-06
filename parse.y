@@ -687,17 +687,17 @@ static char *
 expandtilde(char *str, const struct environment *env)
 {
 	char *buf;
-	int len, n;
+	int siz, n;
 
 	if (*str != '~')
 		return str;
 
-	len = PATH_MAX;
-	buf = malloc(len);
+	siz = PATH_MAX;
+	buf = malloc(siz);
 	if (buf == NULL)
 		err(1, NULL);
-	n = snprintf(buf, len, "%s%s", env->ev_home, str + 1);
-	if (n < 0 || n >= len)
+	n = snprintf(buf, siz, "%s%s", env->ev_home, str + 1);
+	if (n < 0 || n >= siz)
 		yyerror("path too long");
 	free(str);
 	return buf;
