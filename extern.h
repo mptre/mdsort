@@ -228,6 +228,10 @@ struct expr {
 #define EXPR_ERROR	-1
 
 struct match {
+	char mh_path[PATH_MAX];
+	char mh_maildir[PATH_MAX];
+	char mh_subdir[NAME_MAX + 1];
+
 	const struct expr *mh_expr;
 
 	char **mh_matches;
@@ -239,16 +243,7 @@ struct match {
 	TAILQ_ENTRY(match) mh_entry;
 };
 
-struct match_list {
-	char ml_maildir[PATH_MAX];
-	char ml_subdir[NAME_MAX + 1];
-	char ml_path[PATH_MAX];
-
-	TAILQ_HEAD(, match) ml_head;
-};
-
-#define MATCH_LIST_INITIALIZER(ml)	\
-	{ "", "", "", TAILQ_HEAD_INITIALIZER((ml).ml_head) }
+TAILQ_HEAD(match_list, match);
 
 struct expr *expr_alloc(enum expr_type type, int lno, struct expr *lhs,
     struct expr *rhs);
@@ -275,7 +270,8 @@ int expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
 void expr_inspect(const struct expr *ex, FILE *fh,
     const struct environment *env);
 
-void matches_append(struct match_list *ml, struct match *mh);
+int matches_append(struct match_list *ml, struct match *mh,
+    const struct message *msg);
 
 void matches_clear(struct match_list *ml);
 
@@ -284,8 +280,8 @@ int matches_interpolate(struct match_list *ml, struct message *msg);
 int matches_exec(const struct match_list *ml, struct maildir *src,
     struct message *msg, int *reject, const struct environment *env);
 
-void matches_inspect(const struct match_list *ml, FILE *fh,
-    const struct environment *env);
+int matches_inspect(const struct match_list *ml, const struct message *msg,
+    FILE *fh, const struct environment *env);
 
 void match_copy(struct match *mh, const char *str, const regmatch_t *off,
     size_t nmemb);

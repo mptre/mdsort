@@ -482,7 +482,8 @@ static int
 expr_eval_break(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
-	matches_append(ml, ex->ex_match);
+	if (matches_append(ml, ex->ex_match, NULL))
+		return EXPR_ERROR;
 
 	/*
 	 * Return match in order to continue evaluation. The return value is
@@ -558,34 +559,38 @@ static int
 expr_eval_discard(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
+	struct match *mh = ex->ex_match;
 	size_t len;
 
-	matches_append(ml, ex->ex_match);
-
-	len = sizeof(ml->ml_path);
-	if (strlcpy(ml->ml_path, "<discard>", len) >= len) {
+	len = sizeof(mh->mh_path);
+	if (strlcpy(mh->mh_path, "<discard>", len) >= len) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return EXPR_ERROR;
 	}
+
+	if (matches_append(ml, mh, NULL))
+		return EXPR_ERROR;
 
 	return EXPR_MATCH;
 }
 
 static int
-expr_eval_flag(struct expr *ex, struct match_list *ml,
-    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
 {
-	const struct string *str;
-	size_t len;
+	struct match *mh = ex->ex_match;
+	const char *subdir;
+	size_t siz;
 
-	str = TAILQ_FIRST(ex->ex_strings);
-	len = sizeof(ml->ml_subdir);
-	if (strlcpy(ml->ml_subdir, str->val, len) >= len) {
+	subdir = TAILQ_FIRST(ex->ex_strings)->val;
+	siz = sizeof(mh->mh_subdir);
+	if (strlcpy(mh->mh_subdir, subdir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return EXPR_ERROR;
 	}
 
-	matches_append(ml, ex->ex_match);
+	if (matches_append(ml, mh, msg))
+		return EXPR_ERROR;
 
 	return EXPR_MATCH;
 }
@@ -646,26 +651,29 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 
 	message_set_header(msg, "X-Label", DISOWN(buf));
 
-	matches_append(ml, ex->ex_match);
+	if (matches_append(ml, ex->ex_match, msg))
+		return EXPR_ERROR;
 
 	return EXPR_MATCH;
 }
 
 static int
-expr_eval_move(struct expr *ex, struct match_list *ml,
-    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+expr_eval_move(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
 {
-	const struct string *str;
-	size_t len;
+	struct match *mh = ex->ex_match;
+	const char *maildir;
+	size_t siz;
 
-	str = TAILQ_FIRST(ex->ex_strings);
-	len = sizeof(ml->ml_maildir);
-	if (strlcpy(ml->ml_maildir, str->val, len) >= len) {
+	maildir = TAILQ_FIRST(ex->ex_strings)->val;
+	siz = sizeof(mh->mh_maildir);
+	if (strlcpy(mh->mh_maildir, maildir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return EXPR_ERROR;
 	}
 
-	matches_append(ml, ex->ex_match);
+	if (matches_append(ml, mh, msg))
+		return EXPR_ERROR;
 
 	return EXPR_MATCH;
 }
@@ -729,7 +737,8 @@ static int
 expr_eval_pass(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
-	matches_append(ml, ex->ex_match);
+	if (matches_append(ml, ex->ex_match, NULL))
+		return EXPR_ERROR;
 
 	/*
 	 * Return no match in order to continue evaluation. The return value is
@@ -742,15 +751,17 @@ static int
 expr_eval_reject(struct expr *ex, struct match_list *ml,
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
+	struct match *mh = ex->ex_match;
 	size_t len;
 
-	matches_append(ml, ex->ex_match);
-
-	len = sizeof(ml->ml_path);
-	if (strlcpy(ml->ml_path, "<reject>", len) >= len) {
+	len = sizeof(mh->mh_path);
+	if (strlcpy(mh->mh_path, "<reject>", len) >= len) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return EXPR_ERROR;
 	}
+
+	if (matches_append(ml, mh, NULL))
+		return EXPR_ERROR;
 
 	return EXPR_MATCH;
 }
@@ -791,8 +802,6 @@ expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
 	if (error != 0)
 		return EXPR_ERROR;
 
-	matches_append(ml, ex->ex_match);
-
 	match_copy(ex->ex_match, val, ex->ex_re.r_matches,
 	    ex->ex_re.r_nmatches);
 	if (dryrun) {
@@ -803,6 +812,9 @@ expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
 		if (ex->ex_match->mh_val == NULL)
 			err(1, NULL);
 	}
+
+	if (matches_append(ml, ex->ex_match, NULL))
+		return EXPR_ERROR;
 
 	return EXPR_MATCH;
 }

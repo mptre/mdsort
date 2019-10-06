@@ -33,8 +33,8 @@ static __dead void usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct match_list matches = MATCH_LIST_INITIALIZER(matches);
 	struct environment env;
+	struct match_list matches;
 	struct maildir_entry me;
 	struct config_list *config;
 	struct config *conf;
@@ -49,6 +49,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	memset(&env, 0, sizeof(env));
+	TAILQ_INIT(&matches);
 
 	while ((c = getopt(argc, argv, "dnvf:")) != -1)
 		switch (c) {
@@ -136,12 +137,7 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			if (env.ev_options & OPTION_STDIN)
-				log_info("<stdin> -> %s\n", matches.ml_path);
-			else
-				log_info("%s -> %s\n", msg->me_path, matches.ml_path);
-			if (env.ev_options & OPTION_DRYRUN) {
-				matches_inspect(&matches, stdout, &env);
+			if (matches_inspect(&matches, msg, stdout, &env)) {
 				message_free(msg);
 				continue;
 			}

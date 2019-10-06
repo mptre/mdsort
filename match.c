@@ -1,5 +1,6 @@
 #include "config.h"
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <ctype.h>
@@ -9,6 +10,7 @@
 #include "extern.h"
 
 static const struct match *matches_find_interpolate(const struct match_list *);
+static void matches_merge(struct match_list *, struct match *);
 
 static unsigned char match_char(const struct match *, unsigned char);
 static const char *match_get(const struct match *, unsigned int);
@@ -18,20 +20,59 @@ static int bufgrow(char **, size_t *, size_t, int);
 static char *interpolate(const struct match *, const char *, char *, size_t,
     int);
 
-void
-matches_append(struct match_list *ml, struct match *mh)
+/*
+ * Append the given match to the list. If message is non-NULL, construct the
+ * destination maildir path. This is only applicable to actions that either
+ * moves or writes a new message.
+ */
+int
+matches_append(struct match_list *ml, struct match *mh,
+    const struct message *msg)
 {
-	enum expr_type type = mh->mh_expr->ex_type;
+	const char *p;
+	size_t siz;
 
 	/*
 	 * A message only needs to moved or flagged once since both actions
-	 * refer to the same destination.
+	 * refer to the same destination maildir.
 	 */
-	if ((type == EXPR_TYPE_MOVE || type == EXPR_TYPE_FLAG) &&
-	    (matches_find(ml, EXPR_TYPE_MOVE) || matches_find(ml, EXPR_TYPE_FLAG)))
-		return;
+	if (mh->mh_expr->ex_type == EXPR_TYPE_MOVE ||
+	    mh->mh_expr->ex_type == EXPR_TYPE_FLAG)
+		matches_merge(ml, mh);
 
-	TAILQ_INSERT_TAIL(&ml->ml_head, mh, mh_entry);
+	TAILQ_INSERT_TAIL(ml, mh, mh_entry);
+
+	if (msg == NULL)
+		return 0;
+
+	if (mh->mh_maildir[0] == '\0') {
+		/* Infer maildir from message path. */
+		siz = sizeof(mh->mh_maildir);
+		p = pathslice(msg->me_path, mh->mh_maildir, siz, 0, -2);
+		if (p == NULL) {
+			warnx("%s: %s: maildir not found",
+			    __func__, msg->me_path);
+			return 1;
+		}
+	}
+	if (mh->mh_subdir[0] == '\0') {
+		/* Infer subdir from message path. */
+		siz = sizeof(mh->mh_subdir);
+		p = pathslice(msg->me_path, mh->mh_subdir, siz, -2, -2);
+		if (p == NULL) {
+			warnx("%s: %s: subdir not found",
+			    __func__, msg->me_path);
+			return 1;
+		}
+	}
+
+	siz = sizeof(mh->mh_path);
+	if (pathjoin(mh->mh_path, siz, mh->mh_maildir, mh->mh_subdir) == NULL) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return 1;
+	}
+
+	return 0;
 }
 
 void
@@ -39,77 +80,69 @@ matches_clear(struct match_list *ml)
 {
 	struct match *mh;
 
-	while ((mh = TAILQ_FIRST(&ml->ml_head)) != NULL) {
-		TAILQ_REMOVE(&ml->ml_head, mh, mh_entry);
+	while ((mh = TAILQ_FIRST(ml)) != NULL) {
+		mh->mh_path[0] = mh->mh_maildir[0] = mh->mh_subdir[0] = '\0';
+		TAILQ_REMOVE(ml, mh, mh_entry);
 	}
 
-	ml->ml_maildir[0] = ml->ml_subdir[0] = ml->ml_path[0] = '\0';
 }
 
 int
 matches_interpolate(struct match_list *ml, struct message *msg)
 {
-	char buf[PATH_MAX];
-	const struct match *mh;
-	const char *str;
-	char *label, *path;
-	size_t len;
+	const struct match *mi;
+	struct match *mh;
 
 	/*
-	 * Some actions sets the path during expression evaluation and are
-	 * therefore not eligible for interpolation.
+	 * Note that mi might be NULL but it's not considered an error as long
+	 * as the string to interpolate is missing back-references.
 	 */
-	if (ml->ml_path[0] != '\0')
-		return 0;
+	mi = matches_find_interpolate(ml);
 
-	if (ml->ml_maildir[0] == '\0') {
-		/* No maildir present, infer from message path. */
-		len = sizeof(ml->ml_maildir);
-		if (pathslice(msg->me_path, ml->ml_maildir, len, 0, -2) == NULL) {
-			warnx("%s: %s: maildir not found",
-			    __func__, msg->me_path);
-			return 1;
-		}
-	}
-	if (ml->ml_subdir[0] == '\0') {
-		/* No subdir present, infer from message path. */
-		len = sizeof(ml->ml_subdir);
-		if (pathslice(msg->me_path, ml->ml_subdir, len, -2, -2) == NULL) {
-			warnx("%s: %s: subdir not found",
-			    __func__, msg->me_path);
-			return 1;
-		}
-	}
-	path = pathjoin(buf, sizeof(buf), ml->ml_maildir, ml->ml_subdir);
-	if (path == NULL) {
-		warnc(ENAMETOOLONG, "%s", __func__);
-		return 1;
-	}
+	TAILQ_FOREACH(mh, ml, mh_entry) {
+		switch (mh->mh_expr->ex_type) {
+		case EXPR_TYPE_MOVE:
+		case EXPR_TYPE_FLAG: {
+			char tmp[PATH_MAX];
+			char *path;
 
-	mh = matches_find_interpolate(ml);
-	len = sizeof(ml->ml_path);
-	if (interpolate(mh, path, ml->ml_path, len, 0) == NULL)
-		return 1;
-
-	if (matches_find(ml, EXPR_TYPE_LABEL)) {
-		str = message_get_header1(msg, "X-Label");
-		if (str == NULL) {
-			/*
-			 * This should never happen since a label action always
-			 * sets the X-Label header in expr_eval_label(). But
-			 * some static analysis tools interpret usage of str
-			 * below as a potential NULL deference.
-			 */
-			return 1;
+			path = interpolate(mi, mh->mh_path, tmp, sizeof(tmp), 0);
+			if (path == NULL)
+				return 1;
+			(void)strlcpy(mh->mh_path, path, sizeof(mh->mh_path));
+			break;
 		}
-		len = strlen(str) + 1;
-		label = malloc(len);
-		if (label == NULL)
-			err(1, NULL);
-		label = interpolate(mh, str, label, len, 1);
-		if (label == NULL)
-			return 1;
-		message_set_header(msg, "X-Label", DISOWN(label));
+
+		case EXPR_TYPE_LABEL: {
+			const char *str;
+			char *label;
+			size_t len;
+
+			str = message_get_header1(msg, "X-Label");
+			if (str == NULL) {
+				/*
+				 * This should never happen since a label action
+				 * always sets the X-Label header in
+				 * expr_eval_label(). But some static analysis
+				 * tools interpret usage of str below as a
+				 * potential NULL deference.
+				 */
+				return 1;
+			}
+			len = strlen(str) + 1;
+			label = malloc(len);
+			if (label == NULL)
+				err(1, NULL);
+			label = interpolate(mi, str, label, len, 1);
+			if (label == NULL)
+				return 1;
+			message_set_header(msg, "X-Label", DISOWN(label));
+			break;
+		}
+
+		default:
+			continue;
+		}
 	}
 
 	return 0;
@@ -127,7 +160,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 
 	path_save = msg->me_path;
 
-	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
+	TAILQ_FOREACH(mh, ml, mh_entry) {
 		switch (mh->mh_expr->ex_type) {
 		case EXPR_TYPE_FLAG:
 		case EXPR_TYPE_MOVE:
@@ -137,7 +170,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			 * action requires a source maildir.
 			 */
 			maildir_close(dst);
-			dst = maildir_open(ml->ml_path, 0, env);
+			dst = maildir_open(mh->mh_path, 0, env);
 			if (dst == NULL) {
 				error = 1;
 				break;
@@ -192,15 +225,35 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 	return error;
 }
 
-void
-matches_inspect(const struct match_list *ml, FILE *fh,
-    const struct environment *env)
+int
+matches_inspect(const struct match_list *ml, const struct message *msg,
+    FILE *fh, const struct environment *env)
 {
 	const struct match *mh;
+	const char *path = NULL;
 
-	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
+	/* Find the last non-empty path. */
+	TAILQ_FOREACH(mh, ml, mh_entry) {
+		if (mh->mh_path[0] == '\0')
+			continue;
+
+		path = mh->mh_path;
+	}
+	assert(path != NULL);
+
+	if (env->ev_options & OPTION_STDIN)
+		log_info("<stdin> -> %s\n", path);
+	else
+		log_info("%s -> %s\n", msg->me_path, path);
+
+	if ((env->ev_options & OPTION_DRYRUN) == 0)
+		return 0;
+
+	TAILQ_FOREACH(mh, ml, mh_entry) {
 		expr_inspect(mh->mh_expr, fh, env);
 	}
+
+	return 1;
 }
 
 struct match *
@@ -208,7 +261,7 @@ matches_find(struct match_list *ml, enum expr_type type)
 {
 	struct match *mh;
 
-	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
+	TAILQ_FOREACH(mh, ml, mh_entry) {
 		if (mh->mh_expr->ex_type == type)
 			return mh;
 	}
@@ -219,7 +272,7 @@ matches_find(struct match_list *ml, enum expr_type type)
 void
 matches_remove(struct match_list *ml, struct match *mh)
 {
-	TAILQ_REMOVE(&ml->ml_head, mh, mh_entry);
+	TAILQ_REMOVE(ml, mh, mh_entry);
 }
 
 void
@@ -270,7 +323,7 @@ matches_find_interpolate(const struct match_list *ml)
 	const struct match *mh;
 	const struct match *found = NULL;
 
-	TAILQ_FOREACH(mh, &ml->ml_head, mh_entry) {
+	TAILQ_FOREACH(mh, ml, mh_entry) {
 		const struct expr *ex = mh->mh_expr;
 
 		if ((ex->ex_flags & EXPR_FLAG_INTERPOLATE) == 0)
@@ -283,6 +336,28 @@ matches_find_interpolate(const struct match_list *ml)
 	}
 
 	return found;
+}
+
+void
+matches_merge(struct match_list *ml, struct match *mh)
+{
+	struct match *dup;
+
+	dup = matches_find(ml, mh->mh_expr->ex_type == EXPR_TYPE_MOVE ?
+	    EXPR_TYPE_FLAG : EXPR_TYPE_MOVE);
+	if (dup == NULL)
+		return;
+	matches_remove(ml, dup);
+
+	if (mh->mh_expr->ex_type == EXPR_TYPE_MOVE) {
+		/* Copy subdir from flag action. */
+		(void)strlcpy(mh->mh_subdir, dup->mh_subdir,
+		    sizeof(mh->mh_subdir));
+	} else {
+		/* Copy maildir from move action. */
+		(void)strlcpy(mh->mh_maildir, dup->mh_maildir,
+		    sizeof(mh->mh_maildir));
+	}
 }
 
 static unsigned char

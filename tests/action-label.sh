@@ -243,3 +243,17 @@ if testcase "interpolation with x-label header"; then
 	refute_empty "src/new"
 	assert_label "label label" ${TSHDIR}/src/new/*
 fi
+
+# The label action constructs a destination path, however the one from the move
+# action must take higher precedence.
+if testcase "dry run label and move"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all label "label" move "dst"
+	}
+	EOF
+	mdsort -- -d >$TMP1
+	grep -q ' -> dst/new$' $TMP1 || fail - "expected move line" <$TMP1
+fi
