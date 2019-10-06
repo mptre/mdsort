@@ -131,6 +131,7 @@ main(int argc, char *argv[])
 				message_free(msg);
 				continue;
 			}
+
 			if (matches_interpolate(&matches, msg)) {
 				error = 1;
 				message_free(msg);
@@ -138,6 +139,7 @@ main(int argc, char *argv[])
 			}
 
 			if (matches_inspect(&matches, msg, stdout, &env)) {
+				/* Dry run, we're done. */
 				message_free(msg);
 				continue;
 			}
