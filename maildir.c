@@ -511,6 +511,6 @@ parsesubdir(const char *path, enum subdir *subdir)
 		*subdir = SUBDIR_CUR;
 		return 0;
 	}
-	warnx("%s: subdir not found", path);
+	warnx("%s: %s: subdir not found", __func__, path);
 	return 1;
 }
