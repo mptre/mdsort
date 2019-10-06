@@ -17,7 +17,7 @@ static const char *match_get(const struct match *, unsigned int);
 
 static int backref(const char *, unsigned int *);
 static int bufgrow(char **, size_t *, size_t, int);
-static char *interpolate(const struct match *, const char *, char *, size_t,
+static int interpolate(const struct match *, const char *, char **, size_t,
     int);
 
 /*
@@ -103,13 +103,12 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 		switch (mh->mh_expr->ex_type) {
 		case EXPR_TYPE_MOVE:
 		case EXPR_TYPE_FLAG: {
-			char tmp[PATH_MAX];
-			char *path;
+			char buf[PATH_MAX];
+			char *tmp = buf;
 
-			path = interpolate(mi, mh->mh_path, tmp, sizeof(tmp), 0);
-			if (path == NULL)
+			if (interpolate(mi, mh->mh_path, &tmp, sizeof(buf), 0))
 				return 1;
-			(void)strlcpy(mh->mh_path, path, sizeof(mh->mh_path));
+			(void)strlcpy(mh->mh_path, tmp, sizeof(mh->mh_path));
 			break;
 		}
 
@@ -133,9 +132,8 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			label = malloc(len);
 			if (label == NULL)
 				err(1, NULL);
-			label = interpolate(mi, str, label, len, 1);
-			if (label == NULL) {
-				/* label already freed by interpolate(). */
+			if (interpolate(mi, str, &label, len, 1)) {
+				free(label);
 				return 1;
 			}
 			message_set_header(msg, "X-Label", DISOWN(label));
@@ -418,8 +416,8 @@ bufgrow(char **buf, size_t *bufsiz, size_t buflen, int grow)
 	return 0;
 }
 
-static char *
-interpolate(const struct match *mh, const char *str, char *buf, size_t bufsiz,
+static int
+interpolate(const struct match *mh, const char *str, char **buf, size_t bufsiz,
     int grow)
 {
 	const char *sub;
@@ -438,32 +436,28 @@ interpolate(const struct match *mh, const char *str, char *buf, size_t bufsiz,
 				goto invalid;
 
 			for (; *sub != '\0'; sub++) {
-				if (bufgrow(&buf, &bufsiz, buflen, grow))
+				if (bufgrow(buf, &bufsiz, buflen, grow))
 					goto toolong;
 
-				buf[buflen++] = match_char(mh, *sub);
+				(*buf)[buflen++] = match_char(mh, *sub);
 			}
 			i += n;
 			continue;
 		}
 
-		if (bufgrow(&buf, &bufsiz, buflen, grow))
+		if (bufgrow(buf, &bufsiz, buflen, grow))
 			goto toolong;
-		buf[buflen++] = str[i++];
+		(*buf)[buflen++] = str[i++];
 	}
-	buf[buflen] = '\0';
+	(*buf)[buflen] = '\0';
 
-	return buf;
+	return 0;
 
 invalid:
 	warnx("%s: invalid back-reference", str);
-	if (grow)
-		free(buf);
-	return NULL;
+	return 1;
 
 toolong:
 	warnx("%s: interpolated string too long", str);
-	if (grow)
-		free(buf);
-	return NULL;
+	return 1;
 }
