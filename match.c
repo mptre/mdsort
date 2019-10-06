@@ -134,8 +134,10 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			if (label == NULL)
 				err(1, NULL);
 			label = interpolate(mi, str, label, len, 1);
-			if (label == NULL)
+			if (label == NULL) {
+				/* label already freed by interpolate(). */
 				return 1;
+			}
 			message_set_header(msg, "X-Label", DISOWN(label));
 			break;
 		}
