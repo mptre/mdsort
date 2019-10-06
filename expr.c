@@ -410,6 +410,7 @@ expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
 		int e = expr_eval_body(ex, ml, attach, env);
+
 		if (e == EXPR_NOMATCH)
 			continue;
 
@@ -433,6 +434,7 @@ expr_eval_attachment_header(struct expr *ex, struct match_list *ml,
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
 		int e = expr_eval_header(ex, ml, attach, env);
+
 		if (e == EXPR_NOMATCH)
 			continue;
 
@@ -616,6 +618,7 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 		TAILQ_FOREACH(val, values, entry) {
 			int e = expr_regexec(ex, ml, key->val, val->val,
 			    env->ev_options & OPTION_DRYRUN);
+
 			if (e == EXPR_NOMATCH)
 				continue;
 
