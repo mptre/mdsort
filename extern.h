@@ -332,7 +332,7 @@ char *pathjoin(char *buf, size_t bufsiz, const char *dirname,
 
 char *pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end);
 
-unsigned int nspaces(const char *str);
+size_t nspaces(const char *str);
 
 void log_init(int v);
 
