@@ -189,14 +189,14 @@ config_skip(const struct config *conf, const struct environment *env)
 static const char *
 defaultconf(const struct environment *env)
 {
-	static char buf[PATH_MAX];
+	static char path[PATH_MAX];
 	int siz, n;
 
-	siz = sizeof(buf);
-	n = snprintf(buf, siz, "%s/.mdsort.conf", env->ev_home);
+	siz = sizeof(path);
+	n = snprintf(path, siz, "%s/.mdsort.conf", env->ev_home);
 	if (n < 0 || n >= siz)
 		errc(1, ENAMETOOLONG, "%s", __func__);
-	return buf;
+	return path;
 }
 
 static void
