@@ -136,7 +136,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 				free(label);
 				return 1;
 			}
-			message_set_header(msg, "X-Label", DISOWN(label));
+			message_set_header(msg, "X-Label", label);
 			break;
 		}
 

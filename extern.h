@@ -11,16 +11,6 @@
 #include <time.h>
 
 /*
- * Annotate transfer of ownership of the given variable in a function call.
- * The pointer will be invalided in the scope of the call-site afterwards.
- */
-#define DISOWN(ptr) ({							\
-	typeof(ptr) __tmp = ptr;					\
-	ptr = NULL;							\
-	__tmp;								\
-})
-
-/*
  * Annotate the argument as unused.
  */
 #define UNUSED(x)	__##x __attribute__((__unused__))

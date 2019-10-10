@@ -658,7 +658,7 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 	if (buflen > 0)
 		buf[buflen - 1] = '\0';
 
-	message_set_header(msg, "X-Label", DISOWN(buf));
+	message_set_header(msg, "X-Label", buf);
 
 	if (matches_append(ml, ex->ex_match, msg))
 		return EXPR_ERROR;
