@@ -370,7 +370,6 @@ match_char(const struct match *mh, unsigned char c)
 	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_UCASE)
 		return toupper(c);
 	return c;
-
 }
 
 static const char *
