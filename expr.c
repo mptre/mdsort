@@ -198,6 +198,12 @@ expr_set_strings(struct expr *ex, struct string_list *strings)
  *     EXPR_PATTERN_FORCE    Force usage of matches belonging to the
  *                           given pattern during interpolation.
  *
+ *     EXPR_PATTERN_LCASE    Lowercase the matched string from a subexpression
+ *                           before interpolation.
+ *
+ *     EXPR_PATTERN_UCASE    Uppercase the matched string from a subexpression
+ *                           before interpolation.
+ *
  * Returns zero if pattern is successfully compiled into a regular expression.
  * Otherwise, returns non-zero and if errstr is not NULL it will point to an
  * explanation on why the compilation failed.
