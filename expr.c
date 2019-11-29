@@ -206,8 +206,7 @@ int
 expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
     const char **errstr)
 {
-	static char buf[1024];
-	int ret;
+	int error;
 	int rflags = REG_EXTENDED | REG_NEWLINE;
 
 	assert(ex->ex_re.r_nmatches == 0);
@@ -230,9 +229,11 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 	}
 	assert(flags == 0);
 
-	if ((ret = regcomp(&ex->ex_re.r_pattern, pattern, rflags)) != 0) {
+	if ((error = regcomp(&ex->ex_re.r_pattern, pattern, rflags)) != 0) {
 		if (errstr != NULL) {
-			regerror(ret, &ex->ex_re.r_pattern, buf, sizeof(buf));
+			static char buf[1024];
+
+			regerror(error, &ex->ex_re.r_pattern, buf, sizeof(buf));
 			*errstr = buf;
 		}
 		return 1;
