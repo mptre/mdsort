@@ -1,3 +1,23 @@
+# v4.3.0 - 2019-12-14
+
+## News
+
+- Support for using any character as the pattern delimiter.
+  By default, `/` is the expected pattern delimiter.
+  Instead support any character as the pattern delimiter, similar to how
+  `sed(1)` behaves.
+  This is especially useful when one wants to match a literal `/` inside a
+  pattern; removing the need to escape it.
+  (dc76344)
+  (Anton Lindqvist)
+
+  ```
+  $ cat mdsort.conf
+  maildir "~/Maildir/INBOX" {
+    match header "Subject" |/sys/| label "sys"
+  }
+  ```
+
 # v4.2.0 - 2019-09-14
 
 ## Bug fixes
