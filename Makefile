@@ -1,6 +1,6 @@
 include ${.CURDIR}/Makefile.inc
 
-VERSION=	4.2.0
+VERSION=	4.3.0
 
 PROG=	mdsort
 
