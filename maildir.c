@@ -139,7 +139,7 @@ maildir_walk(struct maildir *md, struct maildir_entry *me)
 		if (path == NULL)
 			return 0;
 		if (maildir_opendir(md, path))
-			return 0;
+			return -1;
 	}
 }
 
