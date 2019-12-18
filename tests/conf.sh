@@ -58,7 +58,7 @@ if testcase "sanity"; then
 fi
 
 if testcase "empty"; then
-	>$CONF
+	: >$CONF
 	mdsort - -- -n </dev/null
 fi
 

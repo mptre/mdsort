@@ -2,9 +2,9 @@
 #
 # Encode the given strings using base64.
 b64() {
-	if which b64encode >/dev/null 2>&1; then
+	if command -v b64encode >/dev/null 2>&1; then
 		echo "$@" | b64encode - | sed -e '1d' -e '$d'
-	elif which base64 >/dev/null 2>&1; then
+	elif command -v base64 >/dev/null 2>&1; then
 		echo "$@" | base64
 	else
 		fail "base64 encode utility not found"

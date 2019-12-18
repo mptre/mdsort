@@ -85,7 +85,7 @@ mdsort() {
 		--)	shift
 			break
 			;;
-		*)	fail "mdsort: unknown test options: ${@}"
+		*)	fail "mdsort: unknown test options: ${*}"
 			return 0
 			;;
 		esac
@@ -125,7 +125,7 @@ mkmd() {
 
 # mkmsg [-H] [-b] [-m modified-time] [-s suffix] dir [-- headers ...]
 mkmsg() {
-	local _dir _i _name _path
+	local _dir _name _path
 	local _body=0
 	local _headers=1
 	local _suffix=""
@@ -148,7 +148,6 @@ mkmsg() {
 
 	_dir="${TSHDIR}/${1}"; shift
 
-	_i=0
 	while :; do
 		_name=$(printf '1553633333.%d_%d.hostname%s' \
 			"$$" "$NMSG" "$_suffix")
@@ -167,11 +166,11 @@ mkmsg() {
 		done
 	fi
 	if [ $_headers -eq 1 ]; then
-		printf 'Content-Type: text/plain\n' >>$_path
+		printf 'Content-Type: text/plain\n' >>"$_path"
 	fi
-	echo >>$_path
+	echo >>"$_path"
 	if [ $_body -eq 1 ]; then
-		cat >>$_path
+		cat >>"$_path"
 	fi
 
 	if [ -n "$_tim" ]; then
@@ -200,7 +199,7 @@ now() {
 		_tim=$((_tim + $1))
 	fi
 
-	$(printf "%s%s" "$DATE" "$_tim") "+${_fmt}"
+	${DATE}${_tim} "+${_fmt}"
 }
 
 ls "${MDSORT:?}" >/dev/null || exit 1
