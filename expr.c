@@ -655,13 +655,11 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 	}
 
 	TAILQ_FOREACH(str, ex->ex_strings, entry) {
-		if (message_has_label(msg, str->val))
-			continue;
-
 		/* The label cannot be empty, enforced by the config parser. */
 		append(&buf, &bufsiz, &buflen, str->val);
 		append(&buf, &bufsiz, &buflen, " ");
 	}
+	/* NUL-terminate and remove trailing space added above. */
 	if (buflen > 0)
 		buf[buflen - 1] = '\0';
 

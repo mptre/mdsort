@@ -10,58 +10,6 @@ assert_label() {
 	assert_eq "$1" "$_got"
 }
 
-if testcase "word boundary begin"; then
-	mkmd "src"
-	mkmsg -H "src/new" -- "X-Label" "label"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match all label "label"
-	}
-	EOF
-	mdsort
-	refute_empty "src/new"
-	assert_label label ${TSHDIR}/src/new/*
-fi
-
-if testcase "word boundary middle"; then
-	mkmd "src"
-	mkmsg -H "src/new" -- "X-Label" "first label last"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match all label "label"
-	}
-	EOF
-	mdsort
-	refute_empty "src/new"
-	assert_label "first label last" ${TSHDIR}/src/new/*
-fi
-
-if testcase "word boundary end"; then
-	mkmd "src"
-	mkmsg -H "src/new" -- "X-Label" "first label"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match all label "label"
-	}
-	EOF
-	mdsort
-	refute_empty "src/new"
-	assert_label "first label" ${TSHDIR}/src/new/*
-fi
-
-if testcase "word boundary substring"; then
-	mkmd "src"
-	mkmsg -H "src/new" -- "X-Label" "llabell"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match all label "label"
-	}
-	EOF
-	mdsort
-	refute_empty "src/new"
-	assert_label "llabell label" ${TSHDIR}/src/new/*
-fi
-
 if testcase "no x-label header"; then
 	mkmd "src"
 	mkmsg -H "src/new"
@@ -130,7 +78,7 @@ if testcase "multiple labels already present"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "one two three" ${TSHDIR}/src/new/*
+	assert_label "one two three two three" ${TSHDIR}/src/new/*
 fi
 
 if testcase "many label actions"; then
@@ -176,7 +124,7 @@ fi
 
 if testcase "label and flag"; then
 	mkmd "src"
-	mkmsg -H "src/new"
+	mkmsg -H "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match all label "label" flag !new
@@ -190,7 +138,7 @@ fi
 
 if testcase "flag and label"; then
 	mkmd "src"
-	mkmsg -H "src/new"
+	mkmsg -H "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match all flag !new label "label"

@@ -52,7 +52,6 @@ static int parseboundary(const char *, char **);
 static char *b64decode(const char *);
 static const char *skipline(const char *);
 static ssize_t strflags(unsigned int, unsigned char, char *, size_t);
-static int strword(const char *, const char *);
 
 char *
 message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
@@ -390,28 +389,6 @@ message_set_header(struct message *msg, const char *header, char *val)
 		strings_free(hdr->values);
 		hdr->values = NULL;
 	}
-}
-
-/*
- * Returns non-zero if label is present in the X-Label header, with respect
- * to word boundaries.
- */
-int
-message_has_label(const struct message *msg, const char *label)
-{
-	const struct string_list *labels;
-	const struct string *str;
-
-	labels = message_get_header(msg, "X-Label");
-	if (labels == NULL)
-		return 0;
-
-	TAILQ_FOREACH(str, labels, entry) {
-		if (strword(str->val, label))
-			return 1;
-	}
-
-	return 0;
 }
 
 /*
@@ -892,26 +869,4 @@ strflags(unsigned int flags, unsigned char offset, char *buf, size_t bufsiz)
 	}
 
 	return i;
-}
-
-static int
-strword(const char *haystack, const char *needle)
-{
-	const char *beg, *p;
-	size_t len;
-
-	beg = haystack;
-	len = strlen(needle);
-	for (;;) {
-		p = strstr(haystack, needle);
-		if (p == NULL)
-			return 0;
-		if ((p == beg || p[-1] == ' ') &&
-		    (p[len] == '\0' || p[len] == ' '))
-			return 1;
-
-		haystack = p + len;
-	}
-
-	return 0;
 }

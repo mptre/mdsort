@@ -131,8 +131,6 @@ const char *message_get_header1(const struct message *msg, const char *header);
 
 void message_set_header(struct message *msg, const char *header, char *val);
 
-int message_has_label(const struct message *msg, const char *label);
-
 int message_get_attachments(const struct message *msg,
     struct message_list **attachments);
 
