@@ -61,24 +61,24 @@ message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
 
 	/* Ensure room for at least the empty set of flags ":2,\0". */
 	if (bufsiz < 4)
-		goto fail;
+		goto err;
 
 	buf[i++] = ':';
 	buf[i++] = '2';
 	buf[i++] = ',';
 	n = strflags(flags->mf_flags[0], 'A', &buf[i], bufsiz - i);
 	if (n == -1)
-		goto fail;
+		goto err;
 	i += n;
 	n = strflags(flags->mf_flags[1], 'a', &buf[i], bufsiz - i);
 	if (n == -1)
-		goto fail;
+		goto err;
 	i += n;
 	buf[i] = '\0';
 
 	return buf;
 
-fail:
+err:
 	warnc(ENAMETOOLONG, "%s", __func__);
 	return NULL;
 }
