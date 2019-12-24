@@ -400,7 +400,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 		if (nr == -1) {
 			error = 1;
 			warn("read");
-			break;
+			goto out;
 		}
 		if (nr == 0)
 			break;
@@ -409,20 +409,21 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 		if (nw == -1) {
 			error = 1;
 			warn("write: %s/%s", path, name);
-			break;
+			goto out;
 		}
-	}
-	if (error) {
-		close(fd);
-		return error;
 	}
 
 	if ((md->md_flags & MAILDIR_SYNC) && fsync(fd) == -1) {
 		warn("fsync");
 		error = 1;
 	}
-	close(fd);
 
+out:
+	/* Don't ignore potential EIO errors. */
+	if (close(fd) == -1) {
+		error = 1;
+		warn("close");
+	}
 	return error;
 }
 
