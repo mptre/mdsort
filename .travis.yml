@@ -78,6 +78,15 @@ matrix:
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2'
 
+    - arch: arm64
+      os: linux
+      compiler: gcc
+      env:
+        - T=arm64-linux-gcc
+        - CFLAGS=-Werror
+        - CPPFLAGS=-D_FORTIFY_SOURCE=2
+        - DEBUG='-g -O2'
+
 script:
   - |
     (
