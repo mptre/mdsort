@@ -191,7 +191,8 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 			/*
 			 * Rename failed since source and destination reside on
 			 * different file systems. Fallback to writing a new
-			 * message.
+			 * message. The file descriptor will unconditionally be
+			 * closed by message_writeat().
 			 */
 			error = message_writeat(msg, fd,
 			    src->md_flags & MAILDIR_SYNC);
