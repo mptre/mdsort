@@ -166,8 +166,10 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 		case EXPR_TYPE_MOVE:
 			/*
 			 * Move message and update the source maildir and
-			 * message path. This is of importance if a following
-			 * action requires a source maildir.
+			 * message path, assuming the destination maildir is
+			 * different from the source maildir. This is of
+			 * importance if a following action requires a source
+			 * maildir.
 			 */
 			maildir_close(dst);
 			dst = maildir_open(mh->mh_path, 0, env);
@@ -182,7 +184,8 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 				(void)strlcpy(path, tmp, sizeof(path));
 				msg->me_path = path;
 			}
-			src = dst;
+			if (maildir_cmp(src, dst))
+				src = dst;
 			break;
 
 		case EXPR_TYPE_DISCARD:

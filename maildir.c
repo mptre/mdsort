@@ -14,9 +14,18 @@
 
 #define FLAGS_MAX	64
 
+struct blacklist {
+	uint64_t *bl_inodes;
+	size_t bl_nmemb;
+	size_t bl_size;
+};
+
+static int maildir_blacklist(struct maildir *, const struct maildir *,
+    const char *);
 static int maildir_fd(const struct maildir *);
 static int maildir_genname(const struct maildir *, const char *,
     char *, size_t, const struct environment *);
+static int maildir_ignore(const struct maildir *, const char *);
 static const char *maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
@@ -109,6 +118,9 @@ maildir_close(struct maildir *md)
 
 	if (md->md_dir != NULL)
 		closedir(md->md_dir);
+	if (md->md_blacklist != NULL)
+		free(md->md_blacklist->bl_inodes);
+	free(md->md_blacklist);
 	free(md);
 }
 
@@ -149,7 +161,7 @@ maildir_walk(struct maildir *md, struct maildir_entry *me)
  * Returns zero on success, non-zero otherwise.
  */
 int
-maildir_move(const struct maildir *src, const struct maildir *dst,
+maildir_move(struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env)
 {
@@ -210,6 +222,8 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 	}
 	if (fd != -1)
 		close(fd);
+	if (error == 0)
+		error = maildir_blacklist(src, dst, dstname);
 
 	return error;
 }
@@ -241,7 +255,7 @@ maildir_unlink(const struct maildir *md, const struct message *msg)
  * one.
  */
 int
-maildir_write(const struct maildir *src, const struct maildir *dst,
+maildir_write(struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env)
 {
@@ -257,8 +271,24 @@ maildir_write(const struct maildir *src, const struct maildir *dst,
 	error = message_writeat(msg, fd, src->md_flags & MAILDIR_SYNC);
 	if (error)
 		(void)unlinkat(maildir_fd(dst), buf, 0);
+	else
+		error = maildir_blacklist(src, dst, buf);
 
 	return error;
+}
+
+/*
+ * Returns 0 if the two given maildirs are equal.
+ */
+int
+maildir_cmp(const struct maildir *md1, const struct maildir *md2)
+{
+
+	if (md1->md_subdir > md2->md_subdir)
+		return 1;
+	if (md1->md_subdir < md2->md_subdir)
+		return -1;
+	return strcmp(md1->md_path, md2->md_path);
 }
 
 static const char *
@@ -293,6 +323,45 @@ maildir_opendir(struct maildir *md, const char *path)
 		warn("opendir: %s", path);
 		return 1;
 	}
+	return 0;
+}
+
+/*
+ * When moving a message to the maildir currently being traversed, the same
+ * message is blacklisted in order to not operate on it more than once.
+ */
+static int
+maildir_blacklist(struct maildir *src, const struct maildir *dst,
+    const char *path)
+{
+	struct stat sb;
+	struct blacklist *bl;
+
+	if (maildir_cmp(src, dst))
+		return 0;
+
+	if (src->md_blacklist == NULL) {
+		src->md_blacklist = calloc(1, sizeof(*src->md_blacklist));
+		if (src->md_blacklist == NULL)
+			err(1, NULL);
+	}
+	bl = src->md_blacklist;
+
+	if (bl->bl_nmemb + 1 >= bl->bl_size) {
+		bl->bl_size += 16;
+		bl->bl_inodes = reallocarray(bl->bl_inodes, bl->bl_size,
+		    sizeof(*bl->bl_inodes));
+		if (bl->bl_inodes == NULL)
+			err(1, NULL);
+	}
+
+	if (fstatat(maildir_fd(src), path, &sb, 0) == -1) {
+		warn("fstatat: %s", path);
+		return 1;
+	}
+
+	bl->bl_inodes[bl->bl_nmemb] = (uint64_t)sb.st_ino;
+	bl->bl_nmemb++;
 	return 0;
 }
 
@@ -339,6 +408,30 @@ maildir_genname(const struct maildir *dst, const char *flags,
 		}
 		return fd;
 	}
+}
+
+/*
+ * Returns non-zero if the given path is blacklisted in the given maildir.
+ */
+static int
+maildir_ignore(const struct maildir *md, const char *path)
+{
+	struct stat sb;
+	uint64_t ino;
+	size_t i;
+
+	if (md->md_blacklist == NULL)
+		return 0;
+	if (fstatat(maildir_fd(md), path, &sb, AT_SYMLINK_NOFOLLOW) == -1)
+		return 0;
+	ino = sb.st_ino;
+
+	for (i = 0; i < md->md_blacklist->bl_nmemb; i++) {
+		if (ino == md->md_blacklist->bl_inodes[i])
+			return 1;
+	}
+
+	return 0;
 }
 
 static const char *
@@ -447,6 +540,7 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 			}
 			return 0;
 		}
+
 		switch (ent->d_type) {
 		case DT_UNKNOWN:
 			/*
@@ -459,6 +553,12 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 		case DT_REG:
 			break;
 		default:
+			continue;
+		}
+
+		if (maildir_ignore(md, ent->d_name)) {
+			log_debug("%s: %s/%s: ignoring blacklisted message\n",
+			    __func__, md->md_buf, ent->d_name);
 			continue;
 		}
 

@@ -53,6 +53,7 @@ struct maildir {
 	char md_buf[PATH_MAX];
 	char md_path[PATH_MAX];
 	DIR *md_dir;
+	struct blacklist *md_blacklist;
 	enum subdir md_subdir;
 	unsigned int md_flags;
 #define MAILDIR_WALK	0x00000001u
@@ -73,15 +74,17 @@ void maildir_close(struct maildir *md);
 
 int maildir_walk(struct maildir *md, struct maildir_entry *me);
 
-int maildir_move(const struct maildir *src, const struct maildir *dst,
+int maildir_move(struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env);
 
 int maildir_unlink(const struct maildir *md, const struct message *msg);
 
-int maildir_write(const struct maildir *src, const struct maildir *dst,
+int maildir_write(struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env);
+
+int maildir_cmp(const struct maildir *md1, const struct maildir *md2);
 
 struct message_flags {
 	unsigned int mf_flags[2];	/* 0: uppercase, 1: lowercase */
