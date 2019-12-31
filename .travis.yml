@@ -3,44 +3,49 @@ dist: xenial
 language: c
 matrix:
   include:
-    - os: linux
+    - arch: amd64
+      os: linux
       compiler: clang
       env:
-        - T=linux-clang-asan
+        - T=amd64-linux-clang-asan
         - CFLAGS=-Werror
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
 
-    - os: linux
+    - arch: amd64
+      os: linux
       compiler: clang
       env:
-        - T=linux-clang-ubsan
+        - T=amd64-linux-clang-ubsan
         - CFLAGS=-Werror
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=undefined,unsigned-integer-overflow -fno-sanitize-recover=all'
 
-    - os: linux
+    - arch: amd64
+      os: linux
       compiler: gcc
       env:
-        - T=linux-gcc-asan
+        - T=amd64-linux-gcc-asan
         - CFLAGS=-Werror
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
 
-    - os: linux
+    - arch: amd64
+      os: linux
       compiler: gcc
       env:
-        - T=linux-gcc-ubsan
+        - T=amd64-linux-gcc-ubsan
         - CFLAGS=-Werror
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=undefined -fno-sanitize-recover=all'
 
-    - os: linux
+    - arch: amd64
+      os: linux
       compiler: musl-gcc
       env:
-        - T=linux-musl
+        - T=amd64-linux-musl
         - CFLAGS=-Werror
         - TESTFLAGS='-T tilde'
       addons:
@@ -48,10 +53,11 @@ matrix:
           packages:
             - musl-tools
 
-    - os: linux
+    - arch: amd64
+      os: linux
       compiler: clang
       env:
-        - T=linux-valgrind
+        - T=amd64-linux-valgrind
         - CFLAGS=-Werror
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2'
@@ -63,10 +69,11 @@ matrix:
           packages:
             - valgrind
 
-    - os: osx
+    - arch: amd64
+      os: osx
       compiler: clang
       env:
-        - T=macos-clang
+        - T=amd64-macos-clang
         - CFLAGS=-Werror
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2'
