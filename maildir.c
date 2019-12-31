@@ -158,7 +158,7 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
 	};
-	struct stat st;
+	struct stat sb;
 	const char *dstname, *srcname;
 	int dstfd, fd, srcfd;
 	int doutime = 0;
@@ -170,8 +170,8 @@ maildir_move(const struct maildir *src, const struct maildir *dst,
 		return 1;
 	}
 	srcfd = maildir_fd(src);
-	if (fstatat(srcfd, srcname, &st, 0) != -1) {
-		times[1] = st.st_mtim;
+	if (fstatat(srcfd, srcname, &sb, 0) != -1) {
+		times[1] = sb.st_mtim;
 		doutime = 1;
 	} else {
 		warn("fstatat");
