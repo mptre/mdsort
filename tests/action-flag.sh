@@ -132,3 +132,18 @@ if testcase "flag as new when seen flag is already present"; then
 	refute_empty "src/new"
 	refute_find "src/new" "*2,S"
 fi
+
+# Try to make new messages appear in the maildir currently being traversed.
+if testcase "flag as new when already new"; then
+	mkmd "src"
+	mkmsg "src/new"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all flag new
+	}
+	EOF
+	mdsort
+	assert_empty "src/cur"
+	refute_empty "src/new"
+fi
