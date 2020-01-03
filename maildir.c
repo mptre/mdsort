@@ -411,7 +411,13 @@ maildir_genname(const struct maildir *dst, const char *flags,
 }
 
 /*
- * Returns non-zero if the given path is blacklisted in the given maildir.
+ * Determine if the given path is blacklisted. Returns one of the following:
+ *
+ *     1    The path is blacklisted.
+ *
+ *     0    The path is not blacklisted.
+ *
+ *     -1   An error occurred.
  */
 static int
 maildir_ignore(const struct maildir *md, const char *path)
@@ -422,8 +428,11 @@ maildir_ignore(const struct maildir *md, const char *path)
 
 	if (md->md_blacklist == NULL)
 		return 0;
-	if (fstatat(maildir_fd(md), path, &sb, AT_SYMLINK_NOFOLLOW) == -1)
-		return 0;
+
+	if (fstatat(maildir_fd(md), path, &sb, AT_SYMLINK_NOFOLLOW) == -1) {
+		warn("fstatat: %s", path);
+		return -1;
+	}
 	ino = sb.st_ino;
 
 	for (i = 0; i < md->md_blacklist->bl_nmemb; i++) {
@@ -556,7 +565,10 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 			continue;
 		}
 
-		if (maildir_ignore(md, ent->d_name)) {
+		switch (maildir_ignore(md, ent->d_name)) {
+		case -1:
+			return -1;
+		case 1:
 			log_debug("%s: %s/%s: ignoring blacklisted message\n",
 			    __func__, md->md_buf, ent->d_name);
 			continue;
