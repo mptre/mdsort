@@ -575,6 +575,7 @@ isfile(int dirfd, const char *path)
 {
 	struct stat sb;
 
+	/* Best effort, ignore errors. */
 	if (fstatat(dirfd, path, &sb, AT_SYMLINK_NOFOLLOW) == -1)
 		return 0;
 
