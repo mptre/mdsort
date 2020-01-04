@@ -1,3 +1,23 @@
+# v5.0.0 - 2020-01-04
+
+## Changes
+
+- Remove undocumented and implicit duplicate label handling.
+  (a92ce87)
+  (Anton Lindqvist)
+
+## Bug fixes
+
+- If either the `new` or `cur` directory was missing from a maildir, `mdsort`
+  would exit zero as opposed of non-zero.
+  (f68df64)
+  (Anton Lindqvist)
+
+- Blacklist messages moved to the maildir currently being traversed in order to
+  not operate on the same message more than once.
+  (0cb06ee)
+  (Anton Lindqvist)
+
 # v4.3.0 - 2019-12-14
 
 ## News
