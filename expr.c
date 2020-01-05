@@ -848,7 +848,7 @@ append(char **buf, size_t *bufsiz, size_t *buflen, const char *str)
 	while (*buflen + len >= *bufsiz) {
 		newsiz = 2 * *bufsiz;
 		if (newsiz == 0)
-			newsiz = BUFSIZ;
+			newsiz = 128;
 		*buf = realloc(*buf, newsiz);
 		if (*buf == NULL)
 			err(1, NULL);
