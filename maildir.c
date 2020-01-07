@@ -382,8 +382,8 @@ maildir_genname(const struct maildir *dst, const char *flags,
     char *buf, size_t bufsiz, const struct environment *env)
 {
 	long long ts;
+	unsigned int count;
 	int fd, n;
-	int count;
 
 	ts = env->ev_now;
 	count = arc4random() % 128;
