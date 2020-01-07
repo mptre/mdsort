@@ -333,9 +333,11 @@ matches_find_interpolate(const struct match_list *ml)
 		if ((ex->ex_flags & EXPR_FLAG_INTERPOLATE) == 0)
 			continue;
 
-		if (ex->ex_re.r_flags & EXPR_PATTERN_FORCE)
+		if (ex->ex_re.r_flags & EXPR_PATTERN_FORCE) {
 			found = mh;
-		else if (found == NULL)
+			break;
+		}
+		if (found == NULL)
 			found = mh;
 	}
 
