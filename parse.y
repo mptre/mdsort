@@ -127,7 +127,7 @@ maildir		: maildir_path maildir_flags exprblock {
 		;
 
 maildir_path	: MAILDIR STRING {
-			  $$ = expandtilde($2, env);
+			$$ = expandtilde($2, env);
 		}
 		| STDIN {
 			const struct config *conf;
