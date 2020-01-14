@@ -761,6 +761,7 @@ yypeek(int want)
 static void
 yyungetc(int c)
 {
+
 	if (c == '\n')
 		lineno--;
 	ungetc(c, fh);
