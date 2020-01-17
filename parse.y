@@ -22,6 +22,7 @@ static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
 static const struct environment *env;
 static FILE *fh;
 static const char *confpath;
+static char *stdinpath;
 static int lineno, parse_errors, pflag;
 
 typedef struct {
@@ -111,7 +112,7 @@ maildir		: maildir_path maildir_flags exprblock {
 			if (parse_errors == 0 && expr_count_actions($3) == 0)
 				yyerror("empty match block");
 
-			if ($1 == NULL)
+			if ($1 == stdinpath)
 				$2 |= MAILDIR_STDIN | MAILDIR_SYNC;
 			else if (expr_count($3, EXPR_TYPE_REJECT) > 0)
 				yyerror("reject cannot be used outside stdin");
@@ -132,7 +133,7 @@ maildir_path	: MAILDIR STRING {
 		| STDIN {
 			const struct config *conf;
 
-			$$ = NULL;
+			$$ = stdinpath;
 			TAILQ_FOREACH(conf, &config, entry)
 				if (conf->maildir.flags & MAILDIR_STDIN)
 					yyerror("stdin already defined");
