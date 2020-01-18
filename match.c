@@ -32,14 +32,7 @@ matches_append(struct match_list *ml, struct match *mh,
 	const char *p;
 	size_t siz;
 
-	/*
-	 * A message only needs to moved or flagged once since both actions
-	 * refer to the same destination maildir.
-	 */
-	if (mh->mh_expr->ex_type == EXPR_TYPE_MOVE ||
-	    mh->mh_expr->ex_type == EXPR_TYPE_FLAG)
-		matches_merge(ml, mh);
-
+	matches_merge(ml, mh);
 	TAILQ_INSERT_TAIL(ml, mh, mh_entry);
 
 	if (msg == NULL)
@@ -354,6 +347,14 @@ static void
 matches_merge(struct match_list *ml, struct match *mh)
 {
 	struct match *dup;
+
+	/*
+	 * A message only needs to moved or flagged once since both actions
+	 * refer to the same destination maildir.
+	 */
+	if (mh->mh_expr->ex_type != EXPR_TYPE_MOVE &&
+	    mh->mh_expr->ex_type != EXPR_TYPE_FLAG)
+		return;
 
 	/*
 	 * Merge consecutive flag actions, the last flag action dictates the
