@@ -147,3 +147,15 @@ if testcase "flag as new when already new"; then
 	assert_empty "src/cur"
 	refute_empty "src/new"
 fi
+
+if testcase "redundant flag actions"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all flag new flag !new flag new
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+fi

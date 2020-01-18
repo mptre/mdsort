@@ -184,6 +184,12 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 				(void)strlcpy(path, tmp, sizeof(path));
 				msg->me_path = path;
 			}
+			/*
+			 * The following logic might look fragile as the
+			 * destination maildir is freed above. However, a match
+			 * list can only contain one flag or move action as
+			 * enforced by matches_merge().
+			 */
 			if (maildir_cmp(src, dst))
 				src = dst;
 			break;
@@ -348,6 +354,18 @@ void
 matches_merge(struct match_list *ml, struct match *mh)
 {
 	struct match *dup;
+
+	/*
+	 * Merge consecutive flag actions, the last flag action dictates the
+	 * flag state anyway.
+	 */
+	if (mh->mh_expr->ex_type == EXPR_TYPE_FLAG) {
+		dup = TAILQ_LAST(ml, match_list);
+		if (dup != NULL && dup->mh_expr->ex_type == EXPR_TYPE_FLAG) {
+			matches_remove(ml, dup);
+			return;
+		}
+	}
 
 	dup = matches_find(ml, mh->mh_expr->ex_type == EXPR_TYPE_MOVE ?
 	    EXPR_TYPE_FLAG : EXPR_TYPE_MOVE);
