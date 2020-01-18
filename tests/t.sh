@@ -59,6 +59,9 @@ fail() {
 	echo >>"$NERR"
 
 	_report -f -p FAIL "$@"
+	if [ "$FAST" -eq 1 ]; then
+		exit 1
+	fi
 }
 
 # testcase [-t tag] description
@@ -159,7 +162,7 @@ atexit() {
 }
 
 usage() {
-	echo "usage: sh t.sh [-f filter] [-t tag] file ..." 1>&2
+	echo "usage: sh t.sh [-x] [-f filter] [-t tag] file ..." 1>&2
 	exit 1
 }
 
@@ -172,6 +175,8 @@ NTEST="$(mktemp -t t.sh.XXXXXX)"
 TSHDIR="$(mktemp -d -t t.sh.XXXXXX)"
 trap 'atexit $INCLUDE $EXCLUDE $NERR $NTEST $TSHDIR' EXIT
 
+# Exit on first failure.
+FAST=0
 # Filter mode.
 FILTER=""
 # Test file name.
@@ -181,7 +186,7 @@ TCDESC=""
 # Current test case called report indicator.
 TCREPORT="${TSHDIR}/_tcreport"
 
-while getopts "F:f:t:T:" opt; do
+while getopts "F:f:t:T:x" opt; do
 	case "$opt" in
 	f|t)	FILTER="$opt"
 		echo "$OPTARG" >>"$INCLUDE"
@@ -189,6 +194,7 @@ while getopts "F:f:t:T:" opt; do
 	F|T)	FILTER="$opt"
 		echo "$OPTARG" >>"$EXCLUDE"
 		;;
+	x)	FAST=1;;
 	*)	usage;;
 	esac
 done
