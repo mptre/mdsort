@@ -350,7 +350,7 @@ matches_find_interpolate(const struct match_list *ml)
 	return found;
 }
 
-void
+static void
 matches_merge(struct match_list *ml, struct match *mh)
 {
 	struct match *dup;
