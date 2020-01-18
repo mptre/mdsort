@@ -65,6 +65,7 @@ genstr() {
 mdsort() {
 	local _tmpdir
 	local _args="-f mdsort.conf"
+	local _core="${TSHDIR}/cdump"
 	local _exit1=0
 	local _exit2=0
 	local _input=""
@@ -97,6 +98,16 @@ mdsort() {
 
 	(cd "$TSHDIR" && env "TMPDIR=${_tmpdir}" ${EXEC:-} "$MDSORT" $_args "$@") \
 		>"$_tmp" 2>&1 || _exit2="$?"
+
+	# Find coredump(s) and optionally preserve them.
+	find "$TSHDIR" -name '*core*' >"$_core"
+	if ! cmp -s "$_core" /dev/null; then
+		fail - "found coredump" <"$_core"
+		if [ -n "${COREDUMP}" ]; then
+			cp "$(cat "$_core")" "${COREDUMP}/mdsort.core"
+		fi
+	fi
+
 	if [ "$_exit1" -ne "$_exit2" ]; then
 		fail - "want exit ${_exit1}, got ${_exit2}" <"$_tmp"
 		# Output already displayed, prevent from doing it twice.
