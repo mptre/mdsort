@@ -184,6 +184,7 @@ struct expr {
 #define EXPR_FLAG_INSPECT	0x00000002u
 #define EXPR_FLAG_MATCH		0x00000004u
 #define EXPR_FLAG_INTERPOLATE	0x00000008u
+#define EXPR_FLAG_PATH		0x00000010u
 
 	int (*ex_eval)(struct expr *, struct match_list *, struct message *,
 			const struct environment *);

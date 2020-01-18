@@ -111,11 +111,13 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_MOVE:
 		ex->ex_eval = &expr_eval_move;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH |
+		    EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_FLAG:
 		ex->ex_eval = &expr_eval_flag;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH |
+		    EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_DISCARD:
 		ex->ex_eval = &expr_eval_discard;
@@ -127,7 +129,8 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_LABEL:
 		ex->ex_eval = &expr_eval_label;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH |
+		    EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_PASS:
 		ex->ex_eval = &expr_eval_pass;
@@ -493,11 +496,11 @@ expr_eval_body(struct expr *ex, struct match_list *ml,
 }
 
 static int
-expr_eval_break(struct expr *ex, struct match_list *ml,
-    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+expr_eval_break(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
 {
 
-	if (matches_append(ml, ex->ex_match, NULL))
+	if (matches_append(ml, ex->ex_match, msg))
 		return EXPR_ERROR;
 
 	/*
@@ -571,8 +574,8 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 }
 
 static int
-expr_eval_discard(struct expr *ex, struct match_list *ml,
-    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+expr_eval_discard(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
 {
 	struct match *mh = ex->ex_match;
 	size_t siz;
@@ -583,7 +586,7 @@ expr_eval_discard(struct expr *ex, struct match_list *ml,
 		return EXPR_ERROR;
 	}
 
-	if (matches_append(ml, mh, NULL))
+	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
 
 	return EXPR_MATCH;
@@ -749,11 +752,11 @@ expr_eval_or(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_pass(struct expr *ex, struct match_list *ml,
-    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+expr_eval_pass(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
 {
 
-	if (matches_append(ml, ex->ex_match, NULL))
+	if (matches_append(ml, ex->ex_match, msg))
 		return EXPR_ERROR;
 
 	/*
@@ -764,8 +767,8 @@ expr_eval_pass(struct expr *ex, struct match_list *ml,
 }
 
 static int
-expr_eval_reject(struct expr *ex, struct match_list *ml,
-    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+expr_eval_reject(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
 {
 	struct match *mh = ex->ex_match;
 	size_t siz;
@@ -776,7 +779,7 @@ expr_eval_reject(struct expr *ex, struct match_list *ml,
 		return EXPR_ERROR;
 	}
 
-	if (matches_append(ml, mh, NULL))
+	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
 
 	return EXPR_MATCH;
@@ -829,6 +832,7 @@ expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
 			err(1, NULL);
 	}
 
+	assert((ex->ex_flags & EXPR_FLAG_PATH) == 0);
 	if (matches_append(ml, ex->ex_match, NULL))
 		return EXPR_ERROR;
 

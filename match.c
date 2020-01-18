@@ -21,9 +21,8 @@ static int interpolate(const struct match *, const char *, char **, size_t,
     int);
 
 /*
- * Append the given match to the list. If message is non-NULL, construct the
- * destination maildir path. This is only applicable to actions that either
- * moves or writes a new message.
+ * Append the given match to the list and construct the maildir destination path
+ * if needed.
  */
 int
 matches_append(struct match_list *ml, struct match *mh,
@@ -35,7 +34,7 @@ matches_append(struct match_list *ml, struct match *mh,
 	matches_merge(ml, mh);
 	TAILQ_INSERT_TAIL(ml, mh, mh_entry);
 
-	if (msg == NULL)
+	if ((mh->mh_expr->ex_flags & EXPR_FLAG_PATH) == 0)
 		return 0;
 
 	if (mh->mh_maildir[0] == '\0') {
