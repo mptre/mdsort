@@ -106,8 +106,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 
 		case EXPR_TYPE_LABEL: {
 			const char *str;
-			char *label;
-			size_t len;
+			char *label = NULL;
 
 			str = message_get_header1(msg, "X-Label");
 			if (str == NULL) {
@@ -120,11 +119,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 				 */
 				return 1;
 			}
-			len = strlen(str) + 1;
-			label = malloc(len);
-			if (label == NULL)
-				err(1, NULL);
-			if (interpolate(mi, str, &label, len, 1)) {
+			if (interpolate(mi, str, &label, 0, 1)) {
 				free(label);
 				return 1;
 			}
@@ -430,6 +425,8 @@ bufgrow(char **buf, size_t *bufsiz, size_t buflen, int grow)
 	if (!grow)
 		return 1;
 
+	if (*bufsiz == 0)
+		*bufsiz = 128;
 	*buf = reallocarray(*buf, 2, *bufsiz);
 	if (*buf == NULL)
 		err(1, NULL);
