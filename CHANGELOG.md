@@ -1,3 +1,18 @@
+# v5.1.0 - 2020-01-20
+
+## Bug fixes
+
+- Fix use-after-free.
+  Only triggered by obscure configurations like the following one.
+  (0b5ef03)
+  (Anton Lindqvist)
+
+  ```
+  maildir "src" {
+    match all flag new flag !new flag new
+  }
+  ```
+
 # v5.0.0 - 2020-01-04
 
 ## Changes
