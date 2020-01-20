@@ -122,6 +122,7 @@ The conditions are as follows and may be negated:
 .Bl -tag -width Ds
 .It Xo Op Ic \&!
 .Op Ic attachment
+.Tg body
 .Ic body
 .Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
@@ -134,6 +135,7 @@ is present, evalutes to true if the body of an attachment matches
 .Ar pattern .
 .It Xo Op Ic \&!
 .Op Ic attachment
+.Tg header
 .Ic header Dq Ar name
 .Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
@@ -157,10 +159,12 @@ is present, evalutes to true if any of the headers with
 in an attachment matches
 .Ar pattern .
 .It Xo Op Ic \&!
+.Tg attachment
 .Ic attachment
 .Xc
 Evaluates to true if the message has attachments.
 .It Xo Op Ic \&!
+.Tg date
 .Ic date
 .Op Ar field
 .Ic \&>
@@ -199,14 +203,17 @@ It may be abbreviated in a non-ambiguous way, such as
 or
 .Ic s .
 .It Xo Op Ic \&!
+.Tg all
 .Ic all
 .Xc
 Evaluates to true for any message.
 .It Xo Op Ic \&!
+.Tg new
 .Ic new
 .Xc
 Evaluates to true if the message is not read.
 .It Xo Op Ic \&!
+.Tg old
 .Ic old
 .Xc
 Evaluates to true if the message is old.
