@@ -27,7 +27,7 @@ matrix:
       compiler: gcc
       env:
         - T=amd64-linux-gcc-asan
-        - CFLAGS=-Werror
+        - CFLAGS='-Werror -Wformat-signedness'
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
         - TESTFLAGS='-T leaky'
@@ -37,7 +37,7 @@ matrix:
       compiler: gcc
       env:
         - T=amd64-linux-gcc-ubsan
-        - CFLAGS=-Werror
+        - CFLAGS='-Werror -Wformat-signedness'
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2 -fsanitize=undefined -fno-sanitize-recover=all'
 
@@ -46,7 +46,7 @@ matrix:
       compiler: musl-gcc
       env:
         - T=amd64-linux-musl
-        - CFLAGS=-Werror
+        - CFLAGS='-Werror -Wformat-signedness'
         - TESTFLAGS='-T tilde'
       addons:
         apt:
@@ -83,7 +83,7 @@ matrix:
       compiler: gcc
       env:
         - T=arm64-linux-gcc
-        - CFLAGS=-Werror
+        - CFLAGS='-Werror -Wformat-signedness'
         - CPPFLAGS=-D_FORTIFY_SOURCE=2
         - DEBUG='-g -O2'
 
