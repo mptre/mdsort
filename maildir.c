@@ -389,7 +389,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 	count = arc4random() % 128;
 	for (;;) {
 		count++;
-		n = snprintf(buf, bufsiz, "%lld.%d_%d.%s%s",
+		n = snprintf(buf, bufsiz, "%lld.%d_%u.%s%s",
 		    ts, env->ev_pid, count, env->ev_hostname, flags);
 		if (n < 0 || (size_t)n >= bufsiz) {
 			warnc(ENAMETOOLONG, "%s", __func__);
