@@ -639,6 +639,11 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 	return 0;
 }
 
+/*
+ * Search for the header with the name given by key. Returns the index of the
+ * first matching element in headers. Otherwise, -1 is returned. If the given
+ * header has more than one occurrence, nfound will reflect that.
+ */
 static ssize_t
 searchheader(const struct header *headers, size_t nmemb, const char *key,
     size_t *nfound)
