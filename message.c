@@ -645,8 +645,6 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 {
 	struct header needle;
 	ssize_t hi, mi, lo;
-	size_t i;
-	int cmp;
 
 	*nfound = 0;
 
@@ -658,18 +656,23 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 	lo = 0;
 	hi = nmemb - 1;
 	while (lo <= hi) {
+		int cmp;
+
 		mi = lo + (hi - lo)/2;
 		cmp = cmpheaderkey(&needle, headers + mi);
 		if (cmp == 0) {
-			/* Move backwards to the first matching element. */
-			for (; mi > 0; mi--)
-				if (cmpheaderkey(&needle, headers + mi - 1))
+			size_t beg, end;
+
+			/* Find the first matching header. */
+			for (beg = mi; beg > 0; beg--)
+				if (cmpheaderkey(&needle, headers + beg - 1))
 					break;
-			for (i = mi; i < nmemb; i++)
-				if (cmpheaderkey(&needle, headers + i))
+			/* Find the header after the last matching one. */
+			for (end = mi + 1; end < nmemb; end++)
+				if (cmpheaderkey(&needle, headers + end))
 					break;
-			*nfound = i - mi;
-			return mi;
+			*nfound = end - beg;
+			return beg;
 		}
 		if (cmp > 0)
 			lo = mi + 1;
