@@ -557,11 +557,14 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 			 * type and stat(2) must instead be used.
 			 */
 			if (!isfile(maildir_fd(md), ent->d_name))
-				continue;
+				goto unknown;
 			break;
 		case DT_REG:
 			break;
 		default:
+unknown:
+			log_debug("%s: %s/%s: unknown file type %d\n",
+			    __func__, md->md_buf, ent->d_name, ent->d_type);
 			continue;
 		}
 
