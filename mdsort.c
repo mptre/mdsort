@@ -43,7 +43,6 @@ main(int argc, char *argv[])
 	int c, w;
 	int error = 0;
 	int reject = 0;
-	int verbose = 0;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
 		err(1, "pledge");
@@ -63,7 +62,7 @@ main(int argc, char *argv[])
 			env.ev_options |= OPTION_SYNTAX;
 			break;
 		case 'v':
-			verbose++;
+			log_level++;
 			break;
 		default:
 			usage();
@@ -79,9 +78,8 @@ main(int argc, char *argv[])
 	}
 	if (argc > 0)
 		usage();
-	if ((env.ev_options & OPTION_DRYRUN) && verbose < 1)
-		verbose = 1;
-	log_init(verbose);
+	if ((env.ev_options & OPTION_DRYRUN) && log_level < 1)
+		log_level = 1;
 
 	/* Extract mandatory data from the current environment. */
 	readenv(&env);

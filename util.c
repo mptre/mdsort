@@ -8,7 +8,7 @@
 
 #include "extern.h"
 
-static int verbose;
+int log_level = 0;
 
 /*
  * Allocate a list of strings.
@@ -147,19 +147,10 @@ nspaces(const char *str)
 }
 
 void
-log_init(int v)
-{
-
-	verbose = v;
-}
-
-void
-log_debug(const char *fmt, ...)
+_log_debug(const char *fmt, ...)
 {
 	va_list ap;
 
-	if (verbose < 2)
-		return;
 	va_start(ap, fmt);
 	vfprintf(stdout, fmt, ap);
 	va_end(ap);
@@ -167,12 +158,10 @@ log_debug(const char *fmt, ...)
 }
 
 void
-log_info(const char *fmt, ...)
+_log_info(const char *fmt, ...)
 {
 	va_list ap;
 
-	if (verbose < 1)
-		return;
 	va_start(ap, fmt);
 	vfprintf(stdout, fmt, ap);
 	va_end(ap);

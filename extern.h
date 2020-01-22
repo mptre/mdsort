@@ -326,10 +326,20 @@ char *pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end);
 
 size_t nspaces(const char *str);
 
-void log_init(int v);
+extern int log_level;
 
-void log_debug(const char *fmt, ...)
+#define log_info(fmt, ...) do {						\
+	if (log_level >= 1)						\
+		_log_info((fmt), __VA_ARGS__);				\
+} while (0)
+
+#define log_debug(fmt, ...) do {					\
+	if (log_level >= 2)						\
+		_log_debug((fmt), __VA_ARGS__);				\
+} while (0)
+
+void _log_debug(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 
-void log_info(const char *fmt, ...)
+void _log_info(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));
