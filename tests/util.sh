@@ -70,6 +70,7 @@ mdsort() {
 	local _exit2=0
 	local _input=""
 	local _output=1
+	local _sig=""
 	local _tmp="${TSHDIR}/mdsort"
 
 	while [ $# -gt 0 ]; do
@@ -109,7 +110,10 @@ mdsort() {
 	fi
 
 	if [ "$_exit1" -ne "$_exit2" ]; then
-		fail - "want exit ${_exit1}, got ${_exit2}" <"$_tmp"
+		if [ "$_exit2" -gt 128 ]; then
+			_sig=" (signal $((_exit2 - 128)))"
+		fi
+		fail - "want exit ${_exit1}, got ${_exit2}${_sig}" <"$_tmp"
 		# Output already displayed, prevent from doing it twice.
 		_output=0
 	fi
