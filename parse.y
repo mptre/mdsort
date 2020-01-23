@@ -201,10 +201,7 @@ expr1		: expr1 AND expr1 {
 		;
 
 expr2		: expractions {
-			if ($$ == NULL)
-				yyerror("missing action");
-			else
-				expr_validate($$);
+			expr_validate($$);
 		}
 		| exprblock {
 			$$ = $1;
@@ -714,6 +711,11 @@ static void
 expr_validate(const struct expr *ex)
 {
 	int nactions, nflag, nlabel, npass;
+
+	if (ex == NULL) {
+		yyerror("missing action");
+		return;
+	}
 
 	yypushl(ex->ex_lno);
 
