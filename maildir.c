@@ -624,7 +624,7 @@ parsesubdir(const char *path, enum subdir *subdir)
 	char buf[NAME_MAX + 1];
 
 	if (pathslice(path, buf, sizeof(buf), -1, -1) == NULL) {
-		/* nothing */;
+		/* nothing */
 	} else if (strcmp(buf, "new") == 0) {
 		*subdir = SUBDIR_NEW;
 		return 0;
