@@ -468,6 +468,8 @@ interpolate(const struct match *mh, const char *str, char **buf, size_t bufsiz,
 			goto toolong;
 		(*buf)[buflen++] = str[i++];
 	}
+	if (bufgrow(buf, &bufsiz, buflen, grow))
+		goto toolong;
 	(*buf)[buflen] = '\0';
 
 	return 0;
