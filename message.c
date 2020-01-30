@@ -123,7 +123,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 	ssize_t n;
 	size_t msglen = 0;
 	size_t msgsize = 8192;
-	int fd = -1;
+	int fd;
 
 	fd = openat(dirfd, path, O_RDONLY | O_CLOEXEC);
 	if (fd == -1) {
