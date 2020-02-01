@@ -1,3 +1,25 @@
+# v5.2.0 - 2020-02-01
+
+## Bug fixes
+
+- Reject configurations consisting of only a `pass` action which is a NOP
+  anyway, see example below.
+  Performing a dry run would cause an assertion to trigger.
+  (2ea995e)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    match header "From" /example/ pass
+  }
+  ```
+
+- Fix potential write of out bounds.
+  A path or label constructed using interpolation could cause a heap write out
+  of bounds.
+  (115abfc)
+  (Anton Lindqvist)
+
 # v5.1.0 - 2020-01-20
 
 ## Bug fixes
