@@ -4,12 +4,14 @@ if testcase "conf"; then
 		match all pass pass
 		match all move "dst" pass
 		match all pass move "dst"
+		match all pass
 	}
 	EOF
 	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: pass cannot be combined with another action
 	mdsort.conf:3: pass cannot be combined with another action
 	mdsort.conf:4: pass cannot be combined with another action
+	mdsort.conf:5: pass must be followed by another match
 	EOF
 fi
 

@@ -721,23 +721,29 @@ expr_validate(const struct expr *ex)
 		yyerror("move action already defined");
 
 	nactions = expr_count_actions(ex);
-	if (nactions <= 1)
+	if (nactions == 0)
 		goto out;
-
-	if (expr_count(ex, EXPR_TYPE_BREAK) > 0)
-		yyerror("break cannot be combined with another action");
-	if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
-		yyerror("discard cannot be combined with another action");
-	if (expr_count(ex, EXPR_TYPE_REJECT) > 0)
-		yyerror("reject cannot be combined with another action");
+	if (nactions > 1) {
+		if (expr_count(ex, EXPR_TYPE_BREAK) > 0)
+			yyerror("break cannot be combined with another action");
+		if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
+			yyerror("discard cannot be combined with another "
+			    "action");
+		if (expr_count(ex, EXPR_TYPE_REJECT) > 0)
+			yyerror("reject cannot be combined with another "
+			    "action");
+	}
 
 	npass = expr_count(ex, EXPR_TYPE_PASS);
 	if (npass == 0)
 		goto out;
+	/* Pass can only be used in conjuction with flag and label. */
 	nflag = expr_count(ex, EXPR_TYPE_FLAG);
 	nlabel = expr_count(ex, EXPR_TYPE_LABEL);
 	if (nactions - nflag - nlabel - 1 > 0)
 		yyerror("pass cannot be combined with another action");
+	else if (nactions == 1 && npass == 1)
+		yyerror("pass must be followed by another match");
 
 out:
 	yypopl();
