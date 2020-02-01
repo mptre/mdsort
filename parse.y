@@ -203,6 +203,8 @@ expr1		: expr1 AND expr1 {
 expr2		: expractions {
 			if ($$ == NULL)
 				yyerror("missing action");
+			else
+				expr_validate($$);
 		}
 		| exprblock {
 			$$ = $1;
@@ -259,7 +261,6 @@ expractions	: /* empty */ {
 				$$ = $2;
 			} else {
 				$$ = expr_alloc(EXPR_TYPE_AND, lineno, $1, $2);
-				expr_validate($$);
 			}
 		}
 		;
