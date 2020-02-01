@@ -580,6 +580,7 @@ expr_eval_discard(struct expr *ex, struct match_list *ml, struct message *msg,
 	struct match *mh = ex->ex_match;
 	size_t siz;
 
+	/* Populate the path in case of a dry run. */
 	siz = sizeof(mh->mh_path);
 	if (strlcpy(mh->mh_path, "<discard>", siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
@@ -773,6 +774,7 @@ expr_eval_reject(struct expr *ex, struct match_list *ml, struct message *msg,
 	struct match *mh = ex->ex_match;
 	size_t siz;
 
+	/* Populate the path in case of a dry run. */
 	siz = sizeof(mh->mh_path);
 	if (strlcpy(mh->mh_path, "<reject>", siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
