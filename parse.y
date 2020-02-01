@@ -2,6 +2,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdarg.h>
@@ -18,12 +19,15 @@ static int yylex(void);
 static int yypeek(int);
 static void yyungetc(int);
 
+static void yypushl(int);
+static void yypopl(void);
+
 static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
 static const struct environment *env;
 static FILE *fh;
 static const char *confpath;
 static char *stdinpath;
-static int lineno, parse_errors, pflag;
+static int lineno, lineno_save, parse_errors, pflag;
 
 typedef struct {
 	union {
@@ -410,6 +414,7 @@ config_parse(const char *path, const struct environment *envp)
 	env = envp;
 
 	lineno = 1;
+	lineno_save = -1;
 	yyparse();
 	fclose(fh);
 	if (parse_errors > 0) {
@@ -707,14 +712,17 @@ expandtilde(char *str, const struct environment *env)
 static void
 expr_validate(const struct expr *ex)
 {
-	int nactions, nflag, nlabel;
+	int nactions, nflag, nlabel, npass;
+
+	yypushl(ex->ex_lno);
 
 	if (expr_count(ex, EXPR_TYPE_MOVE) > 1)
 		yyerror("move action already defined");
 
 	nactions = expr_count_actions(ex);
 	if (nactions <= 1)
-		return;
+		goto out;
+
 	if (expr_count(ex, EXPR_TYPE_BREAK) > 0)
 		yyerror("break cannot be combined with another action");
 	if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
@@ -722,12 +730,16 @@ expr_validate(const struct expr *ex)
 	if (expr_count(ex, EXPR_TYPE_REJECT) > 0)
 		yyerror("reject cannot be combined with another action");
 
-	if (expr_count(ex, EXPR_TYPE_PASS) == 0)
-		return;
+	npass = expr_count(ex, EXPR_TYPE_PASS);
+	if (npass == 0)
+		goto out;
 	nflag = expr_count(ex, EXPR_TYPE_FLAG);
 	nlabel = expr_count(ex, EXPR_TYPE_LABEL);
 	if (nactions - nflag - nlabel - 1 > 0)
 		yyerror("pass cannot be combined with another action");
+
+out:
+	yypopl();
 }
 
 static int
@@ -766,4 +778,26 @@ yyungetc(int c)
 	if (c == '\n')
 		lineno--;
 	ungetc(c, fh);
+}
+
+/*
+ * Use the given line number in subsequent calls to yyerror(). Must be followed
+ * by a call to yypopl() in order to restore the previous line number.
+ */
+static void
+yypushl(int lno)
+{
+	assert(lineno_save == -1);
+	lineno_save = yylval.lineno;
+	yylval.lineno = lno;
+}
+
+/*
+ * Restore previous line number.
+ */
+static void
+yypopl(void)
+{
+	yylval.lineno = lineno_save;
+	lineno_save = -1;
 }
