@@ -44,7 +44,7 @@
 
 #include "config.h"
 
-int unused;
+extern int unused;
 
 #ifndef HAVE_B64_PTON
 
