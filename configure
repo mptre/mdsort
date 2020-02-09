@@ -8,8 +8,8 @@ atexit() {
 	# Dump contents of generated files to config.log.
 	exec 1>>config.log 2>&1
 	set -x
-	cat config.h
-	cat Makefile.inc
+	[ -e config.h ] && cat config.h
+	[ -e Makefile.inc ] && cat Makefile.inc
 	rm -f "$@"
 	[ $err -ne 0 ] && fatal
 	exit 0
