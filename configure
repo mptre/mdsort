@@ -9,7 +9,7 @@ atexit() {
 	exec 1>>config.log 2>&1
 	set -x
 	[ -e config.h ] && cat config.h
-	[ -e Makefile.inc ] && cat Makefile.inc
+	[ -e config.mk ] && cat config.mk
 	rm -f "$@"
 	[ $err -ne 0 ] && fatal
 	exit 0
@@ -361,8 +361,8 @@ fi
 	printf 'void warnc(int code, const char *fmt, ...)\n'
 	printf '\t__attribute__((__format__ (printf, 2, 3)));\n'; }
 
-# Redirect stdout to Makefile.inc.
-exec 1>Makefile.inc
+# Redirect stdout to config.mk.
+exec 1>config.mk
 
 # Use echo to normalize whitespace.
 cat <<EOF

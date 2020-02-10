@@ -1,4 +1,4 @@
-include ${.CURDIR}/Makefile.inc
+include ${.CURDIR}/config.mk
 
 VERSION=	5.2.0
 
@@ -98,8 +98,8 @@ dist:
 .PHONY: dist
 
 distclean: clean
-	rm -f ${.CURDIR}/Makefile.inc ${.CURDIR}/config.h \
-		${.CURDIR}/config.log ${.CURDIR}/${PROG}-${VERSION}.tar.gz \
+	rm -f ${.CURDIR}/config.h ${.CURDIR}/config.log ${.CURDIR}/config.mk \
+		${.CURDIR}/${PROG}-${VERSION}.tar.gz \
 		${.CURDIR}/${PROG}-${VERSION}.sha256
 .PHONY: distclean
 
