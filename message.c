@@ -1,5 +1,6 @@
 #include "config.h"
 
+/* b64_pton() */
 #include <netinet/in.h>
 #include <resolv.h>
 
