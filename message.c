@@ -251,7 +251,10 @@ out:
 	 * According to POSIX, fclose(3) must close the underlying file
 	 * descriptor.
 	 */
-	fclose(fh);
+	if (fclose(fh) == EOF && dosync) {
+		warn("fclose");
+		error = 1;
+	}
 
 	return error;
 }
