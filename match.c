@@ -167,10 +167,12 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			if (maildir_move(src, dst, msg,
 				    tmp, sizeof(tmp), env)) {
 				error = 1;
-			} else {
-				(void)strlcpy(path, tmp, sizeof(path));
-				msg->me_path = path;
+				break;
 			}
+
+			(void)strlcpy(path, tmp, sizeof(path));
+			msg->me_path = path;
+
 			/*
 			 * The following logic might look fragile as the
 			 * destination maildir is freed above. However, a match
