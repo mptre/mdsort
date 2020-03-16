@@ -16,8 +16,7 @@ if testcase "conf"; then
 fi
 
 if testcase "basic"; then
-	mkmd "src"
-	mkmd "dst"
+	mkmd "src" "dst"
 	mkmsg "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
@@ -45,18 +44,18 @@ if testcase "last match"; then
 fi
 
 if testcase "nested block"; then
-	mkmd "src"
+	mkmd "src" "dst"
 	mkmsg "src/cur"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match all {
 			match all flag new pass
-			match header "Subject" /nein/ move "junk"
+			match all move "dst"
 		}
-		match all move "dst"
+		match all move "fallback"
 	}
 	EOF
 	mdsort
 	assert_empty "src/cur"
-	refute_empty "src/new"
+	refute_empty "dst/new"
 fi
