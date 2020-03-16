@@ -268,13 +268,6 @@ matches_find(struct match_list *ml, enum expr_type type)
 }
 
 void
-matches_remove(struct match_list *ml, struct match *mh)
-{
-
-	TAILQ_REMOVE(ml, mh, mh_entry);
-}
-
-void
 match_copy(struct match *mh, const char *str, const regmatch_t *off,
     size_t nmemb)
 {
@@ -355,7 +348,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 	if (mh->mh_expr->ex_type == EXPR_TYPE_FLAG) {
 		dup = TAILQ_LAST(ml, match_list);
 		if (dup != NULL && dup->mh_expr->ex_type == EXPR_TYPE_FLAG) {
-			matches_remove(ml, dup);
+			TAILQ_REMOVE(ml, dup, mh_entry);
 			return;
 		}
 	}
@@ -368,7 +361,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 	    EXPR_TYPE_FLAG : EXPR_TYPE_MOVE);
 	if (dup == NULL)
 		return;
-	matches_remove(ml, dup);
+	TAILQ_REMOVE(ml, dup, mh_entry);
 
 	if (mh->mh_expr->ex_type == EXPR_TYPE_MOVE) {
 		/* Copy subdir from flag action. */

@@ -460,7 +460,6 @@ static int
 expr_eval_block(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	struct match *mh;
 	int e;
 
 	e = expr_eval(ex->ex_lhs, ml, msg, env);
@@ -472,11 +471,8 @@ expr_eval_block(struct expr *ex, struct match_list *ml,
 		return EXPR_NOMATCH; /* break, continue evaluation */
 	}
 
-	mh = matches_find(ml, EXPR_TYPE_PASS);
-	if (mh != NULL) {
-		matches_remove(ml, mh);
+	if (matches_find(ml, EXPR_TYPE_PASS) != NULL)
 		return EXPR_MATCH; /* pass, stop evaluation */
-	}
 
 	return e;
 }
