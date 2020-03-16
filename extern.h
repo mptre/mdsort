@@ -282,9 +282,9 @@ void match_reset(struct match *mh);
 
 struct match *matches_find(struct match_list *ml, enum expr_type type);
 
-char *time_format(time_t tim, char *buf, size_t bufsiz);
-
 void matches_remove(struct match_list *ml, struct match *mh);
+
+char *time_format(time_t tim, char *buf, size_t bufsiz);
 
 int time_parse(const char *str, time_t *res, const struct environment *env);
 
