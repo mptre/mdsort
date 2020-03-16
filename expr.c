@@ -761,8 +761,10 @@ expr_eval_pass(struct expr *ex, struct match_list *ml, struct message *msg,
 		return EXPR_ERROR;
 
 	/*
-	 * Return no match in order to continue evaluation. The return value is
-	 * later inverted by expr_eval_block().
+	 * Return no match in order stop evaluation and move on to the next
+	 * expression within the same block. The return value is later inverted
+	 * by expr_eval_block() in order to not continue evaluation outside of
+	 * the current block.
 	 */
 	return EXPR_NOMATCH;
 }
