@@ -1,3 +1,17 @@
+# v5.2.1 - 2020-03-17
+
+## Bug fixes
+
+- Correct dangling `pass` action logic.
+  (d410dcb)
+  (Anton Lindqvist)
+
+## News
+
+- Rename `Makefile.inc` to `config.mk`.
+  (2346012)
+  (Anton Lindqvist)
+
 # v5.2.0 - 2020-02-01
 
 ## Bug fixes
