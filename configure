@@ -137,6 +137,10 @@ check_queue() {
 	compile <<-EOF
 	#include <sys/queue.h>
 
+	#if !defined(TAILQ_FOREACH_SAFE)
+	#error "TAILQ_FOREACH_SAFE not present"
+	#endif
+
 	int main(void) {
 		return 0;
 	}
