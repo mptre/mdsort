@@ -11,7 +11,6 @@ if testcase "conf"; then
 	mdsort.conf:2: pass cannot be combined with another action
 	mdsort.conf:3: pass cannot be combined with another action
 	mdsort.conf:4: pass cannot be combined with another action
-	mdsort.conf:5: pass must be followed by another match
 	EOF
 fi
 
@@ -58,4 +57,19 @@ if testcase "nested block"; then
 	mdsort
 	assert_empty "src/cur"
 	refute_empty "dst/new"
+fi
+
+if testcase "dangling"; then
+	mkmd "src"
+	mkmsg "src/cur" -- "To" "user@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /user/ pass
+		match all {
+			match header "To" /admin/ move "dst"
+		}
+	}
+	EOF
+	mdsort
+	refute_empty "src/cur"
 fi

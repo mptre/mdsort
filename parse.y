@@ -741,8 +741,6 @@ expr_validate(const struct expr *ex)
 		nlabel = expr_count(ex, EXPR_TYPE_LABEL);
 		if (nactions - nflag - nlabel - 1 > 0)
 			yyerror("pass cannot be combined with another action");
-		else if (nactions == 1 && npass == 1)
-			yyerror("pass must be followed by another match");
 	}
 
 	yypopl();

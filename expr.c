@@ -471,8 +471,17 @@ expr_eval_block(struct expr *ex, struct match_list *ml,
 		return EXPR_NOMATCH; /* break, continue evaluation */
 	}
 
-	if (matches_find(ml, EXPR_TYPE_PASS) != NULL)
-		return EXPR_MATCH; /* pass, stop evaluation */
+	if (matches_find(ml, EXPR_TYPE_PASS) != NULL) {
+		/*
+		 * If removing the pass action results in a match list without
+		 * any actions left, we got a pass followed by no effective
+		 * action. Therefore treat it as a no match.
+		 */
+		if (matches_remove(ml, EXPR_TYPE_PASS) > 0)
+			return EXPR_MATCH;
+		else
+			return EXPR_NOMATCH;
+	}
 
 	return e;
 }

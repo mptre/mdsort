@@ -267,6 +267,28 @@ matches_find(struct match_list *ml, enum expr_type type)
 	return NULL;
 }
 
+/*
+ * Remove all expressions with the given type from the match list.
+ * Returns the number of actions left in the match list.
+ */
+int
+matches_remove(struct match_list *ml, enum expr_type type)
+{
+	struct match *mh, *tmp;
+	int n = 0;
+
+	TAILQ_FOREACH_SAFE(mh, ml, mh_entry, tmp) {
+		const struct expr *ex = mh->mh_expr;
+
+		if (ex->ex_type == type)
+			TAILQ_REMOVE(ml, mh, mh_entry);
+		else if (ex->ex_flags & EXPR_FLAG_ACTION)
+			n++;
+	}
+
+	return n;
+}
+
 void
 match_copy(struct match *mh, const char *str, const regmatch_t *off,
     size_t nmemb)
