@@ -1,3 +1,12 @@
+# v5.2.2 - 2020-03-17
+
+## Bug fixes
+
+- Check for presence of `TAILQ_FOREACH_SAFE`.
+  This macro is absent on many Linux distributions.
+  (c447f39)
+  (Anton Lindqvist)
+
 # v5.2.1 - 2020-03-17
 
 ## Bug fixes
