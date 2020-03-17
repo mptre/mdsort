@@ -385,10 +385,10 @@ static int
 expr_eval_and(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
-	int e;
+	int ev;
 
-	if ((e = expr_eval(ex->ex_lhs, ml, msg, env)) != EXPR_MATCH)
-		return e; /* no match or error, short-circuit */
+	if ((ev = expr_eval(ex->ex_lhs, ml, msg, env)) != EXPR_MATCH)
+		return ev; /* no match or error, short-circuit */
 	return expr_eval(ex->ex_rhs, ml, msg, env);
 }
 
@@ -397,15 +397,15 @@ expr_eval_attachment(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     struct message *msg, const struct environment *UNUSED(env))
 {
 	struct message_list *attachments;
-	int e;
+	int ev;
 
 	if (message_get_attachments(msg, &attachments))
 		return EXPR_ERROR;
 
 	/* Presence of attachments is considered a match. */
-	e = TAILQ_EMPTY(attachments) ? EXPR_NOMATCH : EXPR_MATCH;
+	ev = TAILQ_EMPTY(attachments) ? EXPR_NOMATCH : EXPR_MATCH;
 	message_list_free(attachments);
-	return e;
+	return ev;
 }
 
 static int
@@ -419,13 +419,13 @@ expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
 		return EXPR_ERROR;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
-		int e = expr_eval_body(ex, ml, attach, env);
+		int ev = expr_eval_body(ex, ml, attach, env);
 
-		if (e == EXPR_NOMATCH)
+		if (ev == EXPR_NOMATCH)
 			continue;
 
 		message_list_free(attachments);
-		return e;
+		return ev;
 	}
 
 	message_list_free(attachments);
@@ -443,13 +443,13 @@ expr_eval_attachment_header(struct expr *ex, struct match_list *ml,
 		return EXPR_ERROR;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
-		int e = expr_eval_header(ex, ml, attach, env);
+		int ev = expr_eval_header(ex, ml, attach, env);
 
-		if (e == EXPR_NOMATCH)
+		if (ev == EXPR_NOMATCH)
 			continue;
 
 		message_list_free(attachments);
-		return e;
+		return ev;
 	}
 
 	message_list_free(attachments);
@@ -460,10 +460,10 @@ static int
 expr_eval_block(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
-	int e;
+	int ev;
 
-	e = expr_eval(ex->ex_lhs, ml, msg, env);
-	if (e == EXPR_ERROR)
+	ev = expr_eval(ex->ex_lhs, ml, msg, env);
+	if (ev == EXPR_ERROR)
 		return EXPR_ERROR;
 
 	if (matches_find(ml, EXPR_TYPE_BREAK) != NULL) {
@@ -483,7 +483,7 @@ expr_eval_block(struct expr *ex, struct match_list *ml,
 			return EXPR_NOMATCH;
 	}
 
-	return e;
+	return ev;
 }
 
 static int
@@ -632,13 +632,13 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 			continue;
 
 		TAILQ_FOREACH(val, values, entry) {
-			int e = expr_regexec(ex, ml, key->val, val->val,
+			int ev = expr_regexec(ex, ml, key->val, val->val,
 			    env->ev_options & OPTION_DRYRUN);
 
-			if (e == EXPR_NOMATCH)
+			if (ev == EXPR_NOMATCH)
 				continue;
 
-			return e;
+			return ev;
 		}
 	}
 	return EXPR_NOMATCH;
@@ -750,10 +750,10 @@ static int
 expr_eval_or(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
-	int e;
+	int ev;
 
-	if ((e = expr_eval(ex->ex_lhs, ml, msg, env)) != EXPR_NOMATCH)
-		return e; /* match or error, short-circuit */
+	if ((ev = expr_eval(ex->ex_lhs, ml, msg, env)) != EXPR_NOMATCH)
+		return ev; /* match or error, short-circuit */
 	return expr_eval(ex->ex_rhs, ml, msg, env);
 }
 
