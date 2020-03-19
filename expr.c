@@ -37,8 +37,7 @@ static int expr_eval_reject(EXPR_EVAL_ARGS);
 
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
-static int expr_regexec(struct expr *, struct match_list *, const char *,
-    const char *, int);
+static int expr_regexec(struct expr *, const char *, const char *, int);
 
 static size_t append(char **, size_t *, size_t *, const char *);
 
@@ -491,13 +490,20 @@ expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
 	const char *body;
+	int ev;
 
 	body = message_get_body(msg);
 	if (body == NULL)
 		return EXPR_ERROR;
 
-	return expr_regexec(ex, ml, "Body", body,
-	    env->ev_options & OPTION_DRYRUN);
+	ev = expr_regexec(ex, "Body", body, env->ev_options & OPTION_DRYRUN);
+	if (ev != EXPR_MATCH)
+		return ev;
+
+	if (matches_append(ml, ex->ex_match, msg))
+		return EXPR_ERROR;
+	return EXPR_MATCH;
+
 }
 
 static int
@@ -522,6 +528,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 	char buf[32];
 	const char *date;
 	time_t delta, tim;
+	int ev;
 
 	if (ex->ex_date.d_field == EXPR_DATE_FIELD_HEADER) {
 		date = message_get_header1(msg, "Date");
@@ -572,9 +579,13 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 		break;
 	}
 
-	(void)expr_regexec(ex, ml, "Date", date,
-	    env->ev_options & OPTION_DRYRUN);
+	/* Populate matches, only used during dry run. */
+	ev = expr_regexec(ex, "Date", date, env->ev_options & OPTION_DRYRUN);
+	if (ev != EXPR_MATCH)
+		return ev;
 
+	if (matches_append(ml, ex->ex_match, msg))
+		return EXPR_ERROR;
 	return EXPR_MATCH;
 }
 
@@ -632,12 +643,16 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 			continue;
 
 		TAILQ_FOREACH(val, values, entry) {
-			int ev = expr_regexec(ex, ml, key->val, val->val,
+			int ev = expr_regexec(ex, key->val, val->val,
 			    env->ev_options & OPTION_DRYRUN);
 
 			if (ev == EXPR_NOMATCH)
 				continue;
+			if (ev == EXPR_ERROR)
+				return EXPR_ERROR;
 
+			if (matches_append(ml, ex->ex_match, msg))
+				return EXPR_ERROR;
 			return ev;
 		}
 	}
@@ -818,8 +833,7 @@ expr_inspect_prefix(const struct expr *ex, FILE *fh,
 }
 
 static int
-expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
-    const char *val, int dryrun)
+expr_regexec(struct expr *ex, const char *key, const char *val, int dryrun)
 {
 	int error;
 
@@ -832,6 +846,7 @@ expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
 
 	match_copy(ex->ex_match, val, ex->ex_re.r_matches,
 	    ex->ex_re.r_nmatches);
+
 	if (dryrun) {
 		ex->ex_match->mh_key = strdup(key);
 		if (ex->ex_match->mh_key == NULL)
@@ -840,10 +855,6 @@ expr_regexec(struct expr *ex, struct match_list *ml, const char *key,
 		if (ex->ex_match->mh_val == NULL)
 			err(1, NULL);
 	}
-
-	assert((ex->ex_flags & EXPR_FLAG_PATH) == 0);
-	if (matches_append(ml, ex->ex_match, NULL))
-		return EXPR_ERROR;
 
 	return EXPR_MATCH;
 }
