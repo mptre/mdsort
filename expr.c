@@ -179,7 +179,7 @@ expr_set_date(struct expr *ex, enum expr_date_field field,
 	ex->ex_date.d_cmp = cmp;
 	ex->ex_date.d_age = age;
 
-	/* Cheat a bit by adding a match all pattern used during inspect. */
+	/* Cheat a bit by adding a match all pattern used during dry run. */
 	(void)expr_set_pattern(ex, ".*", 0, NULL);
 }
 
