@@ -653,7 +653,7 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 
 			if (matches_append(ml, ex->ex_match, msg))
 				return EXPR_ERROR;
-			return ev;
+			return EXPR_MATCH;
 		}
 	}
 	return EXPR_NOMATCH;
