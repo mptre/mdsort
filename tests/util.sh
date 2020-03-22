@@ -103,10 +103,10 @@ mdsort() {
 	# Find coredump(s) and optionally preserve them.
 	find "$TSHDIR" -name '*core*' >"$_core"
 	if ! cmp -s "$_core" /dev/null; then
-		fail - "found coredump" <"$_core"
 		if [ -n "$COREDUMP" ]; then
 			cp "$(cat "$_core")" "${COREDUMP}/mdsort.core"
 		fi
+		fail - "found coredump" <"$_core"
 	fi
 
 	if [ "$_exit1" -ne "$_exit2" ]; then
