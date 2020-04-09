@@ -434,21 +434,23 @@ backref(const char *str, unsigned int *br)
 }
 
 static int
-bufgrow(char **buf, size_t *bufsiz, size_t buflen, int grow)
+bufgrow(char **buf, size_t *bufsiz, size_t newlen, int grow)
 {
+	size_t newsiz = *bufsiz;
 
-	if (*bufsiz > 0 && buflen < *bufsiz - 1)
+	if (newsiz > 0 && newlen < newsiz)
 		return 0;
 	if (!grow)
 		return 1;
 
-	if (*bufsiz == 0)
-		*bufsiz = 128;
-	*buf = reallocarray(*buf, 2, *bufsiz);
+	if (newsiz == 0)
+		newsiz = 128;
+	while (newsiz < newlen)
+		newsiz *= 2;
+	*buf = realloc(*buf, newsiz);
 	if (*buf == NULL)
 		err(1, NULL);
-	*bufsiz *= 2;
-
+	*bufsiz = newsiz;
 	return 0;
 }
 
@@ -471,21 +473,19 @@ interpolate(const struct match *mh, const char *str, char **buf, size_t bufsiz,
 			if (sub == NULL)
 				goto invalid;
 
-			for (; *sub != '\0'; sub++) {
-				if (bufgrow(buf, &bufsiz, buflen, grow))
-					goto toolong;
-
+			if (bufgrow(buf, &bufsiz, buflen + strlen(sub), grow))
+				goto toolong;
+			for (; *sub != '\0'; sub++)
 				(*buf)[buflen++] = match_char(mh, *sub);
-			}
 			i += n;
 			continue;
 		}
 
-		if (bufgrow(buf, &bufsiz, buflen, grow))
+		if (bufgrow(buf, &bufsiz, buflen + 1, grow))
 			goto toolong;
 		(*buf)[buflen++] = str[i++];
 	}
-	if (bufgrow(buf, &bufsiz, buflen, grow))
+	if (bufgrow(buf, &bufsiz, buflen + 1, grow))
 		goto toolong;
 	(*buf)[buflen] = '\0';
 
