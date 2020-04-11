@@ -198,7 +198,6 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	dstfd = maildir_fd(dst);
 
 	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
-		error = 1;
 		if (errno == EXDEV) {
 			/*
 			 * Rename failed since source and destination reside on
@@ -215,6 +214,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 				error = maildir_unlink(src, msg);
 		} else {
 			warn("renameat");
+			error = 1;
 		}
 	} else if (doutime && utimensat(dstfd, dstname, times, 0) == -1) {
 		warn("utimensat");
