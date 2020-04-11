@@ -438,7 +438,7 @@ config_free(struct config_list *config)
 	}
 }
 
-void
+static void
 yyerror(const char *fmt, ...)
 {
 	char buf[BUFSIZ];
@@ -470,7 +470,7 @@ yyerror(const char *fmt, ...)
 	parse_errors++;
 }
 
-int
+static int
 yylex(void)
 {
 	static struct {
