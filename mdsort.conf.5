@@ -305,10 +305,6 @@ maildir "~/Maildir/INBOX" {
 	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i \e
 		move "~/Maildir/openbsd-\e1"
 
-	# Get rid of potential spam.
-	match header "Received-SPF" /fail/ or header "X-Spam-Score" /[1-9]/ \e
-		move "~/Maildir/Spam"
-
 	# Label messages with the plus portion of the address.
 	match header "To" /user\e+(.+)@example.com/l label "\e1"
 

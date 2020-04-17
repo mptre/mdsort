@@ -20,10 +20,6 @@ maildir "~/Maildir/INBOX" {
 	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i \
 		move "~/Maildir/openbsd-\1"
 
-	# Get rid of potential spam.
-	match header "Received-SPF" /fail/ or header "X-Spam-Score" /[1-9]/ \
-		move "~/Maildir/Spam"
-
 	# Label messages with the plus portion of the address.
 	match header "To" /user\+(.+)@example.com/l label "\1"
 
