@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 			msg = message_parse(me.e_dir, me.e_dirfd, me.e_path);
 			if (msg == NULL) {
 				error = 1;
-				continue;
+				goto loop;
 			}
 
 			matches_clear(&matches);
@@ -126,24 +126,22 @@ main(int argc, char *argv[])
 				error = 1;
 				/* FALLTHROUGH */
 			case EXPR_NOMATCH:
-				message_free(msg);
-				continue;
+				goto loop;
 			}
 
 			if (matches_interpolate(&matches, msg)) {
 				error = 1;
-				message_free(msg);
-				continue;
+				goto loop;
 			}
 
 			if (matches_inspect(&matches, msg, stdout, &env)) {
 				/* Dry run, we're done. */
-				message_free(msg);
-				continue;
+				goto loop;
 			}
 
 			if (matches_exec(&matches, md, msg, &reject, &env))
 				error = 1;
+loop:
 			message_free(msg);
 		}
 		maildir_close(md);
