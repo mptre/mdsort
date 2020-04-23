@@ -38,7 +38,8 @@ _assert_eq() {
 # assert_file file0 file1 [message]
 assert_file() {
 	if ! _assert_file "$1" "$2"; then
-		diff -u -L want -L got "$1" "$2" | fail - "${3:-assert_file}"
+		diff -u -L want -L got "$1" "$2" 2>&1 |
+		fail - "${3:-assert_file}"
 	fi
 }
 
