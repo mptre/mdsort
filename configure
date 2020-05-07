@@ -3,7 +3,7 @@
 set -e
 
 atexit() {
-	err=$?
+	local _err="$?"
 
 	# Dump contents of generated files to config.log.
 	exec 1>>config.log 2>&1
@@ -11,7 +11,7 @@ atexit() {
 	[ -e config.h ] && cat config.h
 	[ -e config.mk ] && cat config.mk
 	rm -f "$@"
-	[ $err -ne 0 ] && fatal
+	[ "$_err" -ne 0 ] && fatal
 	exit 0
 }
 
@@ -311,14 +311,14 @@ exec 1>config.h
 [ $HAVE_GNU_SOURCE -eq 1 ] && printf '#define _GNU_SOURCE\n'
 
 # Headers needed for function prototypes.
-(
+{
 [ $HAVE_ARC4RANDOM -eq 0 ] && echo stdint.h
 [ $HAVE_B64_PTON -eq 0 ] && echo stdlib.h
 [ $HAVE_PLEDGE -eq 0 ] && echo stdlib.h
 [ $HAVE_REALLOCARRAY -eq 0 ] && echo stdlib.h
 [ $HAVE_STRLCPY -eq 0 ] && echo stdlib.h
 [ $HAVE_UTIMENSAT -eq 0 ] && echo sys/time.h
-) | sort | uniq | headers
+} | sort | uniq | headers
 
 [ $HAVE_ARC4RANDOM -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
 [ $HAVE_B64_PTON -eq 1 ] && printf '#define HAVE_B64_PTON\t1\n'
