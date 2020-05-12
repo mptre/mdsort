@@ -1,6 +1,13 @@
 sudo: false
 dist: xenial
 language: c
+
+env:
+  global:
+    - CFLAGS=-Werror
+    - CPPFLAGS=-D_FORTIFY_SOURCE=2
+    - DEBUG="-g -O2"
+
 matrix:
   include:
     - arch: amd64
@@ -8,9 +15,7 @@ matrix:
       compiler: clang
       env:
         - T=amd64-linux-clang-asan
-        - CFLAGS=-Werror
-        - CPPFLAGS=-D_FORTIFY_SOURCE=2
-        - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
+        - DEBUG="${DEBUG} -fsanitize=address -fno-sanitize-recover=all"
         - TESTFLAGS='-T leaky'
 
     - arch: amd64
@@ -18,36 +23,32 @@ matrix:
       compiler: clang
       env:
         - T=amd64-linux-clang-ubsan
-        - CFLAGS=-Werror
-        - CPPFLAGS=-D_FORTIFY_SOURCE=2
-        - DEBUG='-g -O2 -fsanitize=undefined,unsigned-integer-overflow -fno-sanitize-recover=all'
+        - DEBUG="${DEBUG} -fsanitize=undefined,unsigned-integer-overflow -fno-sanitize-recover=all"
 
     - arch: amd64
       os: linux
       compiler: gcc
       env:
         - T=amd64-linux-gcc-asan
-        - CFLAGS='-Werror -Wformat-signedness'
-        - CPPFLAGS=-D_FORTIFY_SOURCE=2
-        - DEBUG='-g -O2 -fsanitize=address -fno-sanitize-recover=all'
-        - TESTFLAGS='-T leaky'
+        - CFLAGS="${CFLAGS} -Wformat-signedness"
+        - DEBUG="${DEBUG} -fsanitize=address -fno-sanitize-recover=all"
+        - TESTFLAGS="-T leaky"
 
     - arch: amd64
       os: linux
       compiler: gcc
       env:
         - T=amd64-linux-gcc-ubsan
-        - CFLAGS='-Werror -Wformat-signedness'
-        - CPPFLAGS=-D_FORTIFY_SOURCE=2
-        - DEBUG='-g -O2 -fsanitize=undefined -fno-sanitize-recover=all'
+        - CFLAGS="${CFLAGS} -Wformat-signedness"
+        - DEBUG="${DEBUG} -fsanitize=undefined -fno-sanitize-recover=all"
 
     - arch: amd64
       os: linux
       compiler: musl-gcc
       env:
         - T=amd64-linux-musl
-        - CFLAGS='-Werror -Wformat-signedness'
-        - TESTFLAGS='-T tilde'
+        - CFLAGS="${CFLAGS} -Wformat-signedness"
+        - TESTFLAGS="-T tilde"
       addons:
         apt:
           packages:
@@ -58,12 +59,9 @@ matrix:
       compiler: clang
       env:
         - T=amd64-linux-valgrind
-        - CFLAGS=-Werror
-        - CPPFLAGS=-D_FORTIFY_SOURCE=2
-        - DEBUG='-g -O2'
         - EXEC=valgrind
-        - TESTFLAGS='-T leaky'
-        - VALGRIND_OPTS='--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all'
+        - TESTFLAGS="-T leaky"
+        - VALGRIND_OPTS="--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all"
       addons:
         apt:
           packages:
@@ -74,18 +72,13 @@ matrix:
       compiler: clang
       env:
         - T=amd64-macos-clang
-        - CFLAGS=-Werror
-        - CPPFLAGS=-D_FORTIFY_SOURCE=2
-        - DEBUG='-g -O2'
 
     - arch: arm64
       os: linux
       compiler: gcc
       env:
         - T=arm64-linux-gcc
-        - CFLAGS='-Werror -Wformat-signedness'
-        - CPPFLAGS=-D_FORTIFY_SOURCE=2
-        - DEBUG='-g -O2'
+        - CFLAGS="${CFLAGS} -Wformat-signedness"
 
 script:
   - |
