@@ -202,11 +202,14 @@ struct expr {
 #define EXPR_PATTERN_UCASE	0x00000008u
 	} ex_re;
 
-	struct {
-		enum expr_date_cmp d_cmp;
-		enum expr_date_field d_field;
-		time_t d_age;
-	} ex_date;
+	union {
+		struct {
+			enum expr_date_cmp d_cmp;
+			enum expr_date_field d_field;
+			time_t d_age;
+		} u_date;
+	} ex_u;
+#define ex_date	ex_u.u_date
 
 	struct match *ex_match;
 
