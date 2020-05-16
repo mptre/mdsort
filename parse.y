@@ -56,6 +56,7 @@ typedef struct {
 %token CREATED
 %token DATE
 %token DISCARD
+%token EXEC
 %token FLAG
 %token HEADER
 %token INT
@@ -87,6 +88,7 @@ typedef struct {
 %type <v.number>	INT
 %type <v.number>	SCALAR
 %type <v.number>	attachment
+%type <v.number>	exec_flags
 %type <v.number>	maildir_flag
 %type <v.number>	maildir_flags
 %type <v.number>	optneg
@@ -296,6 +298,10 @@ expraction	: BREAK {
 		| REJECT {
 			$$ = expr_alloc(EXPR_TYPE_REJECT, lineno, NULL, NULL);
 		}
+		| EXEC exec_flags strings {
+			$$ = expr_alloc(EXPR_TYPE_EXEC, lineno, NULL, NULL);
+			expr_set_exec($$, $3, $2);
+		}
 		;
 
 
@@ -367,6 +373,14 @@ date_age	: INT SCALAR {
 			} else {
 				$$ = $1 * $2;
 			}
+		}
+		;
+
+exec_flags	: /* empty */ {
+			$$ = 0;
+		}
+		| STDIN {
+			$$ = EXPR_EXEC_STDIN;
 		}
 		;
 
@@ -486,6 +500,7 @@ yylex(void)
 		{ "created",	CREATED },
 		{ "date",	DATE },
 		{ "discard",	DISCARD },
+		{ "exec",	EXEC },
 		{ "flag",	FLAG },
 		{ "header",	HEADER },
 		{ "label",	LABEL },

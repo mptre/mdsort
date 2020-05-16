@@ -105,6 +105,7 @@ struct message {
 	const char *me_body;
 	char *me_buf;
 	char *me_buf_dec;	/* decoded body */
+	int me_fd;
 
 	struct message_flags me_flags;
 
@@ -124,6 +125,8 @@ struct message *message_parse(const char *dir, int dirfd, const char *path);
 void message_free(struct message *msg);
 
 int message_writeat(struct message *msg, int fd, unsigned int dosync);
+
+int message_get_fd(const struct message *msg);
 
 const char *message_get_body(struct message *msg);
 
@@ -162,6 +165,7 @@ enum expr_type {
 	EXPR_TYPE_LABEL = 17,
 	EXPR_TYPE_PASS = 18,
 	EXPR_TYPE_REJECT = 19,
+	EXPR_TYPE_EXEC = 20,
 };
 
 enum expr_date_cmp {
@@ -208,8 +212,14 @@ struct expr {
 			enum expr_date_field d_field;
 			time_t d_age;
 		} u_date;
+
+		struct {
+			unsigned int e_flags;
+#define EXPR_EXEC_STDIN	0x00000001u
+		} u_exec;
 	} ex_u;
 #define ex_date	ex_u.u_date
+#define ex_exec	ex_u.u_exec
 
 	struct match *ex_match;
 
@@ -231,6 +241,8 @@ struct match {
 
 	char **mh_matches;
 	size_t mh_nmatches;
+#define mh_exec		mh_matches
+#define mh_nexec	mh_nmatches
 
 	char *mh_key;
 	char *mh_val;
@@ -247,6 +259,9 @@ void expr_free(struct expr *ex);
 
 void expr_set_date(struct expr *ex, enum expr_date_field field,
     enum expr_date_cmp cmp, time_t age);
+
+void expr_set_exec(struct expr *ex, struct string_list *cmd,
+    unsigned int flags);
 
 void expr_set_strings(struct expr *ex, struct string_list *strings);
 
@@ -302,6 +317,8 @@ TAILQ_HEAD(string_list, string);
 struct string_list *strings_alloc(void);
 
 void strings_free(struct string_list *strings);
+
+size_t strings_len(const struct string_list *strings);
 
 void strings_append(struct string_list *strings, char *val);
 

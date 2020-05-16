@@ -1,5 +1,6 @@
 TESTS+=	action-break.sh
 TESTS+=	action-discard.sh
+TESTS+=	action-exec.sh
 TESTS+=	action-flag.sh
 TESTS+=	action-label.sh
 TESTS+=	action-pass.sh

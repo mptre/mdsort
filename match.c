@@ -1,11 +1,15 @@
 #include "config.h"
 
+#include <sys/wait.h>
+
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <ctype.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "extern.h"
 
@@ -17,6 +21,7 @@ static const char *match_get(const struct match *, unsigned int);
 
 static int backref(const char *, unsigned int *);
 static int bufgrow(char **, size_t *, size_t, int);
+static int exec(char *const *, int);
 static int interpolate(const struct match *, const char *, char **, size_t);
 
 /*
@@ -72,7 +77,7 @@ matches_clear(struct match_list *ml)
 	struct match *mh;
 
 	while ((mh = TAILQ_FIRST(ml)) != NULL) {
-		mh->mh_path[0] = mh->mh_maildir[0] = mh->mh_subdir[0] = '\0';
+		match_reset(mh);
 		TAILQ_REMOVE(ml, mh, mh_entry);
 	}
 
@@ -123,6 +128,30 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 				return 1;
 			}
 			message_set_header(msg, "X-Label", label);
+			break;
+		}
+
+		case EXPR_TYPE_EXEC: {
+			const struct string *str;
+			size_t len;
+			size_t nargs = 0;
+
+			/* Make room for NULL-terminator. */
+			len = strings_len(mh->mh_expr->ex_strings) + 1;
+			mh->mh_exec = reallocarray(NULL, len, sizeof(char *));
+			if (mh->mh_exec == NULL)
+				err(1, NULL);
+			memset(mh->mh_exec, 0, len * sizeof(char *));
+			mh->mh_nexec = len;
+			TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
+				char *arg = NULL;
+
+				if (interpolate(mi, str->val, &arg, 0)) {
+					free(arg);
+					return 1;
+				}
+				mh->mh_exec[nargs++] = arg;
+			}
 			break;
 		}
 
@@ -207,6 +236,20 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 		case EXPR_TYPE_REJECT:
 			*reject = 1;
 			break;
+
+		case EXPR_TYPE_EXEC: {
+			int fd = -1;
+
+			if (mh->mh_expr->ex_exec.e_flags & EXPR_EXEC_STDIN) {
+				fd = message_get_fd(msg);
+				if (fd == -1) {
+					error = 1;
+					break;
+				}
+			}
+			error = exec(mh->mh_exec, fd);
+			break;
+		}
 
 		default:
 			break;
@@ -314,6 +357,8 @@ void
 match_reset(struct match *mh)
 {
 	unsigned int i;
+
+	mh->mh_path[0] = mh->mh_maildir[0] = mh->mh_subdir[0] = '\0';
 
 	for (i = 0; i < mh->mh_nmatches; i++)
 		free(mh->mh_matches[i]);
@@ -448,6 +493,51 @@ bufgrow(char **buf, size_t *bufsiz, size_t newlen, int grow)
 		err(1, NULL);
 	*bufsiz = newsiz;
 	return 0;
+}
+
+static int
+exec(char *const *argv, int fdin)
+{
+	pid_t pid;
+	int error = 1;
+	int status;
+	int doclose = 0;
+
+	if (fdin == -1) {
+		doclose = 1;
+		fdin = open("/dev/null", O_RDONLY);
+		if (fdin == -1) {
+			warn("open: /dev/null");
+			goto out;
+		}
+	}
+
+	pid = fork();
+	if (pid == -1) {
+		warn("fork");
+		goto out;
+	}
+	if (pid == 0) {
+		if (dup2(fdin, 0) == -1)
+			err(1, "dup2");
+		execvp(argv[0], argv);
+		warn("%s", argv[0]);
+		_exit(1);
+	}
+
+	if (waitpid(pid, &status, 0) == -1) {
+		warn("waitpid");
+		goto out;
+	}
+	if (WIFEXITED(status))
+		error = WEXITSTATUS(status);
+	if (WIFSIGNALED(status))
+		error = WTERMSIG(status);
+
+out:
+	if (doclose && fdin != -1)
+		close(fdin);
+	return error;
 }
 
 /*

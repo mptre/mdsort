@@ -25,6 +25,8 @@
  */
 #define EX_PERMFAIL	1
 
+static int config_has_exec(const struct config_list *,
+    const struct environment *);
 static int config_skip(const struct config *, const struct environment *);
 static const char *defaultconf(const struct environment *);
 static void readenv(struct environment *);
@@ -44,7 +46,7 @@ main(int argc, char *argv[])
 	int error = 0;
 	int reject = 0;
 
-	if (pledge("stdio rpath wpath cpath fattr getpw", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr getpw proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	memset(&env, 0, sizeof(env));
@@ -84,7 +86,7 @@ main(int argc, char *argv[])
 	/* Extract mandatory data from the current environment. */
 	readenv(&env);
 
-	if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1)
 		err(1, "pledge");
 
 	if (env.ev_confpath == NULL)
@@ -94,6 +96,12 @@ main(int argc, char *argv[])
 		error = 1;
 		goto out;
 	}
+
+	/* Drop exec privilegies unless needed. */
+	if (!config_has_exec(config, &env))
+		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
+			err(1, "pledge");
+
 	if (env.ev_options & OPTION_SYNTAX)
 		goto out;
 
@@ -166,6 +174,28 @@ usage(void)
 
 	fprintf(stderr, "usage: mdsort [-dnv] [-f file] [-]\n");
 	exit(1);
+}
+
+/*
+ * Returns non-zero if any of the expressions associated with the given
+ * configuration includes an exec action.
+ */
+static int
+config_has_exec(const struct config_list *config, const struct environment *env)
+{
+	const struct config *conf;
+
+	if (env->ev_options & OPTION_DRYRUN)
+		return 0;
+
+	TAILQ_FOREACH(conf, config, entry) {
+		if (config_skip(conf, env))
+			continue;
+		if (expr_count(conf->expr, EXPR_TYPE_EXEC) > 0)
+			return 1;
+	}
+
+	return 0;
 }
 
 /*

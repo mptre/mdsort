@@ -247,6 +247,26 @@ Especially useful when using nested
 blocks, see below.
 .Pp
 Mutually exclusive with all other actions.
+.It Xo Ic exec
+.Op Ar options
+.Dq Ar command
+.Xc
+.It Xo Ic exec
+.Op Ar options
+.No { Do Ar command Dc Ar ... No }
+.Xc
+Execute
+.Ar command ,
+which
+may contain back-references.
+The
+.Ar options
+may be any combination of the following:
+.Bl -tag -width Ds
+.It Ic stdin
+Pass the matched message on stdin to
+.Ar command .
+.El
 .It Ic discard
 Remove the message from the maildir.
 .Pp

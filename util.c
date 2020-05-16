@@ -44,6 +44,18 @@ strings_free(struct string_list *strings)
 	free(strings);
 }
 
+size_t
+strings_len(const struct string_list *strings)
+{
+	const struct string *str;
+	size_t len = 0;
+
+	TAILQ_FOREACH(str, strings, entry) {
+		len++;
+	}
+	return len;
+}
+
 void
 strings_append(struct string_list *strings, char *val)
 {

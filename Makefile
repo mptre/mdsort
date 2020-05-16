@@ -52,6 +52,7 @@ DISTFILES+=	tests/GNUmakefile
 DISTFILES+=	tests/Makefile
 DISTFILES+=	tests/action-break.sh
 DISTFILES+=	tests/action-discard.sh
+DISTFILES+=	tests/action-exec.sh
 DISTFILES+=	tests/action-flag.sh
 DISTFILES+=	tests/action-label.sh
 DISTFILES+=	tests/action-pass.sh

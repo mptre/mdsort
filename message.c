@@ -137,6 +137,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 	msg = calloc(1, sizeof(*msg));
 	if (msg == NULL)
 		err(1, NULL);
+	msg->me_fd = fd;
 	msg->me_buf = malloc(msgsize);
 	if (msg->me_buf == NULL)
 		err(1, NULL);
@@ -155,7 +156,8 @@ message_parse(const char *dir, int dirfd, const char *path)
 			msgsize *= 2;
 		}
 
-		n = read(fd, msg->me_buf + msglen, msgsize - msglen - 1);
+		n = read(msg->me_fd, msg->me_buf + msglen,
+		    msgsize - msglen - 1);
 		if (n == -1) {
 			warn("read: %s", path);
 			goto err;
@@ -166,8 +168,6 @@ message_parse(const char *dir, int dirfd, const char *path)
 	}
 	assert(msglen < msgsize);
 	msg->me_buf[msglen] = '\0';
-	close(fd);
-	fd = -1;
 
 	msg->me_body = message_parse_headers(msg);
 
@@ -177,8 +177,6 @@ message_parse(const char *dir, int dirfd, const char *path)
 	return msg;
 
 err:
-	if (fd != -1)
-		close(fd);
 	message_free(msg);
 	return NULL;
 }
@@ -199,6 +197,8 @@ message_free(struct message *msg)
 			free(hdr->val);
 	}
 
+	if (msg->me_fd != -1)
+		close(msg->me_fd);
 	free(msg->me_buf);
 	free(msg->me_buf_dec);
 	free(msg->me_headers.h_v);
@@ -259,6 +259,17 @@ out:
 	}
 
 	return error;
+}
+
+int
+message_get_fd(const struct message *msg)
+{
+
+	if (lseek(msg->me_fd, 0, SEEK_SET) == -1) {
+		warn("lseek");
+		return -1;
+	}
+	return msg->me_fd;
 }
 
 /*

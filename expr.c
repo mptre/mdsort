@@ -24,6 +24,7 @@ static int expr_eval_body(EXPR_EVAL_ARGS);
 static int expr_eval_break(EXPR_EVAL_ARGS);
 static int expr_eval_date(EXPR_EVAL_ARGS);
 static int expr_eval_discard(EXPR_EVAL_ARGS);
+static int expr_eval_exec(EXPR_EVAL_ARGS);
 static int expr_eval_flag(EXPR_EVAL_ARGS);
 static int expr_eval_header(EXPR_EVAL_ARGS);
 static int expr_eval_label(EXPR_EVAL_ARGS);
@@ -140,6 +141,10 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		ex->ex_eval = &expr_eval_reject;
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
 		break;
+	case EXPR_TYPE_EXEC:
+		ex->ex_eval = &expr_eval_exec;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		break;
 	}
 
 	if (ex->ex_flags & EXPR_FLAG_MATCH) {
@@ -183,6 +188,14 @@ expr_set_date(struct expr *ex, enum expr_date_field field,
 
 	/* Cheat a bit by adding a match all pattern used during dry run. */
 	(void)expr_set_pattern(ex, ".*", 0, NULL);
+}
+
+void
+expr_set_exec(struct expr *ex, struct string_list *cmd, unsigned int flags)
+{
+
+	expr_set_strings(ex, cmd);
+	ex->ex_exec.e_flags = flags;
 }
 
 void
@@ -584,6 +597,25 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 	ev = expr_regexec(ex, "Date", date, env->ev_options & OPTION_DRYRUN);
 	if (ev != EXPR_MATCH)
 		return ev;
+
+	if (matches_append(ml, ex->ex_match, msg))
+		return EXPR_ERROR;
+	return EXPR_MATCH;
+}
+
+static int
+expr_eval_exec(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
+{
+	struct match *mh = ex->ex_match;
+	size_t siz;
+
+	/* Populate the path in case of a dry run. */
+	siz = sizeof(mh->mh_path);
+	if (strlcpy(mh->mh_path, "<exec>", siz) >= siz) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return EXPR_ERROR;
+	}
 
 	if (matches_append(ml, ex->ex_match, msg))
 		return EXPR_ERROR;
