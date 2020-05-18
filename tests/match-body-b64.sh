@@ -157,3 +157,16 @@ if testcase "invalid base64"; then
 	mdsort -e >/dev/null
 	refute_empty "src/new"
 fi
+
+if testcase "no attachments"; then
+	mkmd "src" "dst"
+	b64 hello | mkmsg -b "src/new" -- "Content-Transfer-Encoding" "base64"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match body /hello/ move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi

@@ -37,6 +37,8 @@ static int message_flags_resolve(unsigned char, unsigned int *, unsigned int *);
 static struct header *message_headers_alloc(struct message *);
 static int message_is_content_type(const struct message *, const char *);
 static const char *message_parse_headers(struct message *);
+static const char *message_decode_body(struct message *,
+    const struct message *);
 
 static int cmpheaderid(const void *, const void *);
 static int cmpheaderkey(const void *, const void *);
@@ -270,12 +272,11 @@ message_get_body(struct message *msg)
 	struct message_list *attachments;
 	const struct message *attach;
 	const struct message *found = NULL;
-	const char *encoding;
 
 	if (msg->me_buf_dec != NULL)
 		return msg->me_buf_dec;
 	if (!message_is_content_type(msg, "multipart/alternative"))
-		return msg->me_body;
+		return message_decode_body(msg, msg);
 
 	/* Attachment parsing errors are considered fatal. */
 	if (message_get_attachments(msg, &attachments))
@@ -298,20 +299,7 @@ message_get_body(struct message *msg)
 		return msg->me_body;
 	}
 
-	/*
-	 * Attachments are resolved recursively above, it's therefore fine to
-	 * access the body of the attachment directly.
-	 */
-	encoding = message_get_header1(found, "Content-Transfer-Encoding");
-	if (encoding == NULL || strcmp(encoding, "base64")) {
-		msg->me_buf_dec = strdup(found->me_body);
-		if (msg->me_buf_dec == NULL)
-			err(1, NULL);
-	} else {
-		msg->me_buf_dec = b64decode(found->me_body);
-		if (msg->me_buf_dec == NULL)
-			warnx("%s: failed to decode body", msg->me_path);
-	}
+	(void)message_decode_body(msg, found);
 	message_list_free(attachments);
 
 	return msg->me_buf_dec;
@@ -545,6 +533,24 @@ message_parse_headers(struct message *msg)
 	for (; *buf == '\n'; buf++)
 		continue;
 	return buf;
+}
+
+static const char *
+message_decode_body(struct message *msg, const struct message *attachment)
+{
+	const char *encoding;
+
+	encoding = message_get_header1(attachment, "Content-Transfer-Encoding");
+	if (encoding == NULL || strcmp(encoding, "base64")) {
+		msg->me_buf_dec = strdup(attachment->me_body);
+		if (msg->me_buf_dec == NULL)
+			err(1, NULL);
+	} else {
+		msg->me_buf_dec = b64decode(attachment->me_body);
+		if (msg->me_buf_dec == NULL)
+			warnx("%s: failed to decode body", msg->me_path);
+	}
+	return msg->me_buf_dec;
 }
 
 static int
