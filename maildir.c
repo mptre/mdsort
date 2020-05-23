@@ -99,21 +99,19 @@ err:
 void
 maildir_close(struct maildir *md)
 {
-	struct maildir_entry me;
-	const char *dir;
 
 	if (md == NULL)
 		return;
 
 	if (md->md_flags & MAILDIR_STDIN) {
+		struct maildir_entry me;
+
 		/* Best effort removal of the temporary maildir. */
-		dir = maildir_path(md);
-		if (maildir_opendir(md, dir) == 0) {
-			while (maildir_walk(md, &me) == 1)
-				(void)unlinkat(me.e_dirfd, me.e_path, 0);
-			(void)rmdir(dir);
-			(void)rmdir(md->md_path);
-		}
+		rewinddir(md->md_dir);
+		while (maildir_walk(md, &me) == 1)
+			(void)unlinkat(me.e_dirfd, me.e_path, 0);
+		(void)rmdir(maildir_path(md));
+		(void)rmdir(md->md_path);
 	}
 
 	if (md->md_dir != NULL)
