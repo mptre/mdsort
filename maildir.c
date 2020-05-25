@@ -393,8 +393,8 @@ maildir_genname(const struct maildir *dst, const char *flags,
 			warnc(ENAMETOOLONG, "%s", __func__);
 			return -1;
 		}
-		fd = openat(maildir_fd(dst), buf, O_WRONLY | O_CREAT | O_EXCL,
-		    S_IRUSR | S_IWUSR);
+		fd = openat(maildir_fd(dst), buf,
+		    O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, S_IRUSR | S_IWUSR);
 		if (fd == -1) {
 			if (errno == EEXIST) {
 				log_debug("%s: %s: file exists\n",

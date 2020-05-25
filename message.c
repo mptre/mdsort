@@ -206,7 +206,7 @@ message_free(struct message *msg)
 }
 
 int
-message_writeat(struct message *msg, int fd, int dosync)
+message_writeat(struct message *msg, int fd, unsigned int dosync)
 {
 	FILE *fh;
 	unsigned int i;

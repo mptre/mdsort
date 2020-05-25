@@ -37,7 +37,8 @@ static int expr_eval_reject(EXPR_EVAL_ARGS);
 
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
-static int expr_regexec(struct expr *, const char *, const char *, int);
+static int expr_regexec(struct expr *, const char *, const char *,
+    unsigned int);
 
 static size_t append(char **, size_t *, size_t *, const char *);
 
@@ -478,8 +479,7 @@ expr_eval_block(struct expr *ex, struct match_list *ml,
 		 */
 		if (matches_remove(ml, EXPR_TYPE_PASS) == 0)
 			return EXPR_NOMATCH;
-		else
-			return EXPR_MATCH;
+		return EXPR_MATCH;
 	}
 
 	return ev;
@@ -833,7 +833,8 @@ expr_inspect_prefix(const struct expr *ex, FILE *fh,
 }
 
 static int
-expr_regexec(struct expr *ex, const char *key, const char *val, int dryrun)
+expr_regexec(struct expr *ex, const char *key, const char *val,
+    unsigned int dryrun)
 {
 	int error;
 

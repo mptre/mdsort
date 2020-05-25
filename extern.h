@@ -123,7 +123,7 @@ struct message *message_parse(const char *dir, int dirfd, const char *path);
 
 void message_free(struct message *msg);
 
-int message_writeat(struct message *msg, int fd, int dosync);
+int message_writeat(struct message *msg, int fd, unsigned int dosync);
 
 const char *message_get_body(struct message *msg);
 
