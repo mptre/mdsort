@@ -1,6 +1,6 @@
 include ${.CURDIR}/config.mk
 
-VERSION=	5.2.2
+VERSION=	5.2.3
 
 PROG=	mdsort
 
