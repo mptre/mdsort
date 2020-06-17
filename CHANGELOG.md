@@ -1,3 +1,12 @@
+# v5.2.3 - 2020-06-17
+
+## Bug fixes
+
+- Do not limit base64 decode to bodies of attachments as a message without
+  attachments might be encoded as well.
+  (4032953)
+  (Anton Lindqvist)
+
 # v5.2.2 - 2020-03-17
 
 ## Bug fixes
