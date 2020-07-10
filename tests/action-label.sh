@@ -192,12 +192,13 @@ if testcase "interpolation with x-label header"; then
 	assert_label "label label" ${TSHDIR}/src/new/*
 fi
 
+# Ensure error path is free from memory leaks.
 if testcase "interpolation out of bounds"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" "label"
 	cat <<-EOF >$CONF
 	maildir "src" {
-		match header "X-Label" /.+/ label "\1"
+		match header "X-Label" /.+/ label "label \1"
 	}
 	EOF
 	mdsort -e >/dev/null
