@@ -17,8 +17,7 @@ static const char *match_get(const struct match *, unsigned int);
 
 static int backref(const char *, unsigned int *);
 static int bufgrow(char **, size_t *, size_t, int);
-static int interpolate(const struct match *, const char *, char **, size_t,
-    int);
+static int interpolate(const struct match *, const char *, char **, size_t);
 
 /*
  * Append the given match to the list and construct the maildir destination path
@@ -98,7 +97,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			char buf[PATH_MAX];
 			char *tmp = buf;
 
-			if (interpolate(mi, mh->mh_path, &tmp, sizeof(buf), 0))
+			if (interpolate(mi, mh->mh_path, &tmp, sizeof(buf)))
 				return 1;
 			(void)strlcpy(mh->mh_path, tmp, sizeof(mh->mh_path));
 			break;
@@ -119,7 +118,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 				 */
 				return 1;
 			}
-			if (interpolate(mi, str, &label, 0, 1)) {
+			if (interpolate(mi, str, &label, 0)) {
 				free(label);
 				return 1;
 			}
@@ -454,15 +453,20 @@ bufgrow(char **buf, size_t *bufsiz, size_t newlen, int grow)
 	return 0;
 }
 
+/*
+ * Interpolate the given string, storing the interpolated string in buf.
+ * If bufsiz is zero, buf is expected to be dynamically allocated.
+ * Otherwise, buf is assumed to be finite.
+ */
 static int
-interpolate(const struct match *mh, const char *str, char **buf, size_t bufsiz,
-    int grow)
+interpolate(const struct match *mh, const char *str, char **buf, size_t bufsiz)
 {
 	const char *sub;
 	size_t buflen = 0;
 	size_t i = 0;
 	unsigned int br;
 	int n;
+	int grow = bufsiz == 0;
 
 	while (str[i] != '\0') {
 		n = backref(&str[i], &br);
