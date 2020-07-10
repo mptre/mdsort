@@ -38,6 +38,8 @@ static int expr_eval_reject(EXPR_EVAL_ARGS);
 
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
+static int expr_match(struct expr *, struct match_list *, struct message *,
+    const char *);
 static int expr_regexec(struct expr *, const char *, const char *,
     unsigned int);
 
@@ -607,39 +609,16 @@ static int
 expr_eval_exec(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-	struct match *mh = ex->ex_match;
-	size_t siz;
 
-	/* Populate the path in case of a dry run. */
-	siz = sizeof(mh->mh_path);
-	if (strlcpy(mh->mh_path, "<exec>", siz) >= siz) {
-		warnc(ENAMETOOLONG, "%s", __func__);
-		return EXPR_ERROR;
-	}
-
-	if (matches_append(ml, ex->ex_match, msg))
-		return EXPR_ERROR;
-	return EXPR_MATCH;
+	return expr_match(ex, ml, msg, "exec");
 }
 
 static int
 expr_eval_discard(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-	struct match *mh = ex->ex_match;
-	size_t siz;
 
-	/* Populate the path in case of a dry run. */
-	siz = sizeof(mh->mh_path);
-	if (strlcpy(mh->mh_path, "<discard>", siz) >= siz) {
-		warnc(ENAMETOOLONG, "%s", __func__);
-		return EXPR_ERROR;
-	}
-
-	if (matches_append(ml, mh, msg))
-		return EXPR_ERROR;
-
-	return EXPR_MATCH;
+	return expr_match(ex, ml, msg, "discard");
 }
 
 static int
@@ -826,20 +805,8 @@ static int
 expr_eval_reject(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-	struct match *mh = ex->ex_match;
-	size_t siz;
 
-	/* Populate the path in case of a dry run. */
-	siz = sizeof(mh->mh_path);
-	if (strlcpy(mh->mh_path, "<reject>", siz) >= siz) {
-		warnc(ENAMETOOLONG, "%s", __func__);
-		return EXPR_ERROR;
-	}
-
-	if (matches_append(ml, mh, msg))
-		return EXPR_ERROR;
-
-	return EXPR_MATCH;
+	return expr_match(ex, ml, msg, "reject");
 }
 
 static int
@@ -863,6 +830,27 @@ expr_inspect_prefix(const struct expr *ex, FILE *fh,
 	if (n > 0)
 		nwrite += n;
 	return nwrite;
+}
+
+static int
+expr_match(struct expr *ex, struct match_list *ml, struct message *msg,
+    const char *name)
+{
+	struct match *mh = ex->ex_match;
+	size_t siz;
+	int n;
+
+	/* Populate the path in case of a dry run. */
+	siz = sizeof(mh->mh_path);
+	n = snprintf(mh->mh_path, siz, "<%s>", name);
+	if (n < 0 || (size_t)n >= siz) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return EXPR_ERROR;
+	}
+
+	if (matches_append(ml, mh, msg))
+		return EXPR_ERROR;
+	return EXPR_MATCH;
 }
 
 static int
