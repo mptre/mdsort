@@ -162,7 +162,8 @@ expr_free(struct expr *ex)
 	expr_free(ex->ex_lhs);
 	expr_free(ex->ex_rhs);
 	strings_free(ex->ex_strings);
-	match_reset(ex->ex_match);
+	if (ex->ex_match != NULL)
+		match_reset(ex->ex_match);
 	regfree(&ex->ex_re.r_pattern);
 	free(ex->ex_re.r_matches);
 	free(ex->ex_match);

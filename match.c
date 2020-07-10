@@ -315,9 +315,6 @@ match_reset(struct match *mh)
 {
 	unsigned int i;
 
-	if (mh == NULL)
-		return;
-
 	for (i = 0; i < mh->mh_nmatches; i++)
 		free(mh->mh_matches[i]);
 	free(mh->mh_matches);
