@@ -533,6 +533,10 @@ exec(char *const *argv, int fdin)
 		error = WEXITSTATUS(status);
 	if (WIFSIGNALED(status))
 		error = WTERMSIG(status);
+	log_debug("%s: command = \"%s\", exit=%d, signal=%d\n",
+	    __func__, argv[0],
+	    WIFEXITED(status) ? WEXITSTATUS(status) : -1,
+	    WIFSIGNALED(status) ? WTERMSIG(status) : -1);
 
 out:
 	if (doclose && fdin != -1)
