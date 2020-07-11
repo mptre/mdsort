@@ -1,3 +1,12 @@
+# v5.3.0 - 2020-07-11
+
+## News
+
+- Add exec action which can be used to execute an arbitrary command for each
+  matched message. Multiple arguments can be expressed using a string list.
+  (73de2f8)
+  (Anton Lindqvist)
+
 # v5.2.3 - 2020-06-17
 
 ## Bug fixes
