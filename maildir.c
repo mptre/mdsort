@@ -557,6 +557,8 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 			if (!isfile(maildir_fd(md), ent->d_name))
 				goto unknown;
 			break;
+		case DT_DIR:
+			continue;
 		case DT_REG:
 			break;
 		default:
