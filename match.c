@@ -3,9 +3,9 @@
 #include <sys/wait.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <ctype.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
@@ -505,6 +505,7 @@ exec(char *const *argv, int fdin)
 
 	if (fdin == -1) {
 		doclose = 1;
+		/* NOLINTNEXTLINE(android-cloexec-open) */
 		fdin = open("/dev/null", O_RDONLY);
 		if (fdin == -1) {
 			warn("open: /dev/null");
