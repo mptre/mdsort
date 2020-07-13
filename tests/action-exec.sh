@@ -16,6 +16,18 @@ if testcase "basic"; then
 	EOF
 fi
 
+if testcase "stdin defaults to /dev/null"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all exec "cat"
+	}
+	EOF
+	echo nein | mdsort >$TMP1
+	assert_file - $TMP1 </dev/null
+fi
+
 if testcase "stdin"; then
 	mkmd "src"
 	echo body | mkmsg -b "src/new"

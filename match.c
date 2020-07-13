@@ -505,8 +505,7 @@ exec(char *const *argv, int fdin)
 
 	if (fdin == -1) {
 		doclose = 1;
-		/* NOLINTNEXTLINE(android-cloexec-open) */
-		fdin = open("/dev/null", O_RDONLY);
+		fdin = open("/dev/null", O_RDONLY | O_CLOEXEC);
 		if (fdin == -1) {
 			warn("open: /dev/null");
 			goto out;
