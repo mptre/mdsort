@@ -83,7 +83,6 @@ main(int argc, char *argv[])
 	if ((env.ev_options & OPTION_DRYRUN) && log_level < 1)
 		log_level = 1;
 
-	/* Extract mandatory data from the current environment. */
 	readenv(&env);
 
 	if (pledge("stdio rpath wpath cpath fattr proc exec", NULL) == -1)
