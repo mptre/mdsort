@@ -42,10 +42,10 @@ static const char *message_decode_body(struct message *,
 
 static int cmpheaderid(const void *, const void *);
 static int cmpheaderkey(const void *, const void *);
-static char *decodeheader(const char *);
 static int findheader(char *, struct slice *, struct slice *);
 static ssize_t searchheader(const struct header *, size_t, const char *,
     size_t *);
+static char *unfoldheader(const char *);
 
 static int parseattachments(const struct message *, struct message_list *,
     int);
@@ -320,7 +320,6 @@ const struct string_list *
 message_get_header(const struct message *msg, const char *header)
 {
 	struct header *hdr, *tmp;
-	char *val;
 	ssize_t idx;
 	size_t i, nfound;
 
@@ -329,11 +328,13 @@ message_get_header(const struct message *msg, const char *header)
 	if (idx == -1)
 		return NULL;
 
-	hdr = msg->me_headers.h_v + idx;
+	hdr = &msg->me_headers.h_v[idx];
 	if (hdr->values == NULL) {
 		hdr->values = strings_alloc();
 		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
-			val = decodeheader(tmp->val);
+			char *val;
+
+			val = unfoldheader(tmp->val);
 			strings_append(hdr->values, val);
 		}
 	}
@@ -586,10 +587,13 @@ cmpheaderkey(const void *p1, const void *p2)
 	return strcasecmp(h1->key, h2->key);
 }
 
+/*
+ * Unfold the given header value by concatenating multiple lines into a single
+ * one.
+ */
 static char *
-decodeheader(const char *str)
+unfoldheader(const char *str)
 {
-	const char *end;
 	char *dec;
 	size_t i = 0;
 
@@ -604,12 +608,16 @@ decodeheader(const char *str)
 		return dec;
 
 	for (;;) {
+		const char *end;
+
 		if (*str == '\0')
 			break;
 
 		end = strchr(str, '\n');
 		if (end == NULL)
 			end = str + strlen(str);
+		if (i > 0)
+			dec[i++] = ' ';
 		while (str != end)
 			dec[i++] = *str++;
 

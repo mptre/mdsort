@@ -29,10 +29,10 @@ fi
 
 if testcase "line continuation"; then
 	mkmd "src" "dst"
-	mkmsg "src/new" -- "Subject" "$(printf 'foo\n\tbar')"
+	mkmsg "src/new" -- "Subject" "$(printf 'foo\n\t bar')"
 	cat <<-EOF >$CONF
 	maildir "src" {
-		match header "Subject" /foobar/ move "dst"
+		match header "Subject" /^foo bar$/ move "dst"
 	}
 	EOF
 	mdsort
@@ -130,8 +130,8 @@ if testcase "dry run middle line"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-mdsort.conf:2: To: admin@a.com,user@a.com,no-reply@a.com
-                               ^  $
+mdsort.conf:2: To: admin@a.com, user@a.com, no-reply@a.com
+                                ^  $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	assert_file $TMP1 $TMP2
@@ -147,8 +147,8 @@ if testcase "dry run last line"; then
 	}
 	EOF
 	cat <<EOF >$TMP1
-mdsort.conf:2: To: admin@example.com,user@example.com
-                                     ^  $
+mdsort.conf:2: To: admin@example.com, user@example.com
+                                      ^  $
 EOF
 	mdsort -- -d | tail -n +2 >$TMP2
 	assert_file $TMP1 $TMP2
