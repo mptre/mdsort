@@ -593,8 +593,7 @@ isfile(int dirfd, const char *path)
 	/* Best effort, ignore errors. */
 	if (fstatat(dirfd, path, &sb, AT_SYMLINK_NOFOLLOW) == -1)
 		return 0;
-
-	return (sb.st_mode & S_IFMT) == S_IFREG;
+	return S_ISREG(sb.st_mode);
 }
 
 static int
