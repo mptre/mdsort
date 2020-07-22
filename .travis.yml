@@ -4,7 +4,7 @@ language: c
 
 env:
   global:
-    - CFLAGS=-Werror
+    - CFLAGS="-Werror -Wshadow"
     - CPPFLAGS=-D_FORTIFY_SOURCE=2
     - DEBUG="-g -O2"
 
