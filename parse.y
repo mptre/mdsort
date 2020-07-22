@@ -22,8 +22,8 @@ static void yyungetc(int);
 static void yypushl(int);
 static void yypopl(void);
 
-static struct config_list config = TAILQ_HEAD_INITIALIZER(config);
-static const struct environment *env;
+static struct config_list yyconfig = TAILQ_HEAD_INITIALIZER(yyconfig);
+static const struct environment *yyenv;
 static FILE *fh;
 static const char *confpath;
 static char *stdinpath;
@@ -129,18 +129,18 @@ maildir		: maildir_path maildir_flags exprblock {
 			conf->maildir.path = $1;
 			conf->maildir.flags = $2;
 			conf->expr = $3;
-			TAILQ_INSERT_TAIL(&config, conf, entry);
+			TAILQ_INSERT_TAIL(&yyconfig, conf, entry);
 		}
 		;
 
 maildir_path	: MAILDIR STRING {
-			$$ = expandtilde($2, env);
+			$$ = expandtilde($2, yyenv);
 		}
 		| STDIN {
 			const struct config *conf;
 
 			$$ = stdinpath;
-			TAILQ_FOREACH(conf, &config, entry)
+			TAILQ_FOREACH(conf, &yyconfig, entry)
 				if (conf->maildir.flags & MAILDIR_STDIN)
 					yyerror("stdin already defined");
 		}
@@ -272,7 +272,7 @@ expraction	: BREAK {
 			char *path;
 
 			$$ = expr_alloc(EXPR_TYPE_MOVE, lineno, NULL, NULL);
-			path = expandtilde($2, env);
+			path = expandtilde($2, yyenv);
 			strings = strings_alloc();
 			strings_append(strings, path);
 			expr_set_strings($$, strings);
@@ -415,7 +415,7 @@ nl		: '\n' optnl
  * Otherwise, NULL is returned.
  */
 struct config_list *
-config_parse(const char *path, const struct environment *envp)
+config_parse(const char *path, const struct environment *env)
 {
 	fh = fopen(path, "r");
 	if (fh == NULL) {
@@ -423,17 +423,17 @@ config_parse(const char *path, const struct environment *envp)
 		return NULL;
 	}
 	confpath = path;
-	env = envp;
+	yyenv = env;
 
 	lineno = 1;
 	lineno_save = -1;
 	yyparse();
 	fclose(fh);
 	if (parse_errors > 0) {
-		config_free(&config);
+		config_free(&yyconfig);
 		return NULL;
 	}
-	return &config;
+	return &yyconfig;
 }
 
 void
