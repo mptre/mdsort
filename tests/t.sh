@@ -174,7 +174,8 @@ EXCLUDE="$(mktemp -t t.sh.XXXXXX)"
 NERR="$(mktemp -t t.sh.XXXXXX)"
 NTEST="$(mktemp -t t.sh.XXXXXX)"
 TSHDIR="$(mktemp -d -t t.sh.XXXXXX)"
-trap 'atexit $INCLUDE $EXCLUDE $NERR $NTEST $TSHDIR' EXIT
+TSHCLEAN=""
+trap 'atexit $INCLUDE $EXCLUDE $NERR $NTEST $TSHCLEAN $TSHDIR' EXIT
 
 # Exit on first failure.
 FAST=0
