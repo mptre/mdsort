@@ -25,7 +25,7 @@ static void yypopl(void);
 static struct config_list yyconfig = TAILQ_HEAD_INITIALIZER(yyconfig);
 static const struct environment *yyenv;
 static FILE *fh;
-static const char *confpath;
+static const char *yypath;
 static char *stdinpath;
 static int lineno, lineno_save, parse_errors, pflag;
 
@@ -422,7 +422,7 @@ config_parse(const char *path, const struct environment *env)
 		warn("%s", path);
 		return NULL;
 	}
-	confpath = path;
+	yypath = path;
 	yyenv = env;
 
 	lineno = 1;
@@ -461,7 +461,7 @@ yyerror(const char *fmt, ...)
 	va_list ap;
 	int n;
 
-	n = snprintf(cp, bufsiz, "%s:%d: ", confpath, yylval.lineno);
+	n = snprintf(cp, bufsiz, "%s:%d: ", yypath, yylval.lineno);
 	if (n > 0 && (size_t)n < bufsiz) {
 		cp += n;
 		bufsiz -= n;
