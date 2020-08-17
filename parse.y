@@ -580,11 +580,11 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
+		if (strlen(lexeme) == 0)
+			yyerror("empty string");
 		yylval.v.string = strdup(lexeme);
 		if (yylval.v.string == NULL)
 			err(1, NULL);
-		if (strlen(yylval.v.string) == 0)
-			yyerror("empty string");
 		return STRING;
 	}
 
