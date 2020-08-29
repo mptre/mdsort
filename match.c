@@ -463,7 +463,7 @@ backref(const char *str, unsigned int *br)
 	char *end;
 	unsigned long val;
 
-	if (str[0] != '\\' || !isdigit(str[1]))
+	if (str[0] != '\\' || !isdigit((unsigned char)str[1]))
 		return 0;
 
 	val = strtoul(&str[1], &end, 10);

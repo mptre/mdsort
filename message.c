@@ -462,12 +462,12 @@ static int
 message_flags_resolve(unsigned char flag, unsigned int *idx, unsigned int *mask)
 {
 
-	if (isupper(flag)) {
+	if (isupper((unsigned char)flag)) {
 		*idx = 0;
 		*mask = 1 << (flag - 'A');
 		return 0;
 	}
-	if (islower(flag)) {
+	if (islower((unsigned char)flag)) {
 		*idx = 1;
 		*mask = 1 << (flag - 'a');
 		return 0;
@@ -621,7 +621,7 @@ unfoldheader(const char *str)
 		while (str != end)
 			dec[i++] = *str++;
 
-		for (; isspace(*str); str++)
+		for (; isspace((unsigned char)*str); str++)
 			continue;
 	}
 	dec[i] = '\0';
@@ -634,7 +634,7 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 	size_t i;
 
 	for (i = 0; str[i] != ':'; i++) {
-		if (str[i] == '\0' || isspace(str[i]))
+		if (str[i] == '\0' || isspace((unsigned char)str[i]))
 			return 1;
 	}
 	ks->s_beg = str;

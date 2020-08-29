@@ -636,11 +636,11 @@ again:
 		}
 	}
 
-	if (isdigit(c)) {
+	if (isdigit((unsigned char)c)) {
 		int overflow = 0;
 
 		yylval.v.number = 0;
-		for (; isdigit(c); c = yygetc()) {
+		for (; isdigit((unsigned char)c); c = yygetc()) {
 			if (overflow)
 				continue;
 
@@ -662,12 +662,12 @@ again:
 		return INT;
 	}
 
-	if (islower(c)) {
+	if (islower((unsigned char)c)) {
 		size_t len;
 		int ambiguous = 0;
 		int match = -1;
 
-		for (; islower(c); c = yygetc()) {
+		for (; islower((unsigned char)c); c = yygetc()) {
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("keyword too long");
 				return 0;
