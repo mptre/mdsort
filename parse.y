@@ -27,7 +27,7 @@ static const struct environment *yyenv;
 static FILE *fh;
 static const char *yypath;
 static char *stdinpath;
-static int lineno, lineno_save, parse_errors, pflag;
+static int lineno, lineno_save, parse_errors, pflag, token_save;
 
 typedef struct {
 	union {
@@ -549,9 +549,9 @@ again:
 	yylval.lineno = lineno;
 	yylval.v.number = c;
 	if (c == EOF)
-		return 0;
+		return (token_save = 0);
 	if (c == '!')
-		return NEG;
+		return (token_save = NEG);
 
 	if (c == '#') {
 		for (;;) {
@@ -561,7 +561,7 @@ again:
 				goto again;
 			}
 			if (c == EOF)
-				return 0;
+				return (token_save = 0);
 		}
 	}
 
@@ -572,12 +572,12 @@ again:
 			c = yygetc();
 			if (c == EOF) {
 				yyerror("unterminated string");
-				return 0;
+				return (token_save = 0);
 			}
 
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("string too long");
-				return 0;
+				return (token_save = 0);
 			}
 			*buf++ = c;
 		}
@@ -587,7 +587,7 @@ again:
 		yylval.v.string = strdup(lexeme);
 		if (yylval.v.string == NULL)
 			err(1, NULL);
-		return STRING;
+		return (token_save = STRING);
 	}
 
 	if (pflag) {
@@ -599,12 +599,12 @@ again:
 			c = yygetc();
 			if (c == EOF) {
 				yyerror("unterminated pattern");
-				return 0;
+				return (token_save = 0);
 			}
 
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("pattern too long");
-				return 0;
+				return (token_save = 0);
 			}
 			*buf++ = c;
 		}
@@ -633,7 +633,7 @@ again:
 				break;
 			default:
 				yyungetc(c);
-				return PATTERN;
+				return (token_save = PATTERN);
 			}
 		}
 	}
@@ -661,7 +661,7 @@ again:
 			yylval.v.number += c - '0';
 		}
 		yyungetc(c);
-		return INT;
+		return (token_save = INT);
 	}
 
 	if (islower((unsigned char)c)) {
@@ -672,7 +672,7 @@ again:
 		for (; islower((unsigned char)c); c = yygetc()) {
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("keyword too long");
-				return 0;
+				return (token_save = 0);
 			}
 			*buf++ = c;
 		}
@@ -681,7 +681,7 @@ again:
 
 		for (i = 0; keywords[i].str != NULL; i++)
 			if (strcmp(lexeme, keywords[i].str) == 0)
-				return keywords[i].type;
+				return (token_save = keywords[i].type);
 
 		len = strlen(lexeme);
 		for (i = 0; scalars[i].str != NULL; i++) {
@@ -693,15 +693,15 @@ again:
 		}
 		if (ambiguous) {
 			yyerror("ambiguous keyword: %s", lexeme);
-			return SCALAR;
+			return (token_save = SCALAR);
 		} else if (match >= 0) {
 			yylval.v.number = scalars[match].val;
-			return SCALAR;
+			return (token_save = SCALAR);
 		}
 		yyerror("unknown keyword: %s", lexeme);
 	}
 
-	return c;
+	return (token_save = c);
 }
 
 static char *
