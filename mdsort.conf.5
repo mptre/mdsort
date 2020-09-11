@@ -13,7 +13,22 @@ Comments can be put anywhere in the file using a hash mark
 .Pq Sq #
 and extend to the end of the current line.
 .Pp
-The configuration starts with one or many maildir definitions.
+Macros can be define anywhere at the top level of the configuration.
+A macro name may only contain lowercase letters and must not conflict with
+reserved words.
+They can later be interpolated inside strings which are denoted as
+.Dq Ar string
+in this manual.
+.Bd -literal
+prefix = "~/Maildir"
+inbox = "${prefix}/INBOX"
+
+maildir "${inbox}" {
+	match date > 1 week move "${prefix}/Trash"
+}
+.Ed
+.Pp
+The configuration may contain one or many maildir definitions.
 Each maildir is associated with a block of rules.
 For each message present in a maildir, each rule is evaluated in sequential
 order where the first matching rule is favored.
@@ -320,7 +335,9 @@ The default configuration file.
 .El
 .Sh EXAMPLES
 .Bd -literal
-maildir "~/Maildir/INBOX" {
+inbox = "~/Maildir/INBOX"
+
+maildir "${inbox}" {
 	# Move messages from OpenBSD mailing lists into dedicated directories.
 	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i \e
 		move "~/Maildir/openbsd-\e1"
@@ -339,7 +356,7 @@ maildir "~/Maildir/Trash" {
 
 # Accept messages from stdin and move to the invoking user's inbox.
 stdin {
-	match all move "~/Maildir/INBOX"
+	match all move "${inbox}"
 }
 .Ed
 .Sh SEE ALSO

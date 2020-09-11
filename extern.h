@@ -333,6 +333,8 @@ struct config {
 };
 
 struct config_list {
+    struct macro_list *cf_macros;
+
     TAILQ_HEAD(, config) cf_list;
 };
 

@@ -113,12 +113,13 @@ if testcase "empty maildir path"; then
 	EOF
 fi
 
-if testcase "unknown keyword"; then
+if testcase -t leaky "unknown keyword"; then
 	cat <<-EOF >$CONF
 	noway
 	EOF
 	mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: unknown keyword: noway
+	mdsort.conf:2: syntax error
 	EOF
 fi
 

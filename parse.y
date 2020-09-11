@@ -10,6 +10,17 @@
 
 #include "extern.h"
 
+struct macro {
+	char *mc_name;
+	char *mc_value;
+	unsigned int mc_refs;
+	unsigned int mc_lno;
+
+	TAILQ_ENTRY(macro) mc_entry;
+};
+
+TAILQ_HEAD(macro_list, macro);
+
 static char *expandtilde(char *, const struct environment *);
 static void expr_validate(const struct expr *);
 static void yyerror(const char *, ...)
@@ -21,6 +32,12 @@ static void yyungetc(int);
 
 static void yypushl(int);
 static void yypopl(void);
+
+static int macros_insert(struct macro_list *, char *, char *, int);
+static struct macro *macros_find(struct macro_list *, const char *);
+static void macros_validate(const struct macro_list *);
+static char *expandmacros(struct macro_list *, char *);
+static size_t ismacro(char *str, const char **val);
 
 static struct config_list yyconfig;
 static const struct environment *yyenv;
@@ -61,6 +78,7 @@ typedef struct {
 %token HEADER
 %token INT
 %token LABEL
+%token MACRO
 %token MAILDIR
 %token MATCH
 %token MODIFIED
@@ -94,6 +112,7 @@ typedef struct {
 %type <v.number>	optneg
 %type <v.pattern>	PATTERN
 %type <v.pattern>	pattern
+%type <v.string>	MACRO
 %type <v.string>	STRING
 %type <v.string>	flag
 %type <v.string>	maildir_path
@@ -108,7 +127,14 @@ typedef struct {
 
 grammar		: /* empty */
 		| grammar '\n'
+		| grammar macros '\n'
 		| grammar maildir '\n'
+		;
+
+macros		: MACRO '=' STRING {
+			if (macros_insert(yyconfig.cf_macros, $1, $3, lineno))
+				yyerror("macro already defined: %s", $1);
+		}
 		;
 
 maildir		: maildir_path maildir_flags exprblock {
@@ -425,12 +451,18 @@ config_parse(const char *path, const struct environment *env)
 	yypath = path;
 	yyenv = env;
 
+	yyconfig.cf_macros = malloc(sizeof(*yyconfig.cf_macros));
+	if (yyconfig.cf_macros == NULL)
+		err(1, NULL);
+	TAILQ_INIT(yyconfig.cf_macros);
+
 	TAILQ_INIT(&yyconfig.cf_list);
 
 	lineno = 1;
 	lineno_save = -1;
 	yyparse();
 	fclose(fh);
+	macros_validate(yyconfig.cf_macros);
 	if (parse_errors > 0) {
 		config_free(&yyconfig);
 		return NULL;
@@ -442,6 +474,7 @@ void
 config_free(struct config_list *config)
 {
 	struct config *conf;
+	struct macro *mc;
 
 	if (config == NULL)
 		return;
@@ -452,6 +485,14 @@ config_free(struct config_list *config)
 		free(conf->maildir.path);
 		free(conf);
 	}
+
+	while ((mc = TAILQ_FIRST(config->cf_macros)) != NULL) {
+		TAILQ_REMOVE(config->cf_macros, mc, mc_entry);
+		free(mc->mc_name);
+		free(mc->mc_value);
+		free(mc);
+	}
+	free(config->cf_macros);
 }
 
 static void
@@ -536,15 +577,26 @@ yylex(void)
 	};
 	static char lexeme[BUFSIZ];
 	char *buf;
-	int c, i;
+	int c, i, lno;
 
 	buf = lexeme;
 
+	lno = lineno;
 again:
 	for (c = yygetc(); c == ' ' || c == '\t'; c = yygetc())
 		continue;
 	if (c == '\\' && yypeek('\n'))
 		goto again;
+
+	/*
+	 * Macros must always be followed by `=', otherwise treat it as an
+	 * unknown keyword.
+	 */
+	if (token_save == MACRO && c != '=') {
+		yypushl(lno);
+		yyerror("unknown keyword: %s", lexeme);
+		yypopl();
+	}
 
 	yylval.lineno = lineno;
 	yylval.v.number = c;
@@ -566,6 +618,8 @@ again:
 	}
 
 	if (c == '"') {
+		size_t len;
+
 		for (;;) {
 			if (yypeek('"'))
 				break;
@@ -582,11 +636,15 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
-		if (strlen(lexeme) == 0)
+		len = strlen(lexeme);
+		if (len == 0)
 			yyerror("empty string");
 		yylval.v.string = strdup(lexeme);
 		if (yylval.v.string == NULL)
 			err(1, NULL);
+		if (len > 0)
+			yylval.v.string = expandmacros(yyconfig.cf_macros,
+			    yylval.v.string);
 		return (token_save = STRING);
 	}
 
@@ -698,7 +756,16 @@ again:
 			yylval.v.number = scalars[match].val;
 			return (token_save = SCALAR);
 		}
-		yyerror("unknown keyword: %s", lexeme);
+
+		yylval.v.string = strdup(lexeme);
+		if (yylval.v.string == NULL)
+			err(1, NULL);
+		/*
+		 * At this point, it's unknown if a macro is expected. An error
+		 * is emitted upon the next invocation of yylex() if the macro
+		 * was unexpected.
+		 */
+		return (token_save = MACRO);
 	}
 
 	return (token_save = c);
@@ -823,4 +890,108 @@ yypopl(void)
 
 	yylval.lineno = lineno_save;
 	lineno_save = -1;
+}
+
+static int
+macros_insert(struct macro_list *macros, char *name, char *value, int lno)
+{
+	struct macro *mc;
+
+	if (macros_find(macros, name) != NULL)
+		return 1;
+
+	mc = malloc(sizeof(*mc));
+	if (mc == NULL)
+		err(1, NULL);
+
+	mc->mc_name = name;
+	mc->mc_value = value;
+	mc->mc_refs = 0;
+	mc->mc_lno = lno;
+	TAILQ_INSERT_TAIL(macros, mc, mc_entry);
+	return 0;
+}
+
+static struct macro *
+macros_find(struct macro_list *macros, const char *name)
+{
+	struct macro *mc;
+
+	TAILQ_FOREACH(mc, macros, mc_entry) {
+		if (strcmp(mc->mc_name, name) == 0)
+			return mc;
+	}
+	return NULL;
+}
+
+static void
+macros_validate(const struct macro_list *macros)
+{
+	const struct macro *mc;
+
+	TAILQ_FOREACH(mc, macros, mc_entry) {
+		if (mc->mc_refs > 0)
+			continue;
+
+		yypushl(mc->mc_lno);
+		yyerror("unused macro: %s", mc->mc_name);
+		yypopl();
+	}
+}
+
+static char *
+expandmacros(struct macro_list *macros, char *str)
+{
+	char *buf = NULL;
+	size_t i = 0;
+	size_t buflen = 0;
+	size_t bufsiz = 0;
+
+	while (str[i] != '\0') {
+		const char *name;
+		size_t n;
+
+		n = ismacro(&str[i], &name);
+		if (n > 0) {
+			struct macro *mc;
+
+			mc = macros_find(macros, name);
+			if (mc != NULL) {
+				mc->mc_refs++;
+				append(&buf, &bufsiz, &buflen, mc->mc_value);
+			} else {
+				yyerror("unknown macro used in string: %s",
+				    name);
+			}
+			i += n;
+		} else {
+			appendc(&buf, &bufsiz, &buflen, str[i]);
+			i++;
+		}
+	}
+
+	free(str);
+	return buf;
+}
+
+/*
+ * Returns greater than zero if the given str begins with a macro.
+ * The return value denotes the length of the identified macro. Otherwise, zero
+ * is returned.
+ */
+static size_t
+ismacro(char *str, const char **name)
+{
+	size_t i;
+
+	if (str[0] != '$' || str[1] != '{')
+		return 0;
+
+	for (i = 2; str[i] != '}'; i++) {
+		if (str[i] == '\0')
+			return 0;
+	}
+	str[i] = '\0';
+	*name = &str[2];
+	return i + 1;
 }

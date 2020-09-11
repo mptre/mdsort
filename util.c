@@ -187,7 +187,7 @@ append(char **buf, size_t *bufsiz, size_t *buflen, const char *str)
 }
 
 /*
- * Append ch to buf using the semantics as append().
+ * Append ch to buf using the same semantics as append().
  */
 size_t
 appendc(char **buf, size_t *bufsiz, size_t *buflen, char ch)
