@@ -22,7 +22,7 @@ static void yyungetc(int);
 static void yypushl(int);
 static void yypopl(void);
 
-static struct config_list yyconfig = TAILQ_HEAD_INITIALIZER(yyconfig);
+static struct config_list yyconfig;
 static const struct environment *yyenv;
 static FILE *fh;
 static const char *yypath;
@@ -129,7 +129,7 @@ maildir		: maildir_path maildir_flags exprblock {
 			conf->maildir.path = $1;
 			conf->maildir.flags = $2;
 			conf->expr = $3;
-			TAILQ_INSERT_TAIL(&yyconfig, conf, entry);
+			TAILQ_INSERT_TAIL(&yyconfig.cf_list, conf, entry);
 		}
 		;
 
@@ -140,7 +140,7 @@ maildir_path	: MAILDIR STRING {
 			const struct config *conf;
 
 			$$ = stdinpath;
-			TAILQ_FOREACH(conf, &yyconfig, entry)
+			TAILQ_FOREACH(conf, &yyconfig.cf_list, entry)
 				if (conf->maildir.flags & MAILDIR_STDIN)
 					yyerror("stdin already defined");
 		}
@@ -425,6 +425,8 @@ config_parse(const char *path, const struct environment *env)
 	yypath = path;
 	yyenv = env;
 
+	TAILQ_INIT(&yyconfig.cf_list);
+
 	lineno = 1;
 	lineno_save = -1;
 	yyparse();
@@ -444,8 +446,8 @@ config_free(struct config_list *config)
 	if (config == NULL)
 		return;
 
-	while ((conf = TAILQ_FIRST(config)) != NULL) {
-		TAILQ_REMOVE(config, conf, entry);
+	while ((conf = TAILQ_FIRST(&config->cf_list)) != NULL) {
+		TAILQ_REMOVE(&config->cf_list, conf, entry);
 		expr_free(conf->expr);
 		free(conf->maildir.path);
 		free(conf);

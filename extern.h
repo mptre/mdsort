@@ -332,7 +332,9 @@ struct config {
 	TAILQ_ENTRY(config) entry;
 };
 
-TAILQ_HEAD(config_list, config);
+struct config_list {
+    TAILQ_HEAD(, config) cf_list;
+};
 
 struct config_list *config_parse(const char *path,
     const struct environment *env);
