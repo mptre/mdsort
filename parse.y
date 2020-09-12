@@ -44,7 +44,7 @@ static const struct environment *yyenv;
 static FILE *fh;
 static const char *yypath;
 static char *stdinpath;
-static int lineno, lineno_save, parse_errors, pflag, token_save;
+static int lineno, lineno_save, parse_errors, pflag;
 
 typedef struct {
 	union {
@@ -576,6 +576,7 @@ yylex(void)
 		{ NULL,		0 },
 	};
 	static char lexeme[BUFSIZ];
+	static int token_save;
 	char *buf;
 	int c, i, lno;
 
