@@ -1,3 +1,29 @@
+# v6.0.0 - 2020-09-12
+
+## Changes
+
+- Unfold header values into a single space separated line, according to RFC
+  2822.
+  (518a12f)
+  (Anton Lindqvist)
+
+## News
+
+- Add support for macros to configuration.
+  Macros allows repetitive parts of the configuration to be defined once.
+  They can be interpolated inside any string in the configuration.
+  (3f4d931)
+  (Anton Lindqvist)
+
+  ```
+  prefix = "~/Maildir"
+  inbox = "${prefix}/INBOX"
+
+  maildir "${inbox}" {
+    match date > 1 week move "${prefix}/Trash"
+  }
+  ```
+
 # v5.3.0 - 2020-07-11
 
 ## News
