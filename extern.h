@@ -346,6 +346,9 @@ char *pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end);
 
 size_t nspaces(const char *str);
 
+size_t append(char **buf, size_t *bufsiz, size_t *buflen, const char *str);
+size_t appendc(char **buf, size_t *bufsiz, size_t *buflen, char ch);
+
 extern int log_level;
 
 #define log_info(fmt, ...) do {						\

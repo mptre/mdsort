@@ -43,8 +43,6 @@ static int expr_match(struct expr *, struct match_list *, struct message *,
 static int expr_regexec(struct expr *, const char *, const char *,
     unsigned int);
 
-static size_t append(char **, size_t *, size_t *, const char *);
-
 /*
  * Allocate a new expression with the given type.
  *
@@ -680,24 +678,27 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 	char *buf = NULL;
 	size_t buflen = 0;
 	size_t bufsiz = 0;
+	int nlabels = 0;
 
 	labels = message_get_header(msg, "X-Label");
 	if (labels != NULL) {
 		TAILQ_FOREACH(str, labels, entry) {
+			if (nlabels > 0)
+				appendc(&buf, &bufsiz, &buflen, ' ');
+
 			/* The header can be empty. */
 			if (append(&buf, &bufsiz, &buflen, str->val) > 0)
-				append(&buf, &bufsiz, &buflen, " ");
+				nlabels++;
 		}
 	}
 
 	TAILQ_FOREACH(str, ex->ex_strings, entry) {
+		if (nlabels > 0)
+			appendc(&buf, &bufsiz, &buflen, ' ');
+
 		/* The label cannot be empty, enforced by the config parser. */
 		append(&buf, &bufsiz, &buflen, str->val);
-		append(&buf, &bufsiz, &buflen, " ");
 	}
-	/* NUL-terminate and remove trailing space added above. */
-	if (buflen > 0)
-		buf[buflen - 1] = '\0';
 
 	message_set_header(msg, "X-Label", buf);
 
@@ -879,29 +880,4 @@ expr_regexec(struct expr *ex, const char *key, const char *val,
 	}
 
 	return EXPR_MATCH;
-}
-
-/*
- * Append str to buf, both bufsiz and buflen are updated accordingly.
- * Returns the number of appended bytes.
- */
-static size_t
-append(char **buf, size_t *bufsiz, size_t *buflen, const char *str)
-{
-	size_t len, newsiz;
-
-	len = strlen(str);
-	while (*buflen + len >= *bufsiz) {
-		newsiz = 2 * *bufsiz;
-		if (newsiz == 0)
-			newsiz = 128;
-		*buf = realloc(*buf, newsiz);
-		if (*buf == NULL)
-			err(1, NULL);
-		*bufsiz = newsiz;
-	}
-	memcpy(*buf + *buflen, str, len);
-	*buflen += len;
-
-	return len;
 }
