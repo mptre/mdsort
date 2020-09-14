@@ -1,3 +1,11 @@
+# v6.0.1 - 2020-09-14
+
+## Bug fixes
+
+- Fix null dereference when macro is absent.
+  (87bc011)
+  (Anton Lindqvist)
+
 # v6.0.0 - 2020-09-12
 
 ## Changes
