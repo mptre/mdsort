@@ -75,6 +75,17 @@ if testcase -t leaky "macro not on root level"; then
 	EOF
 fi
 
+if testcase "unknown macro"; then
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all move "\${dst}"
+	}
+	EOF
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:2: unknown macro used in string: dst
+	EOF
+fi
+
 if testcase "unused macro"; then
 	cat <<-EOF >$CONF
 	dst = "dst"

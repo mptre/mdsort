@@ -970,6 +970,12 @@ expandmacros(struct macro_list *macros, char *str)
 		}
 	}
 
+	/*
+	 * If the string only contains unknown macros, the buffer will not be
+	 * allocated.
+	 */
+	if (buf == NULL)
+		return str;
 	free(str);
 	return buf;
 }
