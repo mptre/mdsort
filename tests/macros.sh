@@ -99,3 +99,12 @@ if testcase "unused macro"; then
 	mdsort.conf:2: unused macro: trash
 	EOF
 fi
+
+if testcase "unterminated macro"; then
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all move "\${dst"
+	}
+	EOF
+	mdsort -- -n
+fi
