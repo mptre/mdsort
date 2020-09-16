@@ -94,3 +94,15 @@ if testcase "interpolation out of bounds"; then
 	EOF
 	mdsort -e >/dev/null
 fi
+
+# Ensure no unwanted file descriptors are leaked into the executed command.
+if testcase "file descriptors"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all exec { "sh" "-c" "i=3; while [ \$i -lt 10 ]; do command >&\$i && exit 1; i=\$((i + 1)); done" }
+	}
+	EOF
+	mdsort >/dev/null
+fi
