@@ -163,7 +163,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env)
 {
-	char flags[FLAGS_MAX], sbuf[NAME_MAX + 1];
+	char flags[FLAGS_MAX], srcbuf[NAME_MAX + 1];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
@@ -174,7 +174,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	int doutime = 0;
 	int error = 0;
 
-	srcname = pathslice(msg->me_path, sbuf, sizeof(sbuf), -1, -1);
+	srcname = pathslice(msg->me_path, srcbuf, sizeof(srcbuf), -1, -1);
 	if (srcname == NULL) {
 		warnx("%s: basename not found", msg->me_path);
 		return 1;
