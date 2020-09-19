@@ -21,7 +21,7 @@ struct macro {
 
 TAILQ_HEAD(macro_list, macro);
 
-static char *expandtilde(char *, const struct environment *);
+static char *expandtilde(char *, const char *);
 static void expr_validate(const struct expr *);
 static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
@@ -160,7 +160,7 @@ maildir		: maildir_path maildir_flags exprblock {
 		;
 
 maildir_path	: MAILDIR STRING {
-			$$ = expandtilde($2, yyenv);
+			$$ = expandtilde($2, yyenv->ev_home);
 		}
 		| STDIN {
 			const struct config *conf;
@@ -298,7 +298,7 @@ expraction	: BREAK {
 			char *path;
 
 			$$ = expr_alloc(EXPR_TYPE_MOVE, lineno, NULL, NULL);
-			path = expandtilde($2, yyenv);
+			path = expandtilde($2, yyenv->ev_home);
 			strings = strings_alloc();
 			strings_append(strings, path);
 			expr_set_strings($$, strings);
@@ -773,7 +773,7 @@ again:
 }
 
 static char *
-expandtilde(char *str, const struct environment *env)
+expandtilde(char *str, const char *home)
 {
 	char *buf;
 	int siz, n;
@@ -785,7 +785,7 @@ expandtilde(char *str, const struct environment *env)
 	buf = malloc(siz);
 	if (buf == NULL)
 		err(1, NULL);
-	n = snprintf(buf, siz, "%s%s", env->ev_home, str + 1);
+	n = snprintf(buf, siz, "%s%s", home, str + 1);
 	if (n < 0 || n >= siz)
 		yyerror("path too long");
 	free(str);
