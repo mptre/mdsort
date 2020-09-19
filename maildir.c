@@ -214,7 +214,9 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 			warn("renameat");
 			error = 1;
 		}
-	} else if (doutime && utimensat(dstfd, dstname, times, 0) == -1) {
+	}
+	if (error == 0 && doutime &&
+	    utimensat(dstfd, dstname, times, 0) == -1) {
 		warn("utimensat");
 		error = 1;
 	}
