@@ -449,12 +449,12 @@ match_char(const struct match *mh, unsigned char c)
 }
 
 static const char *
-match_get(const struct match *mh, unsigned int n)
+match_get(const struct match *mh, unsigned int idx)
 {
 
-	if (mh == NULL || n >= mh->mh_nmatches)
+	if (mh == NULL || idx >= mh->mh_nmatches)
 		return NULL;
-	return mh->mh_matches[n];
+	return mh->mh_matches[idx];
 }
 
 static int
