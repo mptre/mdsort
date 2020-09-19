@@ -67,37 +67,32 @@ struct maildir_entry {
 	int e_dirfd;
 };
 
-struct maildir *maildir_open(const char *path, unsigned int flags,
-    const struct environment *env);
+struct maildir *maildir_open(const char *, unsigned int,
+    const struct environment *);
 
-void maildir_close(struct maildir *md);
+void maildir_close(struct maildir *);
 
-int maildir_walk(struct maildir *md, struct maildir_entry *me);
+int maildir_walk(struct maildir *, struct maildir_entry *);
 
-int maildir_move(struct maildir *src, const struct maildir *dst,
-    struct message *msg, char *buf, size_t bufsiz,
-    const struct environment *env);
+int maildir_move(struct maildir *, const struct maildir *, struct message *,
+    char *, size_t, const struct environment *);
 
-int maildir_unlink(const struct maildir *md, const struct message *msg);
+int maildir_unlink(const struct maildir *, const struct message *);
 
-int maildir_write(struct maildir *src, const struct maildir *dst,
-    struct message *msg, char *buf, size_t bufsiz,
-    const struct environment *env);
+int maildir_write(struct maildir *, const struct maildir *, struct message *,
+    char *, size_t, const struct environment *);
 
-int maildir_cmp(const struct maildir *md1, const struct maildir *md2);
+int maildir_cmp(const struct maildir *, const struct maildir *);
 
 struct message_flags {
 	unsigned int mf_flags[2];	/* 0: uppercase, 1: lowercase */
 };
 
-char *message_flags_str(const struct message_flags *flags, char *buf,
-    size_t bufsiz);
+char *message_flags_str(const struct message_flags *, char *, size_t);
 
-int message_flags_isset(const struct message_flags *flags,
-    unsigned char flag);
+int message_flags_isset(const struct message_flags *, unsigned char);
 
-int message_flags_set(struct message_flags *flags, unsigned char flag,
-    int add);
+int message_flags_set(struct message_flags *, unsigned char, int);
 
 struct message {
 	char me_pbuf[PATH_MAX];	/* path buffer */
@@ -120,27 +115,26 @@ struct message {
 
 TAILQ_HEAD(message_list, message);
 
-struct message *message_parse(const char *dir, int dirfd, const char *path);
+struct message *message_parse(const char *, int, const char *);
 
-void message_free(struct message *msg);
+void message_free(struct message *);
 
-int message_writeat(struct message *msg, int fd, unsigned int dosync);
+int message_writeat(struct message *, int, unsigned int);
 
-int message_get_fd(const struct message *msg);
+int message_get_fd(const struct message *);
 
-const char *message_get_body(struct message *msg);
+const char *message_get_body(struct message *);
 
-const struct string_list *message_get_header(const struct message *msg,
-    const char *header);
+const struct string_list *message_get_header(const struct message *,
+    const char *);
 
-const char *message_get_header1(const struct message *msg, const char *header);
+const char *message_get_header1(const struct message *, const char *);
 
-void message_set_header(struct message *msg, const char *header, char *val);
+void message_set_header(struct message *, const char *, char *);
 
-int message_get_attachments(const struct message *msg,
-    struct message_list **attachments);
+int message_get_attachments(const struct message *, struct message_list **);
 
-void message_list_free(struct message_list *messages);
+void message_list_free(struct message_list *);
 
 enum expr_type {
 	EXPR_TYPE_BLOCK = 0,
@@ -252,59 +246,53 @@ struct match {
 
 TAILQ_HEAD(match_list, match);
 
-struct expr *expr_alloc(enum expr_type type, int lno, struct expr *lhs,
-    struct expr *rhs);
+struct expr *expr_alloc(enum expr_type, int, struct expr *, struct expr *);
 
-void expr_free(struct expr *ex);
+void expr_free(struct expr *);
 
-void expr_set_date(struct expr *ex, enum expr_date_field field,
-    enum expr_date_cmp cmp, time_t age);
+void expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
+    time_t);
 
-void expr_set_exec(struct expr *ex, struct string_list *cmd,
-    unsigned int flags);
+void expr_set_exec(struct expr *, struct string_list *, unsigned int);
 
-void expr_set_strings(struct expr *ex, struct string_list *strings);
+void expr_set_strings(struct expr *, struct string_list *);
 
-int expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
-    const char **errstr);
+int expr_set_pattern(struct expr *, const char *, unsigned int, const char **);
 
-int expr_count(const struct expr *ex, enum expr_type type);
+int expr_count(const struct expr *, enum expr_type);
 
-int expr_count_actions(const struct expr *ex);
+int expr_count_actions(const struct expr *);
 
-int expr_count_patterns(const struct expr *ex, unsigned int flags);
+int expr_count_patterns(const struct expr *, unsigned int);
 
-int expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env);
+int expr_eval(struct expr *, struct match_list *, struct message *,
+    const struct environment *);
 
-void expr_inspect(const struct expr *ex, FILE *fh,
-    const struct environment *env);
+void expr_inspect(const struct expr *, FILE *, const struct environment *);
 
-int matches_append(struct match_list *ml, struct match *mh,
-    const struct message *msg);
+int matches_append(struct match_list *, struct match *, const struct message *);
 
-void matches_clear(struct match_list *ml);
+void matches_clear(struct match_list *);
 
-int matches_interpolate(struct match_list *ml, struct message *msg);
+int matches_interpolate(struct match_list *, struct message *);
 
-int matches_exec(const struct match_list *ml, struct maildir *src,
-    struct message *msg, int *reject, const struct environment *env);
+int matches_exec(const struct match_list *, struct maildir *, struct message *,
+    int *, const struct environment *);
 
-int matches_inspect(const struct match_list *ml, const struct message *msg,
-    FILE *fh, const struct environment *env);
+int matches_inspect(const struct match_list *, const struct message *, FILE *,
+    const struct environment *);
 
-void match_copy(struct match *mh, const char *str, const regmatch_t *off,
-    size_t nmemb);
+void match_copy(struct match *, const char *, const regmatch_t *, size_t);
 
-void match_reset(struct match *mh);
+void match_reset(struct match *);
 
-struct match *matches_find(struct match_list *ml, enum expr_type type);
+struct match *matches_find(struct match_list *, enum expr_type);
 
-int matches_remove(struct match_list *ml, enum expr_type type);
+int matches_remove(struct match_list *, enum expr_type);
 
-char *time_format(time_t tim, char *buf, size_t bufsiz);
+char *time_format(time_t, char *, size_t);
 
-int time_parse(const char *str, time_t *res, const struct environment *env);
+int time_parse(const char *, time_t *, const struct environment *);
 
 struct string {
 	char *val;
@@ -316,11 +304,11 @@ TAILQ_HEAD(string_list, string);
 
 struct string_list *strings_alloc(void);
 
-void strings_free(struct string_list *strings);
+void strings_free(struct string_list *);
 
-size_t strings_len(const struct string_list *strings);
+size_t strings_len(const struct string_list *);
 
-void strings_append(struct string_list *strings, char *val);
+void strings_append(struct string_list *, char *);
 
 struct config {
 	struct {
@@ -338,20 +326,17 @@ struct config_list {
     TAILQ_HEAD(, config) cf_list;
 };
 
-struct config_list *config_parse(const char *path,
-    const struct environment *env);
+struct config_list *config_parse(const char *, const struct environment *);
 
-void config_free(struct config_list *config);
+void config_free(struct config_list *);
 
-char *pathjoin(char *buf, size_t bufsiz, const char *dirname,
-    const char *filename);
+char *pathjoin(char *, size_t, const char *, const char *);
+char *pathslice(const char *, char *, size_t, int, int);
 
-char *pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end);
+size_t nspaces(const char *);
 
-size_t nspaces(const char *str);
-
-size_t append(char **buf, size_t *bufsiz, size_t *buflen, const char *str);
-size_t appendc(char **buf, size_t *bufsiz, size_t *buflen, char ch);
+size_t append(char **, size_t *, size_t *, const char *);
+size_t appendc(char **, size_t *, size_t *, char);
 
 extern int log_level;
 
