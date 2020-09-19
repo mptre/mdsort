@@ -581,8 +581,8 @@ yylex(void)
 	int c, i, lno;
 
 	buf = lexeme;
-
 	lno = lineno;
+
 again:
 	for (c = yygetc(); c == ' ' || c == '\t'; c = yygetc())
 		continue;
