@@ -106,5 +106,7 @@ if testcase "unterminated macro"; then
 		match all move "\${dst"
 	}
 	EOF
-	mdsort -- -n
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:2: unterminated macro
+	EOF
 fi

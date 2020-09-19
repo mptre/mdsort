@@ -37,7 +37,7 @@ static int macros_insert(struct macro_list *, char *, char *, int);
 static struct macro *macros_find(struct macro_list *, const char *);
 static void macros_validate(const struct macro_list *);
 static char *expandmacros(struct macro_list *, char *);
-static size_t ismacro(char *str, const char **val);
+static ssize_t ismacro(char *str, const char **val);
 
 static struct config_list yyconfig;
 static const struct environment *yyenv;
@@ -950,9 +950,11 @@ expandmacros(struct macro_list *macros, char *str)
 
 	while (str[i] != '\0') {
 		const char *name;
-		size_t n;
+		ssize_t n;
 
 		n = ismacro(&str[i], &name);
+		if (n < 0)
+			yyerror("unterminated macro");
 		if (n > 0) {
 			struct macro *mc;
 
@@ -982,11 +984,15 @@ expandmacros(struct macro_list *macros, char *str)
 }
 
 /*
- * Returns greater than zero if the given str begins with a macro.
- * The return value denotes the length of the identified macro. Otherwise, zero
- * is returned.
+ * Determine if the given string starts with a macro. Returns one of the following:
+ *
+ *     >0   The length of the found macro.
+ *
+ *     0    Macro not found.
+ *
+ *     -1   Unterminated macro found.
  */
-static size_t
+static ssize_t
 ismacro(char *str, const char **name)
 {
 	size_t i;
@@ -996,7 +1002,7 @@ ismacro(char *str, const char **name)
 
 	for (i = 2; str[i] != '}'; i++) {
 		if (str[i] == '\0')
-			return 0;
+			return -1;
 	}
 	str[i] = '\0';
 	*name = &str[2];
