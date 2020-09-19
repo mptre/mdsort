@@ -388,7 +388,8 @@ maildir_genname(const struct maildir *dst, const char *flags,
 	for (;;) {
 		count++;
 		n = snprintf(buf, bufsiz, "%lld.%d_%u.%s%s",
-		    ts, env->ev_pid, count, env->ev_hostname, flags);
+		    ts, env->ev_pid, count, env->ev_hostname,
+		    flags ? flags : "");
 		if (n < 0 || (size_t)n >= bufsiz) {
 			warnc(ENAMETOOLONG, "%s", __func__);
 			return -1;
@@ -492,7 +493,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	 * No need to remove the created file in case of an error since
 	 * maildir_close() removes the complete temporary directory.
 	 */
-	fd = maildir_genname(md, "", name, sizeof(name), env);
+	fd = maildir_genname(md, NULL, name, sizeof(name), env);
 	if (fd == -1)
 		return 1;
 
