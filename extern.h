@@ -10,9 +10,7 @@
 #include <stdio.h>
 #include <time.h>
 
-/*
- * Annotate the argument as unused.
- */
+/* Annotate the argument as unused. */
 #define UNUSED(x)	__##x __attribute__((__unused__))
 
 /* Forward declarations. */
