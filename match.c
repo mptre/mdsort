@@ -19,7 +19,7 @@ static void matches_merge(struct match_list *, struct match *);
 static unsigned char match_char(const struct match *, unsigned char);
 static const char *match_get(const struct match *, unsigned int);
 
-static int backref(const char *, unsigned int *);
+static int isbackref(const char *, unsigned int *);
 static int bufgrow(char **, size_t *, size_t, int);
 static int exec(char *const *, int);
 static int interpolate(const struct match *, const char *, char **, size_t);
@@ -458,7 +458,7 @@ match_get(const struct match *mh, unsigned int idx)
 }
 
 static int
-backref(const char *str, unsigned int *br)
+isbackref(const char *str, unsigned int *br)
 {
 	char *end;
 	unsigned long val;
@@ -560,7 +560,7 @@ interpolate(const struct match *mh, const char *str, char **buf, size_t bufsiz)
 	int grow = bufsiz == 0;
 
 	while (str[i] != '\0') {
-		n = backref(&str[i], &br);
+		n = isbackref(&str[i], &br);
 		if (n < 0)
 			goto invalid;
 		if (n > 0) {
