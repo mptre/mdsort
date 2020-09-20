@@ -263,16 +263,17 @@ if testcase "destination interpolation with negate"; then
 fi
 
 if testcase "destination interpolation too long"; then
+	_to="user@$(genstr $PATH_MAX).com"
 	mkmd "src"
-	mkmsg "src/new" -- "To" "user@$(genstr $PATH_MAX).com"
+	mkmsg "src/new" -- "To" "$_to"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /(.+)/ move "\1"
 	}
 	EOF
-	mdsort -e >$TMP1
-	grep -q '\\1/new: interpolated string too long' $TMP1 ||
-		fail - "expected destination to be too long" <$TMP1
+	mdsort -e - <<-EOF
+	mdsort: ${_to}/new: interpolated string too long
+	EOF
 fi
 
 if testcase "unknown option"; then

@@ -16,13 +16,11 @@
 static const struct match *matches_find_interpolate(const struct match_list *);
 static void matches_merge(struct match_list *, struct match *);
 
-static unsigned char match_char(const struct match *, unsigned char);
 static const char *match_get(const struct match *, unsigned int);
 
 static int isbackref(const char *, unsigned int *);
-static int bufgrow(char **, size_t *, size_t, int);
 static int exec(char *const *, int);
-static int interpolate(const struct match *, const char *, char **, size_t);
+static int interpolate(const struct match *, const char *, char **);
 
 /*
  * Append the given match to the list and construct the maildir destination path
@@ -99,12 +97,18 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 		switch (mh->mh_expr->ex_type) {
 		case EXPR_TYPE_MOVE:
 		case EXPR_TYPE_FLAG: {
-			char buf[PATH_MAX];
-			char *tmp = buf;
+			char *path = NULL;
+			size_t n, siz;
 
-			if (interpolate(mi, mh->mh_path, &tmp, sizeof(buf)))
+			if (interpolate(mi, mh->mh_path, &path))
 				return 1;
-			(void)strlcpy(mh->mh_path, tmp, sizeof(mh->mh_path));
+			siz = sizeof(mh->mh_path);
+			n = strlcpy(mh->mh_path, path, siz);
+			if (n >= siz)
+				warnx("%s: interpolated string too long", path);
+			free(path);
+			if (n >= siz)
+				return 1;
 			break;
 		}
 
@@ -123,7 +127,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 				 */
 				return 1;
 			}
-			if (interpolate(mi, str, &label, 0)) {
+			if (interpolate(mi, str, &label)) {
 				free(label);
 				return 1;
 			}
@@ -146,7 +150,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
 				char *arg = NULL;
 
-				if (interpolate(mi, str->val, &arg, 0)) {
+				if (interpolate(mi, str->val, &arg)) {
 					free(arg);
 					return 1;
 				}
@@ -345,10 +349,20 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 		err(1, NULL);
 	mh->mh_nmatches = nmemb;
 	for (i = 0; i < nmemb; i++) {
+		size_t j;
+
 		len = off[i].rm_eo - off[i].rm_so;
 		cpy = strndup(str + off[i].rm_so, len);
 		if (cpy == NULL)
 			err(1, NULL);
+		if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_LCASE) {
+			for (j = 0; cpy[j] != '\0'; j++)
+				cpy[j] = tolower((unsigned char)cpy[j]);
+		}
+		if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_UCASE) {
+			for (j = 0; cpy[j] != '\0'; j++)
+				cpy[j] = toupper((unsigned char)cpy[j]);
+		}
 		mh->mh_matches[i] = cpy;
 	}
 }
@@ -437,17 +451,6 @@ matches_merge(struct match_list *ml, struct match *mh)
 	}
 }
 
-static unsigned char
-match_char(const struct match *mh, unsigned char c)
-{
-
-	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_LCASE)
-		return tolower(c);
-	if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_UCASE)
-		return toupper(c);
-	return c;
-}
-
 static const char *
 match_get(const struct match *mh, unsigned int idx)
 {
@@ -472,27 +475,6 @@ isbackref(const char *str, unsigned int *br)
 
 	*br = val;
 	return end - str;
-}
-
-static int
-bufgrow(char **buf, size_t *bufsiz, size_t newlen, int grow)
-{
-	size_t newsiz = *bufsiz;
-
-	if (newsiz > 0 && newlen < newsiz)
-		return 0;
-	if (!grow)
-		return 1;
-
-	if (newsiz == 0)
-		newsiz = 128;
-	while (newsiz < newlen)
-		newsiz *= 2;
-	*buf = realloc(*buf, newsiz);
-	if (*buf == NULL)
-		err(1, NULL);
-	*bufsiz = newsiz;
-	return 0;
 }
 
 static int
@@ -545,21 +527,20 @@ out:
 }
 
 /*
- * Interpolate the given string, storing the interpolated string in buf.
- * If bufsiz is zero, buf is expected to be dynamically allocated.
- * Otherwise, buf is assumed to be finite.
+ * Interpolate the given string, storing it in buf.
  */
 static int
-interpolate(const struct match *mh, const char *str, char **buf, size_t bufsiz)
+interpolate(const struct match *mh, const char *str, char **buf)
 {
-	const char *sub;
 	size_t buflen = 0;
+	size_t bufsiz = 0;
 	size_t i = 0;
-	unsigned int br;
-	int n;
-	int grow = bufsiz == 0;
 
 	while (str[i] != '\0') {
+		const char *sub;
+		unsigned int br;
+		int n;
+
 		n = isbackref(&str[i], &br);
 		if (n < 0)
 			goto invalid;
@@ -568,29 +549,17 @@ interpolate(const struct match *mh, const char *str, char **buf, size_t bufsiz)
 			if (sub == NULL)
 				goto invalid;
 
-			if (bufgrow(buf, &bufsiz, buflen + strlen(sub), grow))
-				goto toolong;
-			for (; *sub != '\0'; sub++)
-				(*buf)[buflen++] = match_char(mh, *sub);
+			append(buf, &bufsiz, &buflen, sub);
 			i += n;
-			continue;
+		} else {
+			appendc(buf, &bufsiz, &buflen, str[i]);
+			i++;
 		}
-
-		if (bufgrow(buf, &bufsiz, buflen + 1, grow))
-			goto toolong;
-		(*buf)[buflen++] = str[i++];
 	}
-	if (bufgrow(buf, &bufsiz, buflen + 1, grow))
-		goto toolong;
-	(*buf)[buflen] = '\0';
 
 	return 0;
 
 invalid:
 	warnx("%s: invalid back-reference", str);
-	return 1;
-
-toolong:
-	warnx("%s: interpolated string too long", str);
 	return 1;
 }
