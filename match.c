@@ -455,7 +455,7 @@ static const char *
 match_get(const struct match *mh, unsigned int idx)
 {
 
-	if (mh == NULL || idx >= mh->mh_nmatches)
+	if (idx >= mh->mh_nmatches)
 		return NULL;
 	return mh->mh_matches[idx];
 }
@@ -545,6 +545,8 @@ interpolate(const struct match *mh, const char *str, char **buf)
 		if (n < 0)
 			goto invalid;
 		if (n > 0) {
+			if (mh == NULL)
+				goto invalid;
 			sub = match_get(mh, br);
 			if (sub == NULL)
 				goto invalid;
