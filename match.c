@@ -20,7 +20,7 @@ static const char *match_get(const struct match *, unsigned int);
 
 static int exec(char *const *, int);
 static int interpolate(const struct match *, const char *, char **);
-static int isbackref(const char *, unsigned int *);
+static ssize_t isbackref(const char *, unsigned int *);
 
 /*
  * Append the given match to the list and construct the maildir destination path
@@ -457,7 +457,7 @@ match_get(const struct match *mh, unsigned int idx)
 	return mh->mh_matches[idx];
 }
 
-static int
+static ssize_t
 isbackref(const char *str, unsigned int *br)
 {
 	char *end;
@@ -536,7 +536,7 @@ interpolate(const struct match *mh, const char *str, char **buf)
 	while (str[i] != '\0') {
 		const char *sub;
 		unsigned int br;
-		int n;
+		ssize_t n;
 
 		n = isbackref(&str[i], &br);
 		if (n < 0)
