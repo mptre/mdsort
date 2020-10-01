@@ -19,7 +19,9 @@ struct macro {
 	TAILQ_ENTRY(macro) mc_entry;
 };
 
-TAILQ_HEAD(macro_list, macro);
+struct macro_list {
+	TAILQ_HEAD(, macro) ml_list;
+};
 
 static char *expandtilde(char *, const char *);
 static void expr_validate(const struct expr *);
@@ -442,7 +444,7 @@ config_parse(const char *path, const struct environment *env)
 	yyconfig.cf_macros = malloc(sizeof(*yyconfig.cf_macros));
 	if (yyconfig.cf_macros == NULL)
 		err(1, NULL);
-	TAILQ_INIT(yyconfig.cf_macros);
+	TAILQ_INIT(&yyconfig.cf_macros->ml_list);
 
 	TAILQ_INIT(&yyconfig.cf_list);
 
@@ -474,8 +476,8 @@ config_free(struct config_list *config)
 		free(conf);
 	}
 
-	while ((mc = TAILQ_FIRST(config->cf_macros)) != NULL) {
-		TAILQ_REMOVE(config->cf_macros, mc, mc_entry);
+	while ((mc = TAILQ_FIRST(&config->cf_macros->ml_list)) != NULL) {
+		TAILQ_REMOVE(&config->cf_macros->ml_list, mc, mc_entry);
 		free(mc->mc_name);
 		free(mc->mc_value);
 		free(mc);
@@ -894,7 +896,7 @@ macros_insert(struct macro_list *macros, char *name, char *value, int lno)
 	mc->mc_value = value;
 	mc->mc_refs = 0;
 	mc->mc_lno = lno;
-	TAILQ_INSERT_TAIL(macros, mc, mc_entry);
+	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
 	return 0;
 }
 
@@ -903,7 +905,7 @@ macros_find(struct macro_list *macros, const char *name)
 {
 	struct macro *mc;
 
-	TAILQ_FOREACH(mc, macros, mc_entry) {
+	TAILQ_FOREACH(mc, &macros->ml_list, mc_entry) {
 		if (strcmp(mc->mc_name, name) == 0)
 			return mc;
 	}
@@ -915,7 +917,7 @@ macros_validate(const struct macro_list *macros)
 {
 	const struct macro *mc;
 
-	TAILQ_FOREACH(mc, macros, mc_entry) {
+	TAILQ_FOREACH(mc, &macros->ml_list, mc_entry) {
 		if (mc->mc_refs > 0)
 			continue;
 
