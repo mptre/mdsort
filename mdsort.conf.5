@@ -7,18 +7,29 @@
 .Sh DESCRIPTION
 .Nm
 is the configuration file for
+.Xr mdsort 1
+and is divided into the following main sections:
+.Bl -tag -width XXX
+.It Sx MACROS
+User-defined macros may be defined and used later, simplifying
+the configuration file.
+.It Sx CONFIGURATION
+Configuration for
 .Xr mdsort 1 .
+.El
 .Pp
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq #
 and extend to the end of the current line.
-.Pp
+.Sh MACROS
 Macros can be define anywhere at the top level of the configuration.
 A macro name may only contain lowercase letters and must not conflict with
 reserved words.
 They can later be interpolated inside strings which are denoted as
 .Dq Ar string
 in this manual.
+.Pp
+For example:
 .Bd -literal
 prefix = "~/Maildir"
 inbox = "${prefix}/INBOX"
@@ -27,7 +38,7 @@ maildir "${inbox}" {
 	match date > 1 week move "${prefix}/Trash"
 }
 .Ed
-.Pp
+.Sh CONFIGURATION
 The configuration may contain one or many maildir definitions.
 Each maildir is associated with a block of rules.
 For each message present in a maildir, each rule is evaluated in sequential
