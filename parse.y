@@ -15,11 +15,17 @@ struct macro {
 	char *mc_value;
 	unsigned int mc_refs;
 	unsigned int mc_lno;
+	unsigned int mc_flags;
+#define MACRO_FLAG_STATIC	0x00000001u
 
 	TAILQ_ENTRY(macro) mc_entry;
 };
 
 struct macro_list {
+	struct macro ml_v[2];
+	size_t ml_nmemb;
+	size_t ml_size;
+
 	TAILQ_HEAD(, macro) ml_list;
 };
 
@@ -35,6 +41,8 @@ static void yyungetc(int);
 static void yypushl(int);
 static void yypopl(void);
 
+static void macros_init(struct macro_list *);
+static void macros_free(struct macro_list *);
 static int macros_insert(struct macro_list *, char *, char *, int);
 static struct macro *macros_find(struct macro_list *, const char *);
 static void macros_validate(const struct macro_list *);
@@ -444,7 +452,7 @@ config_parse(const char *path, const struct environment *env)
 	yyconfig.cf_macros = malloc(sizeof(*yyconfig.cf_macros));
 	if (yyconfig.cf_macros == NULL)
 		err(1, NULL);
-	TAILQ_INIT(&yyconfig.cf_macros->ml_list);
+	macros_init(yyconfig.cf_macros);
 
 	TAILQ_INIT(&yyconfig.cf_list);
 
@@ -464,7 +472,6 @@ void
 config_free(struct config_list *config)
 {
 	struct config *conf;
-	struct macro *mc;
 
 	if (config == NULL)
 		return;
@@ -476,13 +483,7 @@ config_free(struct config_list *config)
 		free(conf);
 	}
 
-	while ((mc = TAILQ_FIRST(&config->cf_macros->ml_list)) != NULL) {
-		TAILQ_REMOVE(&config->cf_macros->ml_list, mc, mc_entry);
-		free(mc->mc_name);
-		free(mc->mc_value);
-		free(mc);
-	}
-	free(config->cf_macros);
+	macros_free(config->cf_macros);
 }
 
 static void
@@ -880,6 +881,33 @@ yypopl(void)
 	lineno_save = -1;
 }
 
+static void
+macros_init(struct macro_list *macros)
+{
+
+	macros->ml_nmemb = 0;
+	macros->ml_size = sizeof(macros->ml_v) / sizeof(macros->ml_v[0]);
+	TAILQ_INIT(&macros->ml_list);
+}
+
+static void
+macros_free(struct macro_list *macros)
+{
+	struct macro *mc;
+
+	if (macros == NULL)
+		return;
+
+	while ((mc = TAILQ_FIRST(&macros->ml_list)) != NULL) {
+		TAILQ_REMOVE(&macros->ml_list, mc, mc_entry);
+		free(mc->mc_name);
+		free(mc->mc_value);
+		if ((mc->mc_flags & MACRO_FLAG_STATIC) == 0)
+			free(mc);
+	}
+	free(macros);
+}
+
 static int
 macros_insert(struct macro_list *macros, char *name, char *value, int lno)
 {
@@ -888,9 +916,15 @@ macros_insert(struct macro_list *macros, char *name, char *value, int lno)
 	if (macros_find(macros, name) != NULL)
 		return 1;
 
-	mc = malloc(sizeof(*mc));
-	if (mc == NULL)
-		err(1, NULL);
+	if (macros->ml_nmemb < macros->ml_size) {
+		mc = &macros->ml_v[macros->ml_nmemb++];
+		mc->mc_flags = MACRO_FLAG_STATIC;
+	} else {
+		mc = malloc(sizeof(*mc));
+		if (mc == NULL)
+			err(1, NULL);
+		mc->mc_flags = 0;
+	}
 
 	mc->mc_name = name;
 	mc->mc_value = value;
