@@ -64,7 +64,7 @@ if testcase "collision with keyword"; then
 	EOF
 fi
 
-if testcase -t leaky "macro not on root level"; then
+if testcase -t memleak "macro not on root level"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
 		dst = "dst"

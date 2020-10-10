@@ -94,7 +94,7 @@ if testcase "escape slash inside pattern"; then
 	mdsort - -- -n </dev/null
 fi
 
-if testcase -t leaky "rule must end with newline"; then
+if testcase -t memleak "rule must end with newline"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /./ move "~/Maildir/Junk"}
@@ -113,7 +113,7 @@ if testcase "empty maildir path"; then
 	EOF
 fi
 
-if testcase -t leaky "unknown keyword"; then
+if testcase -t memleak "unknown keyword"; then
 	cat <<-EOF >$CONF
 	noway
 	EOF
@@ -123,7 +123,7 @@ if testcase -t leaky "unknown keyword"; then
 	EOF
 fi
 
-if testcase -t leaky "invalid line continuation"; then
+if testcase -t memleak "invalid line continuation"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" \ {
 	}
@@ -182,7 +182,7 @@ if testcase "empty move destination"; then
 	EOF
 fi
 
-if testcase -t leaky "keyword too long"; then
+if testcase -t memleak "keyword too long"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		$(genstr $BUFSIZ)
@@ -214,7 +214,7 @@ if testcase "string unterminated"; then
 	EOF
 fi
 
-if testcase -t leaky "pattern too long"; then
+if testcase -t memleak "pattern too long"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /$(genstr $BUFSIZ)/ \
@@ -227,7 +227,7 @@ if testcase -t leaky "pattern too long"; then
 	EOF
 fi
 
-if testcase -t leaky "pattern unterminated"; then
+if testcase -t memleak "pattern unterminated"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/test1" {
 		match header "From" /
@@ -260,7 +260,7 @@ if testcase -t tilde "destination path too long after tilde expansion"; then
 	EOF
 fi
 
-if testcase -t leaky "missing left-hand expr with and"; then
+if testcase -t memleak "missing left-hand expr with and"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match and new move "~/Maildir/Junk"
@@ -271,7 +271,7 @@ if testcase -t leaky "missing left-hand expr with and"; then
 	EOF
 fi
 
-if testcase -t leaky "missing right-hand expr with and"; then
+if testcase -t memleak "missing right-hand expr with and"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
 		match new and move "~/Maildir/Junk"

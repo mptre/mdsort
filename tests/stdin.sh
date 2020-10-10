@@ -75,7 +75,7 @@ if testcase "temporary failure"; then
 	mdsort -t -- - </dev/null >/dev/null
 fi
 
-if testcase -t leaky "temporary config failure"; then
+if testcase -t memleak "temporary config failure"; then
 	cat <<-EOF >$CONF
 	invalid
 	EOF

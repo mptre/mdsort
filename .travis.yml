@@ -17,7 +17,7 @@ matrix:
       env:
         - T=amd64-linux-clang-asan
         - DEBUG="${DEBUG} -fsanitize=address -fno-sanitize-recover=all"
-        - TESTFLAGS="${TESTFLAGS} -T leaky"
+        - TESTFLAGS="${TESTFLAGS} -T memleak"
 
     - arch: amd64
       os: linux
@@ -33,7 +33,7 @@ matrix:
         - T=amd64-linux-gcc-asan
         - CFLAGS="${CFLAGS} -Wformat-signedness"
         - DEBUG="${DEBUG} -fsanitize=address -fno-sanitize-recover=all"
-        - TESTFLAGS="${TESTFLAGS} -T leaky"
+        - TESTFLAGS="${TESTFLAGS} -T memleak"
 
     - arch: amd64
       os: linux
@@ -61,7 +61,7 @@ matrix:
       env:
         - T=amd64-linux-valgrind
         - EXEC=valgrind
-        - TESTFLAGS="${TESTFLAGS} -T leaky"
+        - TESTFLAGS="${TESTFLAGS} -T memleak"
         - VALGRIND_OPTS="--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all"
       addons:
         apt:
