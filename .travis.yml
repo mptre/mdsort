@@ -7,6 +7,7 @@ env:
     - CFLAGS="-Werror -Wpedantic -Wshadow"
     - CPPFLAGS=-D_FORTIFY_SOURCE=2
     - DEBUG="-g -O2"
+    - TESTFLAGS="-T fdleak"
 
 matrix:
   include:
@@ -16,7 +17,7 @@ matrix:
       env:
         - T=amd64-linux-clang-asan
         - DEBUG="${DEBUG} -fsanitize=address -fno-sanitize-recover=all"
-        - TESTFLAGS='-T leaky'
+        - TESTFLAGS="${TESTFLAGS} -T leaky"
 
     - arch: amd64
       os: linux
@@ -32,7 +33,7 @@ matrix:
         - T=amd64-linux-gcc-asan
         - CFLAGS="${CFLAGS} -Wformat-signedness"
         - DEBUG="${DEBUG} -fsanitize=address -fno-sanitize-recover=all"
-        - TESTFLAGS="-T leaky"
+        - TESTFLAGS="${TESTFLAGS} -T leaky"
 
     - arch: amd64
       os: linux
@@ -48,7 +49,7 @@ matrix:
       env:
         - T=amd64-linux-musl
         - CFLAGS="${CFLAGS} -Wformat-signedness"
-        - TESTFLAGS="-T tilde"
+        - TESTFLAGS="${TESTFLAGS} -T tilde"
       addons:
         apt:
           packages:
@@ -60,7 +61,7 @@ matrix:
       env:
         - T=amd64-linux-valgrind
         - EXEC=valgrind
-        - TESTFLAGS="-T leaky"
+        - TESTFLAGS="${TESTFLAGS} -T leaky"
         - VALGRIND_OPTS="--quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all"
       addons:
         apt:

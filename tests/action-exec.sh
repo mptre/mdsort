@@ -96,7 +96,7 @@ if testcase "interpolation out of bounds"; then
 fi
 
 # Ensure no unwanted file descriptors are leaked into the executed command.
-if testcase "file descriptors"; then
+if testcase -t fdleak "file descriptors"; then
 	mkmd "src"
 	mkmsg "src/new"
 	cat <<-EOF >$CONF
