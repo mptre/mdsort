@@ -175,6 +175,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 	struct maildir *dst = NULL;
 	struct match *mh;
 	const char *path_save;
+	int chsrc = 0;
 	int error = 0;
 
 	path_save = msg->me_path;
@@ -190,7 +191,6 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			 * importance if a following action requires a source
 			 * maildir.
 			 */
-			maildir_close(dst);
 			dst = maildir_open(mh->mh_path, 0, env);
 			if (dst == NULL) {
 				error = 1;
@@ -205,14 +205,15 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			(void)strlcpy(path, tmp, sizeof(path));
 			msg->me_path = path;
 
-			/*
-			 * The following logic might look fragile as the
-			 * destination maildir is freed above. However, a match
-			 * list can only contain one flag or move action as
-			 * enforced by matches_merge().
-			 */
-			if (maildir_cmp(src, dst))
+			if (maildir_cmp(src, dst)) {
+				if (chsrc)
+					maildir_close(src);
+				chsrc = 1;
 				src = dst;
+			} else {
+				maildir_close(dst);
+			}
+			dst = NULL;
 			break;
 
 		case EXPR_TYPE_DISCARD:
@@ -263,6 +264,8 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			break;
 	}
 
+	if (chsrc)
+		maildir_close(src);
 	maildir_close(dst);
 	msg->me_path = path_save;
 

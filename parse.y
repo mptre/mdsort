@@ -804,9 +804,6 @@ expr_validate(const struct expr *ex)
 
 	yypushl(ex->ex_lno);
 
-	if (expr_count(ex, EXPR_TYPE_MOVE) > 1)
-		yyerror("move action already defined");
-
 	nactions = expr_count_actions(ex);
 	if (nactions > 1) {
 		if (expr_count(ex, EXPR_TYPE_BREAK) > 0)

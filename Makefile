@@ -55,6 +55,7 @@ DISTFILES+=	tests/action-discard.sh
 DISTFILES+=	tests/action-exec.sh
 DISTFILES+=	tests/action-flag.sh
 DISTFILES+=	tests/action-label.sh
+DISTFILES+=	tests/action-move.sh
 DISTFILES+=	tests/action-pass.sh
 DISTFILES+=	tests/action-reject.sh
 DISTFILES+=	tests/basic.sh

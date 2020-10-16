@@ -315,17 +315,6 @@ if testcase "missing action"; then
 	EOF
 fi
 
-if testcase "duplicate move actions"; then
-	cat <<-EOF >$CONF
-	maildir "~/Maildir/INBOX" {
-		match new move "~/Maildir/one" move "~/Maildir/two"
-	}
-	EOF
-	mdsort -e - -- -n <<-EOF
-	mdsort.conf:2: move action already defined
-	EOF
-fi
-
 if testcase "duplicate force pattern flag"; then
 	cat <<-EOF >$CONF
 	maildir "~/Maildir/INBOX" {
