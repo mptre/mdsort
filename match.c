@@ -411,35 +411,33 @@ matches_find_interpolate(const struct match_list *ml)
 static void
 matches_merge(struct match_list *ml, struct match *mh)
 {
+	const struct expr *ex = mh->mh_expr;
 	struct match *dup;
 
-	if (mh->mh_expr->ex_type != EXPR_TYPE_MOVE &&
-	    mh->mh_expr->ex_type != EXPR_TYPE_FLAG)
+	if (ex->ex_type != EXPR_TYPE_MOVE && ex->ex_type != EXPR_TYPE_FLAG)
 		return;
 
 	/*
-	 * Merge consecutive flag actions, the last flag action dictates the
-	 * flag state anyway.
+	 * Merge consecutive flag and move actions, the last action dictates the
+	 * destination maildir anyway.
 	 */
-	if (mh->mh_expr->ex_type == EXPR_TYPE_FLAG) {
-		dup = TAILQ_LAST(ml, match_list);
-		if (dup != NULL && dup->mh_expr->ex_type == EXPR_TYPE_FLAG) {
-			TAILQ_REMOVE(ml, dup, mh_entry);
-			return;
-		}
+	dup = TAILQ_LAST(ml, match_list);
+	if (dup != NULL && dup->mh_expr->ex_type == ex->ex_type) {
+		TAILQ_REMOVE(ml, dup, mh_entry);
+		return;
 	}
 
 	/*
 	 * A message only needs to moved or flagged once since both actions
 	 * refer to the same destination maildir.
 	 */
-	dup = matches_find(ml, mh->mh_expr->ex_type == EXPR_TYPE_MOVE ?
+	dup = matches_find(ml, ex->ex_type == EXPR_TYPE_MOVE ?
 	    EXPR_TYPE_FLAG : EXPR_TYPE_MOVE);
 	if (dup == NULL)
 		return;
 	TAILQ_REMOVE(ml, dup, mh_entry);
 
-	if (mh->mh_expr->ex_type == EXPR_TYPE_MOVE) {
+	if (ex->ex_type == EXPR_TYPE_MOVE) {
 		/* Copy subdir from flag action. */
 		(void)strlcpy(mh->mh_subdir, dup->mh_subdir,
 		    sizeof(mh->mh_subdir));
