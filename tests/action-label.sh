@@ -1,15 +1,3 @@
-# assert_label label file
-assert_label() {
-	local _got
-
-	if [ $# -ne 2 ]; then
-		fail "assert_label: too many arguments: ${*}"
-	fi
-
-	_got="$(sed -n -e '/^X-Label/s/^[^:]*: //p' "$2")"
-	assert_eq "$1" "$_got"
-}
-
 if testcase "no x-label header"; then
 	mkmd "src"
 	mkmsg -H "src/new"

@@ -19,7 +19,8 @@ static void matches_merge(struct match_list *, struct match *);
 static const char *match_get(const struct match *, unsigned int);
 
 static int exec(char *const *, int);
-static int interpolate(const struct match *, const char *, char **);
+static int interpolate(const struct match *, const struct macro_list *,
+    const char *, char **);
 static ssize_t isbackref(const char *, unsigned int *);
 
 /*
@@ -84,6 +85,7 @@ matches_clear(struct match_list *ml)
 int
 matches_interpolate(struct match_list *ml, struct message *msg)
 {
+	struct macro_list macros;
 	const struct match *mi;
 	struct match *mh;
 
@@ -93,6 +95,10 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 	 */
 	mi = matches_find_interpolate(ml);
 
+	/* Construct action macro context. */
+	macros_init(&macros, MACRO_CTX_ACTION);
+	macros_insertc(&macros, "path", msg->me_path);
+
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		switch (mh->mh_expr->ex_type) {
 		case EXPR_TYPE_MOVE:
@@ -100,7 +106,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			char *path = NULL;
 			size_t n, siz;
 
-			if (interpolate(mi, mh->mh_path, &path))
+			if (interpolate(mi, &macros, mh->mh_path, &path))
 				return 1;
 			siz = sizeof(mh->mh_path);
 			n = strlcpy(mh->mh_path, path, siz);
@@ -127,7 +133,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 				 */
 				return 1;
 			}
-			if (interpolate(mi, str, &label))
+			if (interpolate(mi, &macros, str, &label))
 				return 1;
 			message_set_header(msg, "X-Label", label);
 			break;
@@ -148,7 +154,7 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
 				char *arg = NULL;
 
-				if (interpolate(mi, str->val, &arg))
+				if (interpolate(mi, &macros, str->val, &arg))
 					return 1;
 				mh->mh_exec[nargs++] = arg;
 			}
@@ -192,6 +198,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 				error = 1;
 				break;
 			}
+
 			if (maildir_move(src, dst, msg,
 				    tmp, sizeof(tmp), env)) {
 				maildir_close(dst);
@@ -527,7 +534,8 @@ out:
  * Interpolate the given string, storing it in buf.
  */
 static int
-interpolate(const struct match *mh, const char *str, char **buf)
+interpolate(const struct match *mh, const struct macro_list *macros,
+    const char *str, char **buf)
 {
 	size_t buflen = 0;
 	size_t bufsiz = 0;
@@ -535,31 +543,53 @@ interpolate(const struct match *mh, const char *str, char **buf)
 
 	while (str[i] != '\0') {
 		const char *sub;
-		unsigned int br;
+		char *macro;
 		ssize_t n;
+		unsigned int br;
 
 		n = isbackref(&str[i], &br);
 		if (n < 0)
-			goto invalid;
+			goto brerr;
 		if (n > 0) {
 			if (mh == NULL)
-				goto invalid;
+				goto brerr;
 			sub = match_get(mh, br);
 			if (sub == NULL)
-				goto invalid;
+				goto brerr;
 
 			append(buf, &bufsiz, &buflen, sub);
 			i += n;
-		} else {
-			appendc(buf, &bufsiz, &buflen, str[i]);
-			i++;
+			continue;
 		}
+
+		n = ismacro(&str[i], &macro);
+		if (n < 0)
+			goto mcerr;
+		if (n > 0) {
+			const struct macro *mc;
+
+			mc = macros_find(macros, macro);
+			free(macro);
+			if (mc == NULL)
+				goto mcerr;
+
+			append(buf, &bufsiz, &buflen, mc->mc_value);
+			i += n;
+			continue;
+		}
+
+		appendc(buf, &bufsiz, &buflen, str[i]);
+		i++;
 	}
 
 	return 0;
 
-invalid:
+brerr:
 	warnx("%s: invalid back-reference", str);
+	free(*buf);
+	return 1;
+mcerr:
+	warnx("%s: invalid macro", str);
 	free(*buf);
 	return 1;
 }

@@ -110,3 +110,54 @@ if testcase "unterminated macro"; then
 	mdsort.conf:2: unterminated macro
 	EOF
 fi
+
+if testcase -t memleak "pre defined macros cannot be redefined"; then
+	cat <<-EOF >"$CONF"
+	path = "path"
+	EOF
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:1: macro already defined: path
+	EOF
+fi
+
+if testcase "macro used in wrong context"; then
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match header "\${path}" /./ move "dst"
+	}
+	EOF
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:2: macro used in wrong context: path
+	EOF
+fi
+
+if testcase "action label with pre defined macros"; then
+	mkmd "src"
+	mkmsg "src/new"
+	_label="$(findmsg "src/new")"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all label "\${path}"
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+	assert_label "$_label" ${TSHDIR}/src/new/*
+fi
+
+if testcase "action exec with pre defined macros"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all exec { "sh" "-c" "echo \${path}" }
+	}
+	EOF
+	mdsort - <<-EOF
+	$(findmsg "src/new")
+	EOF
+fi
+
+if testcase "action move with pre defined macros"; then
+	:
+fi

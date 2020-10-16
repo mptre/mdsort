@@ -10,7 +10,6 @@
 
 #include "extern.h"
 
-static char *expandtilde(char *, const char *);
 static void expr_validate(const struct expr *);
 static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
@@ -24,7 +23,11 @@ static void yypopl(void);
 
 static void macros_free(struct macro_list *);
 static void macros_validate(const struct macro_list *);
-static char *expandmacros(struct macro_list *, char *);
+
+static char *expand(char *, unsigned int);
+static char *expandmacros(char *, struct macro_list *, unsigned int);
+static struct string_list *expandstrings(struct string_list *, unsigned int);
+static char *expandtilde(char *, const char *);
 
 static struct config_list yyconfig;
 static const struct environment *yyenv;
@@ -119,6 +122,7 @@ grammar		: /* empty */
 		;
 
 macros		: MACRO '=' STRING {
+			$3 = expand($3, MACRO_CTX_DEFAULT);
 			if (macros_insert(yyconfig.cf_macros, $1, $3, lineno))
 				yyerror("macro already defined: %s", $1);
 		}
@@ -147,7 +151,7 @@ maildir		: maildir_path maildir_flags exprblock {
 		;
 
 maildir_path	: MAILDIR STRING {
-			$$ = expandtilde($2, yyenv->ev_home);
+			$$ = expand($2, MACRO_CTX_DEFAULT);
 		}
 		| STDIN {
 			const struct config *conf;
@@ -241,6 +245,7 @@ expr3		: BODY pattern {
 			$$ = expr_alloc(EXPR_TYPE_HEADER, lineno, NULL, NULL);
 			if (expr_set_pattern($$, $3.string, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
+			$2 = expandstrings($2, MACRO_CTX_DEFAULT);
 			expr_set_strings($$, $2);
 		}
 		| DATE date_field date_cmp date_age {
@@ -281,7 +286,7 @@ expraction	: BREAK {
 			char *path;
 
 			$$ = expr_alloc(EXPR_TYPE_MOVE, lineno, NULL, NULL);
-			path = expandtilde($2, yyenv->ev_home);
+			path = expand($2, MACRO_CTX_ACTION);
 			strings = strings_alloc();
 			strings_append(strings, path);
 			expr_set_strings($$, strings);
@@ -299,6 +304,7 @@ expraction	: BREAK {
 		}
 		| LABEL strings {
 			$$ = expr_alloc(EXPR_TYPE_LABEL, lineno, NULL, NULL);
+			$2 = expandstrings($2, MACRO_CTX_ACTION);
 			expr_set_strings($$, $2);
 		}
 		| PASS {
@@ -309,6 +315,7 @@ expraction	: BREAK {
 		}
 		| EXEC exec_flags strings {
 			$$ = expr_alloc(EXPR_TYPE_EXEC, lineno, NULL, NULL);
+			$3 = expandstrings($3, MACRO_CTX_ACTION);
 			expr_set_exec($$, $3, $2);
 		}
 		;
@@ -429,7 +436,7 @@ config_parse(const char *path, const struct environment *env)
 	yyconfig.cf_macros = malloc(sizeof(*yyconfig.cf_macros));
 	if (yyconfig.cf_macros == NULL)
 		err(1, NULL);
-	macros_init(yyconfig.cf_macros);
+	macros_init(yyconfig.cf_macros, MACRO_CTX_DEFAULT);
 
 	TAILQ_INIT(&yyconfig.cf_list);
 
@@ -611,9 +618,6 @@ again:
 		yylval.v.string = strdup(lexeme);
 		if (yylval.v.string == NULL)
 			err(1, NULL);
-		if (len > 0)
-			yylval.v.string = expandmacros(yyconfig.cf_macros,
-			    yylval.v.string);
 		return (token_save = STRING);
 	}
 
@@ -740,26 +744,6 @@ again:
 	return (token_save = c);
 }
 
-static char *
-expandtilde(char *str, const char *home)
-{
-	char *buf;
-	int siz, n;
-
-	if (*str != '~')
-		return str;
-
-	siz = PATH_MAX;
-	buf = malloc(siz);
-	if (buf == NULL)
-		err(1, NULL);
-	n = snprintf(buf, siz, "%s%s", home, str + 1);
-	if (n < 0 || n >= siz)
-		yyerror("path too long");
-	free(str);
-	return buf;
-}
-
 static void
 expr_validate(const struct expr *ex)
 {
@@ -868,8 +852,10 @@ macros_free(struct macro_list *macros)
 
 	while ((mc = TAILQ_FIRST(&macros->ml_list)) != NULL) {
 		TAILQ_REMOVE(&macros->ml_list, mc, mc_entry);
-		free(mc->mc_name);
-		free(mc->mc_value);
+		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
+			free(mc->mc_name);
+			free(mc->mc_value);
+		}
 		if ((mc->mc_flags & MACRO_FLAG_STATIC) == 0)
 			free(mc);
 	}
@@ -892,7 +878,15 @@ macros_validate(const struct macro_list *macros)
 }
 
 static char *
-expandmacros(struct macro_list *macros, char *str)
+expand(char *str, unsigned int curctx)
+{
+	str = expandtilde(str, yyenv->ev_home);
+	str = expandmacros(str, yyconfig.cf_macros, curctx);
+	return str;
+}
+
+static char *
+expandmacros(char *str, struct macro_list *macros, unsigned int curctx)
 {
 	char *buf = NULL;
 	size_t i = 0;
@@ -900,14 +894,50 @@ expandmacros(struct macro_list *macros, char *str)
 	size_t bufsiz = 0;
 
 	while (str[i] != '\0') {
+		struct macro *mc;
 		char *macro;
 		ssize_t n;
 
 		n = ismacro(&str[i], &macro);
-		if (n < 0)
+		if (n < 0) {
 			yyerror("unterminated macro");
+			break;
+		}
 		if (n > 0) {
-			struct macro *mc;
+			unsigned int ctx;
+
+			ctx = macro_context(macro);
+			switch (curctx) {
+			case MACRO_CTX_ACTION:
+				/*
+				 * Delay expansion of a non-default macro in a
+				 * non-default context.
+				 */
+				if ((ctx & curctx) == curctx) {
+					free(macro);
+					goto fallback;
+				}
+				/*
+				 * If the macro is a default one, expand it now.
+				 * Otherwise, it's being used in the wrong
+				 * context.
+				 */
+				if ((ctx & MACRO_CTX_DEFAULT))
+					break;
+				/* FALLTHROUGH */
+			case MACRO_CTX_DEFAULT:
+				/*
+				 * Presence of a non-default macro in a default
+				 * context is invalid.
+				 */
+				if ((ctx & curctx) == 0) {
+					yyerror("macro used in wrong context: "
+					    "%s", macro);
+					free(macro);
+					goto fallback;
+				}
+				break;
+			}
 
 			mc = macros_find(macros, macro);
 			if (mc != NULL) {
@@ -917,9 +947,11 @@ expandmacros(struct macro_list *macros, char *str)
 				yyerror("unknown macro used in string: %s",
 				    macro);
 			}
+
 			free(macro);
 			i += n;
 		} else {
+fallback:
 			appendc(&buf, &bufsiz, &buflen, str[i]);
 			i++;
 		}
@@ -931,6 +963,37 @@ expandmacros(struct macro_list *macros, char *str)
 	 */
 	if (buf == NULL)
 		return str;
+	free(str);
+	return buf;
+}
+
+static struct string_list *
+expandstrings(struct string_list *strings, unsigned int curctx)
+{
+	struct string *str;
+
+	TAILQ_FOREACH(str, strings, entry) {
+		str->val = expand(str->val, curctx);
+	}
+	return strings;
+}
+
+static char *
+expandtilde(char *str, const char *home)
+{
+	char *buf;
+	int siz, n;
+
+	if (*str != '~')
+		return str;
+
+	siz = PATH_MAX;
+	buf = malloc(siz);
+	if (buf == NULL)
+		err(1, NULL);
+	n = snprintf(buf, siz, "%s%s", home, str + 1);
+	if (n < 0 || n >= siz)
+		yyerror("path too long");
 	free(str);
 	return buf;
 }

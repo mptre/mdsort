@@ -309,13 +309,17 @@ size_t strings_len(const struct string_list *);
 
 void strings_append(struct string_list *, char *);
 
+#define MACRO_CTX_DEFAULT	0x00000001u
+#define MACRO_CTX_ACTION	0x00000002u
+
 struct macro {
 	char *mc_name;
 	char *mc_value;
 	unsigned int mc_refs;
 	unsigned int mc_lno;
 	unsigned int mc_flags;
-#define MACRO_FLAG_STATIC	0x00000001u
+#define MACRO_FLAG_STATIC	0x00000001u	/* storage provided by ml_v */
+#define MACRO_FLAG_CONST	0x00000002u	/* may not be freed */
 
 	TAILQ_ENTRY(macro) mc_entry;
 };
@@ -324,13 +328,16 @@ struct macro_list {
 	struct macro ml_v[2];
 	size_t ml_nmemb;
 	size_t ml_size;
+	unsigned int ml_ctx;
 
 	TAILQ_HEAD(, macro) ml_list;
 };
 
-void macros_init(struct macro_list *);
+void macros_init(struct macro_list *, unsigned int);
 int macros_insert(struct macro_list *, char *, char *, int);
+void macros_insertc(struct macro_list *, const char *, const char *);
 struct macro *macros_find(const struct macro_list *, const char *);
+unsigned int macro_context(const char *);
 ssize_t ismacro(const char *, char **);
 
 struct config {
