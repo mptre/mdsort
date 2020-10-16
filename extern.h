@@ -320,9 +320,9 @@ struct config {
 };
 
 struct config_list {
-    struct macro_list *cf_macros;
+	struct macro_list *cf_macros;
 
-    TAILQ_HEAD(, config) cf_list;
+	TAILQ_HEAD(, config) cf_list;
 };
 
 struct config_list *config_parse(const char *, const struct environment *);
