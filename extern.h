@@ -330,7 +330,7 @@ struct macro_list {
 
 void macros_init(struct macro_list *);
 int macros_insert(struct macro_list *, char *, char *, int);
-struct macro *macros_find(struct macro_list *, const char *);
+struct macro *macros_find(const struct macro_list *, const char *);
 ssize_t ismacro(const char *, char **);
 
 struct config {

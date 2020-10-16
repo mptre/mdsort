@@ -104,7 +104,7 @@ macros_insert(struct macro_list *macros, char *name, char *value, int lno)
 }
 
 struct macro *
-macros_find(struct macro_list *macros, const char *name)
+macros_find(const struct macro_list *macros, const char *name)
 {
 	struct macro *mc;
 
