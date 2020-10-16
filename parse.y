@@ -10,25 +10,6 @@
 
 #include "extern.h"
 
-struct macro {
-	char *mc_name;
-	char *mc_value;
-	unsigned int mc_refs;
-	unsigned int mc_lno;
-	unsigned int mc_flags;
-#define MACRO_FLAG_STATIC	0x00000001u
-
-	TAILQ_ENTRY(macro) mc_entry;
-};
-
-struct macro_list {
-	struct macro ml_v[2];
-	size_t ml_nmemb;
-	size_t ml_size;
-
-	TAILQ_HEAD(, macro) ml_list;
-};
-
 static char *expandtilde(char *, const char *);
 static void expr_validate(const struct expr *);
 static void yyerror(const char *, ...)
@@ -41,13 +22,9 @@ static void yyungetc(int);
 static void yypushl(int);
 static void yypopl(void);
 
-static void macros_init(struct macro_list *);
 static void macros_free(struct macro_list *);
-static int macros_insert(struct macro_list *, char *, char *, int);
-static struct macro *macros_find(struct macro_list *, const char *);
 static void macros_validate(const struct macro_list *);
 static char *expandmacros(struct macro_list *, char *);
-static ssize_t ismacro(char *str, const char **val);
 
 static struct config_list yyconfig;
 static const struct environment *yyenv;
@@ -882,15 +859,6 @@ yypopl(void)
 }
 
 static void
-macros_init(struct macro_list *macros)
-{
-
-	macros->ml_nmemb = 0;
-	macros->ml_size = sizeof(macros->ml_v) / sizeof(macros->ml_v[0]);
-	TAILQ_INIT(&macros->ml_list);
-}
-
-static void
 macros_free(struct macro_list *macros)
 {
 	struct macro *mc;
@@ -906,44 +874,6 @@ macros_free(struct macro_list *macros)
 			free(mc);
 	}
 	free(macros);
-}
-
-static int
-macros_insert(struct macro_list *macros, char *name, char *value, int lno)
-{
-	struct macro *mc;
-
-	if (macros_find(macros, name) != NULL)
-		return 1;
-
-	if (macros->ml_nmemb < macros->ml_size) {
-		mc = &macros->ml_v[macros->ml_nmemb++];
-		mc->mc_flags = MACRO_FLAG_STATIC;
-	} else {
-		mc = malloc(sizeof(*mc));
-		if (mc == NULL)
-			err(1, NULL);
-		mc->mc_flags = 0;
-	}
-
-	mc->mc_name = name;
-	mc->mc_value = value;
-	mc->mc_refs = 0;
-	mc->mc_lno = lno;
-	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
-	return 0;
-}
-
-static struct macro *
-macros_find(struct macro_list *macros, const char *name)
-{
-	struct macro *mc;
-
-	TAILQ_FOREACH(mc, &macros->ml_list, mc_entry) {
-		if (strcmp(mc->mc_name, name) == 0)
-			return mc;
-	}
-	return NULL;
 }
 
 static void
@@ -970,23 +900,24 @@ expandmacros(struct macro_list *macros, char *str)
 	size_t bufsiz = 0;
 
 	while (str[i] != '\0') {
-		const char *name;
+		char *macro;
 		ssize_t n;
 
-		n = ismacro(&str[i], &name);
+		n = ismacro(&str[i], &macro);
 		if (n < 0)
 			yyerror("unterminated macro");
 		if (n > 0) {
 			struct macro *mc;
 
-			mc = macros_find(macros, name);
+			mc = macros_find(macros, macro);
 			if (mc != NULL) {
 				mc->mc_refs++;
 				append(&buf, &bufsiz, &buflen, mc->mc_value);
 			} else {
 				yyerror("unknown macro used in string: %s",
-				    name);
+				    macro);
 			}
+			free(macro);
 			i += n;
 		} else {
 			appendc(&buf, &bufsiz, &buflen, str[i]);
@@ -1002,30 +933,4 @@ expandmacros(struct macro_list *macros, char *str)
 		return str;
 	free(str);
 	return buf;
-}
-
-/*
- * Determine if the given string starts with a macro. Returns one of the following:
- *
- *     >0   The length of the found macro.
- *
- *     0    Macro not found.
- *
- *     -1   Unterminated macro found.
- */
-static ssize_t
-ismacro(char *str, const char **name)
-{
-	size_t i;
-
-	if (str[0] != '$' || str[1] != '{')
-		return 0;
-
-	for (i = 2; str[i] != '}'; i++) {
-		if (str[i] == '\0')
-			return -1;
-	}
-	str[i] = '\0';
-	*name = &str[2];
-	return i + 1;
 }

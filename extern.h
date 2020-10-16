@@ -309,6 +309,30 @@ size_t strings_len(const struct string_list *);
 
 void strings_append(struct string_list *, char *);
 
+struct macro {
+	char *mc_name;
+	char *mc_value;
+	unsigned int mc_refs;
+	unsigned int mc_lno;
+	unsigned int mc_flags;
+#define MACRO_FLAG_STATIC	0x00000001u
+
+	TAILQ_ENTRY(macro) mc_entry;
+};
+
+struct macro_list {
+	struct macro ml_v[2];
+	size_t ml_nmemb;
+	size_t ml_size;
+
+	TAILQ_HEAD(, macro) ml_list;
+};
+
+void macros_init(struct macro_list *);
+int macros_insert(struct macro_list *, char *, char *, int);
+struct macro *macros_find(struct macro_list *, const char *);
+ssize_t ismacro(const char *, char **);
+
 struct config {
 	struct {
 		char *path;

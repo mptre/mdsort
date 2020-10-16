@@ -68,6 +68,83 @@ strings_append(struct string_list *strings, char *val)
 	TAILQ_INSERT_TAIL(strings, str, entry);
 }
 
+void
+macros_init(struct macro_list *macros)
+{
+
+	macros->ml_nmemb = 0;
+	macros->ml_size = sizeof(macros->ml_v) / sizeof(macros->ml_v[0]);
+	TAILQ_INIT(&macros->ml_list);
+}
+
+int
+macros_insert(struct macro_list *macros, char *name, char *value, int lno)
+{
+	struct macro *mc;
+
+	if (macros_find(macros, name) != NULL)
+		return 1;
+
+	if (macros->ml_nmemb < macros->ml_size) {
+		mc = &macros->ml_v[macros->ml_nmemb++];
+		mc->mc_flags = MACRO_FLAG_STATIC;
+	} else {
+		mc = malloc(sizeof(*mc));
+		if (mc == NULL)
+			err(1, NULL);
+		mc->mc_flags = 0;
+	}
+
+	mc->mc_name = name;
+	mc->mc_value = value;
+	mc->mc_refs = 0;
+	mc->mc_lno = lno;
+	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
+	return 0;
+}
+
+struct macro *
+macros_find(struct macro_list *macros, const char *name)
+{
+	struct macro *mc;
+
+	TAILQ_FOREACH(mc, &macros->ml_list, mc_entry) {
+		if (strcmp(mc->mc_name, name) == 0)
+			return mc;
+	}
+	return NULL;
+}
+
+/*
+ * Determine if the given string starts with a macro. Returns one of the
+ * following:
+ *
+ *     >0   The length of the found macro. The caller is responsible for freeing
+ *          the memory pointed to in name.
+ *
+ *     0    Macro not found.
+ *
+ *     -1   Unterminated macro found.
+ */
+ssize_t
+ismacro(const char *str, char **macro)
+{
+	size_t i;
+
+	if (str[0] != '$' || str[1] != '{')
+		return 0;
+
+	for (i = 2; str[i] != '}'; i++) {
+		if (str[i] == '\0')
+			return -1;
+	}
+
+	*macro = strndup(&str[2], i - 2);
+	if (*macro == NULL)
+		err(1, NULL);
+	return i + 1;
+}
+
 /*
  * Join dirname and filename into a path written to buf.
  */
