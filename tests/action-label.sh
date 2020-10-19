@@ -3,7 +3,7 @@ assert_label() {
 	local _got
 
 	if [ $# -ne 2 ]; then
-		fatal "assert_label: too many arguments: ${*}"
+		fail "assert_label: too many arguments: ${*}"
 	fi
 
 	_got="$(sed -n -e '/^X-Label/s/^[^:]*: //p' "$2")"
