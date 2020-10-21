@@ -271,9 +271,10 @@ if testcase "destination interpolation too long"; then
 		match header "To" /(.+)/ move "\1"
 	}
 	EOF
-	mdsort -e - <<-EOF
-	mdsort: ${_to}/new: interpolated string too long
-	EOF
+	mdsort -e >"$TMP1"
+	if ! grep -q 'matches_interpolate:' "$TMP1"; then
+		fail - "expected too long error" <"$TMP1"
+	fi
 fi
 
 if testcase "unknown option"; then

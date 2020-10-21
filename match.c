@@ -104,11 +104,11 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 				return 1;
 			siz = sizeof(mh->mh_path);
 			n = strlcpy(mh->mh_path, path, siz);
-			if (n >= siz)
-				warnx("%s: interpolated string too long", path);
 			free(path);
-			if (n >= siz)
+			if (n >= siz) {
+				warnc(ENAMETOOLONG, "%s", __func__);
 				return 1;
+			}
 			break;
 		}
 
