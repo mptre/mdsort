@@ -127,10 +127,8 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 				 */
 				return 1;
 			}
-			if (interpolate(mi, str, &label)) {
-				free(label);
+			if (interpolate(mi, str, &label))
 				return 1;
-			}
 			message_set_header(msg, "X-Label", label);
 			break;
 		}
@@ -150,10 +148,8 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 			TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
 				char *arg = NULL;
 
-				if (interpolate(mi, str->val, &arg)) {
-					free(arg);
+				if (interpolate(mi, str->val, &arg))
 					return 1;
-				}
 				mh->mh_exec[nargs++] = arg;
 			}
 			break;
@@ -566,5 +562,6 @@ interpolate(const struct match *mh, const char *str, char **buf)
 
 invalid:
 	warnx("%s: invalid back-reference", str);
+	free(*buf);
 	return 1;
 }

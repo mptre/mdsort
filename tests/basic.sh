@@ -262,21 +262,6 @@ if testcase "destination interpolation with negate"; then
 		fail - "expected back-reference to be invalid" <$TMP1
 fi
 
-if testcase "destination interpolation too long"; then
-	_to="user@$(genstr $PATH_MAX).com"
-	mkmd "src"
-	mkmsg "src/new" -- "To" "$_to"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match header "To" /(.+)/ move "\1"
-	}
-	EOF
-	mdsort -e >"$TMP1"
-	if ! grep -q 'matches_interpolate:' "$TMP1"; then
-		fail - "expected too long error" <"$TMP1"
-	fi
-fi
-
 if testcase "unknown option"; then
 	mdsort -e -- -1 >$TMP1
 	grep -q 'usage' $TMP1 || fail - "expected usage output" <$TMP1
