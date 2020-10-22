@@ -194,6 +194,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			}
 			if (maildir_move(src, dst, msg,
 				    tmp, sizeof(tmp), env)) {
+				maildir_close(dst);
 				error = 1;
 				break;
 			}
@@ -262,7 +263,6 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 
 	if (chsrc)
 		maildir_close(src);
-	maildir_close(dst);
 	msg->me_path = path_save;
 
 	return error;
