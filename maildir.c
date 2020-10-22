@@ -525,8 +525,8 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 out:
 	/* Don't ignore potential EIO errors. */
 	if (close(fd) == -1) {
-		error = 1;
 		warn("close");
+		error = 1;
 	}
 	return error;
 }
