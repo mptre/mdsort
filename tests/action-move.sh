@@ -13,6 +13,17 @@ if testcase "many move actions"; then
 	refute_empty "dst3/new"
 fi
 
+if testcase "destination missing"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -e >/dev/null
+fi
+
 if testcase "interpolation too long"; then
 	_to="user@$(genstr $PATH_MAX).com"
 	mkmd "src"

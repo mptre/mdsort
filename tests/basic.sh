@@ -297,14 +297,3 @@ if testcase "pattern delimiter"; then
 	assert_empty "src/new"
 	refute_empty "dst/new"
 fi
-
-if testcase "missing maildir"; then
-	mkmd "src"
-	rm -r "${TSHDIR}/src/cur"
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match all move "dst"
-	}
-	EOF
-	mdsort -e >/dev/null
-fi
