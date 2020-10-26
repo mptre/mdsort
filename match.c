@@ -18,9 +18,9 @@ static void matches_merge(struct match_list *, struct match *);
 
 static const char *match_get(const struct match *, unsigned int);
 
-static int isbackref(const char *, unsigned int *);
 static int exec(char *const *, int);
 static int interpolate(const struct match *, const char *, char **);
+static int isbackref(const char *, unsigned int *);
 
 /*
  * Append the given match to the list and construct the maildir destination path
