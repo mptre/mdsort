@@ -8,14 +8,13 @@ if testcase "match body many subexpressions"; then
 		match body /foo (bar)?/ move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: Body: foo bar
                      ^     $
                      foo bar
                          ^ $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "match many headers and body"; then
@@ -28,7 +27,8 @@ if testcase "match many headers and body"; then
 			and body /hello/i move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: Cc: admin@example.com
                    ^   $
 mdsort.conf:2: To: user@example.com
@@ -36,8 +36,6 @@ mdsort.conf:2: To: user@example.com
 mdsort.conf:2: Body: Hello!
                      ^   $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "matches from previous evaluations are discarded"; then
@@ -50,14 +48,13 @@ if testcase "matches from previous evaluations are discarded"; then
 			body /hello/i move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg -g Hello "src/new") -> dst/new
 mdsort.conf:2: Cc: admin@example.com
                    ^   $
 mdsort.conf:2: Body: Hello!
                      ^   $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "matches from previous evaluations are discarded, inverted"; then
@@ -70,14 +67,13 @@ if testcase "matches from previous evaluations are discarded, inverted"; then
 			body /hello/i move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg -g Hello "src/new") -> dst/new
 mdsort.conf:2: To: user@example.com
                    ^  $
 mdsort.conf:2: Body: Hello!
                      ^   $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "match nested rules"; then
@@ -93,14 +89,13 @@ if testcase "match nested rules"; then
 		}
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg -g Hello "src/new") -> dst/new
 mdsort.conf:2: To: user@example.com
                         ^     $
 mdsort.conf:3: Body: Hello!
                      ^   $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "single character"; then
@@ -111,10 +106,9 @@ if testcase "single character"; then
 		match header "To" /./ move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: To: user@example.com
                    ^$
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi

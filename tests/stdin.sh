@@ -88,9 +88,8 @@ if testcase "dry run"; then
 		match all move "dst"
 	}
 	EOF
-	cat <<-EOF >$TMP1
+	mdsort -- -d - </dev/null >"$TMP1"
+	assert_file - $TMP1 <<-EOF
 	<stdin> -> dst/new
 	EOF
-	mdsort -- -d - </dev/null >$TMP2
-	assert_file $TMP1 $TMP2
 fi

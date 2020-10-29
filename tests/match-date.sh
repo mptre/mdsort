@@ -127,12 +127,11 @@ if testcase "dry run"; then
 		match date > 1 minute move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: Date: ${_d}
                      ^                             $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 

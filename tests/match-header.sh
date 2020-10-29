@@ -112,12 +112,11 @@ if testcase "dry run first line"; then
 		match header "To" /example.com/ move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: To: user@example.com
                         ^         $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run middle line"; then
@@ -128,13 +127,12 @@ if testcase "dry run middle line"; then
 	maildir "src" {
 		match header "To" /user/ move "dst"
 	}
-	EOF
 	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: To: admin@a.com, user@a.com, no-reply@a.com
                                 ^  $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run last line"; then
@@ -146,12 +144,11 @@ if testcase "dry run last line"; then
 		match header "To" /user/ move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: To: admin@example.com, user@example.com
                                       ^  $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run negate"; then
@@ -162,9 +159,9 @@ if testcase "dry run negate"; then
 		match ! header "To" /user/ move "dst"
 	}
 	EOF
-	mdsort -- -d >$TMP1
-	grep -q '^src/new.* -> dst/new$' $TMP1 ||
-		fail - "expected move line" <$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
+EOF
 fi
 
 if testcase "dry run many subexpressions"; then
@@ -175,7 +172,8 @@ if testcase "dry run many subexpressions"; then
 		match header "To" /(example).(com)/ move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: To: user@example.com
                         ^         $
                    user@example.com
@@ -183,6 +181,4 @@ mdsort.conf:2: To: user@example.com
                    user@example.com
                                 ^ $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi

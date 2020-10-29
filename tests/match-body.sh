@@ -84,12 +84,11 @@ if testcase "dry run first line"; then
 		match body /hello/i move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: Body: Hello
                      ^   $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run first line no newline"; then
@@ -100,12 +99,11 @@ if testcase "dry run first line no newline"; then
 		match body /hello/i move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: Body: Hello
                      ^   $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run middle line"; then
@@ -122,12 +120,11 @@ if testcase "dry run middle line"; then
 		match body /hello/ move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: Body: Hello hello
                            ^   $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi
 
 if testcase "dry run tabs in body"; then
@@ -140,12 +137,11 @@ EOF
 		match body /(kcov)/ label "\1"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> src/new
 mdsort.conf:2: Body: src/tests/modules: t_kcov.c
                                           ^  $
                      src/tests/modules: t_kcov.c
                                           ^  $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi

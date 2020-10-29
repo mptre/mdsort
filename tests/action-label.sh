@@ -214,6 +214,7 @@ if testcase "dry run label and move"; then
 		match all label "label" move "dst"
 	}
 	EOF
-	mdsort -- -d >$TMP1
-	grep -q ' -> dst/new$' $TMP1 || fail - "expected move line" <$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
+EOF
 fi

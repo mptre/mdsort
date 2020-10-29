@@ -56,9 +56,21 @@ cppvar() {
 	grep -v -e '^#' -e '^$' <"$_tmp" | tail -1
 }
 
-# findmsg dir
+# findmsg [-g pattern] dir
 findmsg() {
-	(cd "$TSHDIR" && find "$1" -type f)
+	local _pattern="."
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-g)	shift; _pattern="$1";;
+		*)	break;;
+		esac
+		shift
+	done
+
+	find "${TSHDIR}/${1}" -type f |
+	xargs grep -l "$_pattern" |
+	sed "s,${TSHDIR}/,,"
 }
 
 # genstr length

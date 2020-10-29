@@ -35,6 +35,7 @@ if testcase "dry run"; then
 		match all reject
 	}
 	EOF
-	mdsort -- -d - </dev/null >$TMP1
-	grep -q ' -> <reject>$' $TMP1 || fail - "expected move line" <$TMP1
+	mdsort - -- -d - <<EOF
+<stdin> -> <reject>
+EOF
 fi

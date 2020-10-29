@@ -36,6 +36,9 @@ if testcase "dry run"; then
 		match header "To" /user/ discard
 	}
 	EOF
-	mdsort -- -d >$TMP1
-        grep -q ' -> <discard>$' $TMP1 || fail - "expected move line" <$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> <discard>
+mdsort.conf:2: To: user@example.com
+                   ^  $
+EOF
 fi
