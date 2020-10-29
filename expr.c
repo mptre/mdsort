@@ -17,8 +17,6 @@
 static int expr_eval_all(EXPR_EVAL_ARGS);
 static int expr_eval_and(EXPR_EVAL_ARGS);
 static int expr_eval_attachment(EXPR_EVAL_ARGS);
-static int expr_eval_attachment_body(EXPR_EVAL_ARGS);
-static int expr_eval_attachment_header(EXPR_EVAL_ARGS);
 static int expr_eval_block(EXPR_EVAL_ARGS);
 static int expr_eval_body(EXPR_EVAL_ARGS);
 static int expr_eval_break(EXPR_EVAL_ARGS);
@@ -79,16 +77,6 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_ATTACHMENT:
 		ex->ex_eval = &expr_eval_attachment;
-		break;
-	case EXPR_TYPE_ATTACHMENT_BODY:
-		ex->ex_eval = &expr_eval_attachment_body;
-		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_INTERPOLATE;
-		break;
-	case EXPR_TYPE_ATTACHMENT_HEADER:
-		ex->ex_eval = &expr_eval_attachment_header;
-		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_INTERPOLATE;
 		break;
 	case EXPR_TYPE_BODY:
 		ex->ex_eval = &expr_eval_body;
@@ -407,23 +395,7 @@ expr_eval_and(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_attachment(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
-    struct message *msg, const struct environment *UNUSED(env))
-{
-	struct message_list *attachments;
-	int ev;
-
-	if (message_get_attachments(msg, &attachments))
-		return EXPR_ERROR;
-
-	/* Presence of attachments is considered a match. */
-	ev = TAILQ_EMPTY(attachments) ? EXPR_NOMATCH : EXPR_MATCH;
-	message_list_free(attachments);
-	return ev;
-}
-
-static int
-expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
+expr_eval_attachment(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
 	struct message_list *attachments;
@@ -433,31 +405,7 @@ expr_eval_attachment_body(struct expr *ex, struct match_list *ml,
 		return EXPR_ERROR;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
-		int ev = expr_eval_body(ex, ml, attach, env);
-
-		if (ev == EXPR_NOMATCH)
-			continue;
-
-		message_list_free(attachments);
-		return ev;
-	}
-
-	message_list_free(attachments);
-	return EXPR_NOMATCH;
-}
-
-static int
-expr_eval_attachment_header(struct expr *ex, struct match_list *ml,
-    struct message *msg, const struct environment *env)
-{
-	struct message_list *attachments;
-	struct message *attach;
-
-	if (message_get_attachments(msg, &attachments))
-		return EXPR_ERROR;
-
-	TAILQ_FOREACH(attach, attachments, me_entry) {
-		int ev = expr_eval_header(ex, ml, attach, env);
+		int ev = expr_eval(ex->ex_lhs, ml, attach, env);
 
 		if (ev == EXPR_NOMATCH)
 			continue;

@@ -1,32 +1,6 @@
-if testcase "presence"; then
-	mkmd "src" "dst"
-	mkmsg -b -H "src/new" <<-EOF -- \
-		"Content-Type" "multipart/alternative; boundary=\"deadbeef\""
-	--deadbeef
-	Content-Type: text/plain
-
-	First attachment.
-
-	--deadbeef
-	Content-Type: text/plain
-
-	Second attachment.
-
-	--deadbeef--
-	EOF
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match attachment move "dst"
-	}
-	EOF
-	mdsort
-	assert_empty "src/new"
-	refute_empty "dst/new"
-fi
-
-if testcase "header"; then
-	mkmd "src" "dst"
-	mkmsg -b -H "src/new" <<-EOF -- \
+# xmkmsg dir
+xmkmsg() {
+	mkmsg -b -H "$1" <<-EOF -- \
 		"Content-Type" "multipart/alternative;boundary=\"deadbeef\""
 	--deadbeef
 	Content-Type: text/plain
@@ -38,9 +12,15 @@ if testcase "header"; then
 	Second attachment.
 	--deadbeef--
 	EOF
-	cat <<-EOF >$CONF
+}
+
+if testcase "match and"; then
+	mkmd "src" "dst"
+	xmkmsg "src/new"
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment header "Content-Type" /text\/calendar/ \
+		match attachment \
+			header "Content-Type" |text/| and body /attachment/ \
 			move "dst"
 	}
 	EOF
@@ -49,90 +29,47 @@ if testcase "header"; then
 	refute_empty "dst/new"
 fi
 
-if testcase "header no match"; then
+if testcase "match or"; then
 	mkmd "src" "dst"
-	mkmsg -b -H "src/new" <<-EOF -- \
-		"Content-Type" "multipart/alternative; boundary=\"deadbeef\""
-	--deadbeef
-	Content-Type: text/plain
-
-	First attachment.
-	--deadbeef
-	Content-Type: text/calendar
-
-	Second attachment.
-	--deadbeef--
-	EOF
-	cat <<-EOF >$CONF
+	xmkmsg "src/new"
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment header "Content-Type" /text\/html/ move "dst"
+		match attachment header "From" /admin/ or all move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "match negate"; then
+	mkmd "src"
+	xmkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match attachment ! body /attachment/ move "dst"
 	}
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_empty "dst/new"
 fi
 
-if testcase "header negate"; then
-	mkmd "src" "dst"
-	mkmsg -b -H "src/new" <<-EOF -- \
-		"Content-Type" "multipart/alternative; boundary=\"deadbeef\""
-	--deadbeef
-	Content-Type: text/plain
-
-	First attachment.
-	--deadbeef
-	Content-Type: text/calendar
-
-	Second attachment.
-	--deadbeef--
-	EOF
-	cat <<-EOF >$CONF
+if testcase "match attachment"; then
+	mkmd "src"
+	xmkmsg "src/new"
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match ! attachment header "Content-Type" /text\/html/ \
-			move "dst"
+		match attachment attachment new move "dst"
 	}
 	EOF
 	mdsort
-	assert_empty "src/new"
-	refute_empty "dst/new"
+	refute_empty "src/new"
 fi
 
-if testcase "many headers"; then
+if testcase "match body"; then
 	mkmd "src" "dst"
-	mkmsg -b -H "src/new" <<-EOF -- \
-		"Content-Type" "multipart/alternative;boundary=\"deadbeef\""
-	--deadbeef
-	From: user@localhost
-	To: admin@example.com
-
-	--deadbeef--
-	EOF
-	cat <<-EOF >$CONF
-	maildir "src" {
-		match attachment header { "From" "To" } /example/ move "dst"
-	}
-	EOF
-	mdsort
-	assert_empty "src/new"
-	refute_empty "dst/new"
-fi
-
-if testcase "body"; then
-	mkmd "src" "dst"
-	mkmsg -b -H "src/new" <<-EOF -- \
-		"Content-Type" "multipart/alternative;boundary=\"deadbeef\""
-	--deadbeef
-	Content-Type: text/plain
-
-	First attachment.
-	--deadbeef
-	Content-Type: text/calendar
-
-	Second attachment.
-	--deadbeef--
-	EOF
-	cat <<-EOF >$CONF
+	xmkmsg "src/new"
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment body /attachment/ move "dst"
 	}
@@ -140,6 +77,45 @@ if testcase "body"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
+fi
+
+if testcase "match header"; then
+	mkmd "src" "dst"
+	xmkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match attachment header "Content-Type" |text/calendar| move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "match new"; then
+	mkmd "src" "dst"
+	xmkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match attachment new move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "match old"; then
+	mkmd "src" "dst"
+	xmkmsg "src/cur"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match attachment old move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/cur"
+	refute_empty "dst/cur"
 fi
 
 if testcase "multipart mixed"; then
@@ -152,9 +128,9 @@ if testcase "multipart mixed"; then
 	First attachment.
 	--deadbeef--
 	EOF
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
 	mdsort
@@ -165,9 +141,9 @@ fi
 if testcase "content type unknown"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "Content-Type" "multipart/octet-stream"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
 	mdsort
@@ -177,9 +153,9 @@ fi
 if testcase "content type missing"; then
 	mkmd "src"
 	mkmsg -H "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
 	mdsort
@@ -189,33 +165,37 @@ fi
 if testcase "content type boundary empty"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "Content-Type" "multipart/alternative; boundary=\"\""
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
-	mdsort -e >/dev/null
+	mdsort -e - <<-EOF
+	mdsort: $(findmsg "src/new"): invalid boundary
+	EOF
 	refute_empty "src/new"
 fi
 
 if testcase "content type boundary invalid"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "Content-Type" "multipart/alternative; boundary=\"xxx"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
-	mdsort -e >/dev/null
+	mdsort -e - <<-EOF
+	mdsort: $(findmsg "src/new"): invalid boundary
+	EOF
 	refute_empty "src/new"
 fi
 
 if testcase "content type boundary missing"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "Content-Type" "multipart/alternative"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
 	mdsort
@@ -228,12 +208,12 @@ if testcase "content type boundary without attachments"; then
 		"Content-Type" "multipart/alternative; boundary=\"deadbeef\""
 	No attachment.
 	EOF
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
-	mdsort -e >/dev/null
+	mdsort -e
 	refute_empty "src/new"
 fi
 
@@ -247,12 +227,12 @@ if testcase "terminating boundary invalid"; then
 	First attachment.
 	--deadbeef
 	EOF
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
-	mdsort -e >/dev/null
+	mdsort -e
 	refute_empty "src/new"
 fi
 
@@ -269,9 +249,9 @@ if testcase "nested"; then
 	--two--
 	--one--
 	EOF
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment header "Content-Type" /text\/plain/ \
+		match attachment header "Content-Type" |text/plain| \
 			move "dst"
 	}
 	EOF
@@ -305,12 +285,14 @@ if testcase "nested too deep"; then
 		done
 	} | mkmsg -b -H "src/new" -- "Content-Type" "multipart/alternative; boundary=\"0\""
 
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment move "dst"
+		match attachment all move "dst"
 	}
 	EOF
-	mdsort -e >/dev/null
+	mdsort -e - -- <<-EOF
+	mdsort: $(findmsg "src/new"): message contains too many nested attachments
+	EOF
 	refute_empty "src/new"
 fi
 
@@ -325,16 +307,15 @@ if testcase "dry run"; then
 
 	--deadbeef--
 	EOF
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match attachment header "Content-Type" /text\/plain/ \
+		match attachment header "Content-Type" |text/plain| \
 			move "dst"
 	}
 	EOF
-	cat <<EOF >$TMP1
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
 mdsort.conf:2: Content-Type: text/plain
                              ^        $
 EOF
-	mdsort -- -d | tail -n +2 >$TMP2
-	assert_file $TMP1 $TMP2
 fi

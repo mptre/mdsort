@@ -105,7 +105,6 @@ typedef struct {
 %type <v.field>		date_field
 %type <v.number>	INT
 %type <v.number>	SCALAR
-%type <v.number>	attachment
 %type <v.number>	exec_flags
 %type <v.number>	maildir_flag
 %type <v.number>	maildir_flags
@@ -122,6 +121,7 @@ typedef struct {
 
 %left AND OR
 %left NEG
+%left ATTACHMENT
 
 %%
 
@@ -222,6 +222,9 @@ expr1		: expr1 AND expr1 {
 		| expr1 OR expr1 {
 			$$ = expr_alloc(EXPR_TYPE_OR, lineno, $1, $3);
 		}
+		| ATTACHMENT expr1 {
+			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, lineno, $2, NULL);
+		}
 		| NEG expr1 {
 			$$ = expr_alloc(EXPR_TYPE_NEG, lineno, $2, NULL);
 		}
@@ -238,27 +241,20 @@ expr2		: expractions {
 		}
 		;
 
-expr3		: attachment BODY pattern {
+expr3		: BODY pattern {
 			const char *errstr;
-			enum expr_type type = $1 ?
-				EXPR_TYPE_ATTACHMENT_BODY : EXPR_TYPE_BODY;
 
-			$$ = expr_alloc(type, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_BODY, lineno, NULL, NULL);
+			if (expr_set_pattern($$, $2.string, $2.flags, &errstr))
+				yyerror("invalid pattern: %s", errstr);
+		}
+		| HEADER strings pattern {
+			const char *errstr;
+
+			$$ = expr_alloc(EXPR_TYPE_HEADER, lineno, NULL, NULL);
 			if (expr_set_pattern($$, $3.string, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
-		}
-		| attachment HEADER strings pattern {
-			const char *errstr;
-			enum expr_type type = $1 ?
-				EXPR_TYPE_ATTACHMENT_HEADER : EXPR_TYPE_HEADER;
-
-			$$ = expr_alloc(type, lineno, NULL, NULL);
-			if (expr_set_pattern($$, $4.string, $4.flags, &errstr))
-				yyerror("invalid pattern: %s", errstr);
-			expr_set_strings($$, $3);
-		}
-		| ATTACHMENT {
-			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, lineno, NULL, NULL);
+			expr_set_strings($$, $2);
 		}
 		| DATE date_field date_cmp date_age {
 			$$ = expr_alloc(EXPR_TYPE_DATE, lineno, NULL, NULL);
@@ -346,14 +342,6 @@ stringblock	: /* empty */ {
 		| stringblock STRING {
 			$$ = $1;
 			strings_append($$, $2);
-		}
-		;
-
-attachment	: /* empty */ {
-			$$ = 0;
-		}
-		| ATTACHMENT {
-			$$ = 1;
 		}
 		;
 

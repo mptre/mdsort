@@ -56,6 +56,11 @@ cppvar() {
 	grep -v -e '^#' -e '^$' <"$_tmp" | tail -1
 }
 
+# findmsg dir
+findmsg() {
+	(cd "$TSHDIR" && find "$1" -type f)
+}
+
 # genstr length
 genstr() {
 	dd if=/dev/zero of=/dev/stdout "bs=${1}" count=1 2>/dev/null | tr '\0' 'x'

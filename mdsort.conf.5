@@ -147,26 +147,18 @@ also applies.
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
 .It Xo Op Ic \&!
-.Op Ic attachment
 .Tg body
 .Ic body
 .Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
 Evaluates to true if the message body matches
 .Ar pattern .
-.Pp
-If
-.Ic attachment
-is present, evalutes to true if the body of an attachment matches
-.Ar pattern .
 .It Xo Op Ic \&!
-.Op Ic attachment
 .Tg header
 .Ic header Dq Ar name
 .Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
 .It Xo Op Ic \&!
-.Op Ic attachment
 .Ic header No { Do Ar name Dc Ar ... No }
 .Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
@@ -177,18 +169,6 @@ in message matches
 Finding the header with
 .Ar name
 in message is done case insensitive.
-.Pp
-If
-.Ic attachment
-is present, evalutes to true if any of the headers with
-.Ar name
-in an attachment matches
-.Ar pattern .
-.It Xo Op Ic \&!
-.Tg attachment
-.Ic attachment
-.Xc
-Evaluates to true if the message has attachments.
 .It Xo Op Ic \&!
 .Tg date
 .Ic date
@@ -248,6 +228,9 @@ Meaning, a message that has been read but later flagged as not read.
 .Pp
 Multiple and nested conditions may also be specified:
 .Bl -tag -width Ds
+.It Ic attachment Ar condition
+Evaluates to true if any attachment in the message matches
+.Ar condition .
 .It Ar condition Ic and Ar condition
 Evaluates to true if both
 .Ar condition

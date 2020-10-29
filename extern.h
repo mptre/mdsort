@@ -135,29 +135,30 @@ int message_get_attachments(const struct message *, struct message_list **);
 void message_list_free(struct message_list *);
 
 enum expr_type {
+	/* logical operators */
 	EXPR_TYPE_BLOCK = 0,
 	EXPR_TYPE_AND = 1,
 	EXPR_TYPE_OR = 2,
 	EXPR_TYPE_NEG = 3,
+
+	/* matchers */
 	EXPR_TYPE_ALL = 4,
 	EXPR_TYPE_ATTACHMENT = 5,
-	EXPR_TYPE_ATTACHMENT_BODY = 6,
-	EXPR_TYPE_ATTACHMENT_HEADER = 7,
-	EXPR_TYPE_BODY = 8,
-	EXPR_TYPE_DATE = 9,
-	EXPR_TYPE_HEADER = 10,
-	EXPR_TYPE_NEW = 11,
-	EXPR_TYPE_OLD = 12,
+	EXPR_TYPE_BODY = 6,
+	EXPR_TYPE_DATE = 7,
+	EXPR_TYPE_HEADER = 8,
+	EXPR_TYPE_NEW = 9,
+	EXPR_TYPE_OLD = 10,
 
 	/* actions */
-	EXPR_TYPE_MOVE = 13,
-	EXPR_TYPE_FLAG = 14,
-	EXPR_TYPE_DISCARD = 15,
-	EXPR_TYPE_BREAK = 16,
-	EXPR_TYPE_LABEL = 17,
-	EXPR_TYPE_PASS = 18,
-	EXPR_TYPE_REJECT = 19,
-	EXPR_TYPE_EXEC = 20,
+	EXPR_TYPE_MOVE = 11,
+	EXPR_TYPE_FLAG = 12,
+	EXPR_TYPE_DISCARD = 13,
+	EXPR_TYPE_BREAK = 14,
+	EXPR_TYPE_LABEL = 15,
+	EXPR_TYPE_PASS = 16,
+	EXPR_TYPE_REJECT = 17,
+	EXPR_TYPE_EXEC = 18,
 };
 
 enum expr_date_cmp {
