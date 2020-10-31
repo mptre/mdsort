@@ -72,8 +72,8 @@ maildir_open(const char *path, unsigned int flags,
 	}
 
 	if (md->md_flags & MAILDIR_WALK) {
-		siz = sizeof(md->md_path);
-		if (strlcpy(md->md_path, path, siz) >= siz) {
+		siz = sizeof(md->md_root);
+		if (strlcpy(md->md_root, path, siz) >= siz) {
 			warnc(ENAMETOOLONG, "%s", __func__);
 			goto err;
 		}
@@ -81,8 +81,8 @@ maildir_open(const char *path, unsigned int flags,
 		if (parsesubdir(path, &md->md_subdir))
 			goto err;
 
-		siz = sizeof(md->md_path);
-		if (pathslice(path, md->md_path, siz, 0, -1) == NULL)
+		siz = sizeof(md->md_root);
+		if (pathslice(path, md->md_root, siz, 0, -1) == NULL)
 			goto err;
 	}
 	path = maildir_path(md);
@@ -111,7 +111,7 @@ maildir_close(struct maildir *md)
 		while (maildir_walk(md, &me) == 1)
 			(void)unlinkat(me.e_dirfd, me.e_path, 0);
 		(void)rmdir(maildir_path(md));
-		(void)rmdir(md->md_path);
+		(void)rmdir(md->md_root);
 	}
 
 	if (md->md_dir != NULL)
@@ -288,7 +288,7 @@ maildir_cmp(const struct maildir *md1, const struct maildir *md2)
 		return 1;
 	if (md1->md_subdir < md2->md_subdir)
 		return -1;
-	return strcmp(md1->md_path, md2->md_path);
+	return strcmp(md1->md_root, md2->md_root);
 }
 
 static const char *
@@ -458,7 +458,7 @@ maildir_path(struct maildir *md)
 		subdir = "cur";
 		break;
 	}
-	path = pathjoin(md->md_buf, sizeof(md->md_buf), md->md_path, subdir);
+	path = pathjoin(md->md_path, sizeof(md->md_path), md->md_root, subdir);
 	if (path == NULL)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return path;
@@ -473,12 +473,12 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	int fd;
 	int error = 0;
 
-	if (pathjoin(md->md_path, sizeof(md->md_path), env->ev_tmpdir,
+	if (pathjoin(md->md_root, sizeof(md->md_root), env->ev_tmpdir,
 		    "mdsort-XXXXXXXX") == NULL) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return 1;
 	}
-	if (mkdtemp(md->md_path) == NULL) {
+	if (mkdtemp(md->md_root) == NULL) {
 		warn("mkdtemp");
 		return 1;
 	}
@@ -567,7 +567,7 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 		default:
 unknown:
 			log_debug("%s: %s/%s: unknown file type %d\n",
-			    __func__, md->md_buf, ent->d_name, ent->d_type);
+			    __func__, md->md_path, ent->d_name, ent->d_type);
 			continue;
 		}
 
@@ -576,12 +576,12 @@ unknown:
 			return -1;
 		case 1:
 			log_debug("%s: %s/%s: ignoring blacklisted message\n",
-			    __func__, md->md_buf, ent->d_name);
+			    __func__, md->md_path, ent->d_name);
 			continue;
 		}
 
-		log_debug("%s: %s/%s\n", __func__, md->md_buf, ent->d_name);
-		me->e_dir = md->md_buf;
+		log_debug("%s: %s/%s\n", __func__, md->md_path, ent->d_name);
+		me->e_dir = md->md_path;
 		me->e_dirfd = maildir_fd(md);
 		me->e_path = ent->d_name;
 		return 1;

@@ -48,8 +48,8 @@ enum subdir {
 };
 
 struct maildir {
-	char md_buf[PATH_MAX];
-	char md_path[PATH_MAX];
+	char md_root[PATH_MAX];	/* root directory */
+	char md_path[PATH_MAX];	/* current directory */
 	DIR *md_dir;
 	struct blacklist *md_blacklist;
 	enum subdir md_subdir;
