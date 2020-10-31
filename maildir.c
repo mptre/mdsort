@@ -545,7 +545,7 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 		ent = readdir(md->md_dir);
 		if (ent == NULL) {
 			if (errno) {
-				warn("readdir");
+				warn("readdir: %s", md->md_path);
 				return -1;
 			}
 			return 0;
