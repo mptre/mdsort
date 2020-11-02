@@ -553,14 +553,14 @@ message_decode_body(struct message *msg, const struct message *attachment)
 	const char *encoding;
 
 	encoding = message_get_header1(attachment, "Content-Transfer-Encoding");
-	if (encoding == NULL || strcmp(encoding, "base64")) {
-		msg->me_buf_dec = strdup(attachment->me_body);
-		if (msg->me_buf_dec == NULL)
-			err(1, NULL);
-	} else {
+	if (encoding != NULL && strcmp(encoding, "base64") == 0) {
 		msg->me_buf_dec = b64decode(attachment->me_body);
 		if (msg->me_buf_dec == NULL)
 			warnx("%s: failed to decode body", msg->me_path);
+	} else {
+		msg->me_buf_dec = strdup(attachment->me_body);
+		if (msg->me_buf_dec == NULL)
+			err(1, NULL);
 	}
 	return msg->me_buf_dec;
 }
