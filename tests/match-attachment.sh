@@ -296,6 +296,20 @@ if testcase "nested too deep"; then
 	refute_empty "src/new"
 fi
 
+if testcase -t regress "close file descriptor"; then
+	mkmd "src"
+	xmkmsg "src/new"
+	xmkmsg "src/cur"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match body /nein/ move "dst"
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+	refute_empty "src/cur"
+fi
+
 if testcase "dry run"; then
 	mkmd "src"
 	mkmsg -b -H "src/new" <<-EOF -- \

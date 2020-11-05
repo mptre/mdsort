@@ -762,6 +762,7 @@ parseattachments(const struct message *msg, struct message_list *attachments,
 		attach = calloc(1, sizeof(*attach));
 		if (attach == NULL)
 			err(1, NULL);
+		attach->me_fd = -1;
 		attach->me_buf = strndup(beg, end - beg);
 		if (attach->me_buf == NULL)
 			err(1, NULL);
