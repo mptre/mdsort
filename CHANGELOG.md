@@ -1,3 +1,17 @@
+# v7.0.0 - 2020-11-05
+
+## Changes
+
+- Rework attachment grammar.
+  (b236c0e)
+  (Anton Lindqvist)
+
+## Bug fixes
+
+- Initialize file descriptor field for attachments.
+  (3737a35)
+  (Anton Lindqvist, Giovanni Simoni)
+
 # v6.0.1 - 2020-09-14
 
 ## Bug fixes
