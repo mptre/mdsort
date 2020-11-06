@@ -584,7 +584,6 @@ expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
 
 	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
-
 	return EXPR_MATCH;
 }
 
@@ -651,7 +650,6 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 
 	if (matches_append(ml, ex->ex_match, msg))
 		return EXPR_ERROR;
-
 	return EXPR_MATCH;
 }
 
@@ -672,7 +670,6 @@ expr_eval_move(struct expr *ex, struct match_list *ml, struct message *msg,
 
 	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
-
 	return EXPR_MATCH;
 }
 
