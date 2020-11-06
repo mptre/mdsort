@@ -55,7 +55,7 @@ if testcase "multiple x-label headers"; then
 	assert_file ${TSHDIR}/src/new/* $TMP1
 fi
 
-if testcase "multiple labels"; then
+if testcase "multiple labels and x-label present"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" "one"
 	cat <<-EOF >$CONF
@@ -66,6 +66,19 @@ if testcase "multiple labels"; then
 	mdsort
 	refute_empty "src/new"
 	assert_label "one two three" ${TSHDIR}/src/new/*
+fi
+
+if testcase "multiple labels and no x-label present"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all label { "one" "two" }
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+	assert_label "one two" ${TSHDIR}/src/new/*
 fi
 
 if testcase "multiple labels already present"; then

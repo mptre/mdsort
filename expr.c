@@ -634,7 +634,6 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 			if (nlabels > 0)
 				appendc(&buf, &bufsiz, &buflen, ' ');
 
-			/* The header can be empty. */
 			if (append(&buf, &bufsiz, &buflen, str->val) > 0)
 				nlabels++;
 		}
@@ -644,8 +643,8 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 		if (nlabels > 0)
 			appendc(&buf, &bufsiz, &buflen, ' ');
 
-		/* The label cannot be empty, enforced by the config parser. */
-		append(&buf, &bufsiz, &buflen, str->val);
+		if (append(&buf, &bufsiz, &buflen, str->val) > 0)
+			nlabels++;
 	}
 
 	message_set_header(msg, "X-Label", buf);
