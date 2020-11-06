@@ -188,22 +188,26 @@ mkmsg() {
 
 		NMSG=$((NMSG + 1))
 	done
-	touch "$_path"
 
-	if [ "${1:-}" = "--" ]; then
-		shift
-		while [ $# -gt 0 ]; do
-			echo "${1}: ${2}" >>$_path
-			shift 2
-		done
-	fi
-	if [ $_headers -eq 1 ]; then
-		printf 'Content-Type: text/plain\n' >>"$_path"
-	fi
-	echo >>"$_path"
-	if [ $_body -eq 1 ]; then
-		cat >>"$_path"
-	fi
+	{
+		# Optional headers.
+		if [ "${1:-}" = "--" ]; then
+			shift
+			while [ $# -gt 0 ]; do
+				echo "${1}: ${2}"
+				shift 2
+			done
+		fi
+
+		# Default headers.
+		[ $_headers -eq 1 ] && printf 'Content-Type: text/plain\n'
+
+		# Start of body.
+		printf '\n'
+
+		# Optional body.
+		[ $_body -eq 1 ] && cat
+	} >"$_path"
 
 	if [ -n "$_tim" ]; then
 		touch -m -t "$_tim" "$_path"
