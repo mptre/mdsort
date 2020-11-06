@@ -1,3 +1,41 @@
+# v7.1.0 - 2020-12-03
+
+## News
+
+- Add support for matching each attachment in a message.
+  Its intended use is to extract calendar attachments:
+  (209f9e5)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    match all attachment {
+      match header "Content-Type" |text/calendar| \
+        exec stdin body "icalendar2calendar"
+    }
+  }
+  ```
+
+## Bug fixes
+
+- Fix label concatenation bug.
+  (ba97d74)
+  (Anton Lindqvist)
+
+## News
+
+- Add support for pre defined macros in action context.
+  The only available macro at this point is path which expands to the path of
+  the matched message.
+  (5350ec4)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    match all exec { "echo" "${path}" }
+  }
+  ```
+
 # v7.0.0 - 2020-11-05
 
 ## Changes
@@ -462,7 +500,7 @@
 
 - mdsort is now available on OpenBSD
   (a5e1fdc)
-  (Anton Lindqvsit)
+  (Anton Lindqvist)
 
 - Add support for headers spanning multiple lines
   (fb26ffc)
