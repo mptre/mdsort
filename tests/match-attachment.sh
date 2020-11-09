@@ -118,6 +118,18 @@ if testcase "match old"; then
 	refute_empty "dst/cur"
 fi
 
+if testcase "no attachments"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match attachment all move "dst"
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+fi
+
 if testcase "multipart mixed"; then
 	mkmd "src" "dst"
 	mkmsg -b -H "src/new" <<-EOF -- \
