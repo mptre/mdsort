@@ -217,26 +217,32 @@ int
 expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
     const char **errstr)
 {
-	int error;
+	struct {
+		unsigned int eflag;	/* expr pattern flag */
+		unsigned int pflag;	/* propagate expr pattern flag */
+		unsigned int rflag;	/* regcomp() flag(s) */
+	} fflags[] = {
+		{ EXPR_PATTERN_ICASE,	0,	REG_ICASE },
+		{ EXPR_PATTERN_FORCE,	1,	0 },
+		{ EXPR_PATTERN_LCASE,	1,	0 },
+		{ EXPR_PATTERN_UCASE,	1,	0 },
+
+		{ 0,			0,	0 },
+	};
+	int error, i;
 	int rflags = REG_EXTENDED | REG_NEWLINE;
 
 	assert(ex->ex_re.r_nmatches == 0);
 
-	if (flags & EXPR_PATTERN_ICASE) {
-		rflags |= REG_ICASE;
-		flags &= ~EXPR_PATTERN_ICASE;
-	}
-	if (flags & EXPR_PATTERN_FORCE) {
-		ex->ex_re.r_flags |= EXPR_PATTERN_FORCE;
-		flags &= ~EXPR_PATTERN_FORCE;
-	}
-	if (flags & EXPR_PATTERN_LCASE) {
-		ex->ex_re.r_flags |= EXPR_PATTERN_LCASE;
-		flags &= ~EXPR_PATTERN_LCASE;
-	}
-	if (flags & EXPR_PATTERN_UCASE) {
-		ex->ex_re.r_flags |= EXPR_PATTERN_UCASE;
-		flags &= ~EXPR_PATTERN_UCASE;
+	for (i = 0; fflags[i].eflag != 0; i++) {
+		if ((flags & fflags[i].eflag) == 0)
+			continue;
+
+		if (fflags[i].pflag)
+			ex->ex_re.r_flags |= fflags[i].eflag;
+		if (fflags[i].rflag)
+			rflags |= fflags[i].rflag;
+		flags &= ~fflags[i].eflag;
 	}
 	assert(flags == 0);
 
