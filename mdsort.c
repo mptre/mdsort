@@ -28,7 +28,7 @@
 static int config_has_exec(const struct config_list *,
     const struct environment *);
 static int config_skip(const struct config *, const struct environment *);
-static const char *defaultconf(const struct environment *);
+static const char *defaultconf(const char *);
 static void readenv(struct environment *);
 static __dead void usage(void);
 
@@ -89,7 +89,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	if (env.ev_confpath == NULL)
-		env.ev_confpath = defaultconf(&env);
+		env.ev_confpath = defaultconf(env.ev_home);
 	config = config_parse(env.ev_confpath, &env);
 	if (config == NULL) {
 		error = 1;
@@ -212,13 +212,13 @@ config_skip(const struct config *conf, const struct environment *env)
 }
 
 static const char *
-defaultconf(const struct environment *env)
+defaultconf(const char *home)
 {
 	static char path[PATH_MAX];
 	int siz, n;
 
 	siz = sizeof(path);
-	n = snprintf(path, siz, "%s/.mdsort.conf", env->ev_home);
+	n = snprintf(path, siz, "%s/.mdsort.conf", home);
 	if (n < 0 || n >= siz)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return path;
