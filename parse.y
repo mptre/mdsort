@@ -41,7 +41,7 @@ static ssize_t ismacro(char *str, const char **val);
 
 static struct config_list yyconfig;
 static const struct environment *yyenv;
-static FILE *fh;
+static FILE *yyfh;
 static const char *yypath;
 static char *stdinpath;
 static int lineno, lineno_save, parse_errors, pflag;
@@ -431,8 +431,8 @@ nl		: '\n' optnl
 struct config_list *
 config_parse(const char *path, const struct environment *env)
 {
-	fh = fopen(path, "r");
-	if (fh == NULL) {
+	yyfh = fopen(path, "r");
+	if (yyfh == NULL) {
 		warn("%s", path);
 		return NULL;
 	}
@@ -449,7 +449,7 @@ config_parse(const char *path, const struct environment *env)
 	lineno = 1;
 	lineno_save = -1;
 	yyparse();
-	fclose(fh);
+	fclose(yyfh);
 	macros_validate(yyconfig.cf_macros);
 	if (parse_errors > 0) {
 		config_free(&yyconfig);
@@ -821,7 +821,7 @@ yygetc(void)
 {
 	int c;
 
-	c = fgetc(fh);
+	c = fgetc(yyfh);
 	if (c == '\n')
 		lineno++;
 	return c;
@@ -851,7 +851,7 @@ yyungetc(int c)
 
 	if (c == '\n')
 		lineno--;
-	ungetc(c, fh);
+	ungetc(c, yyfh);
 }
 
 /*
