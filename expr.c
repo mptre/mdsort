@@ -336,7 +336,7 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 	const struct match *match;
 	const char *lbeg, *lend, *p;
 	unsigned int i;
-	int beg, end, len, indent, pindent;
+	int len, indent, pindent;
 	int printkey = 1;
 
 	if ((ex->ex_flags & EXPR_FLAG_INSPECT) == 0)
@@ -346,8 +346,12 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 	pindent = strlen(match->mh_key) + 2;
 
 	for (i = 0; i < ex->ex_re.r_nmatches; i++) {
+		int beg, end;
+
 		beg = ex->ex_re.r_matches[i].rm_so;
 		end = ex->ex_re.r_matches[i].rm_eo;
+		if (beg == end)
+			continue;
 
 		lbeg = match->mh_val;
 		for (;;) {

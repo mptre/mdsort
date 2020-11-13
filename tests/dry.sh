@@ -112,3 +112,18 @@ mdsort.conf:2: To: user@example.com
                    ^$
 EOF
 fi
+
+if testcase "empty subexpression"; then
+	mkmd "src"
+	mkmsg "src/new" -- "To" "user@example.com"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match header "To" /user@(foo)?/ move "dst"
+	}
+	EOF
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
+mdsort.conf:2: To: user@example.com
+                   ^   $
+EOF
+fi
