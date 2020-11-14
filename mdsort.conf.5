@@ -7,12 +7,14 @@
 .Sh DESCRIPTION
 .Nm
 is the configuration file for
-.Xr mdsort 1
-and is divided into the following main sections:
+.Xr mdsort 1 .
+The manual is divided into the sections as follows:
 .Bl -tag -width XXX
 .It Sx MACROS
-User-defined macros may be defined and used later, simplifying
-the configuration file.
+Macros may be defined and used later, simplifying the configuration file.
+.It Sx PATTERNS AND INTERPOLATION
+Description of patterns expressed as regular expressions and how they can be
+used for interpolation.
 .It Sx CONFIGURATION
 Configuration for
 .Xr mdsort 1 .
@@ -24,20 +26,83 @@ and extend to the end of the current line.
 .Sh MACROS
 Macros can be define anywhere at the top level of the configuration.
 A macro name may only contain lowercase letters and must not conflict with
-reserved words.
-They can later be interpolated inside strings which are denoted as
-.Dq Ar string
-in this manual.
+reserved words, such as
+.Ic maildir .
+They can later be interpolated inside strings.
+.Bl -tag -width Ds
+.It Ar macro No = Dq Ar value
+Define a macro named
+.Ar macro
+with a corresponding
+.Ar value .
+.El
+.Sh PATTERNS AND INTERPOLATION
+A
+.Ar pattern
+used within a
+.Ar condition
+is interpreted as an extended regular expression.
+Subexpressions in
+.Ar pattern
+can be used to interpolate arguments to
+.Ar action .
+Referencing a subexpression is done using back-references on the form
+.Sq \e#
+where
+.Sq #
+is a digit.
+The digit refers to the nth subexpression of
+.Ar pattern
+and will be replaced with the matched string.
+By default, subexpressions of the first matching
+.Ar pattern
+is used.
+Each
+.Ar pattern
+optionally accepts one or many of the following
+.Ar flags :
+.Bl -tag -width Ds -offset indent
+.It f
+Force usage of subexpressions from the corresponding pattern,
+as opposed of using the ones from the first matching pattern.
+.It i
+Make pattern case insensitive.
+.It l
+Lowercase the matched string from a subexpression before interpolation.
+Mutually exclusive with
+.Sq u .
+.It u
+Uppercase the matched string from a subexpression before interpolation.
+Mutually exclusive with
+.Sq l .
+.El
 .Pp
-For example:
-.Bd -literal
-prefix = "~/Maildir"
-inbox = "${prefix}/INBOX"
-
-maildir "${inbox}" {
-	match date > 1 week move "${prefix}/Trash"
-}
-.Ed
+A
+.Ar pattern
+is by default expected to be enclosed in a pair of
+.Sq /
+delimiters.
+A literal
+.Sq /
+can be expressed as
+.Sq \e/
+inside a
+.Ar pattern .
+However, any character can be used as the delimiter and same escaping principle
+also applies.
+.Pp
+Macros may also be interpolated inside strings on the form
+.Dq \(Do Ns Brq Ar macro
+where
+.Ar macro
+is a defined macro.
+.Pp
+In addition, the following macros are available in
+.Ar action :
+.Bl -tag -width Ds -offset indent
+.It path
+Expands to the path of the matched message.
+.El
 .Sh CONFIGURATION
 The configuration may contain one or many maildir definitions.
 Each maildir is associated with a block of rules.
@@ -91,58 +156,6 @@ evaluates to true.
 Each rule spans to the end of the current line but can extended over multiple
 lines using a backslash
 .Pq Sq \e .
-.Pp
-A
-.Ar pattern
-used within a condition is interpreted as an extended regular expression.
-Subexpressions in
-.Ar pattern
-can be used to interpolate arguments to
-.Ar action .
-Referencing a subexpression is done using back-references on the form
-.Sq \e#
-where
-.Sq #
-is a digit.
-The digit refers to the nth subexpression of
-.Ar pattern
-and will be replaced with the matched string.
-By default, subexpressions of the first matching
-.Ar pattern
-is used.
-Each
-.Ar pattern
-optionally accepts one or many of the following
-.Ar flags :
-.Bl -tag -width Ds -offset indent
-.It f
-Force usage of subexpressions from the corresponding pattern,
-as opposed of using the ones from the first matching pattern.
-.It i
-Make pattern case insensitive.
-.It l
-Lowercase the matched string from a subexpression before interpolation.
-Mutually exclusive with
-.Sq u .
-.It u
-Uppercase the matched string from a subexpression before interpolation.
-Mutually exclusive with
-.Sq l .
-.El
-.Pp
-A
-.Ar pattern
-is by default expected to be enclosed in a pair of
-.Sq /
-delimiters.
-A literal
-.Sq /
-can be expressed as
-.Sq \e/
-inside a
-.Ar pattern .
-However, any character can be used as the delimiter and same escaping principle
-also applies.
 .Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
@@ -266,8 +279,7 @@ Mutually exclusive with all other actions.
 .Xc
 Execute
 .Ar command ,
-which
-may contain back-references.
+which is interpolated.
 The
 .Ar options
 may be any combination of the following:
@@ -289,13 +301,13 @@ Add
 to the X-Label header in message.
 The
 .Ar label
-may contain back-references.
+is interpolated.
 .It Ic move Dq Ar path
 Move the message to the maildir located at
 .Ar path .
 The
 .Ar path
-may contain back-references.
+is interpolated.
 .It Ic pass
 Continue evaluation of the current block of rules up to the next matching
 rule.
