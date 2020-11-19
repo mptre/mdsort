@@ -119,7 +119,7 @@ void message_free(struct message *);
 
 int message_writeat(struct message *, int, unsigned int);
 
-int message_get_fd(const struct message *);
+int message_get_fd(struct message *, const struct environment *, int);
 
 const char *message_get_body(struct message *);
 
@@ -209,6 +209,7 @@ struct expr {
 		struct {
 			unsigned int e_flags;
 #define EXPR_EXEC_STDIN	0x00000001u
+#define EXPR_EXEC_BODY	0x00000002u
 		} u_exec;
 	} ex_u;
 #define ex_date	ex_u.u_date
@@ -252,7 +253,7 @@ void expr_free(struct expr *);
 void expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
     time_t);
 
-void expr_set_exec(struct expr *, struct string_list *, unsigned int);
+int expr_set_exec(struct expr *, struct string_list *, unsigned int);
 
 void expr_set_strings(struct expr *, struct string_list *);
 

@@ -1,16 +1,3 @@
-# b64 string ...
-#
-# Encode the given strings using base64.
-b64() {
-	if command -v b64encode >/dev/null 2>&1; then
-		echo "$@" | b64encode - | sed -e '1d' -e '$d'
-	elif command -v base64 >/dev/null 2>&1; then
-		echo "$@" | base64
-	else
-		fail "base64 encode utility not found"
-	fi
-}
-
 # mkattach [-m multipart] dir -- type encoding body ...
 #
 # Create a message with one or many attachments.

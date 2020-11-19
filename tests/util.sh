@@ -55,6 +55,19 @@ assert_label() {
 	assert_eq "$1" "$_got"
 }
 
+# b64 string ...
+#
+# Encode the given strings using base64.
+b64() {
+	if command -v b64encode >/dev/null 2>&1; then
+		echo "$@" | b64encode - | sed -e '1d' -e '$d'
+	elif command -v base64 >/dev/null 2>&1; then
+		echo "$@" | base64
+	else
+		fail "base64 encode utility not found"
+	fi
+}
+
 cppvar() {
 	local _tmp="${TSHDIR}/cppvar"
 

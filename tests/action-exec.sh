@@ -46,6 +46,57 @@ body
 EOF
 fi
 
+if testcase "stdin body"; then
+	mkmd "src"
+	mkmsg -b "src/new" <<-EOF
+	This is the body.
+	EOF
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all exec stdin body "cat"
+	}
+	EOF
+	mdsort - -- <<-EOF
+	This is the body.
+	EOF
+fi
+
+if testcase "stdin body base64"; then
+	mkmd "src"
+	b64 "This is the body." | mkmsg -b "src/new" -- \
+		"Content-Transfer-Encoding" "base64"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all exec stdin body "cat"
+	}
+	EOF
+	mdsort - -- <<-EOF
+	This is the body.
+	EOF
+fi
+
+if testcase -t memleak "body without stdin"; then
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all exec body "cat"
+	}
+	EOF
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:2: invalid exec options
+	EOF
+fi
+
+if testcase "duplicate options"; then
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all exec stdin stdin "cat"
+	}
+	EOF
+	mdsort -e - -- -n <<-EOF
+	mdsort.conf:2: exec options cannot be repeated
+	EOF
+fi
+
 if testcase "exit non-zero"; then
 	mkmd "src"
 	mkmsg "src/new"

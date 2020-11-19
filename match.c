@@ -247,16 +247,20 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			break;
 
 		case EXPR_TYPE_EXEC: {
+			unsigned int flags = mh->mh_expr->ex_exec.e_flags;
 			int fd = -1;
 
-			if (mh->mh_expr->ex_exec.e_flags & EXPR_EXEC_STDIN) {
-				fd = message_get_fd(msg);
+			if (flags & EXPR_EXEC_STDIN) {
+				fd = message_get_fd(msg, env,
+				    flags & EXPR_EXEC_BODY);
 				if (fd == -1) {
 					error = 1;
 					break;
 				}
 			}
 			error = exec(mh->mh_exec, fd);
+			if (fd != -1)
+				close(fd);
 			break;
 		}
 

@@ -178,12 +178,15 @@ expr_set_date(struct expr *ex, enum expr_date_field field,
 	(void)expr_set_pattern(ex, ".*", 0, NULL);
 }
 
-void
+int
 expr_set_exec(struct expr *ex, struct string_list *cmd, unsigned int flags)
 {
+	if ((flags & (EXPR_EXEC_STDIN | EXPR_EXEC_BODY)) == EXPR_EXEC_BODY)
+		return 1;
 
 	expr_set_strings(ex, cmd);
 	ex->ex_exec.e_flags = flags;
+	return 0;
 }
 
 void

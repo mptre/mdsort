@@ -55,6 +55,7 @@ static int parseboundary(const char *, char **);
 static char *b64decode(const char *);
 static const char *skipline(const char *);
 static ssize_t strflags(unsigned int, unsigned char, char *, size_t);
+static int writefd(const char *);
 
 char *
 message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
@@ -261,15 +262,57 @@ out:
 	return error;
 }
 
+/*
+ * Get the file descriptor for the given message. Optionally seeking past the
+ * headers to where the body begins. In this case, the body is decoded as well.
+ * The caller is responsible for closing the returned file descriptor.
+ */
 int
-message_get_fd(const struct message *msg)
+message_get_fd(struct message *msg, const struct environment *env,
+    int dobody)
 {
+	int fd;
 
-	if (lseek(msg->me_fd, 0, SEEK_SET) == -1) {
+	if (dobody) {
+		const char *body;
+		size_t len;
+
+		body = message_get_body(msg);
+		if (body == NULL)
+			return -1;
+
+		fd = writefd(env->ev_tmpdir);
+		if (fd == -1)
+			return -1;
+
+		len = strlen(body);
+		while (len > 0) {
+			ssize_t n;
+
+			n = write(fd, body, len);
+			if (n == -1) {
+				warn("write");
+				close(fd);
+				return -1;
+			}
+			len -= n;
+			body += n;
+		}
+	} else {
+		fd = dup(msg->me_fd);
+		if (fd == -1) {
+			warn("dup");
+			return -1;
+		}
+	}
+
+	if (lseek(fd, 0, SEEK_SET) == -1) {
 		warn("lseek");
+		close(fd);
 		return -1;
 	}
-	return msg->me_fd;
+
+	return fd;
 }
 
 /*
@@ -907,4 +950,33 @@ strflags(unsigned int flags, unsigned char offset, char *buf, size_t bufsiz)
 	}
 
 	return i;
+}
+
+/*
+ * Get a writeable file descriptor by creating a temporary file in the given
+ * directory. The file is immediately removed in the hopes of returning the last
+ * reference to the file.
+ */
+static int
+writefd(const char *dir)
+{
+	char path[PATH_MAX];
+	int fd;
+
+	if (pathjoin(path, sizeof(path), dir, "mdsort-XXXXXXXX") == NULL) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return -1;
+	}
+
+	fd = mkstemp(path);
+	if (fd == -1) {
+		warn("mkstemp");
+		return -1;
+	}
+	if (unlink(path) == -1) {
+		warn("unlink: %s", path);
+		close(fd);
+		return -1;
+	}
+	return fd;
 }

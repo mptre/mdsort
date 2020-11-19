@@ -95,6 +95,7 @@ typedef struct {
 %type <v.field>		date_field
 %type <v.number>	INT
 %type <v.number>	SCALAR
+%type <v.number>	exec_flag
 %type <v.number>	exec_flags
 %type <v.number>	maildir_flag
 %type <v.number>	maildir_flags
@@ -169,7 +170,6 @@ maildir_flags	: /* empty */ {
 		| maildir_flags maildir_flag {
 			if ($1 & $2)
 				yyerror("maildir options cannot be repeated");
-
 			$$ = $1 | $2;
 		}
 		;
@@ -316,7 +316,8 @@ expraction	: BREAK {
 		| EXEC exec_flags strings {
 			$$ = expr_alloc(EXPR_TYPE_EXEC, lineno, NULL, NULL);
 			$3 = expandstrings($3, MACRO_CTX_ACTION);
-			expr_set_exec($$, $3, $2);
+			if (expr_set_exec($$, $3, $2))
+				yyerror("invalid exec options");
 		}
 		;
 
@@ -387,10 +388,21 @@ date_age	: INT SCALAR {
 exec_flags	: /* empty */ {
 			$$ = 0;
 		}
-		| STDIN {
-			$$ = EXPR_EXEC_STDIN;
+		| exec_flags exec_flag {
+			if ($1 & $2)
+				yyerror("exec options cannot be repeated");
+			$$ = $1 | $2;
 		}
 		;
+
+exec_flag	: STDIN {
+			$$ = EXPR_EXEC_STDIN;
+		}
+		| BODY {
+			$$ = EXPR_EXEC_BODY;
+		}
+		;
+
 
 pattern		: /* backdoor */ {
 			pflag = 1;

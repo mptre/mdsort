@@ -287,6 +287,10 @@ may be any combination of the following:
 .It Ic stdin
 Pass the matched message on stdin to
 .Ar command .
+.It Ic body
+While used in combination with
+.Ic stdin ,
+only the body of the matched message is passed on stdin.
 .El
 .It Ic discard
 Remove the message from the maildir.
