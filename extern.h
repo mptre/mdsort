@@ -135,8 +135,10 @@ int message_get_attachments(const struct message *, struct message_list **);
 void message_list_free(struct message_list *);
 
 enum expr_type {
-	/* logical operators */
+	/* blocks */
 	EXPR_TYPE_BLOCK,
+
+	/* logical operators */
 	EXPR_TYPE_AND,
 	EXPR_TYPE_OR,
 	EXPR_TYPE_NEG,
