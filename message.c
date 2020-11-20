@@ -47,8 +47,7 @@ static ssize_t searchheader(const struct header *, size_t, const char *,
     size_t *);
 static char *unfoldheader(const char *);
 
-static int parseattachments(const struct message *, struct message_list *,
-    int);
+static int parseattachments(struct message *, struct message_list *, int);
 static const char *findboundary(const char *, const char *, int *);
 static int parseboundary(const char *, char **);
 
@@ -189,6 +188,8 @@ message_free(struct message *msg)
 
 	if (msg == NULL)
 		return;
+
+	message_list_free(msg->me_attachments);
 
 	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
 		struct header *hdr = &msg->me_headers.h_v[i];
@@ -333,7 +334,8 @@ message_get_body(struct message *msg)
 		return message_decode_body(msg, msg);
 
 	/* Attachment parsing errors are considered fatal. */
-	if (message_get_attachments(msg, &attachments))
+	attachments = message_get_attachments(msg);
+	if (attachments == NULL)
 		return NULL;
 
 	/* Scan attachments, favor plain text over HTML. */
@@ -348,13 +350,10 @@ message_get_body(struct message *msg)
 				found = attach;
 		}
 	}
-	if (found == NULL) {
-		message_list_free(attachments);
+	if (found == NULL)
 		return msg->me_body;
-	}
 
 	(void)message_decode_body(msg, found);
-	message_list_free(attachments);
 
 	return msg->me_buf_dec;
 }
@@ -440,28 +439,25 @@ message_set_header(struct message *msg, const char *header, char *val)
 
 /*
  * Parse all attachments in message into the given message list.
- * Returns zero on success, even if no attachments where found.
- * The caller is responsible for freeing the message list using
- * message_list_free().
- *
- * Otherwise, non-zero is returned.
+ * Returns non NULL-on success, even if no attachments where found.
  */
-int
-message_get_attachments(const struct message *msg,
-    struct message_list **attachments)
+struct message_list *
+message_get_attachments(struct message *msg)
 {
+	if (msg->me_attachments != NULL)
+		return msg->me_attachments;
 
-	*attachments = malloc(sizeof(**attachments));
-	if (*attachments == NULL)
+	msg->me_attachments = malloc(sizeof(*msg->me_attachments));
+	if (msg->me_attachments == NULL)
 		err(1, NULL);
-	TAILQ_INIT(*attachments);
+	TAILQ_INIT(msg->me_attachments);
 
-	if (parseattachments(msg, *attachments, 0)) {
-		message_list_free(*attachments);
-		return 1;
+	if (parseattachments(msg, msg->me_attachments, 0)) {
+		message_list_free(msg->me_attachments);
+		msg->me_attachments = NULL;
+		return NULL;
 	}
-
-	return 0;
+	return msg->me_attachments;
 }
 
 void
@@ -760,7 +756,7 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 }
 
 static int
-parseattachments(const struct message *msg, struct message_list *attachments,
+parseattachments(struct message *msg, struct message_list *attachments,
     int depth)
 {
 	struct message *attach;

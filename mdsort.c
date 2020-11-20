@@ -136,17 +136,17 @@ main(int argc, char *argv[])
 				goto loop;
 			}
 
-			if (matches_interpolate(&matches, msg)) {
+			if (matches_interpolate(&matches)) {
 				error = 1;
 				goto loop;
 			}
 
-			if (matches_inspect(&matches, msg, stdout, &env)) {
+			if (matches_inspect(&matches, stdout, &env)) {
 				/* Dry run, we're done. */
 				goto loop;
 			}
 
-			if (matches_exec(&matches, md, msg, &reject, &env))
+			if (matches_exec(&matches, md, &reject, &env))
 				error = 1;
 loop:
 			message_free(msg);

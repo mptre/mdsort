@@ -16,6 +16,7 @@
 /* Forward declarations. */
 struct match_list;
 struct message;
+struct message_list;
 
 struct environment {
 	char ev_home[PATH_MAX];
@@ -108,6 +109,8 @@ struct message {
 		size_t h_size;
 	} me_headers;
 
+	struct message_list *me_attachments;
+
 	TAILQ_ENTRY(message) me_entry;
 };
 
@@ -130,7 +133,7 @@ const char *message_get_header1(const struct message *, const char *);
 
 void message_set_header(struct message *, const char *, char *);
 
-int message_get_attachments(const struct message *, struct message_list **);
+struct message_list *message_get_attachments(struct message *);
 
 void message_list_free(struct message_list *);
 
@@ -234,6 +237,7 @@ struct match {
 	char mh_subdir[NAME_MAX + 1];
 
 	const struct expr *mh_expr;
+	struct message *mh_msg;
 
 	char **mh_matches;
 	size_t mh_nmatches;
@@ -272,16 +276,16 @@ int expr_eval(struct expr *, struct match_list *, struct message *,
 
 void expr_inspect(const struct expr *, FILE *, const struct environment *);
 
-int matches_append(struct match_list *, struct match *, const struct message *);
+int matches_append(struct match_list *, struct match *, struct message *);
 
 void matches_clear(struct match_list *);
 
-int matches_interpolate(struct match_list *, struct message *);
+int matches_interpolate(struct match_list *);
 
-int matches_exec(const struct match_list *, struct maildir *, struct message *,
-    int *, const struct environment *);
+int matches_exec(const struct match_list *, struct maildir *, int *,
+    const struct environment *);
 
-int matches_inspect(const struct match_list *, const struct message *, FILE *,
+int matches_inspect(const struct match_list *, FILE *,
     const struct environment *);
 
 void match_copy(struct match *, const char *, const regmatch_t *, size_t);

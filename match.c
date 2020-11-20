@@ -28,11 +28,12 @@ static ssize_t isbackref(const char *, unsigned int *);
  * if needed.
  */
 int
-matches_append(struct match_list *ml, struct match *mh,
-    const struct message *msg)
+matches_append(struct match_list *ml, struct match *mh, struct message *msg)
 {
 	const char *p;
 	size_t siz;
+
+	mh->mh_msg = msg;
 
 	matches_merge(ml, mh);
 	TAILQ_INSERT_TAIL(ml, mh, mh_entry);
@@ -83,11 +84,14 @@ matches_clear(struct match_list *ml)
 }
 
 int
-matches_interpolate(struct match_list *ml, struct message *msg)
+matches_interpolate(struct match_list *ml)
 {
 	struct macro_list macros;
 	const struct match *mi;
 	struct match *mh;
+	struct message *msg;
+
+	msg = TAILQ_FIRST(ml)->mh_msg;
 
 	/*
 	 * Note that mi might be NULL but it's not considered an error as long
@@ -170,16 +174,18 @@ matches_interpolate(struct match_list *ml, struct message *msg)
 }
 
 int
-matches_exec(const struct match_list *ml, struct maildir *src,
-    struct message *msg, int *reject, const struct environment *env)
+matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
+    const struct environment *env)
 {
 	char path[NAME_MAX + 1], tmp[NAME_MAX + 1];
 	struct maildir *dst = NULL;
 	struct match *mh;
+	struct message *msg;
 	const char *path_save;
 	int chsrc = 0;
 	int error = 0;
 
+	msg = TAILQ_FIRST(ml)->mh_msg;
 	path_save = msg->me_path;
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
@@ -280,11 +286,14 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 }
 
 int
-matches_inspect(const struct match_list *ml, const struct message *msg,
-    FILE *fh, const struct environment *env)
+matches_inspect(const struct match_list *ml, FILE *fh,
+    const struct environment *env)
 {
 	const struct match *mh;
+	const struct message *msg;
 	const char *path = NULL;
+
+	msg = TAILQ_FIRST(ml)->mh_msg;
 
 	/* Find the last non-empty path. */
 	TAILQ_FOREACH(mh, ml, mh_entry) {
@@ -383,6 +392,8 @@ match_reset(struct match *mh)
 	unsigned int i;
 
 	mh->mh_path[0] = mh->mh_maildir[0] = mh->mh_subdir[0] = '\0';
+
+	mh->mh_msg = NULL;
 
 	for (i = 0; i < mh->mh_nmatches; i++)
 		free(mh->mh_matches[i]);

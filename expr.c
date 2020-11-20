@@ -413,20 +413,21 @@ expr_eval_attachment(struct expr *ex, struct match_list *ml,
 {
 	struct message_list *attachments;
 	struct message *attach;
-	int ev = EXPR_NOMATCH;
 
-	if (message_get_attachments(msg, &attachments))
+	attachments = message_get_attachments(msg);
+	if (attachments == NULL)
 		return EXPR_ERROR;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
+		int ev;
+
 		ev = expr_eval(ex->ex_lhs, ml, attach, env);
 		if (ev == EXPR_NOMATCH)
 			continue;
-		break;	/* match or error, return */
+		return ev;	/* match or error, return */
 	}
 
-	message_list_free(attachments);
-	return ev;
+	return EXPR_NOMATCH;
 }
 
 static int
