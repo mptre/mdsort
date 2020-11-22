@@ -180,9 +180,10 @@ mkmd() {
 	done
 }
 
-# mkmsg [-H] [-b] [-m modified-time] [-s suffix] dir [-- headers ...]
+# mkmsg [-A] [-H] [-b] [-m modified-time] [-s suffix] dir [-- headers ...]
 mkmsg() {
 	local _dir _name _path
+	local _attachments=0
 	local _body=0
 	local _headers=1
 	local _suffix=""
@@ -190,6 +191,7 @@ mkmsg() {
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
+		-A)	_attachments=1;;
 		-b)	_body=1;;
 		-H)	_headers=0;;
 		-m)	shift
@@ -225,13 +227,31 @@ mkmsg() {
 		fi
 
 		# Default headers.
-		[ $_headers -eq 1 ] && printf 'Content-Type: text/plain\n'
+		if [ "$_attachments" -eq 1 ]; then
+			printf 'Content-Type: multipart/alternative;boundary="deadbeef"\n'
+		elif [ "$_headers" -eq 1 ]; then
+			printf 'Content-Type: text/plain\n'
+		fi
 
 		# Start of body.
 		printf '\n'
 
 		# Optional body.
-		[ $_body -eq 1 ] && cat
+		if [ "$_attachments" -eq 1 ]; then
+			cat <<-EOF
+			--deadbeef
+			Content-Type: text/plain
+
+			First attachment.
+			--deadbeef
+			Content-Type: text/calendar
+
+			Second attachment.
+			--deadbeef--
+			EOF
+		elif [ $_body -eq 1 ]; then
+			cat
+		fi
 	} >"$_path"
 
 	if [ -n "$_tim" ]; then

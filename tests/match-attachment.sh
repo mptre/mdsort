@@ -1,22 +1,6 @@
-# xmkmsg dir
-xmkmsg() {
-	mkmsg -b -H "$1" <<-EOF -- \
-		"Content-Type" "multipart/alternative;boundary=\"deadbeef\""
-	--deadbeef
-	Content-Type: text/plain
-
-	First attachment.
-	--deadbeef
-	Content-Type: text/calendar
-
-	Second attachment.
-	--deadbeef--
-	EOF
-}
-
 if testcase "match and"; then
 	mkmd "src" "dst"
-	xmkmsg "src/new"
+	mkmsg -A "src/new"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment \
@@ -31,7 +15,7 @@ fi
 
 if testcase "match or"; then
 	mkmd "src" "dst"
-	xmkmsg "src/new"
+	mkmsg -A "src/new"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment header "From" /admin/ or all move "dst"
@@ -44,7 +28,7 @@ fi
 
 if testcase "match negate"; then
 	mkmd "src"
-	xmkmsg "src/new"
+	mkmsg -A "src/new"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment ! body /attachment/ move "dst"
@@ -56,7 +40,7 @@ fi
 
 if testcase "match attachment"; then
 	mkmd "src"
-	xmkmsg "src/new"
+	mkmsg -A "src/new"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment attachment new move "dst"
@@ -68,7 +52,7 @@ fi
 
 if testcase "match body"; then
 	mkmd "src" "dst"
-	xmkmsg "src/new"
+	mkmsg -A "src/new"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment body /attachment/ move "dst"
@@ -81,7 +65,7 @@ fi
 
 if testcase "match header"; then
 	mkmd "src" "dst"
-	xmkmsg "src/new"
+	mkmsg -A "src/new"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment header "Content-Type" |text/calendar| move "dst"
@@ -94,7 +78,7 @@ fi
 
 if testcase "match new"; then
 	mkmd "src" "dst"
-	xmkmsg "src/new"
+	mkmsg -A "src/new"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment new move "dst"
@@ -107,7 +91,7 @@ fi
 
 if testcase "match old"; then
 	mkmd "src" "dst"
-	xmkmsg "src/cur"
+	mkmsg -A "src/cur"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match attachment old move "dst"
@@ -310,8 +294,8 @@ fi
 
 if testcase -t regress "close file descriptor"; then
 	mkmd "src"
-	xmkmsg "src/new"
-	xmkmsg "src/cur"
+	mkmsg -A "src/new"
+	mkmsg -A "src/cur"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /nein/ move "dst"
