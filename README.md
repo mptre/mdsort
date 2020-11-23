@@ -23,6 +23,12 @@ maildir "~/Maildir/INBOX" {
 	# Label messages with the plus portion of the address.
 	match header "To" /user\+(.+)@example.com/l label "\1"
 
+	# Extract calendar attachments.
+	match all attachment {
+		match header "Content-Type" |text/calendar| \
+			exec stdin body "icalendar2calendar"
+	}
+
 	# Archive read messages.
 	match ! new move "~/Maildir/Archive"
 }

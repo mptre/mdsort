@@ -50,6 +50,7 @@ DISTFILES+=	message.c
 DISTFILES+=	parse.y
 DISTFILES+=	tests/GNUmakefile
 DISTFILES+=	tests/Makefile
+DISTFILES+=	tests/action-attachment.sh
 DISTFILES+=	tests/action-break.sh
 DISTFILES+=	tests/action-discard.sh
 DISTFILES+=	tests/action-exec.sh

@@ -11,6 +11,7 @@
 #include "extern.h"
 
 static void expr_validate(const struct expr *);
+static void expr_validate_attachment_block(const struct expr *);
 static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 static int yygetc(void);
@@ -318,6 +319,11 @@ expraction	: BREAK {
 			$3 = expandstrings($3, MACRO_CTX_ACTION);
 			if (expr_set_exec($$, $3, $2))
 				yyerror("invalid exec options");
+		}
+		| ATTACHMENT exprblock {
+			expr_validate_attachment_block($2);
+			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT_BLOCK, lineno, $2,
+			    NULL);
 		}
 		;
 
@@ -790,6 +796,13 @@ expr_validate(const struct expr *ex)
 	}
 
 	yypopl();
+}
+
+static void
+expr_validate_attachment_block(const struct expr *ex)
+{
+	if (expr_count_actions(ex) > expr_count(ex, EXPR_TYPE_EXEC))
+		yyerror("attachment cannot be combined with action(s)");
 }
 
 static int

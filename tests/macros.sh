@@ -161,3 +161,19 @@ fi
 if testcase "action move with pre defined macros"; then
 	:
 fi
+
+if testcase "action attachment with pre defined macros"; then
+	mkmd "src"
+	mkmsg -A "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all attachment {
+			match all exec { "echo" "\${path}" }
+		}
+	}
+	EOF
+	mdsort - <<-EOF
+	$(findmsg "src/new")
+	$(findmsg "src/new")
+	EOF
+fi

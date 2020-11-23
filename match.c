@@ -13,7 +13,8 @@
 
 #include "extern.h"
 
-static const struct match *matches_find_interpolate(const struct match_list *);
+static const struct match *matches_find_interpolate(const struct match_list *,
+    const struct message *);
 static void matches_merge(struct match_list *, struct match *);
 
 static const char *match_get(const struct match *, unsigned int);
@@ -92,19 +93,20 @@ matches_interpolate(struct match_list *ml)
 	struct match *mh;
 	struct message *msg;
 
-	msg = TAILQ_FIRST(ml)->mh_msg;
-
-	/*
-	 * Note that mi might be NULL but it's not considered an error as long
-	 * as the string to interpolate is missing back-references.
-	 */
-	mi = matches_find_interpolate(ml);
-
 	/* Construct action macro context. */
 	macros_init(&macros, MACRO_CTX_ACTION);
-	macros_insertc(&macros, "path", msg->me_path);
+	macros_insertc(&macros, "path", TAILQ_FIRST(ml)->mh_msg->me_path);
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
+		msg = mh->mh_msg;
+
+		/*
+		 * Note that mi might be NULL but it's not considered an error
+		 * as long as the string to interpolate is missing
+		 * back-references.
+		 */
+		mi = matches_find_interpolate(ml, msg);
+
 		switch (mh->mh_expr->ex_type) {
 		case EXPR_TYPE_MOVE:
 		case EXPR_TYPE_FLAG: {
@@ -181,15 +183,15 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 	char path[NAME_MAX + 1], tmp[NAME_MAX + 1];
 	struct maildir *dst = NULL;
 	struct match *mh;
-	struct message *msg;
 	const char *path_save;
 	int chsrc = 0;
 	int error = 0;
 
-	msg = TAILQ_FIRST(ml)->mh_msg;
-	path_save = msg->me_path;
+	path_save = TAILQ_FIRST(ml)->mh_msg->me_path;
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
+		struct message *msg = mh->mh_msg;
+
 		switch (mh->mh_expr->ex_type) {
 		case EXPR_TYPE_FLAG:
 		case EXPR_TYPE_MOVE:
@@ -281,7 +283,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 
 	if (chsrc)
 		maildir_close(src);
-	msg->me_path = path_save;
+	TAILQ_FIRST(ml)->mh_msg->me_path = path_save;
 
 	return error;
 }
@@ -290,34 +292,38 @@ int
 matches_inspect(const struct match_list *ml, FILE *fh,
     const struct environment *env)
 {
-	const struct match *mh;
+	const struct match *lhs, *mh;
 	const struct message *msg;
-	const char *path = NULL;
+	int dryrun = env->ev_options & OPTION_DRYRUN;
 
+	lhs = TAILQ_FIRST(ml);
 	msg = TAILQ_FIRST(ml)->mh_msg;
 
-	/* Find the last non-empty path. */
 	TAILQ_FOREACH(mh, ml, mh_entry) {
-		if (mh->mh_path[0] == '\0')
+		const struct expr *ex = mh->mh_expr;
+		const struct match *rhs;
+
+		if ((ex->ex_flags & EXPR_FLAG_ACTION) == 0)
 			continue;
 
-		path = mh->mh_path;
+		log_info("%s -> %s\n",
+		    env->ev_options & OPTION_STDIN ? "<stdin>" : msg->me_path,
+		    ex->ex_label ? ex->ex_label : mh->mh_path);
+
+		if (!dryrun)
+			continue;
+
+		rhs = lhs;
+		for (;;) {
+			if (rhs == mh)
+				break;
+			expr_inspect(rhs->mh_expr, rhs, fh, env);
+			rhs = TAILQ_NEXT(rhs, mh_entry);
+		}
+		lhs = rhs;
 	}
-	assert(path != NULL);
 
-	if (env->ev_options & OPTION_STDIN)
-		log_info("<stdin> -> %s\n", path);
-	else
-		log_info("%s -> %s\n", msg->me_path, path);
-
-	if ((env->ev_options & OPTION_DRYRUN) == 0)
-		return 0;
-
-	TAILQ_FOREACH(mh, ml, mh_entry) {
-		expr_inspect(mh->mh_expr, mh, fh, env);
-	}
-
-	return 1;
+	return dryrun;
 }
 
 struct match *
@@ -395,26 +401,30 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 			for (j = 0; cpy[j] != '\0'; j++)
 				cpy[j] = toupper((unsigned char)cpy[j]);
 		}
-		mh->mh_matches[i] = cpy;
+		mh->mh_matches[i].m_str = cpy;
+		mh->mh_matches[i].m_beg = off[i].rm_so;
+		mh->mh_matches[i].m_end = off[i].rm_eo;
 	}
 }
 
+/*
+ * Find the first match behind the given one that can be used for
+ * interpolation.
+ */
 static const struct match *
-matches_find_interpolate(const struct match_list *ml)
+matches_find_interpolate(const struct match_list *ml, const struct message *msg)
 {
 	const struct match *mh;
 	const struct match *found = NULL;
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
-		const struct expr *ex = mh->mh_expr;
-
-		if ((ex->ex_flags & EXPR_FLAG_INTERPOLATE) == 0)
+		if ((mh->mh_expr->ex_flags & EXPR_FLAG_INTERPOLATE) == 0)
 			continue;
-
-		if (ex->ex_re.r_flags & EXPR_PATTERN_FORCE) {
-			found = mh;
-			break;
-		}
+		if ((mh->mh_msg->me_flags & MESSAGE_FLAG_ATTACHMENT) &&
+		    mh->mh_msg != msg)
+			continue;
+		if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_FORCE)
+			return mh;
 		if (found == NULL)
 			found = mh;
 	}
@@ -450,8 +460,6 @@ matches_merge(struct match_list *ml, struct match *mh)
 	    EXPR_TYPE_FLAG : EXPR_TYPE_MOVE);
 	if (dup == NULL)
 		return;
-	TAILQ_REMOVE(ml, dup, mh_entry);
-	match_free(dup);
 
 	if (ex->ex_type == EXPR_TYPE_MOVE) {
 		/* Copy subdir from flag action. */
@@ -462,6 +470,9 @@ matches_merge(struct match_list *ml, struct match *mh)
 		(void)strlcpy(mh->mh_maildir, dup->mh_maildir,
 		    sizeof(mh->mh_maildir));
 	}
+
+	TAILQ_REMOVE(ml, dup, mh_entry);
+	match_free(dup);
 }
 
 static const char *
@@ -470,7 +481,7 @@ match_get(const struct match *mh, unsigned int idx)
 
 	if (idx >= mh->mh_nmatches)
 		return NULL;
-	return mh->mh_matches[idx];
+	return mh->mh_matches[idx].m_str;
 }
 
 static void
@@ -482,11 +493,16 @@ match_free(struct match *mh)
 		return;
 
 	for (i = 0; i < mh->mh_nmatches; i++)
-		free(mh->mh_matches[i]);
+		free(mh->mh_matches[i].m_str);
 	free(mh->mh_matches);
+
+	for (i = 0; i < mh->mh_nexec; i++)
+		free(mh->mh_exec[i]);
+	free(mh->mh_exec);
 
 	free(mh->mh_key);
 	free(mh->mh_val);
+	free(mh);
 }
 
 static ssize_t

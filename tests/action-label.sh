@@ -216,6 +216,7 @@ if testcase "dry run label and move"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> <label>
 $(findmsg "src/new") -> dst/new
 EOF
 fi

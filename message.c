@@ -306,6 +306,14 @@ message_get_fd(struct message *msg, const struct environment *env,
 			len -= n;
 			body += n;
 		}
+	} else if (msg->me_flags & MESSAGE_FLAG_ATTACHMENT) {
+		fd = writefd(env->ev_tmpdir);
+		if (fd == -1)
+			return -1;
+		if (message_writeat(msg, fd, 0)) {
+			close(fd);
+			return -1;
+		}
 	} else {
 		fd = dup(msg->me_fd);
 		if (fd == -1) {
@@ -809,6 +817,7 @@ parseattachments(struct message *msg, struct message_list *attachments,
 		if (attach == NULL)
 			err(1, NULL);
 		attach->me_fd = -1;
+		attach->me_flags = MESSAGE_FLAG_ATTACHMENT;
 		attach->me_buf = strndup(beg, end - beg);
 		if (attach->me_buf == NULL)
 			err(1, NULL);

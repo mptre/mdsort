@@ -138,7 +138,7 @@ EOF
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> src/new
+$(findmsg "src/new") -> <label>
 mdsort.conf:2: Body: src/tests/modules: t_kcov.c
                                           ^  $
                      src/tests/modules: t_kcov.c

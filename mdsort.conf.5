@@ -262,6 +262,12 @@ is true.
 .Pp
 Next comes one or many actions:
 .Bl -tag -width Ds
+.It Ic attachment No { Ar rule ... No }
+Evaluate the nested block of rules on each attachment in message.
+The only available action in
+.Ar rule
+is
+.Ic exec .
 .It Ic break
 Abort evaluation of the current block of rules.
 Especially useful when using nested
@@ -350,6 +356,12 @@ maildir "${inbox}" {
 
 	# Label messages with the plus portion of the address.
 	match header "To" /user\e+(.+)@example.com/l label "\e1"
+
+	# Extract calendar attachments.
+	match all attachment {
+		match header "Content-Type" |text/calendar| \e
+			exec stdin body "icalendar2calendar"
+	}
 
 	# Archive read messages.
 	match ! new move "~/Maildir/Archive"

@@ -100,6 +100,8 @@ struct message {
 	char *me_buf;
 	char *me_buf_dec;	/* decoded body */
 	int me_fd;
+	unsigned int me_flags;
+#define MESSAGE_FLAG_ATTACHMENT	0x00000001u
 
 	struct message_flags me_mflags;	/* maildir flags */
 
@@ -164,6 +166,7 @@ enum expr_type {
 	EXPR_TYPE_PASS,
 	EXPR_TYPE_REJECT,
 	EXPR_TYPE_EXEC,
+	EXPR_TYPE_ATTACHMENT_BLOCK,
 };
 
 enum expr_date_cmp {
@@ -189,6 +192,8 @@ struct expr {
 
 	int (*ex_eval)(struct expr *, struct match_list *, struct message *,
 			const struct environment *);
+
+	const char *ex_label;
 
 	struct string_list *ex_strings;
 
@@ -236,10 +241,15 @@ struct match {
 	const struct expr *mh_expr;
 	struct message *mh_msg;
 
-	char **mh_matches;
+	struct {
+		char *m_str;
+		size_t m_beg;
+		size_t m_end;
+	} *mh_matches;
 	size_t mh_nmatches;
-#define mh_exec		mh_matches
-#define mh_nexec	mh_nmatches
+
+	char **mh_exec;
+	size_t mh_nexec;
 
 	char *mh_key;
 	char *mh_val;

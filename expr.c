@@ -17,6 +17,7 @@
 static int expr_eval_all(EXPR_EVAL_ARGS);
 static int expr_eval_and(EXPR_EVAL_ARGS);
 static int expr_eval_attachment(EXPR_EVAL_ARGS);
+static int expr_eval_attachment_block(EXPR_EVAL_ARGS);
 static int expr_eval_block(EXPR_EVAL_ARGS);
 static int expr_eval_body(EXPR_EVAL_ARGS);
 static int expr_eval_break(EXPR_EVAL_ARGS);
@@ -36,8 +37,7 @@ static int expr_eval_reject(EXPR_EVAL_ARGS);
 
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
-static int expr_match(struct expr *, struct match_list *, struct message *,
-    const char *);
+static int expr_match(struct expr *, struct match_list *, struct message *);
 static int expr_regexec(struct expr *, struct match_list *, struct message *,
     const struct environment *, const char *, const char *);
 
@@ -107,6 +107,7 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_DISCARD:
 		ex->ex_eval = &expr_eval_discard;
 		ex->ex_flags = EXPR_FLAG_ACTION;
+		ex->ex_label = "<discard>";
 		break;
 	case EXPR_TYPE_BREAK:
 		ex->ex_eval = &expr_eval_break;
@@ -115,6 +116,7 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_LABEL:
 		ex->ex_eval = &expr_eval_label;
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
+		ex->ex_label = "<label>";
 		break;
 	case EXPR_TYPE_PASS:
 		ex->ex_eval = &expr_eval_pass;
@@ -123,10 +125,15 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 	case EXPR_TYPE_REJECT:
 		ex->ex_eval = &expr_eval_reject;
 		ex->ex_flags = EXPR_FLAG_ACTION;
+		ex->ex_label = "<reject>";
 		break;
 	case EXPR_TYPE_EXEC:
 		ex->ex_eval = &expr_eval_exec;
 		ex->ex_flags = EXPR_FLAG_ACTION;
+		ex->ex_label = "<exec>";
+		break;
+	case EXPR_TYPE_ATTACHMENT_BLOCK:
+		ex->ex_eval = &expr_eval_attachment_block;
 		break;
 	}
 
@@ -331,11 +338,11 @@ expr_inspect(const struct expr *ex, const struct match *match, FILE *fh,
 
 	pindent = strlen(match->mh_key) + 2;
 
-	for (i = 0; i < ex->ex_re.r_nmatches; i++) {
+	for (i = 0; i < match->mh_nmatches; i++) {
 		int beg, end;
 
-		beg = ex->ex_re.r_matches[i].rm_so;
-		end = ex->ex_re.r_matches[i].rm_eo;
+		beg = match->mh_matches[i].m_beg;
+		end = match->mh_matches[i].m_end;
 		if (beg == end)
 			continue;
 
@@ -414,8 +421,35 @@ expr_eval_attachment(struct expr *ex, struct match_list *ml,
 }
 
 static int
-expr_eval_block(struct expr *ex, struct match_list *ml,
+expr_eval_attachment_block(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
+{
+	struct message_list *attachments;
+	struct message *attach;
+	int ev = EXPR_NOMATCH;
+
+	attachments = message_get_attachments(msg);
+	if (attachments == NULL)
+		return EXPR_ERROR;
+	if (TAILQ_FIRST(attachments) == NULL)
+		return EXPR_NOMATCH;
+
+	TAILQ_FOREACH(attach, attachments, me_entry) {
+		switch (expr_eval(ex->ex_lhs, ml, attach, env)) {
+		case EXPR_ERROR:
+			return EXPR_ERROR;
+		case EXPR_MATCH:
+			ev = EXPR_MATCH;
+			break;
+		}
+	}
+
+	return ev;
+}
+
+static int
+expr_eval_block(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *env)
 {
 	int ev;
 
@@ -537,16 +571,14 @@ static int
 expr_eval_exec(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-
-	return expr_match(ex, ml, msg, "exec");
+	return expr_match(ex, ml, msg);
 }
 
 static int
 expr_eval_discard(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-
-	return expr_match(ex, ml, msg, "discard");
+	return expr_match(ex, ml, msg);
 }
 
 static int
@@ -733,8 +765,7 @@ static int
 expr_eval_reject(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-
-	return expr_match(ex, ml, msg, "reject");
+	return expr_match(ex, ml, msg);
 }
 
 static int
@@ -761,23 +792,11 @@ expr_inspect_prefix(const struct expr *ex, FILE *fh,
 }
 
 static int
-expr_match(struct expr *ex, struct match_list *ml, struct message *msg,
-    const char *name)
+expr_match(struct expr *ex, struct match_list *ml, struct message *msg)
 {
 	struct match *mh;
-	size_t siz;
-	int n;
 
 	mh = match_alloc(ex);
-
-	/* Populate the path in case of a dry run. */
-	siz = sizeof(mh->mh_path);
-	n = snprintf(mh->mh_path, siz, "<%s>", name);
-	if (n < 0 || (size_t)n >= siz) {
-		warnc(ENAMETOOLONG, "%s", __func__);
-		return EXPR_ERROR;
-	}
-
 	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
