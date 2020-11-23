@@ -212,12 +212,23 @@ message_writeat(struct message *msg, int fd, unsigned int dosync)
 {
 	FILE *fh;
 	unsigned int i;
+	int newfd;
 	int error = 0;
 
-	fh = fdopen(fd, "we");
+	/*
+	 * Since fclose(3) uncondtionally closes the file descriptor, operate on
+	 * a duplicate in order to prevent side effects.
+	 */
+	newfd = dup(fd);
+	if (newfd == -1) {
+		warn("dup");
+		return 1;
+	}
+
+	fh = fdopen(newfd, "we");
 	if (fh == NULL) {
 		warn("fdopen");
-		close(fd);
+		close(newfd);
 		return 1;
 	}
 
@@ -251,10 +262,6 @@ message_writeat(struct message *msg, int fd, unsigned int dosync)
 	}
 
 out:
-	/*
-	 * According to POSIX, fclose(3) must close the underlying file
-	 * descriptor.
-	 */
 	if (fclose(fh) == EOF && dosync) {
 		warn("fclose");
 		error = 1;

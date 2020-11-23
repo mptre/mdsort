@@ -200,12 +200,10 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 			/*
 			 * Rename failed since source and destination reside on
 			 * different file systems. Fallback to writing a new
-			 * message. The file descriptor will unconditionally be
-			 * closed by message_writeat().
+			 * message.
 			 */
 			error = message_writeat(msg, fd,
 			    src->md_flags & MAILDIR_SYNC);
-			fd = -1;
 			if (error)
 				(void)unlinkat(dstfd, dstname, 0);
 			else
@@ -215,13 +213,14 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 			error = 1;
 		}
 	}
+
+	close(fd);
+
 	if (error == 0 && doutime &&
 	    utimensat(dstfd, dstname, times, 0) == -1) {
 		warn("utimensat");
 		error = 1;
 	}
-	if (fd != -1)
-		close(fd);
 	if (error == 0)
 		error = maildir_blacklist(src, dst, dstname);
 
@@ -269,6 +268,7 @@ maildir_write(struct maildir *src, const struct maildir *dst,
 		return 1;
 
 	error = message_writeat(msg, fd, src->md_flags & MAILDIR_SYNC);
+	close(fd);
 	if (error)
 		(void)unlinkat(maildir_fd(dst), buf, 0);
 	else
