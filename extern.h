@@ -101,7 +101,7 @@ struct message {
 	char *me_buf_dec;	/* decoded body */
 	int me_fd;
 
-	struct message_flags me_flags;
+	struct message_flags me_mflags;	/* maildir flags */
 
 	struct {
 		struct header *h_v;

@@ -171,7 +171,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 
 	msg->me_body = message_parse_headers(msg);
 
-	if (message_flags_parse(&msg->me_flags, msg->me_path))
+	if (message_flags_parse(&msg->me_mflags, msg->me_path))
 		goto err;
 
 	return msg;

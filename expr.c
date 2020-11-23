@@ -691,7 +691,7 @@ expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
 {
 	char buf[NAME_MAX + 1];
 
-	if (message_flags_isset(&msg->me_flags, 'S'))
+	if (message_flags_isset(&msg->me_mflags, 'S'))
 		return EXPR_NOMATCH;
 	if (pathslice(msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
 	    strcmp(buf, "cur"))

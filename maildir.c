@@ -603,7 +603,7 @@ static int
 msgflags(const struct maildir *src, const struct maildir *dst,
     const struct message *msg, char *buf, size_t bufsiz)
 {
-	struct message_flags flags = msg->me_flags;
+	struct message_flags flags = msg->me_mflags;
 
 	if (src->md_subdir == SUBDIR_NEW && dst->md_subdir == SUBDIR_CUR) {
 		if (message_flags_set(&flags, 'S', 1))
