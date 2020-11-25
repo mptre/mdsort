@@ -38,8 +38,8 @@ static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
 static int expr_match(struct expr *, struct match_list *, struct message *,
     const char *);
-static int expr_regexec(struct expr *, const char *, const char *,
-    unsigned int);
+static int expr_regexec(struct expr *, struct match_list *, struct message *,
+    const struct environment *, const char *, const char *);
 
 /*
  * Allocate a new expression with the given type.
@@ -80,17 +80,15 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_BODY:
 		ex->ex_eval = &expr_eval_body;
-		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_INTERPOLATE;
+		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_INTERPOLATE;
 		break;
 	case EXPR_TYPE_DATE:
 		ex->ex_eval = &expr_eval_date;
-		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_INSPECT;
 		break;
 	case EXPR_TYPE_HEADER:
 		ex->ex_eval = &expr_eval_header;
-		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_INTERPOLATE;
+		ex->ex_flags = EXPR_FLAG_INSPECT | EXPR_FLAG_INTERPOLATE;
 		break;
 	case EXPR_TYPE_NEW:
 		ex->ex_eval = &expr_eval_new;
@@ -100,46 +98,36 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_MOVE:
 		ex->ex_eval = &expr_eval_move;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_PATH;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_FLAG:
 		ex->ex_eval = &expr_eval_flag;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_PATH;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_DISCARD:
 		ex->ex_eval = &expr_eval_discard;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
 	case EXPR_TYPE_BREAK:
 		ex->ex_eval = &expr_eval_break;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
 	case EXPR_TYPE_LABEL:
 		ex->ex_eval = &expr_eval_label;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH |
-		    EXPR_FLAG_PATH;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_PASS:
 		ex->ex_eval = &expr_eval_pass;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
 	case EXPR_TYPE_REJECT:
 		ex->ex_eval = &expr_eval_reject;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
 	case EXPR_TYPE_EXEC:
 		ex->ex_eval = &expr_eval_exec;
-		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_MATCH;
+		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
-	}
-
-	if (ex->ex_flags & EXPR_FLAG_MATCH) {
-		ex->ex_match = calloc(1, sizeof(*ex->ex_match));
-		if (ex->ex_match == NULL)
-			err(1, NULL);
-		ex->ex_match->mh_expr = ex;
 	}
 
 	return ex;
@@ -148,18 +136,14 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 void
 expr_free(struct expr *ex)
 {
-
 	if (ex == NULL)
 		return;
 
 	expr_free(ex->ex_lhs);
 	expr_free(ex->ex_rhs);
 	strings_free(ex->ex_strings);
-	if (ex->ex_match != NULL)
-		match_reset(ex->ex_match);
 	regfree(&ex->ex_re.r_pattern);
 	free(ex->ex_re.r_matches);
-	free(ex->ex_match);
 	free(ex);
 }
 
@@ -334,9 +318,9 @@ expr_count_patterns(const struct expr *ex, unsigned int flags)
  * Writes a human readable representation of the latest match to fh.
  */
 void
-expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
+expr_inspect(const struct expr *ex, const struct match *match, FILE *fh,
+    const struct environment *env)
 {
-	const struct match *match;
 	const char *lbeg, *lend, *p;
 	unsigned int i;
 	int len, indent, pindent;
@@ -345,7 +329,6 @@ expr_inspect(const struct expr *ex, FILE *fh, const struct environment *env)
 	if ((ex->ex_flags & EXPR_FLAG_INSPECT) == 0)
 		return;
 
-	match = ex->ex_match;
 	pindent = strlen(match->mh_key) + 2;
 
 	for (i = 0; i < ex->ex_re.r_nmatches; i++) {
@@ -464,19 +447,11 @@ expr_eval_body(struct expr *ex, struct match_list *ml,
     struct message *msg, const struct environment *env)
 {
 	const char *body;
-	int ev;
 
 	body = message_get_body(msg);
 	if (body == NULL)
 		return EXPR_ERROR;
-
-	ev = expr_regexec(ex, "Body", body, env->ev_options & OPTION_DRYRUN);
-	if (ev != EXPR_MATCH)
-		return ev;
-
-	if (matches_append(ml, ex->ex_match, msg))
-		return EXPR_ERROR;
-	return EXPR_MATCH;
+	return expr_regexec(ex, ml, msg, env, "Body", body);
 
 }
 
@@ -484,8 +459,10 @@ static int
 expr_eval_break(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
+	struct match *mh;
 
-	if (matches_append(ml, ex->ex_match, msg))
+	mh = match_alloc(ex);
+	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
 
 	/*
@@ -502,7 +479,6 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 	char buf[32];
 	const char *date;
 	time_t delta, tim;
-	int ev;
 
 	if (ex->ex_date.d_field == EXPR_DATE_FIELD_HEADER) {
 		date = message_get_header1(msg, "Date");
@@ -554,13 +530,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml,
 	}
 
 	/* Populate matches, only used during dry run. */
-	ev = expr_regexec(ex, "Date", date, env->ev_options & OPTION_DRYRUN);
-	if (ev != EXPR_MATCH)
-		return ev;
-
-	if (matches_append(ml, ex->ex_match, msg))
-		return EXPR_ERROR;
-	return EXPR_MATCH;
+	return expr_regexec(ex, ml, msg, env, "Date", date);
 }
 
 static int
@@ -583,10 +553,11 @@ static int
 expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-	struct match *mh = ex->ex_match;
+	struct match *mh;
 	const char *subdir;
 	size_t siz;
 
+	mh = match_alloc(ex);
 	subdir = TAILQ_FIRST(ex->ex_strings)->val;
 	siz = sizeof(mh->mh_subdir);
 	if (strlcpy(mh->mh_subdir, subdir, siz) >= siz) {
@@ -612,17 +583,12 @@ expr_eval_header(struct expr *ex, struct match_list *ml,
 			continue;
 
 		TAILQ_FOREACH(val, values, entry) {
-			int ev = expr_regexec(ex, key->val, val->val,
-			    env->ev_options & OPTION_DRYRUN);
+			int ev;
 
+			ev = expr_regexec(ex, ml, msg, env, key->val, val->val);
 			if (ev == EXPR_NOMATCH)
 				continue;
-			if (ev == EXPR_ERROR)
-				return EXPR_ERROR;
-
-			if (matches_append(ml, ex->ex_match, msg))
-				return EXPR_ERROR;
-			return EXPR_MATCH;
+			return ev;	/* match or error, return */
 		}
 	}
 	return EXPR_NOMATCH;
@@ -632,6 +598,7 @@ static int
 expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
+	struct match *mh;
 	const struct string_list *labels;
 	const struct string *str;
 	char *buf = NULL;
@@ -660,7 +627,8 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 
 	message_set_header(msg, "X-Label", buf);
 
-	if (matches_append(ml, ex->ex_match, msg))
+	mh = match_alloc(ex);
+	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
 }
@@ -669,11 +637,12 @@ static int
 expr_eval_move(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-	struct match *mh = ex->ex_match;
+	struct match *mh;
 	const char *maildir;
 	size_t siz;
 
 	maildir = TAILQ_FIRST(ex->ex_strings)->val;
+	mh = match_alloc(ex);
 	siz = sizeof(mh->mh_maildir);
 	if (strlcpy(mh->mh_maildir, maildir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
@@ -745,8 +714,10 @@ static int
 expr_eval_pass(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
+	struct match *mh;
 
-	if (matches_append(ml, ex->ex_match, msg))
+	mh = match_alloc(ex);
+	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
 
 	/*
@@ -793,9 +764,11 @@ static int
 expr_match(struct expr *ex, struct match_list *ml, struct message *msg,
     const char *name)
 {
-	struct match *mh = ex->ex_match;
+	struct match *mh;
 	size_t siz;
 	int n;
+
+	mh = match_alloc(ex);
 
 	/* Populate the path in case of a dry run. */
 	siz = sizeof(mh->mh_path);
@@ -811,9 +784,10 @@ expr_match(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_regexec(struct expr *ex, const char *key, const char *val,
-    unsigned int dryrun)
+expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *env, const char *key, const char *val)
 {
+	struct match *mh;
 	int error;
 
 	error = regexec(&ex->ex_re.r_pattern, val, ex->ex_re.r_nmatches,
@@ -823,15 +797,17 @@ expr_regexec(struct expr *ex, const char *key, const char *val,
 	if (error != 0)
 		return EXPR_ERROR;
 
-	match_copy(ex->ex_match, val, ex->ex_re.r_matches,
-	    ex->ex_re.r_nmatches);
+	mh = match_alloc(ex);
+	match_copy(mh, val, ex->ex_re.r_matches, ex->ex_re.r_nmatches);
+	if (matches_append(ml, mh, msg))
+		return EXPR_ERROR;
 
-	if (dryrun) {
-		ex->ex_match->mh_key = strdup(key);
-		if (ex->ex_match->mh_key == NULL)
+	if (env->ev_options & OPTION_DRYRUN) {
+		mh->mh_key = strdup(key);
+		if (mh->mh_key == NULL)
 			err(1, NULL);
-		ex->ex_match->mh_val = strdup(val);
-		if (ex->ex_match->mh_val == NULL)
+		mh->mh_val = strdup(val);
+		if (mh->mh_val == NULL)
 			err(1, NULL);
 	}
 

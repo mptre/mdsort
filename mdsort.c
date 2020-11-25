@@ -127,7 +127,6 @@ main(int argc, char *argv[])
 				goto loop;
 			}
 
-			matches_clear(&matches);
 			switch (expr_eval(conf->expr, &matches, msg, &env)) {
 			case EXPR_ERROR:
 				error = 1;
@@ -150,6 +149,7 @@ main(int argc, char *argv[])
 				error = 1;
 loop:
 			message_free(msg);
+			matches_clear(&matches);
 		}
 		maildir_close(md);
 	}

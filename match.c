@@ -17,6 +17,7 @@ static const struct match *matches_find_interpolate(const struct match_list *);
 static void matches_merge(struct match_list *, struct match *);
 
 static const char *match_get(const struct match *, unsigned int);
+static void match_free(struct match *);
 
 static int exec(char *const *, int);
 static int interpolate(const struct match *, const struct macro_list *,
@@ -77,8 +78,8 @@ matches_clear(struct match_list *ml)
 	struct match *mh;
 
 	while ((mh = TAILQ_FIRST(ml)) != NULL) {
-		match_reset(mh);
 		TAILQ_REMOVE(ml, mh, mh_entry);
+		match_free(mh);
 	}
 
 }
@@ -313,7 +314,7 @@ matches_inspect(const struct match_list *ml, FILE *fh,
 		return 0;
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
-		expr_inspect(mh->mh_expr, fh, env);
+		expr_inspect(mh->mh_expr, mh, fh, env);
 	}
 
 	return 1;
@@ -345,13 +346,27 @@ matches_remove(struct match_list *ml, enum expr_type type)
 	TAILQ_FOREACH_SAFE(mh, ml, mh_entry, tmp) {
 		const struct expr *ex = mh->mh_expr;
 
-		if (ex->ex_type == type)
+		if (ex->ex_type == type) {
 			TAILQ_REMOVE(ml, mh, mh_entry);
-		else if (ex->ex_flags & EXPR_FLAG_ACTION)
+			match_free(mh);
+		} else if (ex->ex_flags & EXPR_FLAG_ACTION) {
 			n++;
+		}
 	}
 
 	return n;
+}
+
+struct match *
+match_alloc(struct expr *ex)
+{
+	struct match *mh;
+
+	mh = calloc(1, sizeof(*mh));
+	if (mh == NULL)
+		err(1, NULL);
+	mh->mh_expr = ex;
+	return mh;
 }
 
 void
@@ -360,8 +375,6 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 {
 	char *cpy;
 	size_t i, len;
-
-	match_reset(mh);
 
 	mh->mh_matches = reallocarray(NULL, nmemb, sizeof(*mh->mh_matches));
 	if (mh->mh_matches == NULL)
@@ -384,27 +397,6 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 		}
 		mh->mh_matches[i] = cpy;
 	}
-}
-
-void
-match_reset(struct match *mh)
-{
-	unsigned int i;
-
-	mh->mh_path[0] = mh->mh_maildir[0] = mh->mh_subdir[0] = '\0';
-
-	mh->mh_msg = NULL;
-
-	for (i = 0; i < mh->mh_nmatches; i++)
-		free(mh->mh_matches[i]);
-	free(mh->mh_matches);
-	mh->mh_matches = NULL;
-	mh->mh_nmatches = 0;
-
-	free(mh->mh_key);
-	mh->mh_key = NULL;
-	free(mh->mh_val);
-	mh->mh_val = NULL;
 }
 
 static const struct match *
@@ -446,6 +438,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 	dup = TAILQ_LAST(ml, match_list);
 	if (dup != NULL && dup->mh_expr->ex_type == ex->ex_type) {
 		TAILQ_REMOVE(ml, dup, mh_entry);
+		match_free(dup);
 		return;
 	}
 
@@ -458,6 +451,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 	if (dup == NULL)
 		return;
 	TAILQ_REMOVE(ml, dup, mh_entry);
+	match_free(dup);
 
 	if (ex->ex_type == EXPR_TYPE_MOVE) {
 		/* Copy subdir from flag action. */
@@ -477,6 +471,22 @@ match_get(const struct match *mh, unsigned int idx)
 	if (idx >= mh->mh_nmatches)
 		return NULL;
 	return mh->mh_matches[idx];
+}
+
+static void
+match_free(struct match *mh)
+{
+	unsigned int i;
+
+	if (mh == NULL)
+		return;
+
+	for (i = 0; i < mh->mh_nmatches; i++)
+		free(mh->mh_matches[i]);
+	free(mh->mh_matches);
+
+	free(mh->mh_key);
+	free(mh->mh_val);
 }
 
 static ssize_t

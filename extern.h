@@ -184,9 +184,8 @@ struct expr {
 	unsigned int ex_flags;
 #define EXPR_FLAG_ACTION	0x00000001u
 #define EXPR_FLAG_INSPECT	0x00000002u
-#define EXPR_FLAG_MATCH		0x00000004u
-#define EXPR_FLAG_INTERPOLATE	0x00000008u
-#define EXPR_FLAG_PATH		0x00000010u
+#define EXPR_FLAG_INTERPOLATE	0x00000004u
+#define EXPR_FLAG_PATH		0x00000008u
 
 	int (*ex_eval)(struct expr *, struct match_list *, struct message *,
 			const struct environment *);
@@ -219,8 +218,6 @@ struct expr {
 	} ex_u;
 #define ex_date	ex_u.u_date
 #define ex_exec	ex_u.u_exec
-
-	struct match *ex_match;
 
 	struct expr *ex_lhs;
 	struct expr *ex_rhs;
@@ -274,7 +271,8 @@ int expr_count_patterns(const struct expr *, unsigned int);
 int expr_eval(struct expr *, struct match_list *, struct message *,
     const struct environment *);
 
-void expr_inspect(const struct expr *, FILE *, const struct environment *);
+void expr_inspect(const struct expr *, const struct match *, FILE *,
+    const struct environment *);
 
 int matches_append(struct match_list *, struct match *, struct message *);
 
@@ -288,9 +286,9 @@ int matches_exec(const struct match_list *, struct maildir *, int *,
 int matches_inspect(const struct match_list *, FILE *,
     const struct environment *);
 
-void match_copy(struct match *, const char *, const regmatch_t *, size_t);
+struct match *match_alloc(struct expr *);
 
-void match_reset(struct match *);
+void match_copy(struct match *, const char *, const regmatch_t *, size_t);
 
 struct match *matches_find(struct match_list *, enum expr_type);
 
