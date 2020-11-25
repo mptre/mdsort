@@ -135,7 +135,7 @@ mdsort() {
 		if [ -n "$COREDUMP" ]; then
 			cp "$(cat "$_core")" "${COREDUMP}/mdsort.core"
 		fi
-		fail - "found coredump" <"$_core"
+		fail - "found coredump" <"$_tmp"
 	fi
 
 	if [ "$_exit1" -ne "$_exit2" ]; then
