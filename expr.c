@@ -325,7 +325,7 @@ expr_count_patterns(const struct expr *ex, unsigned int flags)
  * Writes a human readable representation of the latest match to fh.
  */
 void
-expr_inspect(const struct expr *ex, const struct match *match, FILE *fh,
+expr_inspect(const struct expr *ex, const struct match *mh, FILE *fh,
     const struct environment *env)
 {
 	const char *lbeg, *lend, *p;
@@ -336,27 +336,27 @@ expr_inspect(const struct expr *ex, const struct match *match, FILE *fh,
 	if ((ex->ex_flags & EXPR_FLAG_INSPECT) == 0)
 		return;
 
-	pindent = strlen(match->mh_key) + 2;
+	pindent = strlen(mh->mh_key) + 2;
 
-	for (i = 0; i < match->mh_nmatches; i++) {
+	for (i = 0; i < mh->mh_nmatches; i++) {
 		int beg, end;
 
-		beg = match->mh_matches[i].m_beg;
-		end = match->mh_matches[i].m_end;
+		beg = mh->mh_matches[i].m_beg;
+		end = mh->mh_matches[i].m_end;
 		if (beg == end)
 			continue;
 
-		lbeg = match->mh_val;
+		lbeg = mh->mh_val;
 		for (;;) {
 			if ((p = strchr(lbeg, '\n')) == NULL ||
-			    p > match->mh_val + beg)
+			    p > mh->mh_val + beg)
 				break;
 			lbeg = p + 1;
 		}
 		lbeg += nspaces(lbeg);
 		lend = strchr(lbeg, '\n');
 		if (lend == NULL)
-			lend = match->mh_val + strlen(match->mh_val);
+			lend = mh->mh_val + strlen(mh->mh_val);
 
 		len = end - beg;
 		/* Try to compensate for the "^$" markers. */
@@ -368,11 +368,11 @@ expr_inspect(const struct expr *ex, const struct match *match, FILE *fh,
 		if (printkey) {
 			pindent += expr_inspect_prefix(ex, fh, env);
 			printkey = 0;
-			fprintf(fh, "%s: ", match->mh_key);
+			fprintf(fh, "%s: ", mh->mh_key);
 		} else {
 			fprintf(fh, "%*s", pindent, "");
 		}
-		indent = beg - (lbeg - match->mh_val) + pindent;
+		indent = beg - (lbeg - mh->mh_val) + pindent;
 		fprintf(fh, "%.*s\n%*s^%*s$\n",
 		    (int)(lend - lbeg), lbeg, indent, "", len, "");
 	}
