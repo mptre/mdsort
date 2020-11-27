@@ -408,8 +408,7 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 }
 
 /*
- * Find the first match behind the given one that can be used for
- * interpolation.
+ * Find the first match that can be used for interpolation.
  */
 static const struct match *
 matches_find_interpolate(const struct match_list *ml, const struct message *msg)
