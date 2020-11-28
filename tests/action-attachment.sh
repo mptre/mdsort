@@ -33,7 +33,7 @@ if testcase "action exec"; then
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all attachment {
-			match body /.*/ exec { "echo" "\0" }
+			match body /.*/ exec { "echo" "\\0" }
 		}
 	}
 	EOF
@@ -85,7 +85,7 @@ if testcase "interpolation"; then
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /.*/ attachment {
-			match all exec { "echo" "\0" }
+			match all exec { "echo" "\\0" }
 		}
 	}
 	EOF
@@ -102,14 +102,17 @@ if testcase "interpolation force"; then
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /foo/ attachment {
-			match body /.*/f exec { "echo" "\0" }
+			match body /.*/f exec { "echo" "\\0" }
 		}
 		match header "To" /bar/f attachment {
-			match body /.*/ exec { "echo" "\0" }
+			match body /.*/ exec { "echo" "\\0" }
 		}
 	}
 	EOF
-	mdsort - <<-EOF
+	# The order in which entries are returned from readdir(3) is not
+	# deterministic.
+	mdsort | sort >"$TMP1"
+	assert_file - "$TMP1" <<-EOF
 	First attachment.
 	Second attachment.
 	bar
