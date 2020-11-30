@@ -555,14 +555,17 @@ exec(char *const *argv, int fdin)
 		warn("waitpid");
 		goto out;
 	}
-	if (WIFEXITED(status))
+	if (WIFEXITED(status)) {
 		error = WEXITSTATUS(status);
-	if (WIFSIGNALED(status))
+		if (error)
+			warnx("%s: %s: exited %d", __func__, argv[0], error);
+	}
+	if (WIFSIGNALED(status)) {
 		error = WTERMSIG(status);
-	log_debug("%s: command = \"%s\", exit=%d, signal=%d\n",
-	    __func__, argv[0],
-	    WIFEXITED(status) ? WEXITSTATUS(status) : -1,
-	    WIFSIGNALED(status) ? WTERMSIG(status) : -1);
+		if (error)
+			warnx("%s: %s: killed by signal %d",
+			    __func__, argv[0], error);
+	}
 
 out:
 	if (doclose && fdin != -1)

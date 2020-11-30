@@ -105,7 +105,22 @@ if testcase "exit non-zero"; then
 		match all exec { "sh" "-c" "exit 1" }
 	}
 	EOF
-	mdsort -e
+	mdsort -e - <<-EOF
+	mdsort: exec: sh: exited 1
+	EOF
+fi
+
+if testcase "exit signal"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >$CONF
+	maildir "src" {
+		match all exec { "sh" "-c" "kill -9 \$$" }
+	}
+	EOF
+	mdsort -e - <<-EOF
+	mdsort: exec: sh: killed by signal 9
+	EOF
 fi
 
 if testcase "command not found"; then
