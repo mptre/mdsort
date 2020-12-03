@@ -2,6 +2,18 @@
 
 ## News
 
+- Add support for pre defined macros in action context.
+  The only available macro at this point is path which expands to the path of
+  the matched message.
+  (5350ec4)
+  (Anton Lindqvist)
+
+  ```
+  maildir "~/Maildir/INBOX" {
+    match all exec { "echo" "${path}" }
+  }
+  ```
+
 - Add support for matching each attachment in a message.
   Its intended use is to extract calendar attachments:
   (209f9e5)
@@ -21,20 +33,6 @@
 - Fix label concatenation bug.
   (ba97d74)
   (Anton Lindqvist)
-
-## News
-
-- Add support for pre defined macros in action context.
-  The only available macro at this point is path which expands to the path of
-  the matched message.
-  (5350ec4)
-  (Anton Lindqvist)
-
-  ```
-  maildir "~/Maildir/INBOX" {
-    match all exec { "echo" "${path}" }
-  }
-  ```
 
 # v7.0.0 - 2020-11-05
 
