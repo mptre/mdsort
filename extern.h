@@ -387,16 +387,13 @@ extern int log_level;
 
 #define log_info(fmt, ...) do {						\
 	if (log_level >= 1)						\
-		_log_info((fmt), __VA_ARGS__);				\
+		logit((fmt), __VA_ARGS__);				\
 } while (0)
 
 #define log_debug(fmt, ...) do {					\
 	if (log_level >= 2)						\
-		_log_debug((fmt), __VA_ARGS__);				\
+		logit((fmt), __VA_ARGS__);				\
 } while (0)
 
-void _log_debug(const char *fmt, ...)
-	__attribute__((__format__ (printf, 1, 2)));
-
-void _log_info(const char *fmt, ...)
+void logit(const char *fmt, ...)
 	__attribute__((__format__ (printf, 1, 2)));

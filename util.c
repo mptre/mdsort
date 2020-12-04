@@ -333,18 +333,7 @@ appendc(char **buf, size_t *bufsiz, size_t *buflen, char ch)
 }
 
 void
-_log_debug(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stdout, fmt, ap);
-	va_end(ap);
-	fflush(stdout);
-}
-
-void
-_log_info(const char *fmt, ...)
+logit(const char *fmt, ...)
 {
 	va_list ap;
 
