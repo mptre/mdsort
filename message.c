@@ -53,6 +53,7 @@ static int parseboundary(const char *, char **);
 
 static char *b64decode(const char *);
 static const char *skipline(const char *);
+static char *skipseparator(char *);
 static ssize_t strflags(unsigned int, unsigned char, char *, size_t);
 static int writefd(const char *);
 
@@ -583,7 +584,8 @@ message_parse_headers(struct message *msg)
 	char *buf;
 	struct slice ks, vs;
 
-	buf = msg->me_buf;
+	buf = skipseparator(msg->me_buf);
+
 	while (findheader(buf, &ks, &vs) == 0) {
 		struct header *hdr = message_headers_alloc(msg);
 
@@ -944,6 +946,26 @@ skipline(const char *s)
 			return ++s;
 		s++;
 	}
+}
+
+/*
+ * Skip past mbox separator line. Older versions of OpenSMTPD are known to emit
+ * such separator while performing MDA delivery.
+ */
+static char *
+skipseparator(char *str)
+{
+	const char separator[] = "From ";
+	char *p;
+
+	if (strncmp(str, separator, sizeof(separator) - 1))
+		return str;
+
+	p = strchr(str, '\n');
+	if (p == NULL)
+		return str;
+	return p + 1;
+
 }
 
 static ssize_t

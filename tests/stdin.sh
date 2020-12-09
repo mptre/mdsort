@@ -82,6 +82,23 @@ if testcase -t memleak "temporary config failure"; then
 	mdsort -t -- - </dev/null >/dev/null
 fi
 
+if testcase "mbox separator"; then
+	mkmd "dst"
+	cat <<-EOF >"$TMP1"
+	From user@localhost Wed Dec 13 00:00:01 2020
+	To: to
+
+	body
+	EOF
+	cat <<-EOF >"$CONF"
+	stdin {
+		match header "To" /to/ and body /body/ move "dst"
+	}
+	EOF
+	mdsort -- - <"$TMP1"
+	refute_empty "dst/new"
+fi
+
 if testcase "dry run"; then
 	cat <<-EOF >$CONF
 	stdin {
