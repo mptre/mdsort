@@ -1,3 +1,25 @@
+# v8.0.0 - 2020-12-16
+
+## Changes
+
+- Stop leaking interpolation matches between rules.
+  (1491385)
+  (Anton Lindqvist)
+
+- Remove force pattern flag.
+  (ddad961)
+  (Anton Lindqvist)
+
+## Bug fixes
+
+- Skip mbox separator line.
+  (c6002fb)
+  (Anton Lindqvist)
+
+- Support many label actions in conjunction with pass.
+  (514bb3e)
+  (Anton Lindqvist)
+
 # v7.1.0 - 2020-12-03
 
 ## News
