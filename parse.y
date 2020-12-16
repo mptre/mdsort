@@ -200,10 +200,6 @@ exprs		: /* empty */ {
 		;
 
 expr		: MATCH expr1 expr2 {
-			if (expr_count_patterns($2, EXPR_PATTERN_FORCE) > 1)
-				yyerror("pattern force flag cannot be used "
-				    "more than once");
-
 			$$ = expr_alloc(EXPR_TYPE_MATCH, lineno, $2, $3);
 		}
 		;
@@ -664,9 +660,6 @@ again:
 		for (;;) {
 			c = yygetc();
 			switch (c) {
-			case 'f':
-				yylval.v.pattern.flags |= EXPR_PATTERN_FORCE;
-				break;
 			case 'i':
 				yylval.v.pattern.flags |= EXPR_PATTERN_ICASE;
 				break;

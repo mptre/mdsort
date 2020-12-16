@@ -198,9 +198,6 @@ expr_set_strings(struct expr *ex, struct string_list *strings)
  *
  *     EXPR_PATTERN_ICASE    Ignore case.
  *
- *     EXPR_PATTERN_FORCE    Force usage of matches belonging to the
- *                           given pattern during interpolation.
- *
  *     EXPR_PATTERN_LCASE    Lowercase the matched string from a subexpression
  *                           before interpolation.
  *
@@ -221,7 +218,6 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 		unsigned int rflag;	/* regcomp() flag(s) */
 	} fflags[] = {
 		{ EXPR_PATTERN_ICASE,	0,	REG_ICASE },
-		{ EXPR_PATTERN_FORCE,	1,	0 },
 		{ EXPR_PATTERN_LCASE,	1,	0 },
 		{ EXPR_PATTERN_UCASE,	1,	0 },
 
@@ -306,23 +302,6 @@ expr_count_actions(const struct expr *ex)
 		n = 1;
 	return n + expr_count_actions(ex->ex_lhs) +
 	    expr_count_actions(ex->ex_rhs);
-}
-
-/*
- * Returns the number of expressions with the given pattern flags.
- */
-int
-expr_count_patterns(const struct expr *ex, unsigned int flags)
-{
-	int n = 0;
-
-	if (ex == NULL)
-		return 0;
-
-	if (ex->ex_re.r_nmatches > 0 && (ex->ex_re.r_flags & flags))
-		n = 1;
-	return n + expr_count_patterns(ex->ex_lhs, flags) +
-	    expr_count_patterns(ex->ex_rhs, flags);
 }
 
 /*

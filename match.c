@@ -416,15 +416,9 @@ static const struct match *
 matches_find_interpolate(const struct match_list *UNUSED(ml),
     const struct match *mh)
 {
-	const struct match *found = NULL;
-
 	for (;;) {
-		if (mh->mh_expr->ex_flags & EXPR_FLAG_INTERPOLATE) {
-			if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_FORCE)
-				return mh;
-			if (found == NULL)
-				found = mh;
-		}
+		if (mh->mh_expr->ex_flags & EXPR_FLAG_INTERPOLATE)
+			return mh;
 
 		mh = TAILQ_NEXT(mh, mh_entry);
 		if (mh == TAILQ_END(ml) ||
@@ -432,7 +426,7 @@ matches_find_interpolate(const struct match_list *UNUSED(ml),
 			break;
 	}
 
-	return found;
+	return NULL;
 }
 
 static void

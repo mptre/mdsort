@@ -204,9 +204,8 @@ struct expr {
 		size_t r_nmatches;
 		unsigned int r_flags;
 #define EXPR_PATTERN_ICASE	0x00000001u
-#define EXPR_PATTERN_FORCE	0x00000002u
-#define EXPR_PATTERN_LCASE	0x00000004u
-#define EXPR_PATTERN_UCASE	0x00000008u
+#define EXPR_PATTERN_LCASE	0x00000002u
+#define EXPR_PATTERN_UCASE	0x00000004u
 	} ex_re;
 
 	union {
@@ -276,8 +275,6 @@ int expr_set_pattern(struct expr *, const char *, unsigned int, const char **);
 int expr_count(const struct expr *, enum expr_type);
 
 int expr_count_actions(const struct expr *);
-
-int expr_count_patterns(const struct expr *, unsigned int);
 
 int expr_eval(struct expr *, struct match_list *, struct message *,
     const struct environment *);
