@@ -1,6 +1,6 @@
 include ${.CURDIR}/config.mk
 
-VERSION=	7.1.0
+VERSION=	8.0.0
 
 PROG=	mdsort
 
