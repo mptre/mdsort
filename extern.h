@@ -322,6 +322,8 @@ size_t strings_len(const struct string_list *);
 
 void strings_append(struct string_list *, char *);
 
+char *strings_concat(const struct string_list *, char *, size_t *, size_t *);
+
 #define MACRO_CTX_DEFAULT	0x00000001u
 #define MACRO_CTX_ACTION	0x00000002u
 

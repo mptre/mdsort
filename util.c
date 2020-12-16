@@ -68,6 +68,25 @@ strings_append(struct string_list *strings, char *val)
 	TAILQ_INSERT_TAIL(strings, str, entry);
 }
 
+char *
+strings_concat(const struct string_list *strings, char *buf, size_t *bufsiz,
+    size_t *buflen)
+{
+	const struct string *str;
+	int nmemb = 0;
+
+	if (buf != NULL && buf[0] != '\0')
+		nmemb = 1;
+
+	TAILQ_FOREACH(str, strings, entry) {
+		if (nmemb > 0)
+			appendc(&buf, bufsiz, buflen, ' ');
+		if (append(&buf, bufsiz, buflen, str->val))
+			nmemb++;
+	}
+	return buf;
+}
+
 void
 macros_init(struct macro_list *macros, unsigned int ctx)
 {

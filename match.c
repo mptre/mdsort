@@ -128,21 +128,22 @@ matches_interpolate(struct match_list *ml)
 		}
 
 		case EXPR_TYPE_LABEL: {
-			const char *str;
+			const struct string_list *labels;
+			char *buf = NULL;
 			char *label = NULL;
+			size_t buflen = 0;
+			size_t bufsiz = 0;
+			int error;
 
-			str = message_get_header1(msg, "X-Label");
-			if (str == NULL) {
-				/*
-				 * This should never happen since a label action
-				 * always sets the X-Label header in
-				 * expr_eval_label(). But some static analysis
-				 * tools interpret usage of str below as a
-				 * potential NULL deference.
-				 */
-				return 1;
-			}
-			if (interpolate(mi, &macros, str, &label))
+			labels = message_get_header(msg, "X-Label");
+			if (labels != NULL)
+				buf = strings_concat(labels, buf,
+				    &bufsiz, &buflen);
+			buf = strings_concat(mh->mh_expr->ex_strings, buf,
+			    &bufsiz, &buflen);
+			error = interpolate(mi, &macros, buf, &label);
+			free(buf);
+			if (error)
 				return 1;
 			message_set_header(msg, "X-Label", label);
 			break;

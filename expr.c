@@ -613,39 +613,7 @@ static int
 expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
-	struct match *mh;
-	const struct string_list *labels;
-	const struct string *str;
-	char *buf = NULL;
-	size_t buflen = 0;
-	size_t bufsiz = 0;
-	int nlabels = 0;
-
-	labels = message_get_header(msg, "X-Label");
-	if (labels != NULL) {
-		TAILQ_FOREACH(str, labels, entry) {
-			if (nlabels > 0)
-				appendc(&buf, &bufsiz, &buflen, ' ');
-
-			if (append(&buf, &bufsiz, &buflen, str->val) > 0)
-				nlabels++;
-		}
-	}
-
-	TAILQ_FOREACH(str, ex->ex_strings, entry) {
-		if (nlabels > 0)
-			appendc(&buf, &bufsiz, &buflen, ' ');
-
-		if (append(&buf, &bufsiz, &buflen, str->val) > 0)
-			nlabels++;
-	}
-
-	message_set_header(msg, "X-Label", buf);
-
-	mh = match_alloc(ex);
-	if (matches_append(ml, mh, msg))
-		return EXPR_ERROR;
-	return EXPR_MATCH;
+	return expr_match(ex, ml, msg);
 }
 
 static int
