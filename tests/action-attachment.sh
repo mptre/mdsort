@@ -85,38 +85,13 @@ if testcase "interpolation"; then
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /.*/ attachment {
-			match all exec { "echo" "\\0" }
+			match header "Content-Type" /.*/ exec { "echo" "\\0" }
 		}
 	}
 	EOF
 	mdsort - <<-EOF
-	user@example.com
-	user@example.com
-	EOF
-fi
-
-if testcase "interpolation force"; then
-	mkmd "src"
-	mkmsg -A "src/new" -- "To" "foo@example.com"
-	mkmsg -A "src/new" -- "To" "bar@example.com"
-	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match header "To" /foo/ attachment {
-			match body /.*/f exec { "echo" "\\0" }
-		}
-		match header "To" /bar/f attachment {
-			match body /.*/ exec { "echo" "\\0" }
-		}
-	}
-	EOF
-	# The order in which entries are returned from readdir(3) is not
-	# deterministic.
-	mdsort | sort >"$TMP1"
-	assert_file - "$TMP1" <<-EOF
-	First attachment.
-	Second attachment.
-	bar
-	bar
+	text/plain
+	text/calendar
 	EOF
 fi
 

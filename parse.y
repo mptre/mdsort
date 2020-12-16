@@ -204,7 +204,7 @@ expr		: MATCH expr1 expr2 {
 				yyerror("pattern force flag cannot be used "
 				    "more than once");
 
-			$$ = expr_alloc(EXPR_TYPE_AND, lineno, $2, $3);
+			$$ = expr_alloc(EXPR_TYPE_MATCH, lineno, $2, $3);
 		}
 		;
 

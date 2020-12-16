@@ -14,7 +14,7 @@
 #include "extern.h"
 
 static const struct match *matches_find_interpolate(const struct match_list *,
-    const struct message *);
+    const struct match *);
 static void matches_merge(struct match_list *, struct match *);
 
 static const char *match_get(const struct match *, unsigned int);
@@ -89,7 +89,7 @@ int
 matches_interpolate(struct match_list *ml)
 {
 	struct macro_list macros;
-	const struct match *mi;
+	const struct match *mi = NULL;
 	struct match *mh;
 	struct message *msg;
 
@@ -100,14 +100,16 @@ matches_interpolate(struct match_list *ml)
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		msg = mh->mh_msg;
 
-		/*
-		 * Note that mi might be NULL but it's not considered an error
-		 * as long as the string to interpolate is missing
-		 * back-references.
-		 */
-		mi = matches_find_interpolate(ml, msg);
-
 		switch (mh->mh_expr->ex_type) {
+		case EXPR_TYPE_MATCH:
+			/*
+			 * Note that mi might be NULL but it's not considered an
+			 * error as long as the string to interpolate is missing
+			 * back-references.
+			 */
+			mi = matches_find_interpolate(ml, mh);
+			break;
+
 		case EXPR_TYPE_MOVE:
 		case EXPR_TYPE_FLAG: {
 			char *path = NULL;
@@ -411,21 +413,23 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
  * Find the first match that can be used for interpolation.
  */
 static const struct match *
-matches_find_interpolate(const struct match_list *ml, const struct message *msg)
+matches_find_interpolate(const struct match_list *UNUSED(ml),
+    const struct match *mh)
 {
-	const struct match *mh;
 	const struct match *found = NULL;
 
-	TAILQ_FOREACH(mh, ml, mh_entry) {
-		if ((mh->mh_expr->ex_flags & EXPR_FLAG_INTERPOLATE) == 0)
-			continue;
-		if ((mh->mh_msg->me_flags & MESSAGE_FLAG_ATTACHMENT) &&
-		    mh->mh_msg != msg)
-			continue;
-		if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_FORCE)
-			return mh;
-		if (found == NULL)
-			found = mh;
+	for (;;) {
+		if (mh->mh_expr->ex_flags & EXPR_FLAG_INTERPOLATE) {
+			if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_FORCE)
+				return mh;
+			if (found == NULL)
+				found = mh;
+		}
+
+		mh = TAILQ_NEXT(mh, mh_entry);
+		if (mh == TAILQ_END(ml) ||
+		    mh->mh_expr->ex_type == EXPR_TYPE_MATCH)
+			break;
 	}
 
 	return found;

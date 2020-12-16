@@ -27,6 +27,7 @@ static int expr_eval_exec(EXPR_EVAL_ARGS);
 static int expr_eval_flag(EXPR_EVAL_ARGS);
 static int expr_eval_header(EXPR_EVAL_ARGS);
 static int expr_eval_label(EXPR_EVAL_ARGS);
+static int expr_eval_match(EXPR_EVAL_ARGS);
 static int expr_eval_move(EXPR_EVAL_ARGS);
 static int expr_eval_neg(EXPR_EVAL_ARGS);
 static int expr_eval_new(EXPR_EVAL_ARGS);
@@ -71,6 +72,9 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_NEG:
 		ex->ex_eval = &expr_eval_neg;
+		break;
+	case EXPR_TYPE_MATCH:
+		ex->ex_eval = &expr_eval_match;
 		break;
 	case EXPR_TYPE_ALL:
 		ex->ex_eval = &expr_eval_all;
@@ -663,6 +667,23 @@ expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
 	if (matches_append(ml, mh, msg))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
+}
+
+static int
+expr_eval_match(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *env)
+{
+	struct match *mh;
+
+	/*
+	 * Behaves like and with the exception of adding itself to the match
+	 * list. The match is later used by matches_find_interpolate().
+	 */
+	mh = match_alloc(ex);
+	if (matches_append(ml, mh, msg))
+		return EXPR_ERROR;
+
+	return expr_eval_and(ex, ml, msg, env);
 }
 
 static int

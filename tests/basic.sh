@@ -52,15 +52,15 @@ if testcase "match negate nested condition"; then
 	refute_empty "dst/new"
 fi
 
-if testcase "match nested"; then
+if testcase "match nested with interpolation"; then
 	mkmd "src" "dst"
-	echo "Hello!" | mkmsg -b "src/new" -- "To" "user@example.com"
-	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
+	echo "foo" | mkmsg -b "src/new" -- "To" "user@example.com"
+	echo "dst" | mkmsg -b "src/new" -- "To" "user@example.com"
 	cat <<-EOF >$CONF
 	maildir "src" {
 		match header "To" /user/ {
 			match new {
-				match body /Hello/ move "dst"
+				match body /dst/ move "\0"
 			}
 		}
 	}

@@ -147,6 +147,7 @@ enum expr_type {
 	EXPR_TYPE_AND,
 	EXPR_TYPE_OR,
 	EXPR_TYPE_NEG,
+	EXPR_TYPE_MATCH,	/* alias for and */
 
 	/* matchers */
 	EXPR_TYPE_ALL,
