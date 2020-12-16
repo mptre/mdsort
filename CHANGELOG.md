@@ -3,11 +3,11 @@
 ## Changes
 
 - Stop leaking interpolation matches between rules.
-  (1491385)
+  (ddad961)
   (Anton Lindqvist)
 
 - Remove force pattern flag.
-  (ddad961)
+  (1491385)
   (Anton Lindqvist)
 
 ## Bug fixes
