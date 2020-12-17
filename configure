@@ -141,6 +141,10 @@ check_queue() {
 	#error "TAILQ_FOREACH_SAFE not present"
 	#endif
 
+	#if !defined(TAILQ_END)
+	#error "TAILQ_END not present"
+	#endif
+
 	int main(void) {
 		return 0;
 	}
