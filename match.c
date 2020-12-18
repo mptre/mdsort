@@ -13,8 +13,6 @@
 
 #include "extern.h"
 
-static const struct match *matches_find_interpolate(const struct match_list *,
-    const struct match *);
 static void matches_merge(struct match_list *, struct match *);
 
 static const char *match_get(const struct match *, unsigned int);
@@ -89,91 +87,15 @@ int
 matches_interpolate(struct match_list *ml)
 {
 	struct macro_list macros;
-	const struct match *mi = NULL;
 	struct match *mh;
-	struct message *msg;
 
 	/* Construct action macro context. */
 	macros_init(&macros, MACRO_CTX_ACTION);
 	macros_insertc(&macros, "path", TAILQ_FIRST(ml)->mh_msg->me_path);
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
-		msg = mh->mh_msg;
-
-		switch (mh->mh_expr->ex_type) {
-		case EXPR_TYPE_MATCH:
-			/*
-			 * Note that mi might be NULL but it's not considered an
-			 * error as long as the string to interpolate is missing
-			 * back-references.
-			 */
-			mi = matches_find_interpolate(ml, mh);
-			break;
-
-		case EXPR_TYPE_MOVE:
-		case EXPR_TYPE_FLAG: {
-			char *path = NULL;
-			size_t n, siz;
-
-			if (interpolate(mi, &macros, mh->mh_path, &path))
-				return 1;
-			siz = sizeof(mh->mh_path);
-			n = strlcpy(mh->mh_path, path, siz);
-			free(path);
-			if (n >= siz) {
-				warnc(ENAMETOOLONG, "%s", __func__);
-				return 1;
-			}
-			break;
-		}
-
-		case EXPR_TYPE_LABEL: {
-			const struct string_list *labels;
-			char *buf = NULL;
-			char *label = NULL;
-			size_t buflen = 0;
-			size_t bufsiz = 0;
-			int error;
-
-			labels = message_get_header(msg, "X-Label");
-			if (labels != NULL)
-				buf = strings_concat(labels, buf,
-				    &bufsiz, &buflen);
-			buf = strings_concat(mh->mh_expr->ex_strings, buf,
-			    &bufsiz, &buflen);
-			error = interpolate(mi, &macros, buf, &label);
-			free(buf);
-			if (error)
-				return 1;
-			message_set_header(msg, "X-Label", label);
-			break;
-		}
-
-		case EXPR_TYPE_EXEC: {
-			const struct string *str;
-			size_t len;
-			size_t nargs = 0;
-
-			/* Make room for NULL-terminator. */
-			len = strings_len(mh->mh_expr->ex_strings) + 1;
-			mh->mh_exec = reallocarray(NULL, len, sizeof(char *));
-			if (mh->mh_exec == NULL)
-				err(1, NULL);
-			memset(mh->mh_exec, 0, len * sizeof(char *));
-			mh->mh_nexec = len;
-			TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
-				char *arg = NULL;
-
-				if (interpolate(mi, &macros, str->val, &arg))
-					return 1;
-				mh->mh_exec[nargs++] = arg;
-			}
-			break;
-		}
-
-		default:
-			continue;
-		}
+		if (match_interpolate(mh, &macros))
+			return 1;
 	}
 
 	return 0;
@@ -410,24 +332,97 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 	}
 }
 
-/*
- * Find the first match that can be used for interpolation.
- */
-static const struct match *
-matches_find_interpolate(const struct match_list *UNUSED(ml),
-    const struct match *mh)
+int
+match_interpolate(struct match *mh, const struct macro_list *macros)
 {
-	for (;;) {
-		if (mh->mh_expr->ex_flags & EXPR_FLAG_INTERPOLATE)
-			return mh;
+	const struct match *mi = NULL;
+	const struct match *tmp = mh;
+	struct message *msg = mh->mh_msg;
 
-		mh = TAILQ_NEXT(mh, mh_entry);
-		if (mh == TAILQ_END(ml) ||
-		    mh->mh_expr->ex_type == EXPR_TYPE_MATCH)
+	/*
+	 * Search backwards for the last expr that can be used for
+	 * interpolation.
+	 */
+	for (;;) {
+		const struct expr *ex = tmp->mh_expr;
+
+		if (ex->ex_type == EXPR_TYPE_MATCH)
+			break;
+		if (ex->ex_flags & EXPR_FLAG_INTERPOLATE)
+			mi = tmp;
+
+		tmp = TAILQ_PREV(tmp, match_list, mh_entry);
+		if (tmp == NULL)
 			break;
 	}
 
-	return NULL;
+	switch (mh->mh_expr->ex_type) {
+	case EXPR_TYPE_MOVE:
+	case EXPR_TYPE_FLAG: {
+		char *path = NULL;
+		size_t n, siz;
+
+		if (interpolate(mi, macros, mh->mh_path, &path))
+			return 1;
+		siz = sizeof(mh->mh_path);
+		n = strlcpy(mh->mh_path, path, siz);
+		free(path);
+		if (n >= siz) {
+			warnc(ENAMETOOLONG, "%s", __func__);
+			return 1;
+		}
+		break;
+	}
+
+	case EXPR_TYPE_LABEL: {
+		const struct string_list *labels;
+		char *buf = NULL;
+		char *label = NULL;
+		size_t buflen = 0;
+		size_t bufsiz = 0;
+		int error;
+
+		labels = message_get_header(msg, "X-Label");
+		if (labels != NULL)
+			buf = strings_concat(labels, buf, &bufsiz, &buflen);
+		buf = strings_concat(mh->mh_expr->ex_strings, buf, &bufsiz,
+		    &buflen);
+		error = interpolate(mi, macros, buf, &label);
+		free(buf);
+		if (error)
+			return 1;
+		message_set_header(msg, "X-Label", label);
+		break;
+	}
+
+	case EXPR_TYPE_EXEC: {
+		const struct string *str;
+		size_t len;
+		size_t nargs = 0;
+
+		/* Make room for NULL-terminator. */
+		len = strings_len(mh->mh_expr->ex_strings) + 1;
+		mh->mh_exec = reallocarray(NULL, len, sizeof(char *));
+		if (mh->mh_exec == NULL)
+			err(1, NULL);
+		memset(mh->mh_exec, 0, len * sizeof(char *));
+		mh->mh_nexec = len;
+		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
+			char *arg = NULL;
+
+			if (interpolate(mi, macros, str->val, &arg))
+				return 1;
+			mh->mh_exec[nargs++] = arg;
+		}
+		break;
+
+	}
+
+	default:
+		break;
+	}
+
+	return 0;
 }
 
 static void

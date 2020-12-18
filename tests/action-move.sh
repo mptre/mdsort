@@ -34,7 +34,7 @@ if testcase "interpolation too long"; then
 	}
 	EOF
 	mdsort -e >"$TMP1"
-	if ! grep -q 'matches_interpolate:' "$TMP1"; then
+	if ! grep -q 'match_interpolate:' "$TMP1"; then
 		fail - "expected too long error" <"$TMP1"
 	fi
 fi

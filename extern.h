@@ -14,6 +14,7 @@
 #define UNUSED(x)	__##x __attribute__((__unused__))
 
 /* Forward declarations. */
+struct macro_list;
 struct match_list;
 struct message;
 struct message_list;
@@ -297,6 +298,8 @@ int matches_inspect(const struct match_list *, FILE *,
 struct match *match_alloc(struct expr *);
 
 void match_copy(struct match *, const char *, const regmatch_t *, size_t);
+
+int match_interpolate(struct match *, const struct macro_list *);
 
 struct match *matches_find(struct match_list *, enum expr_type);
 
