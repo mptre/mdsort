@@ -44,8 +44,7 @@ used within a
 is interpreted as an extended regular expression.
 Subexpressions in
 .Ar pattern
-can be used to interpolate arguments to
-.Ar action .
+can be used to interpolate certain configuration arguments.
 Referencing a subexpression is done using back-references on the form
 .Sq \e#
 where
@@ -222,6 +221,15 @@ It may be abbreviated in a non-ambiguous way, such as
 or
 .Ic s .
 .It Xo Op Ic \&!
+.Ic isdirectory Dq Ar path
+.Xc
+Evaluates to true if
+.Ar path
+refers to an existing directory.
+The
+.Ar path
+is interpolated.
+.It Xo Op Ic \&!
 .Tg all
 .Ic all
 .Xc
@@ -356,6 +364,11 @@ maildir "${inbox}" {
 
 	# Label messages with the plus portion of the address.
 	match header "To" /user\e+(.+)@example.com/l label "\e1"
+
+	# Conditionally move to a maildir named after the plus portion of the
+	# address.
+	match header "To" /user\e+(.+)@example.com/l and \e
+		isdirectory "~/Maildir/\e1" move "~/Maildir/\e1"
 
 	# Extract calendar attachments.
 	match all attachment {

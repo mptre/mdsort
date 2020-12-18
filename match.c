@@ -16,7 +16,6 @@
 static void matches_merge(struct match_list *, struct match *);
 
 static const char *match_get(const struct match *, unsigned int);
-static void match_free(struct match *);
 
 static int exec(char *const *, int);
 static int interpolate(const struct match *, const struct macro_list *,
@@ -300,6 +299,27 @@ match_alloc(struct expr *ex, struct message *msg)
 }
 
 void
+match_free(struct match *mh)
+{
+	unsigned int i;
+
+	if (mh == NULL)
+		return;
+
+	for (i = 0; i < mh->mh_nmatches; i++)
+		free(mh->mh_matches[i].m_str);
+	free(mh->mh_matches);
+
+	for (i = 0; i < mh->mh_nexec; i++)
+		free(mh->mh_exec[i]);
+	free(mh->mh_exec);
+
+	free(mh->mh_key);
+	free(mh->mh_val);
+	free(mh);
+}
+
+void
 match_copy(struct match *mh, const char *str, const regmatch_t *off,
     size_t nmemb)
 {
@@ -356,6 +376,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 	}
 
 	switch (mh->mh_expr->ex_type) {
+	case EXPR_TYPE_STAT:
 	case EXPR_TYPE_MOVE: {
 		char *path = NULL;
 		size_t n, siz;
@@ -473,27 +494,6 @@ match_get(const struct match *mh, unsigned int idx)
 	if (idx >= mh->mh_nmatches)
 		return NULL;
 	return mh->mh_matches[idx].m_str;
-}
-
-static void
-match_free(struct match *mh)
-{
-	unsigned int i;
-
-	if (mh == NULL)
-		return;
-
-	for (i = 0; i < mh->mh_nmatches; i++)
-		free(mh->mh_matches[i].m_str);
-	free(mh->mh_matches);
-
-	for (i = 0; i < mh->mh_nexec; i++)
-		free(mh->mh_exec[i]);
-	free(mh->mh_exec);
-
-	free(mh->mh_key);
-	free(mh->mh_val);
-	free(mh);
 }
 
 static ssize_t

@@ -18,6 +18,7 @@ TESTS+=	match-body-b64.sh
 TESTS+=	match-body.sh
 TESTS+=	match-date.sh
 TESTS+=	match-header.sh
+TESTS+=	match-isdirectory.sh
 TESTS+=	match-logical.sh
 TESTS+=	match-new.sh
 TESTS+=	match-old.sh

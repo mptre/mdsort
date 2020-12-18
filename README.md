@@ -23,6 +23,11 @@ maildir "~/Maildir/INBOX" {
 	# Label messages with the plus portion of the address.
 	match header "To" /user\+(.+)@example.com/l label "\1"
 
+	# Conditionally move to a maildir named after the plus portion of the
+	# address.
+	match header "To" /user\+(.+)@example.com/l and \
+		isdirectory "~/Maildir/\1" move "~/Maildir/\1"
+
 	# Extract calendar attachments.
 	match all attachment {
 		match header "Content-Type" |text/calendar| \

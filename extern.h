@@ -158,6 +158,7 @@ enum expr_type {
 	EXPR_TYPE_HEADER,
 	EXPR_TYPE_NEW,
 	EXPR_TYPE_OLD,
+	EXPR_TYPE_STAT,
 
 	/* actions */
 	EXPR_TYPE_MOVE,
@@ -181,6 +182,10 @@ enum expr_date_field {
 	EXPR_DATE_FIELD_ACCESS,
 	EXPR_DATE_FIELD_MODIFIED,
 	EXPR_DATE_FIELD_CREATED,
+};
+
+enum expr_stat {
+	EXPR_STAT_DIR,
 };
 
 struct expr {
@@ -221,9 +226,14 @@ struct expr {
 #define EXPR_EXEC_STDIN	0x00000001u
 #define EXPR_EXEC_BODY	0x00000002u
 		} u_exec;
+
+		struct {
+			enum expr_stat s_stat;
+		} u_stat;
 	} ex_u;
 #define ex_date	ex_u.u_date
 #define ex_exec	ex_u.u_exec
+#define ex_stat	ex_u.u_stat
 
 	struct expr *ex_lhs;
 	struct expr *ex_rhs;
@@ -269,6 +279,8 @@ void expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
 
 int expr_set_exec(struct expr *, struct string_list *, unsigned int);
 
+void expr_set_stat(struct expr *, char *, enum expr_stat);
+
 void expr_set_strings(struct expr *, struct string_list *);
 
 int expr_set_pattern(struct expr *, const char *, unsigned int, const char **);
@@ -296,6 +308,8 @@ int matches_inspect(const struct match_list *, FILE *,
     const struct environment *);
 
 struct match *match_alloc(struct expr *, struct message *);
+
+void match_free(struct match *);
 
 void match_copy(struct match *, const char *, const regmatch_t *, size_t);
 

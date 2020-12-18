@@ -35,6 +35,7 @@ static int expr_eval_old(EXPR_EVAL_ARGS);
 static int expr_eval_or(EXPR_EVAL_ARGS);
 static int expr_eval_pass(EXPR_EVAL_ARGS);
 static int expr_eval_reject(EXPR_EVAL_ARGS);
+static int expr_eval_stat(EXPR_EVAL_ARGS);
 
 static int expr_inspect_prefix(const struct expr *, FILE *,
     const struct environment *);
@@ -99,6 +100,9 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_OLD:
 		ex->ex_eval = &expr_eval_old;
+		break;
+	case EXPR_TYPE_STAT:
+		ex->ex_eval = &expr_eval_stat;
 		break;
 	case EXPR_TYPE_MOVE:
 		ex->ex_eval = &expr_eval_move;
@@ -171,6 +175,19 @@ expr_set_date(struct expr *ex, enum expr_date_field field,
 
 	/* Cheat a bit by adding a match all pattern used during dry run. */
 	(void)expr_set_pattern(ex, ".*", 0, NULL);
+}
+
+void
+expr_set_stat(struct expr *ex, char *path, enum expr_stat stat)
+{
+	struct string_list *strings;
+
+	assert(ex->ex_type == EXPR_TYPE_STAT);
+
+	strings = strings_alloc();
+	strings_append(strings, path);
+	expr_set_strings(ex, strings);
+	ex->ex_stat.s_stat = stat;
 }
 
 int
@@ -734,6 +751,48 @@ expr_eval_reject(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *UNUSED(env))
 {
 	return expr_match(ex, ml, msg);
+}
+
+static int
+expr_eval_stat(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *UNUSED(env))
+{
+	struct stat st;
+	struct match *mh;
+	const char *str;
+	size_t siz;
+	int ev = EXPR_NOMATCH;
+
+	mh = match_alloc(ex, msg);
+	if (matches_append(ml, mh)) {
+		ev = EXPR_ERROR;
+		goto out;
+	}
+
+	str = TAILQ_FIRST(ex->ex_strings)->val;
+	siz = sizeof(mh->mh_path);
+	if (strlcpy(mh->mh_path, str, siz) >= siz) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		ev = EXPR_ERROR;
+	} else if (match_interpolate(mh, NULL)) {
+		ev = EXPR_ERROR;
+	} else if (stat(mh->mh_path, &st) == -1) {
+		warn("stat: %s", mh->mh_path);
+		ev = EXPR_ERROR;
+	} else {
+		switch (ex->ex_stat.s_stat) {
+		case EXPR_STAT_DIR:
+			if (S_ISDIR(st.st_mode))
+				ev = EXPR_MATCH;
+			break;
+		}
+	}
+
+out:
+	TAILQ_REMOVE(ml, mh, mh_entry);
+	match_free(mh);
+
+	return ev;
 }
 
 static int

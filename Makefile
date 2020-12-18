@@ -70,6 +70,7 @@ DISTFILES+=	tests/match-body-b64.sh
 DISTFILES+=	tests/match-body.sh
 DISTFILES+=	tests/match-date.sh
 DISTFILES+=	tests/match-header.sh
+DISTFILES+=	tests/match-isdirectory.sh
 DISTFILES+=	tests/match-logical.sh
 DISTFILES+=	tests/match-new.sh
 DISTFILES+=	tests/match-old.sh

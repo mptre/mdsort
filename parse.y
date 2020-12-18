@@ -68,6 +68,7 @@ typedef struct {
 %token FLAG
 %token HEADER
 %token INT
+%token ISDIRECTORY
 %token LABEL
 %token MACRO
 %token MAILDIR
@@ -257,6 +258,13 @@ expr3		: BODY pattern {
 		}
 		| ALL {
 			$$ = expr_alloc(EXPR_TYPE_ALL, lineno, NULL, NULL);
+		}
+		| ISDIRECTORY STRING {
+			char *path;
+
+			$$ = expr_alloc(EXPR_TYPE_STAT, lineno, NULL, NULL);
+			path = expand($2, MACRO_CTX_DEFAULT);
+			expr_set_stat($$, path, EXPR_STAT_DIR);
 		}
 		| '(' expr1 ')' {
 			$$ = $2;
@@ -535,6 +543,8 @@ yylex(void)
 		{ "exec",	EXEC },
 		{ "flag",	FLAG },
 		{ "header",	HEADER },
+		// XXX pad
+		{ "isdirectory",ISDIRECTORY },
 		{ "label",	LABEL },
 		{ "maildir",	MAILDIR },
 		{ "match",	MATCH },
