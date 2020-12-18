@@ -283,7 +283,7 @@ int expr_eval(struct expr *, struct match_list *, struct message *,
 void expr_inspect(const struct expr *, const struct match *, FILE *,
     const struct environment *);
 
-int matches_append(struct match_list *, struct match *, struct message *);
+int matches_append(struct match_list *, struct match *);
 
 void matches_clear(struct match_list *);
 
@@ -295,7 +295,7 @@ int matches_exec(const struct match_list *, struct maildir *, int *,
 int matches_inspect(const struct match_list *, FILE *,
     const struct environment *);
 
-struct match *match_alloc(struct expr *);
+struct match *match_alloc(struct expr *, struct message *);
 
 void match_copy(struct match *, const char *, const regmatch_t *, size_t);
 

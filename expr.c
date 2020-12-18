@@ -478,8 +478,8 @@ expr_eval_break(struct expr *ex, struct match_list *ml, struct message *msg,
 {
 	struct match *mh;
 
-	mh = match_alloc(ex);
-	if (matches_append(ml, mh, msg))
+	mh = match_alloc(ex, msg);
+	if (matches_append(ml, mh))
 		return EXPR_ERROR;
 
 	/*
@@ -572,7 +572,7 @@ expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
 	const char *subdir;
 	size_t siz;
 
-	mh = match_alloc(ex);
+	mh = match_alloc(ex, msg);
 	subdir = TAILQ_FIRST(ex->ex_strings)->val;
 	siz = sizeof(mh->mh_subdir);
 	if (strlcpy(mh->mh_subdir, subdir, siz) >= siz) {
@@ -580,7 +580,7 @@ expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
 		return EXPR_ERROR;
 	}
 
-	if (matches_append(ml, mh, msg))
+	if (matches_append(ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
 }
@@ -626,8 +626,8 @@ expr_eval_match(struct expr *ex, struct match_list *ml, struct message *msg,
 	 * Behaves like and with the exception of adding itself to the match
 	 * list. The match is later used by matches_find_interpolate().
 	 */
-	mh = match_alloc(ex);
-	if (matches_append(ml, mh, msg))
+	mh = match_alloc(ex, msg);
+	if (matches_append(ml, mh))
 		return EXPR_ERROR;
 
 	return expr_eval_and(ex, ml, msg, env);
@@ -642,14 +642,14 @@ expr_eval_move(struct expr *ex, struct match_list *ml, struct message *msg,
 	size_t siz;
 
 	maildir = TAILQ_FIRST(ex->ex_strings)->val;
-	mh = match_alloc(ex);
+	mh = match_alloc(ex, msg);
 	siz = sizeof(mh->mh_maildir);
 	if (strlcpy(mh->mh_maildir, maildir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return EXPR_ERROR;
 	}
 
-	if (matches_append(ml, mh, msg))
+	if (matches_append(ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
 }
@@ -716,8 +716,8 @@ expr_eval_pass(struct expr *ex, struct match_list *ml, struct message *msg,
 {
 	struct match *mh;
 
-	mh = match_alloc(ex);
-	if (matches_append(ml, mh, msg))
+	mh = match_alloc(ex, msg);
+	if (matches_append(ml, mh))
 		return EXPR_ERROR;
 
 	/*
@@ -764,8 +764,8 @@ expr_match(struct expr *ex, struct match_list *ml, struct message *msg)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex);
-	if (matches_append(ml, mh, msg))
+	mh = match_alloc(ex, msg);
+	if (matches_append(ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
 }
@@ -784,9 +784,9 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 	if (error != 0)
 		return EXPR_ERROR;
 
-	mh = match_alloc(ex);
+	mh = match_alloc(ex, msg);
 	match_copy(mh, val, ex->ex_re.r_matches, ex->ex_re.r_nmatches);
-	if (matches_append(ml, mh, msg))
+	if (matches_append(ml, mh))
 		return EXPR_ERROR;
 
 	if (env->ev_options & OPTION_DRYRUN) {

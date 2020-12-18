@@ -28,12 +28,10 @@ static ssize_t isbackref(const char *, unsigned int *);
  * if needed.
  */
 int
-matches_append(struct match_list *ml, struct match *mh, struct message *msg)
+matches_append(struct match_list *ml, struct match *mh)
 {
 	const char *p;
 	size_t siz;
-
-	mh->mh_msg = msg;
 
 	matches_merge(ml, mh);
 	TAILQ_INSERT_TAIL(ml, mh, mh_entry);
@@ -44,20 +42,20 @@ matches_append(struct match_list *ml, struct match *mh, struct message *msg)
 	if (mh->mh_maildir[0] == '\0') {
 		/* Infer maildir from message path. */
 		siz = sizeof(mh->mh_maildir);
-		p = pathslice(msg->me_path, mh->mh_maildir, siz, 0, -2);
+		p = pathslice(mh->mh_msg->me_path, mh->mh_maildir, siz, 0, -2);
 		if (p == NULL) {
 			warnx("%s: %s: maildir not found",
-			    __func__, msg->me_path);
+			    __func__, mh->mh_msg->me_path);
 			return 1;
 		}
 	}
 	if (mh->mh_subdir[0] == '\0') {
 		/* Infer subdir from message path. */
 		siz = sizeof(mh->mh_subdir);
-		p = pathslice(msg->me_path, mh->mh_subdir, siz, -2, -2);
+		p = pathslice(mh->mh_msg->me_path, mh->mh_subdir, siz, -2, -2);
 		if (p == NULL) {
 			warnx("%s: %s: subdir not found",
-			    __func__, msg->me_path);
+			    __func__, mh->mh_msg->me_path);
 			return 1;
 		}
 	}
@@ -289,7 +287,7 @@ matches_remove(struct match_list *ml, enum expr_type type)
 }
 
 struct match *
-match_alloc(struct expr *ex)
+match_alloc(struct expr *ex, struct message *msg)
 {
 	struct match *mh;
 
@@ -297,6 +295,7 @@ match_alloc(struct expr *ex)
 	if (mh == NULL)
 		err(1, NULL);
 	mh->mh_expr = ex;
+	mh->mh_msg = msg;
 	return mh;
 }
 
