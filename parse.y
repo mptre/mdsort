@@ -120,11 +120,11 @@ typedef struct {
 
 grammar		: /* empty */
 		| grammar '\n'
-		| grammar macros '\n'
+		| grammar macro '\n'
 		| grammar maildir '\n'
 		;
 
-macros		: MACRO '=' STRING {
+macro		: MACRO '=' STRING {
 			$3 = expand($3, MACRO_CTX_DEFAULT);
 			if (macros_insert(yyconfig.cf_macros, $1, $3, lineno))
 				yyerror("macro already defined: %s", $1);
