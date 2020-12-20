@@ -356,8 +356,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 	}
 
 	switch (mh->mh_expr->ex_type) {
-	case EXPR_TYPE_MOVE:
-	case EXPR_TYPE_FLAG: {
+	case EXPR_TYPE_MOVE: {
 		char *path = NULL;
 		size_t n, siz;
 
