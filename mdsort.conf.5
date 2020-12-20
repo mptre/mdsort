@@ -159,28 +159,17 @@ lines using a backslash
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
 .It Xo Op Ic \&!
+.Tg all
+.Ic all
+.Xc
+Evaluates to true for any message.
+.It Xo Op Ic \&!
 .Tg body
 .Ic body
 .Pf / Ar pattern Ns Pf / Op Ar flags
 .Xc
 Evaluates to true if the message body matches
 .Ar pattern .
-.It Xo Op Ic \&!
-.Tg header
-.Ic header Dq Ar name
-.Pf / Ar pattern Ns Pf / Op Ar flags
-.Xc
-.It Xo Op Ic \&!
-.Ic header No { Do Ar name Dc Ar ... No }
-.Pf / Ar pattern Ns Pf / Op Ar flags
-.Xc
-Evaluates to true if the value of any of the headers with
-.Ar name
-in message matches
-.Ar pattern .
-Finding the header with
-.Ar name
-in message is done case insensitive.
 .It Xo Op Ic \&!
 .Tg date
 .Ic date
@@ -221,6 +210,22 @@ It may be abbreviated in a non-ambiguous way, such as
 or
 .Ic s .
 .It Xo Op Ic \&!
+.Tg header
+.Ic header Dq Ar name
+.Pf / Ar pattern Ns Pf / Op Ar flags
+.Xc
+.It Xo Op Ic \&!
+.Ic header No { Do Ar name Dc Ar ... No }
+.Pf / Ar pattern Ns Pf / Op Ar flags
+.Xc
+Evaluates to true if the value of any of the headers with
+.Ar name
+in message matches
+.Ar pattern .
+Finding the header with
+.Ar name
+in message is done case insensitive.
+.It Xo Op Ic \&!
 .Ic isdirectory Dq Ar path
 .Xc
 Evaluates to true if
@@ -229,11 +234,6 @@ refers to an existing directory.
 The
 .Ar path
 is interpolated.
-.It Xo Op Ic \&!
-.Tg all
-.Ic all
-.Xc
-Evaluates to true for any message.
 .It Xo Op Ic \&!
 .Tg new
 .Ic new
