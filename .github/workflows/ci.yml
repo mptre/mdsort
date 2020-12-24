@@ -1,0 +1,89 @@
+name: ci
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    runs-on: ${{matrix.os}}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        compiler: [gcc, clang]
+        mode: [asan, ubsan, musl, valgrind]
+        exclude:
+          - os: macos-latest
+            compiler: gcc
+
+          - mode: musl
+            os: macos-latest
+
+          - mode: musl
+            os: ubuntu-latest
+            compiler: clang
+
+          - mode: valgrind
+            os: macos-latest
+
+          - mode: valgrind
+            os: ubuntu-latest
+            compiler: clang
+
+        include:
+          - os: ubuntu-latest
+            cppflags: -D_FORTIFY_SOURCE=2
+
+          - compiler: gcc
+            cflags: -Wformat-signedness
+
+          - mode: asan
+            debug1: -fsanitize=address
+            testflags: -Tmemleak
+
+          - mode: ubsan
+            debug1: -fsanitize=undefined -fno-sanitize-recover=all
+
+          - mode: ubsan
+            compiler: clang
+            debug2: -fsanitize=unsigned-integer-overflow
+
+          - mode: musl
+            cc: musl-gcc
+            dependenices: musl-tools
+            testflags: -Ttilde
+
+          - mode: valgrind
+            dependenices: valgrind
+            exec: valgrind
+            testflags: -Tmemleak
+            valgrind: --quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: dependenices
+        if: ${{matrix.dependenices}}
+        run: sudo apt-get update && sudo apt-get install ${{matrix.dependenices}}
+
+      - name: test
+        env:
+          ASAN_OPTIONS: exitcode=66
+          CC: ${{matrix.compiler}}
+          CPPFLAGS: ${{matrix.cppflags}}
+          CFLAGS: -Werror -Wpedantic -Wshadow ${{matrix.cflags}}
+          DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
+          EXEC: ${{matrix.exec}}
+          TESTFLAGS: -Tfdleak ${{matrix.testflags}}
+          VALGRIND_OPTS: ${{matrix.valgrind}}
+        run: |
+          set -ex
+          [ -z "${{matrix.cc}}" ] || CC="${{matrix.cc}}"
+          ${CC} -v
+          ./configure || :
+          cat config.log
+          make test
+          # Ensure assertions are free from side effects.
+          env CPPFLAGS="${CPPFLAGS} -DNDEBUG" ./configure || :
+          cat config.log
+          make test
