@@ -43,7 +43,7 @@ if testcase "interpolation"; then
 	mkmsg "src/new" -- "To" "dst"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "To" /.*/ and isdirectory "src" move "\\0"
+		match header "To" /.*/ and isdirectory "\\0" move "\\0"
 	}
 	EOF
 	mdsort
@@ -56,11 +56,11 @@ if testcase "interpolation out of bounds"; then
 	mkmsg "src/new" -- "To" "dst"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match isdirectory "src" move "\\0"
+		match isdirectory "\\0" move "\\0"
 	}
 	EOF
 	mdsort -e - <<-EOF
-	mdsort: \\0/new: invalid back-reference
+	mdsort: \\0: invalid back-reference
 	EOF
 	refute_empty "src/new"
 fi
