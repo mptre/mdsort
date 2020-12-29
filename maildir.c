@@ -168,11 +168,14 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 		return 1;
 	}
 	srcfd = maildir_fd(src);
-	if (fstatat(srcfd, srcname, &sb, 0) != -1) {
-		times[1] = sb.st_mtim;
-		doutime = 1;
-	} else {
-		warn("fstatat");
+
+	if ((src->md_flags & MAILDIR_STDIN) == 0) {
+		if (fstatat(srcfd, srcname, &sb, 0) != -1) {
+			times[1] = sb.st_mtim;
+			doutime = 1;
+		} else {
+			warn("fstatat");
+		}
 	}
 
 	if (msgflags(src, dst, msg, flags, sizeof(flags)))
