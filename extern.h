@@ -53,7 +53,6 @@ struct maildir {
 	char md_root[PATH_MAX];	/* root directory */
 	char md_path[PATH_MAX];	/* current directory */
 	DIR *md_dir;
-	struct blacklist *md_blacklist;
 	enum subdir md_subdir;
 	unsigned int md_flags;
 #define MAILDIR_WALK	0x00000001u
