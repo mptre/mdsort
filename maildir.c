@@ -442,6 +442,7 @@ static int
 maildir_read(struct maildir *md, struct maildir_entry *me)
 {
 	const struct dirent *ent;
+	unsigned int type;
 
 	if (FAULT("maildir_read", md->md_path))
 		return -1;
@@ -461,7 +462,11 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 			return 0;
 		}
 
-		switch (ent->d_type) {
+		type = ent->d_type;
+		if (FAULT("readdir_type", md->md_path, ent->d_name))
+			type = DT_UNKNOWN;
+
+		switch (type) {
 		case DT_UNKNOWN:
 			/*
 			 * Some filesystems like XFS does not return the file
@@ -477,7 +482,7 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 		default:
 unknown:
 			log_debug("%s: %s/%s: unknown file type %d\n",
-			    __func__, md->md_path, ent->d_name, ent->d_type);
+			    __func__, md->md_path, ent->d_name, type);
 			continue;
 		}
 

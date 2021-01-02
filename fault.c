@@ -11,8 +11,10 @@
 
 #ifdef DIAGNOSTIC
 
+#define ARGS_MAX	1024
+
 struct fault {
-	char fu_args[256];
+	char fu_args[ARGS_MAX];
 	char fu_name[32];
 	int fu_errno;
 	unsigned int fu_hits;
@@ -32,19 +34,30 @@ static int cold = 1;
 int
 fault(const char *name, ...)
 {
+	char buf[ARGS_MAX];
 	va_list ap;
+	ssize_t bufsiz = sizeof(buf);
 	int match = 0;
+	int n;
 
 	fault_init();
 
+#define STRARG	va_arg(ap, const char *)
 	va_start(ap, name);
-	if (strcmp(name, "maildir_read") == 0)
-		match = fault_match("maildir_read", va_arg(ap, const char *));
-	else if (strcmp(name, "maildir_unlink") == 0)
-		match = fault_match("maildir_unlink", va_arg(ap, const char *));
-	else
+	if (strcmp(name, "maildir_read") == 0) {
+		match = fault_match("maildir_read", STRARG);
+	} else if (strcmp(name, "maildir_unlink") == 0) {
+		match = fault_match("maildir_unlink", STRARG);
+	} else if (strcmp(name, "readdir_type") == 0) {
+		n = snprintf(buf, bufsiz, "%s, %s", STRARG, STRARG);
+		if (n < 0 || n >= bufsiz)
+			errc(1, ENAMETOOLONG, "%s", __func__);
+		match = fault_match("readdir_type", buf);
+	} else {
 		errx(1, "%s: %s: unknown fault", __func__, name);
+	}
 	va_end(ap);
+#undef STRARG
 
 	if (match)
 		warnx("%s: %s", __func__, name);

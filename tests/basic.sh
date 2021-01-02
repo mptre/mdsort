@@ -285,7 +285,7 @@ if testcase "pattern delimiter"; then
 	refute_empty "dst/new"
 fi
 
-if testcase -t fault "maildir walk failure"; then
+if testcase -t fault "readdir failure"; then
 	mkmd "src"
 	mkmsg "src/new"
 	cat <<-EOF >"$CONF"
@@ -296,4 +296,19 @@ if testcase -t fault "maildir walk failure"; then
 	mdsort -e -f "name=maildir_read,errno=EINVAL" - <<-EOF
 	mdsort: fault: maildir_read
 	EOF
+fi
+
+if testcase -t fault "readdir unknown file type"; then
+	mkmd "src" "dst"
+	mkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -f "name=readdir_type" - <<-EOF
+	mdsort: fault: readdir_type
+	EOF
+	assert_empty "src/new"
+	refute_empty "dst/new"
 fi
