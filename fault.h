@@ -2,7 +2,7 @@
 
 #define FAULT(probe, ret, ...) do {							\
 	if (fault((probe), __VA_ARGS__)) {						\
-		warn("%s", (probe));							\
+		warnx("fault: %s", (probe));						\
 		return (ret);								\
 	}										\
 } while (0)

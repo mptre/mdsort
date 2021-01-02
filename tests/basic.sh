@@ -294,6 +294,6 @@ if testcase -t fault "maildir walk failure"; then
 	}
 	EOF
 	mdsort -e -f "name=maildir_read,errno=EINVAL" - <<-EOF
-	mdsort: maildir_read: Invalid argument
+	mdsort: fault: maildir_read
 	EOF
 fi

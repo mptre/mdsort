@@ -233,7 +233,7 @@ if testcase -t fault "unlink failure"; then
 	}
 	EOF
 	mdsort -e -f "name=maildir_unlink,errno=ENOENT" - <<-EOF
-	mdsort: maildir_unlink: No such file or directory
+	mdsort: fault: maildir_unlink
 	EOF
 	findmsg "src/new" | assert_file "$TMP1" -
 fi
