@@ -442,6 +442,8 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 {
 	const struct dirent *ent;
 
+	FAULT("maildir_read", -1, md->md_path);
+
 	for (;;) {
 		/*
 		 * Necessary to reset errno in order to distinguish between

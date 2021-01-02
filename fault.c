@@ -25,8 +25,6 @@ TAILQ_HEAD(, fault) faults = TAILQ_HEAD_INITIALIZER(faults);
 static void fault_init(void);
 static int fault_match(const char *, const char *);
 
-static int fault_maildir_unlink(const char *);
-
 static const char *parse_attr(struct fault *, const char *, const char *);
 
 static int cold = 1;
@@ -40,8 +38,10 @@ fault(const char *name, ...)
 	fault_init();
 
 	va_start(ap, name);
-	if (strcmp(name, "maildir_unlink") == 0)
-		error = fault_maildir_unlink(va_arg(ap, const char *));
+	if (strcmp(name, "maildir_read") == 0)
+		error = fault_match("maildir_read", va_arg(ap, const char *));
+	else if (strcmp(name, "maildir_unlink") == 0)
+		error = fault_match("maildir_unlink", va_arg(ap, const char *));
 	else
 		errx(1, "%s: %s: unknown fault", __func__, name);
 	va_end(ap);
@@ -131,12 +131,6 @@ fault_match(const char *name, const char *args)
 	return 0;
 }
 
-static int
-fault_maildir_unlink(const char *path)
-{
-	return fault_match("maildir_unlink", path);
-}
-
 static const char *
 parse_attr(struct fault *fu, const char *str, const char *end)
 {
@@ -165,12 +159,18 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 		if (n < 0 || n >= siz)
 			errc(1, ENAMETOOLONG, "%s", __func__);
 	} else if (strncmp(key, "errno", keysiz) == 0) {
-		if (strncmp(val, "ENOENT", valsiz) == 0) {
-			fu->fu_errno = ENOENT;
-		} else {
-			errx(1, "%s: %.*s: unknown errno value",
-			    __func__, (int)valsiz, val);
-		}
+#define ERRNO(e) do {								\
+		if (strncmp(val, #e, valsiz) == 0) {				\
+			fu->fu_errno = e;					\
+			goto out;						\
+		}								\
+} while (0)
+		ERRNO(EIO);
+		ERRNO(ENOENT);
+#undef ERRNO
+
+		errx(1, "%s: %.*s: unknown errno value",
+		    __func__, (int)valsiz, val);
 	} else if (strncmp(key, "name", keysiz) == 0) {
 		siz = sizeof(fu->fu_name);
 		n = snprintf(fu->fu_name, siz, "%.*s", (int)valsiz, val);
@@ -181,6 +181,7 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 		    __func__, (int)keysiz, key);
 	}
 
+out:
 	if (p == end)
 		return NULL;
 	return p + 1;

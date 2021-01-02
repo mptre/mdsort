@@ -284,3 +284,16 @@ if testcase "pattern delimiter"; then
 	assert_empty "src/new"
 	refute_empty "dst/new"
 fi
+
+if testcase -t fault "maildir walk failure"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -e -f "name=maildir_read,errno=EIO" - <<-EOF
+	mdsort: maildir_read: Input/output error
+	EOF
+fi
