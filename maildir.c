@@ -481,7 +481,7 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 			break;
 		default:
 unknown:
-			log_debug("%s: %s/%s: unknown file type %d\n",
+			log_debug("%s: %s/%s: unknown file type %u\n",
 			    __func__, md->md_path, ent->d_name, type);
 			continue;
 		}
