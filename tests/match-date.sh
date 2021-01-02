@@ -105,7 +105,7 @@ if testcase "invalid date"; then
 	assert_empty "dst/new"
 fi
 
-if testcase "interpolation regression"; then
+if testcase -t regress "interpolation"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$(now -60)" "From" "dst"
 	cat <<-EOF >$CONF
