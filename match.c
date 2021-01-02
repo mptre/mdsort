@@ -102,14 +102,11 @@ int
 matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
     const struct environment *env)
 {
-	char path[NAME_MAX + 1], tmp[NAME_MAX + 1];
+	char tmp[NAME_MAX + 1];
 	struct maildir *dst = NULL;
 	struct match *mh;
-	const char *path_save;
 	int chsrc = 0;
 	int error = 0;
-
-	path_save = TAILQ_FIRST(ml)->mh_msg->me_path;
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		struct message *msg = mh->mh_msg;
@@ -137,8 +134,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 				break;
 			}
 
-			(void)strlcpy(path, tmp, sizeof(path));
-			msg->me_path = path;
+			(void)strlcpy(msg->me_name, tmp, sizeof(msg->me_name));
 
 			if (maildir_cmp(src, dst)) {
 				if (chsrc)
@@ -168,8 +164,8 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			} else if (maildir_unlink(src, msg)) {
 				error = 1;
 			} else {
-				(void)strlcpy(path, tmp, sizeof(path));
-				msg->me_path = path;
+				(void)strlcpy(msg->me_name, tmp,
+				    sizeof(msg->me_name));
 			}
 			break;
 
@@ -205,7 +201,6 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 
 	if (chsrc)
 		maildir_close(src);
-	TAILQ_FIRST(ml)->mh_msg->me_path = path_save;
 
 	return error;
 }

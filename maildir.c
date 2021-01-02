@@ -151,7 +151,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
     struct message *msg, char *buf, size_t bufsiz,
     const struct environment *env)
 {
-	char flags[FLAGS_MAX], srcbuf[NAME_MAX + 1];
+	char flags[FLAGS_MAX];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
@@ -162,11 +162,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	int doutime = 0;
 	int error = 0;
 
-	srcname = pathslice(msg->me_path, srcbuf, sizeof(srcbuf), -1, -1);
-	if (srcname == NULL) {
-		warnx("%s: basename not found", msg->me_path);
-		return 1;
-	}
+	srcname = msg->me_name;
 	srcfd = maildir_fd(src);
 
 	if ((src->md_flags & MAILDIR_STDIN) == 0) {
@@ -223,15 +219,8 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 int
 maildir_unlink(const struct maildir *md, const struct message *msg)
 {
-	char buf[NAME_MAX + 1];
-
-	if (pathslice(msg->me_path, buf, sizeof(buf), -1, -1) == NULL) {
-		warnx("%s: basename not found", msg->me_path);
-		return 1;
-	}
-
-	if (unlinkat(maildir_fd(md), buf, 0) == -1) {
-		warn("unlinkat: %s", msg->me_path);
+	if (unlinkat(maildir_fd(md), msg->me_name, 0) == -1) {
+		warn("unlinkat: %s/%s", md->md_path, msg->me_name);
 		return 1;
 	}
 	return 0;

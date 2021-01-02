@@ -127,6 +127,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 	ssize_t n;
 	size_t msglen = 0;
 	size_t msgsize = 8192;
+	size_t siz;
 	int fd;
 
 	fd = openat(dirfd, path, O_RDONLY | O_CLOEXEC);
@@ -142,9 +143,13 @@ message_parse(const char *dir, int dirfd, const char *path)
 	msg->me_buf = malloc(msgsize);
 	if (msg->me_buf == NULL)
 		err(1, NULL);
-	msg->me_path = pathjoin(msg->me_pbuf, sizeof(msg->me_pbuf), dir,
-	    path);
-	if (msg->me_path == NULL) {
+
+	if (pathjoin(msg->me_path, sizeof(msg->me_path), dir, path) == NULL) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		goto err;
+	}
+	siz = sizeof(msg->me_name);
+	if (strlcpy(msg->me_name, path, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		goto err;
 	}
@@ -823,7 +828,10 @@ parseattachments(struct message *msg, struct message_list *attachments,
 		attach->me_buf = strndup(beg, end - beg);
 		if (attach->me_buf == NULL)
 			err(1, NULL);
-		attach->me_path = msg->me_path;
+		(void)strlcpy(attach->me_path, msg->me_path,
+		    sizeof(attach->me_path));
+		(void)strlcpy(attach->me_name, msg->me_name,
+		    sizeof(attach->me_name));
 		attach->me_body = message_parse_headers(attach);
 		TAILQ_INSERT_TAIL(attachments, attach, me_entry);
 

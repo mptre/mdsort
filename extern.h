@@ -94,11 +94,11 @@ int message_flags_isset(const struct message_flags *, unsigned char);
 int message_flags_set(struct message_flags *, unsigned char, int);
 
 struct message {
-	char me_pbuf[PATH_MAX];	/* path buffer */
-	const char *me_path;
+	char me_path[PATH_MAX];		/* full path */
+	char me_name[NAME_MAX + 1];	/* file name */
 	const char *me_body;
 	char *me_buf;
-	char *me_buf_dec;	/* decoded body */
+	char *me_buf_dec;		/* decoded body */
 	int me_fd;
 	unsigned int me_flags;
 #define MESSAGE_FLAG_ATTACHMENT	0x00000001u
