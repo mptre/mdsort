@@ -194,7 +194,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 			if (error)
 				(void)unlinkat(dstfd, dstname, 0);
 			else
-				error = maildir_unlink(src, msg);
+				error = maildir_unlink(src, srcname);
 		} else {
 			warn("renameat");
 			error = 1;
@@ -213,14 +213,14 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 }
 
 /*
- * Remove the message located in the given maildir.
+ * Remove the path located in the given maildir.
  * Returns zero on success, non-zero otherwise.
  */
 int
-maildir_unlink(const struct maildir *md, const struct message *msg)
+maildir_unlink(const struct maildir *md, const char *path)
 {
-	if (unlinkat(maildir_fd(md), msg->me_name, 0) == -1) {
-		warn("unlinkat: %s/%s", md->md_path, msg->me_name);
+	if (unlinkat(maildir_fd(md), path, 0) == -1) {
+		warn("unlinkat: %s/%s", md->md_path, path);
 		return 1;
 	}
 	return 0;

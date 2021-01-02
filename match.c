@@ -148,7 +148,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			break;
 
 		case EXPR_TYPE_DISCARD:
-			if (maildir_unlink(src, msg))
+			if (maildir_unlink(src, msg->me_name))
 				error = 1;
 			break;
 
@@ -161,7 +161,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			if (maildir_write(src, src, msg,
 				    tmp, sizeof(tmp), env)) {
 				error = 1;
-			} else if (maildir_unlink(src, msg)) {
+			} else if (maildir_unlink(src, msg->me_name)) {
 				error = 1;
 			} else {
 				(void)strlcpy(msg->me_name, tmp,

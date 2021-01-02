@@ -76,7 +76,7 @@ int maildir_walk(struct maildir *, struct maildir_entry *);
 int maildir_move(struct maildir *, const struct maildir *, struct message *,
     char *, size_t, const struct environment *);
 
-int maildir_unlink(const struct maildir *, const struct message *);
+int maildir_unlink(const struct maildir *, const char *);
 
 int maildir_write(struct maildir *, const struct maildir *, struct message *,
     char *, size_t, const struct environment *);
