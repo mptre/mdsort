@@ -70,7 +70,7 @@ jobs:
         env:
           ASAN_OPTIONS: exitcode=66
           CC: ${{matrix.compiler}}
-          CPPFLAGS: ${{matrix.cppflags}}
+          CPPFLAGS: -DDIAGNOSTIC ${{matrix.cppflags}}
           CFLAGS: -Werror -Wpedantic -Wshadow ${{matrix.cflags}}
           DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
           EXEC: ${{matrix.exec}}
@@ -83,7 +83,8 @@ jobs:
           ./configure || :
           cat config.log
           make test
-          # Ensure assertions are free from side effects.
+          # Ensure faults and assertions are free from side effects.
+          CPPFLAGS="$(echo "$CPPFLAGS" | sed 's/-DDIAGNOSTIC//')"
           env CPPFLAGS="${CPPFLAGS} -DNDEBUG" ./configure || :
           cat config.log
-          make test
+          make test "TESTFLAGS=${TESTFLAGS} -Tfault"
