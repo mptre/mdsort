@@ -293,7 +293,7 @@ if testcase -t fault "maildir walk failure"; then
 		match all move "dst"
 	}
 	EOF
-	mdsort -e -f "name=maildir_read,errno=EIO" - <<-EOF
-	mdsort: maildir_read: Input/output error
+	mdsort -e -f "name=maildir_read,errno=EINVAL" - <<-EOF
+	mdsort: maildir_read: Invalid argument
 	EOF
 fi

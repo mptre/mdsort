@@ -165,7 +165,7 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 			goto out;						\
 		}								\
 } while (0)
-		ERRNO(EIO);
+		ERRNO(EINVAL);
 		ERRNO(ENOENT);
 #undef ERRNO
 
