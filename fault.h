@@ -1,10 +1,8 @@
 #ifdef DIAGNOSTIC
 
 #define FAULT(probe, ret, ...) do {							\
-	if (fault((probe), __VA_ARGS__)) {						\
-		warnx("fault: %s", (probe));						\
+	if (fault((probe), __VA_ARGS__))						\
 		return (ret);								\
-	}										\
 } while (0)
 
 #define FAULT_SHUTDOWN() fault_shutdown()

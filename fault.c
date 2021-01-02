@@ -33,20 +33,22 @@ int
 fault(const char *name, ...)
 {
 	va_list ap;
-	int error = 0;
+	int match = 0;
 
 	fault_init();
 
 	va_start(ap, name);
 	if (strcmp(name, "maildir_read") == 0)
-		error = fault_match("maildir_read", va_arg(ap, const char *));
+		match = fault_match("maildir_read", va_arg(ap, const char *));
 	else if (strcmp(name, "maildir_unlink") == 0)
-		error = fault_match("maildir_unlink", va_arg(ap, const char *));
+		match = fault_match("maildir_unlink", va_arg(ap, const char *));
 	else
 		errx(1, "%s: %s: unknown fault", __func__, name);
 	va_end(ap);
 
-	return error;
+	if (match)
+		warnx("%s: %s", __func__, name);
+	return match;
 }
 
 void
