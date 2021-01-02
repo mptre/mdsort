@@ -21,7 +21,9 @@ if testcase "destination missing"; then
 		match all move "dst"
 	}
 	EOF
-	mdsort -e >/dev/null
+	mdsort -e - <<-EOF
+mdsort: opendir: dst/new: No such file or directory
+	EOF
 fi
 
 if testcase "interpolation too long"; then
