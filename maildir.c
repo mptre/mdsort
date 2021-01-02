@@ -219,7 +219,8 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 int
 maildir_unlink(const struct maildir *md, const char *path)
 {
-	FAULT("maildir_unlink", 1, md->md_path);
+	if (FAULT("maildir_unlink", md->md_path))
+		return 1;
 
 	if (unlinkat(maildir_fd(md), path, 0) == -1) {
 		warn("unlinkat: %s/%s", md->md_path, path);
@@ -442,7 +443,8 @@ maildir_read(struct maildir *md, struct maildir_entry *me)
 {
 	const struct dirent *ent;
 
-	FAULT("maildir_read", -1, md->md_path);
+	if (FAULT("maildir_read", md->md_path))
+		return -1;
 
 	for (;;) {
 		/*
