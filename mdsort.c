@@ -157,6 +157,8 @@ loop:
 out:
 	config_free(config);
 
+	FAULT_SHUTDOWN();
+
 	if (env.ev_options & OPTION_STDIN) {
 		if (error)
 			return EX_TEMPFAIL;

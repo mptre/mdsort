@@ -103,17 +103,18 @@ genstr() {
 	dd if=/dev/zero of=/dev/stdout "bs=${1}" count=1 2>/dev/null | tr '\0' 'x'
 }
 
-# mdsort [-D] [-e | -t] [-] [-- mdsort-argument ...]
+# mdsort [-D] [-e | -t] [-f fault] [-] [-- mdsort-argument ...]
 mdsort() {
-	local _tmpdir
 	local _args="-f mdsort.conf"
 	local _core="${TSHDIR}/cdump"
 	local _exit1=0
 	local _exit2=0
+	local _fault=""
 	local _input=""
 	local _output=1
 	local _sig=""
 	local _tmp="${TSHDIR}/mdsort"
+	local _tmpdir
 
 	while [ $# -gt 0 ]; do
 		case "$1" in
@@ -123,6 +124,8 @@ mdsort() {
 		-D)	_args=""
 			;;
 		-e)	_exit1=1
+			;;
+		-f)	shift; _fault="FAULT=${1}"
 			;;
 		-t)	_exit1=75
 			;;
@@ -139,8 +142,8 @@ mdsort() {
 	_tmpdir="${TSHDIR}/_tmpdir"
 	mkdir "$_tmpdir"
 
-	(cd "$TSHDIR" && env "TMPDIR=${_tmpdir}" ${EXEC:-} "$MDSORT" $_args "$@") \
-		>"$_tmp" 2>&1 || _exit2="$?"
+	(cd "$TSHDIR" && env "TMPDIR=${_tmpdir}" ${_fault} ${EXEC:-} \
+		"$MDSORT" $_args "$@") >"$_tmp" 2>&1 || _exit2="$?"
 
 	# Find coredump(s) and optionally preserve them.
 	find "$TSHDIR" -name '*core*' >"$_core"

@@ -13,6 +13,7 @@ SRCS+=	compat-strlcpy.c
 SRCS+=	compat-utimensat.c
 SRCS+=	compat-warnc.c
 SRCS+=	expr.c
+SRCS+=	fault.c
 SRCS+=	maildir.c
 SRCS+=	match.c
 SRCS+=	mdsort.c
@@ -41,6 +42,8 @@ DISTFILES+=	compat-warnc.c
 DISTFILES+=	configure
 DISTFILES+=	expr.c
 DISTFILES+=	extern.h
+DISTFILES+=	fault.c
+DISTFILES+=	fault.h
 DISTFILES+=	maildir.c
 DISTFILES+=	match.c
 DISTFILES+=	mdsort.1
@@ -79,6 +82,8 @@ DISTFILES+=	tests/t.sh
 DISTFILES+=	tests/util.sh
 DISTFILES+=	time.c
 DISTFILES+=	util.c
+
+TESTFLAGS?=	-Tfault
 
 all: ${PROG}
 

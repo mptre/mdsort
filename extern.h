@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "fault.h"
+
 /* Annotate the argument as unused. */
 #define UNUSED(x)	__##x __attribute__((__unused__))
 
