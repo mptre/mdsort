@@ -221,6 +221,23 @@ if testcase "interpolation out of bounds"; then
 	mdsort -e >/dev/null
 fi
 
+# Ensure the newly written message is removed if removing the old message
+# failed.
+if testcase -t fault "unlink failure"; then
+	mkmd "src"
+	mkmsg "src/new"
+	findmsg "src/new" >"$TMP1"
+	cat >"$CONF" <<-EOF
+	maildir "src" {
+		match all label "foo"
+	}
+	EOF
+	mdsort -e -f "name=maildir_unlink,errno=ENOENT" - <<-EOF
+	mdsort: maildir_unlink: No such file or directory
+	EOF
+	findmsg "src/new" | assert_file "$TMP1" -
+fi
+
 # The label action constructs a destination path, however the one from the move
 # action must take higher precedence.
 if testcase "dry run label and move"; then
