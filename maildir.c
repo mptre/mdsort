@@ -259,7 +259,7 @@ maildir_write(struct maildir *src, const struct maildir *dst,
 	error = message_write(msg, fd, src->md_flags & MAILDIR_SYNC);
 	close(fd);
 	if (error)
-		(void)unlinkat(maildir_fd(dst), buf, 0);
+		(void)maildir_unlink(dst, buf);
 
 	return error;
 }
