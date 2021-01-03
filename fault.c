@@ -2,8 +2,6 @@
 
 #include <err.h>
 #include <errno.h>
-#include <fnmatch.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -25,43 +23,21 @@ struct fault {
 TAILQ_HEAD(, fault) faults = TAILQ_HEAD_INITIALIZER(faults);
 
 static void fault_init(void);
-static int fault_match(const char *, const char *);
+static int fault_match(const char *);
 
 static const char *parse_attr(struct fault *, const char *, const char *);
 
 static int cold = 1;
 
 int
-fault(const char *name, ...)
+fault(const char *name)
 {
-	char buf[ARGS_MAX];
-	va_list ap;
-	ssize_t bufsiz = sizeof(buf);
-	int match = 0;
-	int n;
-
 	fault_init();
 
-#define STRARG	va_arg(ap, const char *)
-	va_start(ap, name);
-	if (strcmp(name, "maildir_read") == 0) {
-		match = fault_match("maildir_read", STRARG);
-	} else if (strcmp(name, "maildir_unlink") == 0) {
-		match = fault_match("maildir_unlink", STRARG);
-	} else if (strcmp(name, "readdir_type") == 0) {
-		n = snprintf(buf, bufsiz, "%s, %s", STRARG, STRARG);
-		if (n < 0 || n >= bufsiz)
-			errc(1, ENAMETOOLONG, "%s", __func__);
-		match = fault_match("readdir_type", buf);
-	} else {
-		errx(1, "%s: %s: unknown fault", __func__, name);
-	}
-	va_end(ap);
-#undef STRARG
-
-	if (match)
-		warnx("%s: %s", __func__, name);
-	return match;
+	if (fault_match(name) == 0)
+		return 0;
+	warnx("fault: %s", name);
+	return 1;
 }
 
 void
@@ -126,15 +102,12 @@ fault_init(void)
 }
 
 static int
-fault_match(const char *name, const char *args)
+fault_match(const char *name)
 {
 	struct fault *fu;
 
 	TAILQ_FOREACH(fu, &faults, fu_entry) {
 		if (strcmp(fu->fu_name, name))
-			continue;
-		if (fu->fu_args[0] != '\0' &&
-		    fnmatch(fu->fu_args, args, 0) == FNM_NOMATCH)
 			continue;
 		if (fu->fu_hits > 0)
 			continue;
@@ -168,12 +141,7 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 	valsiz = p - str;
 	str = p + 1;
 
-	if (strncmp(key, "args", keysiz) == 0) {
-		siz = sizeof(fu->fu_args);
-		n = snprintf(fu->fu_args, siz, "%.*s", (int)valsiz, val);
-		if (n < 0 || n >= siz)
-			errc(1, ENAMETOOLONG, "%s", __func__);
-	} else if (strncmp(key, "errno", keysiz) == 0) {
+	if (strncmp(key, "errno", keysiz) == 0) {
 #define ERRNO(e) do {								\
 		if (strncmp(val, #e, valsiz) == 0) {				\
 			fu->fu_errno = e;					\
