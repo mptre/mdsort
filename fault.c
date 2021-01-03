@@ -150,6 +150,7 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 } while (0)
 		ERRNO(EINVAL);
 		ERRNO(ENOENT);
+		ERRNO(EXDEV);
 #undef ERRNO
 
 		errx(1, "%s: %.*s: unknown errno value",

@@ -10,7 +10,6 @@ TESTS+=	action-reject.sh
 TESTS+=	basic.sh
 TESTS+=	conf.sh
 TESTS+=	dry.sh
-TESTS+=	exdev.sh
 TESTS+=	macros.sh
 TESTS+=	match-all.sh
 TESTS+=	match-attachment.sh

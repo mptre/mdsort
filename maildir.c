@@ -193,10 +193,16 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 			 */
 			error = message_write(msg, fd,
 			    src->md_flags & MAILDIR_SYNC);
-			if (error)
-				(void)unlinkat(dstfd, dstname, 0);
-			else
+			if (error == 0)
 				error = maildir_unlink(src, srcname);
+			if (error) {
+				/*
+				 * Either writing the new message or removing
+				 * the old one failed, try to reduce side
+				 * effects by removing the new message.
+				 */
+				(void)maildir_unlink(dst, dstname);
+			}
 		} else {
 			warn("renameat");
 			error = 1;

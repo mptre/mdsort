@@ -65,7 +65,6 @@ DISTFILES+=	tests/action-reject.sh
 DISTFILES+=	tests/basic.sh
 DISTFILES+=	tests/conf.sh
 DISTFILES+=	tests/dry.sh
-DISTFILES+=	tests/exdev.sh
 DISTFILES+=	tests/macros.sh
 DISTFILES+=	tests/match-all.sh
 DISTFILES+=	tests/match-attachment.sh

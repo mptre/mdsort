@@ -273,6 +273,9 @@ out:
 		error = 1;
 	}
 
+	if (FAULT("message_write"))
+		error = 1;
+
 	return error;
 }
 
