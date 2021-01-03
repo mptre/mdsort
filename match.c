@@ -163,8 +163,9 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 				error = 1;
 			} else if (maildir_unlink(src, msg->me_name)) {
 				/*
-				 * Failed to remove the old message. Try to be
-				 * atomic by removing the new message.
+				 * Failed to remove the old message, Try to
+				 * reduce side effects by removing the new
+				 * message.
 				 */
 				(void)maildir_unlink(src, tmp);
 				error = 1;
