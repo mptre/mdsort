@@ -124,7 +124,7 @@ struct message *message_parse(const char *, int, const char *);
 
 void message_free(struct message *);
 
-int message_writeat(struct message *, int, unsigned int);
+int message_write(struct message *, int, unsigned int);
 
 int message_get_fd(struct message *, const struct environment *, int);
 

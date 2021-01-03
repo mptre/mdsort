@@ -191,7 +191,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 			 * different file systems. Fallback to writing a new
 			 * message.
 			 */
-			error = message_writeat(msg, fd,
+			error = message_write(msg, fd,
 			    src->md_flags & MAILDIR_SYNC);
 			if (error)
 				(void)unlinkat(dstfd, dstname, 0);
@@ -250,7 +250,7 @@ maildir_write(struct maildir *src, const struct maildir *dst,
 	if (fd == -1)
 		return 1;
 
-	error = message_writeat(msg, fd, src->md_flags & MAILDIR_SYNC);
+	error = message_write(msg, fd, src->md_flags & MAILDIR_SYNC);
 	close(fd);
 	if (error)
 		(void)unlinkat(maildir_fd(dst), buf, 0);
