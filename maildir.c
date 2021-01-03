@@ -22,6 +22,8 @@ static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
 static const char *maildir_path(struct maildir *);
 static int maildir_read(struct maildir *, struct maildir_entry *);
+static int maildir_rename(const struct maildir *, const struct maildir *,
+    const char *, const char *);
 
 static int isfile(int, const char *);
 static int msgflags(const struct maildir *, const struct maildir *,
@@ -182,7 +184,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	dstname = buf;
 	dstfd = maildir_fd(dst);
 
-	if (renameat(srcfd, srcname, dstfd, dstname) == -1) {
+	if (maildir_rename(src, dst, srcname, dstname)) {
 		if (errno == EXDEV) {
 			/*
 			 * Rename failed since source and destination reside on
@@ -492,6 +494,18 @@ unknown:
 		me->e_path = ent->d_name;
 		return 1;
 	}
+}
+
+static int
+maildir_rename(const struct maildir *src, const struct maildir *dst,
+    const char *srcname, const char *dstname)
+{
+	if (FAULT("maildir_rename"))
+		return 1;
+
+	if (renameat(maildir_fd(src), srcname, maildir_fd(dst), dstname) == -1)
+		return 1;
+	return 0;
 }
 
 static int
