@@ -225,9 +225,9 @@ message_write(struct message *msg, int fd, unsigned int dosync)
 	 * Since fclose(3) uncondtionally closes the file descriptor, operate on
 	 * a duplicate in order to prevent side effects.
 	 */
-	newfd = fcntl(fd, F_DUPFD_CLOEXEC);
+	newfd = fcntl(fd, F_DUPFD_CLOEXEC, 0);
 	if (newfd == -1) {
-		warn("dup");
+		warn("fcntl");
 		return 1;
 	}
 
@@ -324,9 +324,9 @@ message_get_fd(struct message *msg, const struct environment *env,
 			return -1;
 		}
 	} else {
-		fd = fcntl(msg->me_fd, F_DUPFD_CLOEXEC);
+		fd = fcntl(msg->me_fd, F_DUPFD_CLOEXEC, 0);
 		if (fd == -1) {
-			warn("dup");
+			warn("fcntl");
 			return -1;
 		}
 	}
