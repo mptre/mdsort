@@ -214,7 +214,7 @@ message_free(struct message *msg)
 }
 
 int
-message_write(struct message *msg, int fd, unsigned int dosync)
+message_write(struct message *msg, int fd)
 {
 	FILE *fh;
 	unsigned int i;
@@ -262,13 +262,13 @@ message_write(struct message *msg, int fd, unsigned int dosync)
 	if (fflush(fh) == EOF) {
 		warn("fflush");
 		error = 1;
-	} else if (dosync && fsync(fd) == -1) {
+	} else if (fsync(fd) == -1) {
 		warn("fsync");
 		error = 1;
 	}
 
 out:
-	if (fclose(fh) == EOF && dosync) {
+	if (fclose(fh) == EOF) {
 		warn("fclose");
 		error = 1;
 	}
@@ -319,7 +319,7 @@ message_get_fd(struct message *msg, const struct environment *env,
 		fd = writefd(env->ev_tmpdir);
 		if (fd == -1)
 			return -1;
-		if (message_write(msg, fd, 0)) {
+		if (message_write(msg, fd)) {
 			close(fd);
 			return -1;
 		}

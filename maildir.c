@@ -191,8 +191,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 			 * different file systems. Fallback to writing a new
 			 * message.
 			 */
-			error = message_write(msg, fd,
-			    src->md_flags & MAILDIR_SYNC);
+			error = message_write(msg, fd);
 			if (error == 0)
 				error = maildir_unlink(src, srcname);
 			if (error) {
@@ -256,7 +255,7 @@ maildir_write(struct maildir *src, const struct maildir *dst,
 	if (fd == -1)
 		return 1;
 
-	error = message_write(msg, fd, src->md_flags & MAILDIR_SYNC);
+	error = message_write(msg, fd);
 	close(fd);
 	if (error)
 		(void)maildir_unlink(dst, buf);
@@ -432,7 +431,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 		}
 	}
 
-	if ((md->md_flags & MAILDIR_SYNC) && fsync(fd) == -1) {
+	if (fsync(fd) == -1) {
 		warn("fsync");
 		error = 1;
 	}

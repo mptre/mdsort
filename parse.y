@@ -99,8 +99,6 @@ typedef struct {
 %type <v.number>	SCALAR
 %type <v.number>	exec_flag
 %type <v.number>	exec_flags
-%type <v.number>	maildir_flag
-%type <v.number>	maildir_flags
 %type <v.number>	optneg
 %type <v.pattern>	PATTERN
 %type <v.pattern>	pattern
@@ -131,24 +129,25 @@ macro		: MACRO '=' STRING {
 		}
 		;
 
-maildir		: maildir_path maildir_flags exprblock {
+maildir		: maildir_path exprblock {
 			struct config *conf;
+			unsigned int flags = MAILDIR_WALK;
 
 			/* Favor more specific error messages. */
-			if (parse_errors == 0 && expr_count_actions($3) == 0)
+			if (parse_errors == 0 && expr_count_actions($2) == 0)
 				yyerror("empty match block");
 
 			if ($1 == stdinpath)
-				$2 |= MAILDIR_STDIN | MAILDIR_SYNC;
-			else if (expr_count($3, EXPR_TYPE_REJECT) > 0)
+				flags |= MAILDIR_STDIN;
+			else if (expr_count($2, EXPR_TYPE_REJECT) > 0)
 				yyerror("reject cannot be used outside stdin");
 
 			conf = malloc(sizeof(*conf));
 			if (conf == NULL)
 				err(1, NULL);
 			conf->maildir.path = $1;
-			conf->maildir.flags = $2;
-			conf->expr = $3;
+			conf->maildir.flags = flags;
+			conf->expr = $2;
 			TAILQ_INSERT_TAIL(&yyconfig.cf_list, conf, entry);
 		}
 		;
@@ -163,21 +162,6 @@ maildir_path	: MAILDIR STRING {
 			TAILQ_FOREACH(conf, &yyconfig.cf_list, entry)
 				if (conf->maildir.flags & MAILDIR_STDIN)
 					yyerror("stdin already defined");
-		}
-		;
-
-maildir_flags	: /* empty */ {
-			$$ = MAILDIR_WALK;
-		}
-		| maildir_flags maildir_flag {
-			if ($1 & $2)
-				yyerror("maildir options cannot be repeated");
-			$$ = $1 | $2;
-		}
-		;
-
-maildir_flag	: SYNC {
-			$$ = MAILDIR_SYNC;
 		}
 		;
 
@@ -555,7 +539,6 @@ yylex(void)
 		{ "pass",		PASS },
 		{ "reject",		REJECT },
 		{ "stdin",		STDIN },
-		{ "sync",		SYNC },
 
 		{ NULL,		0 },
 	};

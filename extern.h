@@ -59,7 +59,6 @@ struct maildir {
 	unsigned int md_flags;
 #define MAILDIR_WALK	0x00000001u
 #define MAILDIR_STDIN	0x00000002u
-#define MAILDIR_SYNC	0x00000004u
 };
 
 struct maildir_entry {
@@ -124,7 +123,7 @@ struct message *message_parse(const char *, int, const char *);
 
 void message_free(struct message *);
 
-int message_write(struct message *, int, unsigned int);
+int message_write(struct message *, int);
 
 int message_get_fd(struct message *, const struct environment *, int);
 

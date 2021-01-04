@@ -43,7 +43,7 @@ if testcase "sanity"; then
 			move "~/Maildir/Junk"
 	}
 
-	maildir "~/Maildir/test2" sync {
+	maildir "~/Maildir/test2" {
 		match header "Received-SPF" /fail/i move "~/Maildir/Junk"
 	}
 
@@ -322,16 +322,5 @@ if testcase "lower and upper case flags are mutually exclusive"; then
 	mdsort -e - -- -n <<-EOF
 	mdsort.conf:2: \`l' and \`u' flags cannot be combined
 	mdsort.conf:3: \`l' and \`u' flags cannot be combined
-	EOF
-fi
-
-if testcase "duplicate maildir options"; then
-	cat <<-EOF >$CONF
-	maildir "~/Maildir/INBOX" sync sync {
-		match all move "dst"
-	}
-	EOF
-	mdsort -e - -- -n <<-EOF
-	mdsort.conf:1: maildir options cannot be repeated
 	EOF
 fi
