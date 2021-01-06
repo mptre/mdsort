@@ -103,7 +103,7 @@ maildir_close(struct maildir *md)
 		rewinddir(md->md_dir);
 		while (maildir_walk(md, &me) == 1)
 			(void)unlinkat(me.e_dirfd, me.e_path, 0);
-		(void)rmdir(maildir_path(md));
+		(void)rmdir(md->md_path);
 		(void)rmdir(md->md_root);
 	}
 
