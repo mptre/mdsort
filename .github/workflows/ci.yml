@@ -5,38 +5,6 @@ on:
   - pull_request
 
 jobs:
-  lint:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: clang-tidy
-        run: |
-          set -ex
-          checks() {
-            xargs printf '%s,' <<-EOF
-            *
-            -bugprone-narrowing-conversions
-            -bugprone-suspicious-string-compare
-            -clang-analyzer-*
-            -cppcoreguidelines-*
-            -google-*
-            -hicpp-*
-            -readability-braces-around-statements
-            -readability-isolate-declaration
-            -readability-magic-numbers
-            -readability-named-parameter
-          EOF
-          }
-          sudo apt-get update && sudo apt-get install clang-tidy
-          ./configure
-          clang-tidy \
-            --quiet \
-            --checks=$(checks) \
-            --warnings-as-errors=* \
-            $(git ls-files | grep '.c$' | grep -v compat) \
-            -- -x c
-
   test:
     runs-on: ${{matrix.os}}
     strategy:
