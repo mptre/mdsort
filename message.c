@@ -461,6 +461,28 @@ message_set_header(struct message *msg, const char *header, char *val)
 	}
 }
 
+int
+message_set_path(struct message *msg, const char *path, const char *name)
+{
+	size_t siz;
+
+	if (FAULT("message_set_path"))
+		return 1;
+
+	if (pathjoin(msg->me_path, sizeof(msg->me_path), path, name) == NULL) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return 1;
+	}
+
+	siz = sizeof(msg->me_name);
+	if (strlcpy(msg->me_name, name, siz) >= siz) {
+		warnc(ENAMETOOLONG, "%s", __func__);
+		return 1;
+	}
+
+	return 0;
+}
+
 /*
  * Parse all attachments in message into the given message list.
  * Returns non NULL-on success, even if no attachments where found.

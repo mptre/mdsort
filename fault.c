@@ -149,6 +149,7 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 		}								\
 } while (0)
 		ERRNO(EINVAL);
+		ERRNO(ENAMETOOLONG);
 		ERRNO(ENOENT);
 		ERRNO(EXDEV);
 #undef ERRNO

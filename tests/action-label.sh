@@ -238,6 +238,20 @@ if testcase -t fault "unlink failure"; then
 	findmsg "src/new" | assert_file "$TMP1" -
 fi
 
+if testcase -t fault "message path too long"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat >"$CONF" <<-EOF
+	maildir "src" {
+		match all label "foo"
+	}
+	EOF
+	mdsort -e -f "name=message_set_path,errno=ENAMETOOLONG" - <<-EOF
+	mdsort: fault: message_set_path
+	EOF
+	refute_empty "src/new"
+fi
+
 # The label action constructs a destination path, however the one from the move
 # action must take higher precedence.
 if testcase "dry run label and move"; then

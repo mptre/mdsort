@@ -20,7 +20,7 @@ static int maildir_genname(const struct maildir *, const char *,
 static const char *maildir_next(struct maildir *);
 static int maildir_opendir(struct maildir *, const char *);
 static int maildir_stdin(struct maildir *, const struct environment *);
-static const char *maildir_path(struct maildir *);
+static const char *maildir_set_path(struct maildir *);
 static int maildir_read(struct maildir *, struct maildir_entry *);
 static int maildir_rename(const struct maildir *, const struct maildir *,
     const char *, const char *);
@@ -78,7 +78,7 @@ maildir_open(const char *path, unsigned int flags,
 		if (pathslice(path, md->md_root, siz, 0, -1) == NULL)
 			goto err;
 	}
-	path = maildir_path(md);
+	path = maildir_set_path(md);
 	if (maildir_opendir(md, path))
 		goto err;
 
@@ -277,6 +277,12 @@ maildir_cmp(const struct maildir *md1, const struct maildir *md2)
 	return strcmp(md1->md_root, md2->md_root);
 }
 
+const char *
+maildir_path(const struct maildir *md)
+{
+	return md->md_path;
+}
+
 static const char *
 maildir_next(struct maildir *md)
 {
@@ -292,7 +298,7 @@ maildir_next(struct maildir *md)
 		return NULL;
 	}
 
-	return maildir_path(md);
+	return maildir_set_path(md);
 }
 
 static int
@@ -359,7 +365,7 @@ maildir_genname(const struct maildir *dst, const char *flags,
 }
 
 static const char *
-maildir_path(struct maildir *md)
+maildir_set_path(struct maildir *md)
 {
 	const char *path;
 	const char *subdir = NULL;
@@ -397,7 +403,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 		return 1;
 	}
 
-	path = maildir_path(md);
+	path = maildir_set_path(md);
 	if (mkdir(path, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
 		warn("mkdir");
 		return 1;

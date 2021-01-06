@@ -110,3 +110,18 @@ if testcase -t fault "exdev unlink failure"; then
 	refute_empty "src/new"
 	assert_empty "dst/new"
 fi
+
+if testcase -t fault "message path too long"; then
+	mkmd "src" "dst"
+	mkmsg "src/new"
+	cat >"$CONF" <<-EOF
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -e -f "name=message_set_path,errno=ENAMETOOLONG" - <<-EOF
+	mdsort: fault: message_set_path
+	EOF
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi

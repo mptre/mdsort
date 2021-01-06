@@ -82,6 +82,8 @@ int maildir_unlink(const struct maildir *, const char *);
 int maildir_write(struct maildir *, const struct maildir *, struct message *,
     char *, size_t, const struct environment *);
 
+const char *maildir_path(const struct maildir *);
+
 int maildir_cmp(const struct maildir *, const struct maildir *);
 
 struct message_flags {
@@ -135,6 +137,8 @@ const struct string_list *message_get_header(const struct message *,
 const char *message_get_header1(const struct message *, const char *);
 
 void message_set_header(struct message *, const char *, char *);
+
+int message_set_path(struct message *, const char *, const char *);
 
 struct message_list *message_get_attachments(struct message *);
 

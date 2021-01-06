@@ -134,7 +134,8 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 				break;
 			}
 
-			(void)strlcpy(msg->me_name, tmp, sizeof(msg->me_name));
+			if (message_set_path(msg, maildir_path(dst), tmp))
+				error = 1;
 
 			if (maildir_cmp(src, dst)) {
 				if (chsrc)
@@ -169,9 +170,9 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 				 */
 				(void)maildir_unlink(src, tmp);
 				error = 1;
-			} else {
-				(void)strlcpy(msg->me_name, tmp,
-				    sizeof(msg->me_name));
+			} else if (message_set_path(msg, maildir_path(src),
+				    tmp)) {
+				error = 1;
 			}
 			break;
 
