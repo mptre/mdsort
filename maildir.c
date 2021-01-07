@@ -152,13 +152,13 @@ int
 maildir_move(struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env)
 {
-	char buf[NAME_MAX + 1], flags[FLAGS_MAX];
+	char dstname[NAME_MAX + 1], flags[FLAGS_MAX];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
 	};
 	struct stat sb;
-	const char *dstname, *srcname;
+	const char *srcname;
 	int dstfd, fd, srcfd;
 	int doutime = 0;
 	int error = 0;
@@ -177,10 +177,9 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 
 	if (msgflags(src, dst, msg, flags, sizeof(flags)))
 		return 1;
-	fd = maildir_genname(dst, flags, buf, sizeof(buf), env);
+	fd = maildir_genname(dst, flags, dstname, sizeof(dstname), env);
 	if (fd == -1)
 		return 1;
-	dstname = buf;
 	dstfd = maildir_fd(dst);
 
 	if (maildir_rename(src, dst, srcname, dstname)) {
@@ -216,7 +215,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	}
 
 	if (error == 0)
-		error = message_set_path(msg, dst->md_path, buf);
+		error = message_set_path(msg, dst->md_path, dstname);
 
 	return error;
 }
@@ -246,12 +245,12 @@ int
 maildir_write(struct maildir *src, struct message *msg,
     const struct environment *env)
 {
-	char buf[NAME_MAX + 1], flags[FLAGS_MAX];
+	char flags[FLAGS_MAX], name[NAME_MAX + 1];
 	int error, fd;
 
 	if (msgflags(src, src, msg, flags, sizeof(flags)))
 		return 1;
-	fd = maildir_genname(src, flags, buf, sizeof(buf), env);
+	fd = maildir_genname(src, flags, name, sizeof(name), env);
 	if (fd == -1)
 		return 1;
 
@@ -266,10 +265,10 @@ maildir_write(struct maildir *src, struct message *msg,
 	 * effects by removing the new message.
 	 */
 	if (error)
-		(void)maildir_unlink(src, buf);
+		(void)maildir_unlink(src, name);
 
 	if (error == 0)
-		error = message_set_path(msg, src->md_path, buf);
+		error = message_set_path(msg, src->md_path, name);
 
 	return error;
 }
