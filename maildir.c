@@ -239,28 +239,37 @@ maildir_unlink(const struct maildir *md, const char *path)
 }
 
 /*
- * Write message to a new file in the given maildir. The destination filename
- * will be written to buf, which must have a capacity of at least NAME_MAX plus
- * one.
+ * Write message to a new file in the given maildir and remove the old file,
+ * assuming the write succeeded.
  */
 int
-maildir_write(struct maildir *src, const struct maildir *dst,
-    struct message *msg, char *buf, size_t bufsiz,
+maildir_write(struct maildir *src, struct message *msg,
     const struct environment *env)
 {
-	char flags[FLAGS_MAX];
+	char buf[NAME_MAX + 1], flags[FLAGS_MAX];
 	int error, fd;
 
-	if (msgflags(src, dst, msg, flags, sizeof(flags)))
+	if (msgflags(src, src, msg, flags, sizeof(flags)))
 		return 1;
-	fd = maildir_genname(dst, flags, buf, bufsiz, env);
+	fd = maildir_genname(src, flags, buf, sizeof(buf), env);
 	if (fd == -1)
 		return 1;
 
 	error = message_write(msg, fd);
 	close(fd);
+	if (error == 0)
+		error = maildir_unlink(src, msg->me_name);
+
+	/*
+	 * Either writing the new message or removing
+	 * the old one failed, try to reduce side
+	 * effects by removing the new message.
+	 */
 	if (error)
-		(void)maildir_unlink(dst, buf);
+		(void)maildir_unlink(src, buf);
+
+	if (error == 0)
+		error = message_set_path(msg, src->md_path, buf);
 
 	return error;
 }
@@ -277,12 +286,6 @@ maildir_cmp(const struct maildir *md1, const struct maildir *md2)
 	if (md1->md_subdir < md2->md_subdir)
 		return -1;
 	return strcmp(md1->md_root, md2->md_root);
-}
-
-const char *
-maildir_path(const struct maildir *md)
-{
-	return md->md_path;
 }
 
 static const char *

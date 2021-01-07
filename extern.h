@@ -79,10 +79,8 @@ int maildir_move(struct maildir *, const struct maildir *, struct message *,
 
 int maildir_unlink(const struct maildir *, const char *);
 
-int maildir_write(struct maildir *, const struct maildir *, struct message *,
-    char *, size_t, const struct environment *);
-
-const char *maildir_path(const struct maildir *);
+int maildir_write(struct maildir *, struct message *,
+     const struct environment *);
 
 int maildir_cmp(const struct maildir *, const struct maildir *);
 

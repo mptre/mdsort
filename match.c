@@ -102,7 +102,6 @@ int
 matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
     const struct environment *env)
 {
-	char tmp[NAME_MAX + 1];
 	struct maildir *dst = NULL;
 	struct match *mh;
 	int chsrc = 0;
@@ -150,26 +149,8 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			break;
 
 		case EXPR_TYPE_LABEL:
-			/*
-			 * Write message with new labels to the source maildir
-			 * and update the message path. This is of importance if
-			 * a following action requires a source maildir.
-			 */
-			if (maildir_write(src, src, msg,
-				    tmp, sizeof(tmp), env)) {
+			if (maildir_write(src, msg, env))
 				error = 1;
-			} else if (maildir_unlink(src, msg->me_name)) {
-				/*
-				 * Failed to remove the old message, Try to
-				 * reduce side effects by removing the new
-				 * message.
-				 */
-				(void)maildir_unlink(src, tmp);
-				error = 1;
-			} else if (message_set_path(msg, maildir_path(src),
-				    tmp)) {
-				error = 1;
-			}
 			break;
 
 		case EXPR_TYPE_REJECT:
