@@ -144,16 +144,15 @@ maildir_walk(struct maildir *md, struct maildir_entry *me)
 }
 
 /*
- * Move the message located in src to dst. The destination filename will be
- * written to buf, which must have a capacity of at least NAME_MAX plus one.
+ * Move the message located in src to dst. The message path will be updated
+ * accordingly.
  * Returns zero on success, non-zero otherwise.
  */
 int
 maildir_move(struct maildir *src, const struct maildir *dst,
-    struct message *msg, char *buf, size_t bufsiz,
-    const struct environment *env)
+    struct message *msg, const struct environment *env)
 {
-	char flags[FLAGS_MAX];
+	char buf[NAME_MAX + 1], flags[FLAGS_MAX];
 	struct timespec times[2] = {
 		{ 0,	UTIME_OMIT },
 		{ 0,	0 }
@@ -178,7 +177,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 
 	if (msgflags(src, dst, msg, flags, sizeof(flags)))
 		return 1;
-	fd = maildir_genname(dst, flags, buf, bufsiz, env);
+	fd = maildir_genname(dst, flags, buf, sizeof(buf), env);
 	if (fd == -1)
 		return 1;
 	dstname = buf;
@@ -215,6 +214,9 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 		warn("utimensat");
 		error = 1;
 	}
+
+	if (error == 0)
+		error = message_set_path(msg, dst->md_path, buf);
 
 	return error;
 }
