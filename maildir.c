@@ -182,26 +182,22 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 		return 1;
 	dstfd = maildir_fd(dst);
 
-	if (maildir_rename(src, dst, srcname, dstname)) {
-		if (errno == EXDEV) {
+	error = maildir_rename(src, dst, srcname, dstname);
+	if (error && errno == EXDEV) {
+		/*
+		 * Rename failed since source and destination reside on
+		 * different file systems. Fallback to writing a new message.
+		 */
+		error = message_write(msg, fd);
+		if (error == 0)
+			error = maildir_unlink(src, srcname);
+		if (error) {
 			/*
-			 * Rename failed since source and destination reside on
-			 * different file systems. Fallback to writing a new
-			 * message.
+			 * Either writing the new message or removing
+			 * the old one failed, try to reduce side
+			 * effects by removing the new message.
 			 */
-			error = message_write(msg, fd);
-			if (error == 0)
-				error = maildir_unlink(src, srcname);
-			if (error) {
-				/*
-				 * Either writing the new message or removing
-				 * the old one failed, try to reduce side
-				 * effects by removing the new message.
-				 */
-				(void)maildir_unlink(dst, dstname);
-			}
-		} else {
-			error = 1;
+			(void)maildir_unlink(dst, dstname);
 		}
 	}
 
