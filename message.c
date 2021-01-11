@@ -262,7 +262,7 @@ message_write(struct message *msg, int fd)
 	if (fflush(fh) == EOF) {
 		warn("fflush");
 		error = 1;
-	} else if (fsync(fd) == -1) {
+	} else if (fsync(newfd) == -1) {
 		warn("fsync");
 		error = 1;
 	}
