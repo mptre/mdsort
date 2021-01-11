@@ -125,3 +125,18 @@ if testcase -t fault "message path too long"; then
 	assert_empty "src/new"
 	refute_empty "dst/new"
 fi
+
+if testcase -t fault "rename failure"; then
+	mkmd "src" "dst"
+	mkmsg "src/new"
+	cat >"$CONF" <<-EOF
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -e -f "name=maildir_rename,errno=ENOSPC" - <<-EOF
+	mdsort: fault: maildir_rename
+	EOF
+	refute_empty "src/new"
+	assert_empty "dst/new"
+fi

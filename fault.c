@@ -151,6 +151,7 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 		ERRNO(EINVAL);
 		ERRNO(ENAMETOOLONG);
 		ERRNO(ENOENT);
+		ERRNO(ENOSPC);
 		ERRNO(EXDEV);
 #undef ERRNO
 
