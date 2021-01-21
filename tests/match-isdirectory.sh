@@ -32,9 +32,7 @@ if testcase "directory not found"; then
 		match isdirectory "$_dir" move "dst"
 	}
 	EOF
-	mdsort -e - -- <<-EOF
-	mdsort: stat: ${_dir}: No such file or directory
-	EOF
+	mdsort
 	refute_empty "src/new"
 fi
 

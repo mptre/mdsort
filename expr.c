@@ -776,10 +776,7 @@ expr_eval_stat(struct expr *ex, struct match_list *ml, struct message *msg,
 		ev = EXPR_ERROR;
 	} else if (match_interpolate(mh, NULL)) {
 		ev = EXPR_ERROR;
-	} else if (stat(mh->mh_path, &st) == -1) {
-		warn("stat: %s", mh->mh_path);
-		ev = EXPR_ERROR;
-	} else {
+	} else if (stat(mh->mh_path, &st) == 0) {
 		switch (ex->ex_stat.s_stat) {
 		case EXPR_STAT_DIR:
 			if (S_ISDIR(st.st_mode))
