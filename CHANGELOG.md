@@ -1,3 +1,40 @@
+# v9.0.0 - 2021-01-22
+
+## Changes
+
+- Remove message blacklist functionality used during maildir traversal.
+  (3d8b345)
+  (Anton Lindqvist)
+
+- Remove support for the `sync` option used with `maildir`.
+  Thus, always making use of fsync(2).
+  (9d78550)
+  (Anton Lindqvist)
+
+## News
+
+- Add `isdirectory` matcher, evalutes to true if the path refers to an existing
+  directory.
+  Allows move actions to be made conditional based on the destination maildir.
+  (16a53aa)
+  (Anton Lindqvist)
+
+  ```
+  match header "To" /user\+(.+)@example.com/l and \
+    isdirectory "~/Maildir/\1" move "~/Maildir/\1"
+  ```
+
+- Best effort reduction of side effects when moving a message fails.
+  (8eae8da, c58d0bb)
+  (Anton Lindqvist)
+
+## Bug fixes
+
+- Check for presence of TAILQ_END during configure.
+  This macro is not present on macOS, use the compat version instead.
+  (b89983a)
+  (Anton Lindqvist)
+
 # v8.0.0 - 2020-12-16
 
 ## Changes
