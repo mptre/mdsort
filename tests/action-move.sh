@@ -35,10 +35,9 @@ if testcase "interpolation too long"; then
 		match header "To" /(.+)/ move "\1"
 	}
 	EOF
-	mdsort -e >"$TMP1"
-	if ! grep -q 'match_interpolate:' "$TMP1"; then
-		fail - "expected too long error" <"$TMP1"
-	fi
+	mdsort -e - <<-EOF
+	mdsort: match_interpolate: File name too long
+	EOF
 fi
 
 # Ensure error path is free from memory leaks.
