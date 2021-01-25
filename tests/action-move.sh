@@ -16,7 +16,7 @@ fi
 if testcase "destination missing"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all move "dst"
 	}
@@ -27,12 +27,12 @@ mdsort: opendir: dst/new: No such file or directory
 fi
 
 if testcase "interpolation too long"; then
-	_to="user@$(genstr $PATH_MAX).com"
+	_to="user@$(genstr "$PATH_MAX").com"
 	mkmd "src"
 	mkmsg "src/new" -- "To" "$_to"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "To" /(.+)/ move "\1"
+		match header "To" /(.+)/ move "\\1"
 	}
 	EOF
 	mdsort -e - <<-EOF
@@ -44,9 +44,9 @@ fi
 if testcase "interpolation out of bounds"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match all move "/\0"
+		match all move "/\\0"
 	}
 	EOF
 	mdsort -e >/dev/null
@@ -61,7 +61,7 @@ if testcase -t fault "exdev"; then
 	that the ordering is preserved.
 	EOF
 	cat "$(findmsg -p "src/new")" >"$TMP1"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all move "dst"
 	}
