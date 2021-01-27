@@ -142,7 +142,7 @@ if testcase "action label with pre defined macros"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "$_label" ${TSHDIR}/src/new/*
+	assert_label "$_label" "$(findmsg "src/new")"
 fi
 
 if testcase "action exec with pre defined macros"; then

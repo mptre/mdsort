@@ -8,7 +8,7 @@ if testcase "no x-label header"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label label ${TSHDIR}/src/new/*
+	assert_label label "$(findmsg "src/new")"
 fi
 
 if testcase "x-label header present but empty"; then
@@ -21,7 +21,7 @@ if testcase "x-label header present but empty"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label label ${TSHDIR}/src/new/*
+	assert_label label "$(findmsg "src/new")"
 fi
 
 if testcase "multiple x-label headers"; then
@@ -39,8 +39,8 @@ if testcase "multiple x-label headers"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "one two label" ${TSHDIR}/src/new/*
-	assert_file ${TSHDIR}/src/new/* $TMP1
+	assert_label "one two label" "$(findmsg "src/new")"
+	assert_file "$(findmsg -p "src/new")" $TMP1
 fi
 
 if testcase "multiple labels and x-label present"; then
@@ -53,7 +53,7 @@ if testcase "multiple labels and x-label present"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "one two three" ${TSHDIR}/src/new/*
+	assert_label "one two three" "$(findmsg "src/new")"
 fi
 
 if testcase "multiple labels and no x-label present"; then
@@ -66,7 +66,7 @@ if testcase "multiple labels and no x-label present"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "one two" ${TSHDIR}/src/new/*
+	assert_label "one two" "$(findmsg "src/new")"
 fi
 
 if testcase "multiple labels already present"; then
@@ -79,7 +79,7 @@ if testcase "multiple labels already present"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "one two three two three" ${TSHDIR}/src/new/*
+	assert_label "one two three two three" "$(findmsg "src/new")"
 fi
 
 if testcase "many label actions"; then
@@ -92,7 +92,7 @@ if testcase "many label actions"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "1 2 3 4" ${TSHDIR}/src/new/*
+	assert_label "1 2 3 4" "$(findmsg "src/new")"
 fi
 
 if testcase "label and move"; then
@@ -106,7 +106,7 @@ if testcase "label and move"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	assert_label label ${TSHDIR}/dst/new/*
+	assert_label label "$(findmsg "dst/new")"
 fi
 
 if testcase "move and label"; then
@@ -120,7 +120,7 @@ if testcase "move and label"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	assert_label label ${TSHDIR}/dst/new/*
+	assert_label label "$(findmsg "dst/new")"
 fi
 
 if testcase "label and flag"; then
@@ -134,7 +134,7 @@ if testcase "label and flag"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "src/cur"
-	assert_label label ${TSHDIR}/src/cur/*
+	assert_label label "$(findmsg "src/cur")"
 fi
 
 if testcase "flag and label"; then
@@ -148,7 +148,7 @@ if testcase "flag and label"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "src/cur"
-	assert_label label ${TSHDIR}/src/cur/*
+	assert_label label "$(findmsg "src/cur")"
 fi
 
 if testcase "label and pass"; then
@@ -164,7 +164,7 @@ if testcase "label and pass"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	assert_label "user example" ${TSHDIR}/dst/new/*
+	assert_label "user example" "$(findmsg "dst/new")"
 fi
 
 if testcase "label and pass with interpolation"; then
@@ -180,7 +180,7 @@ if testcase "label and pass with interpolation"; then
 	mdsort
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	assert_label "user example" ${TSHDIR}/dst/new/*
+	assert_label "user example" "$(findmsg "dst/new")"
 fi
 
 if testcase "interpolation with no x-label header"; then
@@ -193,7 +193,7 @@ if testcase "interpolation with no x-label header"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label label ${TSHDIR}/src/new/*
+	assert_label label "$(findmsg "src/new")"
 fi
 
 if testcase "interpolation with x-label header"; then
@@ -206,7 +206,7 @@ if testcase "interpolation with x-label header"; then
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "label label" ${TSHDIR}/src/new/*
+	assert_label "label label" "$(findmsg "src/new")"
 fi
 
 # Ensure error path is free from memory leaks.

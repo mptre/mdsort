@@ -47,11 +47,7 @@ _assert_find() {
 assert_label() {
 	local _got
 
-	if [ $# -ne 2 ]; then
-		fail "assert_label: too many arguments: ${*}"
-	fi
-
-	_got="$(sed -n -e '/^X-Label/s/^[^:]*: //p' "$2")"
+	_got="$(sed -n -e '/^X-Label/s/^[^:]*: //p' "${TSHDIR}/$2")"
 	assert_eq "$1" "$_got"
 }
 
@@ -84,6 +80,7 @@ cppvar() {
 # findmsg [-p] [-g pattern] dir
 findmsg() {
 	local _cmd="sed s,${TSHDIR}/,,"
+	local _tmp="${TSHDIR}/findmsg"
 	local _pattern="."
 
 	while [ $# -gt 0 ]; do
@@ -97,7 +94,13 @@ findmsg() {
 
 	find "${TSHDIR}/${1}" -type f |
 	xargs grep -l "$_pattern" |
-	$_cmd
+	$_cmd >"$_tmp"
+
+	if [ "$(wc -l "$_tmp" | awk '{print $1}')" -ne 1 ]; then
+		fail - "expected to find only one message" <"$_tmp"
+	fi
+
+	cat "$_tmp"
 }
 
 # genstr length
