@@ -285,6 +285,30 @@ if testcase "pattern delimiter"; then
 	refute_empty "dst/new"
 fi
 
+# Exercise header reallocation logic.
+if testcase "many headers"; then
+	mkmd "src" "dst"
+	mkmsg "src/new"
+	cp "$(findmsg -p "src/new")" "$TMP1"
+	{
+		_i=0
+		while [ "$_i" -lt 32 ]; do
+			echo "$(genstr "$((RANDOM % 128))"): $(genstr "$((RANDOM % 128))")"
+			_i=$((_i + 1))
+		done
+
+		cat "$TMP1"
+	} >"$(findmsg -p "src/new")"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
 if testcase -t fault "readdir failure"; then
 	mkmd "src"
 	mkmsg "src/new"

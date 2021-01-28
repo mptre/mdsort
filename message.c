@@ -566,21 +566,23 @@ static struct header *
 message_headers_alloc(struct message *msg)
 {
 	struct header *hdr;
-	size_t newsize;
+	size_t siz;
 
 	if (msg->me_headers.h_nmemb + 1 < msg->me_headers.h_size)
 		goto out;
 
-	if (msg->me_headers.h_size == 0)
-		newsize = 16;
+	siz = msg->me_headers.h_size;
+	if (siz == 0)
+		siz = 16;
+	else if (siz > SIZE_T_MAX / 2)
+		errc(1, EOVERFLOW, "%s", __func__);
 	else
-		newsize = msg->me_headers.h_size * 2;
-
-	msg->me_headers.h_v = reallocarray(msg->me_headers.h_v, newsize,
+		siz *= 2;
+	msg->me_headers.h_v = reallocarray(msg->me_headers.h_v, siz,
 	    sizeof(*msg->me_headers.h_v));
 	if (msg->me_headers.h_v == NULL)
 		err(1, NULL);
-	msg->me_headers.h_size = newsize;
+	msg->me_headers.h_size = siz;
 
 out:
 	hdr = &msg->me_headers.h_v[msg->me_headers.h_nmemb];
