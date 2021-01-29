@@ -174,27 +174,27 @@ fi
 if testcase "destination interpolation out of bounds"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "To" /./ move "\1"
+		match header "To" /./ move "\\1"
 	}
 	EOF
-	mdsort -e >$TMP1
-	grep -q '\\1/new: invalid back-reference' $TMP1 ||
-		fail - "expected back-reference to be invalid" <$TMP1
+	mdsort -e - <<-EOF
+	mdsort: \\1/new: invalid back-reference
+	EOF
 fi
 
 if testcase "destination interpolation out of range"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "To" /./ move "\99999999999999999999"
+		match header "To" /./ move "\\99999999999999999999"
 	}
 	EOF
-	mdsort -e >$TMP1
-	grep -q '9/new: invalid back-reference' $TMP1 ||
-		fail - "expected back-reference to be invalid" <$TMP1
+	mdsort -e - <<-EOF
+	mdsort: \\99999999999999999999/new: invalid back-reference
+	EOF
 fi
 
 if testcase "destination interpolation negative"; then
@@ -226,27 +226,27 @@ fi
 if testcase "destination interpolation with none body/header"; then
 	mkmd "src" ""
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match new move "\1"
+		match new move "\\1"
 	}
 	EOF
-	mdsort -e >$TMP1
-	grep -q '\\1/new: invalid back-reference' $TMP1 ||
-		fail - "expected back-reference to be invalid" <$TMP1
+	mdsort -e - <<-EOF
+	mdsort: \\1/new: invalid back-reference
+	EOF
 fi
 
 if testcase "destination interpolation with negate"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match ! header "To" /(user)/ or new move "\1"
+		match ! header "To" /(user)/ or new move "\\1"
 	}
 	EOF
-	mdsort -e >$TMP1
-	grep -q '\\1/new: invalid back-reference' $TMP1 ||
-		fail - "expected back-reference to be invalid" <$TMP1
+	mdsort -e - <<-EOF
+	mdsort: \\1/new: invalid back-reference
+	EOF
 fi
 
 if testcase "unknown option"; then
