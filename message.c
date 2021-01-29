@@ -9,6 +9,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdint.h>	/* SIZE_MAX */
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
@@ -574,7 +575,7 @@ message_headers_alloc(struct message *msg)
 	siz = msg->me_headers.h_size;
 	if (siz == 0)
 		siz = 16;
-	else if (siz > SIZE_T_MAX / 2)
+	else if (siz > SIZE_MAX / 2)
 		errc(1, EOVERFLOW, "%s", __func__);
 	else
 		siz *= 2;
