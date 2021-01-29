@@ -36,7 +36,7 @@ if testcase "interpolation too long"; then
 	}
 	EOF
 	mdsort -e - <<-EOF
-	mdsort: match_interpolate: File name too long
+	mdsort: match_interpolate: $(errno ENAMETOOLONG)
 	EOF
 fi
 

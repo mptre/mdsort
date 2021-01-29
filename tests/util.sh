@@ -77,6 +77,26 @@ cppvar() {
 	grep -v -e '^#' -e '^$' <"$_tmp" | tail -1
 }
 
+# errno num
+#
+# Get the human readable representation of the given errno.
+errno() {
+	local _num
+
+	_num="$1"; : "${_num:?}"
+	case "$_num" in
+	ENAMETOOLONG)
+		if [ "${MUSL:-0}" -eq 1 ]; then
+			echo "Filename too long"
+		else
+			echo "File name too long"
+		fi
+		;;
+	*)
+		fail "${_num}: unknown errno"
+	esac
+}
+
 # findmsg [-p] [-g pattern] dir
 findmsg() {
 	local _cmd="sed s,${TSHDIR}/,,"

@@ -51,6 +51,7 @@ jobs:
           - mode: musl
             cc: musl-gcc
             dependenices: musl-tools
+            musl: 1
             testflags: -Ttilde
 
           - mode: valgrind
@@ -74,6 +75,7 @@ jobs:
           CFLAGS: -Werror -Wpedantic -Wshadow ${{matrix.cflags}}
           DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
           EXEC: ${{matrix.exec}}
+          MUSL: ${{matrix.musl}}
           TESTFLAGS: -Tfdleak ${{matrix.testflags}}
           VALGRIND_OPTS: ${{matrix.valgrind}}
         run: |
