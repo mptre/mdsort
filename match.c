@@ -601,9 +601,11 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 brerr:
 	warnx("%s: invalid back-reference", str);
 	free(*buf);
+	*buf = NULL;
 	return 1;
 mcerr:
 	warnx("%s: invalid macro", str);
 	free(*buf);
+	*buf = NULL;
 	return 1;
 }
