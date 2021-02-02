@@ -594,6 +594,7 @@ expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
 	siz = sizeof(mh->mh_subdir);
 	if (strlcpy(mh->mh_subdir, subdir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
+		match_free(mh);
 		return EXPR_ERROR;
 	}
 
@@ -663,6 +664,7 @@ expr_eval_move(struct expr *ex, struct match_list *ml, struct message *msg,
 	siz = sizeof(mh->mh_maildir);
 	if (strlcpy(mh->mh_maildir, maildir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
+		match_free(mh);
 		return EXPR_ERROR;
 	}
 
