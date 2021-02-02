@@ -324,13 +324,13 @@ append(char **buf, size_t *bufsiz, size_t *buflen, const char *str)
 	while (*buflen + len + 1 >= *bufsiz) {
 		size_t newsiz;
 
-		newsiz = 2 * *bufsiz;
+		newsiz = *bufsiz;
 		if (newsiz == 0)
-			newsiz = 128;
-		*buf = realloc(*buf, newsiz);
+			newsiz = 64;	/* initial size 64 * 2 = 128 */
+		*buf = reallocarray(*buf, 2, newsiz);
 		if (*buf == NULL)
 			err(1, NULL);
-		*bufsiz = newsiz;
+		*bufsiz = 2 * newsiz;
 	}
 	memcpy(*buf + *buflen, str, len + 1);
 	*buflen += len;
