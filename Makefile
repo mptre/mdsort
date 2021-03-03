@@ -128,6 +128,7 @@ lint:
 
 test: all
 	${MAKE} -C ${.CURDIR}/tests \
+		"COREDUMP=${.CURDIR}" \
 		"MDSORT=${.OBJDIR}/${PROG}" \
 		"TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
