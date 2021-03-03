@@ -49,4 +49,4 @@ errc(int eval, int code, const char *fmt, ...)
 	va_end(ap);
 }
 
-#endif /* !HAVE_ERRC */
+#endif

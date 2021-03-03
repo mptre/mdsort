@@ -42,4 +42,4 @@ rrand(const char *path, uint32_t *r)
 	return 0;
 }
 
-#endif /* !HAVE_ARC4RANDOM */
+#endif

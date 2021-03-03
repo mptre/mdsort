@@ -49,4 +49,4 @@ warnc(int code, const char *fmt, ...)
 	va_end(ap);
 }
 
-#endif /* !HAVE_WARNC */
+#endif

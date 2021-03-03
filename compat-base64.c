@@ -323,4 +323,4 @@ b64_pton(src, target, targsize)
 	return (tarindex);
 }
 
-#endif /* !HAVE_B64_PTON */
+#endif

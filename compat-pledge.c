@@ -12,4 +12,4 @@ pledge(const char *UNUSED(promises), const char *UNUSED(execpromises))
 	return 0;
 }
 
-#endif /* !HAVE_PLEDGE */
+#endif
