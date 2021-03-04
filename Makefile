@@ -95,7 +95,7 @@ clean:
 
 dist:
 	set -e; \
-	d=${PROG}-${VERSION}; \
+	d=mdsort-${VERSION}; \
 	mkdir $$d; \
 	for f in ${DISTFILES}; do \
 		mkdir -p $$d/`dirname $$f`; \
@@ -109,8 +109,8 @@ dist:
 
 distclean: clean
 	rm -f ${.CURDIR}/config.h ${.CURDIR}/config.log ${.CURDIR}/config.mk \
-		${.CURDIR}/${PROG}-${VERSION}.tar.gz \
-		${.CURDIR}/${PROG}-${VERSION}.sha256
+		${.CURDIR}/mdsort-${VERSION}.tar.gz \
+		${.CURDIR}/mdsort-${VERSION}.sha256
 .PHONY: distclean
 
 install: all
