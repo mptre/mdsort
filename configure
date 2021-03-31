@@ -16,7 +16,7 @@ atexit() {
 }
 
 compile() {
-	$CC -Werror -o /dev/null -x c - $@
+	$CC $CPPFLAGS -Werror -o /dev/null -x c - $@
 }
 
 fatal() {
@@ -277,7 +277,6 @@ CC=$(makevar CC || fatal "CC: not defined")
 CFLAGS=$(DEBUG= makevar CFLAGS || :)
 CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
 CPPFLAGS="$(makevar CPPFLAGS || :)"
-CPPFLAGS="${CPPFLAGS} -I\${.CURDIR}"
 LDFLAGS="$(DEBUG= makevar LDFLAGS || :)"
 YACC=$(makevar YACC || fatal "YACC: not defined")
 YFLAGS="$(makevar YFLAGS || :)"
@@ -376,7 +375,7 @@ exec 1>config.mk
 cat <<EOF
 CC=		$(echo $CC)
 CFLAGS=		$(echo $CFLAGS)
-CPPFLAGS=	$(echo $CPPFLAGS)
+CPPFLAGS=	$(echo $CPPFLAGS -I\${.CURDIR})
 DEBUG=		$(echo $DEBUG)
 LDFLAGS=	$(echo $LDFLAGS)
 YACC=		$(echo $YACC)
