@@ -190,8 +190,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 }
 
 int
-matches_inspect(const struct match_list *ml, FILE *fh,
-    const struct environment *env)
+matches_inspect(const struct match_list *ml, const struct environment *env)
 {
 	const struct match *lhs, *mh;
 	const struct message *msg;
@@ -218,7 +217,7 @@ matches_inspect(const struct match_list *ml, FILE *fh,
 		for (;;) {
 			if (rhs == mh)
 				break;
-			expr_inspect(rhs->mh_expr, rhs, fh, env);
+			expr_inspect(rhs->mh_expr, rhs, env);
 			rhs = TAILQ_NEXT(rhs, mh_entry);
 		}
 		lhs = rhs;

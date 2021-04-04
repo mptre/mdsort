@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -37,8 +38,7 @@ static int expr_eval_pass(EXPR_EVAL_ARGS);
 static int expr_eval_reject(EXPR_EVAL_ARGS);
 static int expr_eval_stat(EXPR_EVAL_ARGS);
 
-static int expr_inspect_prefix(const struct expr *, FILE *,
-    const struct environment *);
+static int expr_inspect_prefix(const struct expr *, const struct environment *);
 static int expr_match(struct expr *, struct match_list *, struct message *);
 static int expr_regexec(struct expr *, struct match_list *, struct message *,
     const struct environment *, const char *, const char *);
@@ -325,7 +325,7 @@ expr_count_actions(const struct expr *ex)
  * Writes a human readable representation of the latest match to fh.
  */
 void
-expr_inspect(const struct expr *ex, const struct match *mh, FILE *fh,
+expr_inspect(const struct expr *ex, const struct match *mh,
     const struct environment *env)
 {
 	const char *lbeg, *lend, *p;
@@ -366,14 +366,14 @@ expr_inspect(const struct expr *ex, const struct match *mh, FILE *fh,
 			len = 0;
 
 		if (printkey) {
-			pindent += expr_inspect_prefix(ex, fh, env);
+			pindent += expr_inspect_prefix(ex, env);
 			printkey = 0;
-			fprintf(fh, "%s: ", mh->mh_key);
+			fprintf(stdout, "%s: ", mh->mh_key);
 		} else {
-			fprintf(fh, "%*s", pindent, "");
+			fprintf(stdout, "%*s", pindent, "");
 		}
 		indent = beg - (lbeg - mh->mh_val) + pindent;
-		fprintf(fh, "%.*s\n%*s^%*s$\n",
+		fprintf(stdout, "%.*s\n%*s^%*s$\n",
 		    (int)(lend - lbeg), lbeg, indent, "", len, "");
 	}
 }
@@ -795,8 +795,7 @@ out:
 }
 
 static int
-expr_inspect_prefix(const struct expr *ex, FILE *fh,
-    const struct environment *env)
+expr_inspect_prefix(const struct expr *ex, const struct environment *env)
 {
 	const char *path;
 	size_t len;
@@ -806,12 +805,12 @@ expr_inspect_prefix(const struct expr *ex, FILE *fh,
 	path = env->ev_confpath;
 	len = strlen(env->ev_home);
 	if (strncmp(path, env->ev_home, len) == 0) {
-		n = fprintf(fh, "~");
+		n = fprintf(stdout, "~");
 		if (n > 0)
 			nwrite += n;
 		path += len;
 	}
-	n = fprintf(fh, "%s:%d: ", path, ex->ex_lno);
+	n = fprintf(stdout, "%s:%d: ", path, ex->ex_lno);
 	if (n > 0)
 		nwrite += n;
 	return nwrite;

@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "extern.h"

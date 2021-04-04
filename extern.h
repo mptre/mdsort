@@ -7,7 +7,6 @@
 #include <dirent.h>
 #include <limits.h>
 #include <regex.h>
-#include <stdio.h>
 #include <time.h>
 
 #include "fault.h"
@@ -294,7 +293,7 @@ int expr_count_actions(const struct expr *);
 int expr_eval(struct expr *, struct match_list *, struct message *,
     const struct environment *);
 
-void expr_inspect(const struct expr *, const struct match *, FILE *,
+void expr_inspect(const struct expr *, const struct match *,
     const struct environment *);
 
 int matches_append(struct match_list *, struct match *);
@@ -306,8 +305,7 @@ int matches_interpolate(struct match_list *);
 int matches_exec(const struct match_list *, struct maildir *, int *,
     const struct environment *);
 
-int matches_inspect(const struct match_list *, FILE *,
-    const struct environment *);
+int matches_inspect(const struct match_list *, const struct environment *);
 
 struct match *match_alloc(struct expr *, struct message *);
 

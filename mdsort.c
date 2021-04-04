@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <paths.h>
 #include <pwd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -140,7 +141,7 @@ main(int argc, char *argv[])
 				goto loop;
 			}
 
-			if (matches_inspect(&matches, stdout, &env)) {
+			if (matches_inspect(&matches, &env)) {
 				/* Dry run, we're done. */
 				goto loop;
 			}
