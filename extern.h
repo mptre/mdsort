@@ -14,11 +14,9 @@
 /* Annotate the argument as unused. */
 #define UNUSED(x)	__##x __attribute__((__unused__))
 
-/* Forward declarations. */
-struct macro_list;
-struct match_list;
-struct message;
-struct message_list;
+/*
+ * environment -----------------------------------------------------------------
+ */
 
 struct environment {
 	char ev_home[PATH_MAX];
@@ -44,6 +42,12 @@ struct environment {
 #define OPTION_SYNTAX	0x00000002u
 #define OPTION_STDIN	0x00000004u
 };
+
+/*
+ * maildir ---------------------------------------------------------------------
+ */
+
+struct message;
 
 enum subdir {
 	SUBDIR_NEW,
@@ -82,6 +86,10 @@ int maildir_write(struct maildir *, struct message *,
      const struct environment *);
 
 int maildir_cmp(const struct maildir *, const struct maildir *);
+
+/*
+ * message ---------------------------------------------------------------------
+ */
 
 struct message_flags {
 	unsigned int mf_flags[2];	/* 0: uppercase, 1: lowercase */
@@ -140,6 +148,12 @@ int message_set_path(struct message *, const char *, const char *);
 struct message_list *message_get_attachments(struct message *);
 
 void message_list_free(struct message_list *);
+
+/*
+ * expr ------------------------------------------------------------------------
+ */
+
+struct match_list;
 
 enum expr_type {
 	/* blocks */
@@ -296,6 +310,12 @@ int expr_eval(struct expr *, struct match_list *, struct message *,
 void expr_inspect(const struct expr *, const struct match *,
     const struct environment *);
 
+/*
+ * matches ---------------------------------------------------------------------
+ */
+
+struct macro_list;
+
 int matches_append(struct match_list *, struct match *);
 
 void matches_clear(struct match_list *);
@@ -319,9 +339,16 @@ struct match *matches_find(struct match_list *, enum expr_type);
 
 int matches_remove(struct match_list *, enum expr_type);
 
-char *time_format(time_t, char *, size_t);
+/*
+ * time ------------------------------------------------------------------------
+ */
 
+char *time_format(time_t, char *, size_t);
 int time_parse(const char *, time_t *, const struct environment *);
+
+/*
+ * string ----------------------------------------------------------------------
+ */
 
 struct string {
 	char *val;
@@ -340,6 +367,10 @@ size_t strings_len(const struct string_list *);
 void strings_append(struct string_list *, char *);
 
 char *strings_concat(const struct string_list *, char *, size_t *, size_t *);
+
+/*
+ * macros ----------------------------------------------------------------------
+ */
 
 #define MACRO_CTX_DEFAULT	0x00000001u
 #define MACRO_CTX_ACTION	0x00000002u
@@ -372,6 +403,10 @@ struct macro *macros_find(const struct macro_list *, const char *);
 unsigned int macro_context(const char *);
 ssize_t ismacro(const char *, char **);
 
+/*
+ * config ----------------------------------------------------------------------
+ */
+
 struct config {
 	struct {
 		char *path;
@@ -391,6 +426,10 @@ struct config_list {
 struct config_list *config_parse(const char *, const struct environment *);
 
 void config_free(struct config_list *);
+
+/*
+ * util ------------------------------------------------------------------------
+ */
 
 char *pathjoin(char *, size_t, const char *, const char *);
 char *pathslice(const char *, char *, size_t, int, int);
