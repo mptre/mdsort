@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -14,6 +15,19 @@
 #include "extern.h"
 
 #define FLAGS_MAX	64
+
+enum subdir {
+	SUBDIR_NEW,
+	SUBDIR_CUR,
+};
+
+struct maildir {
+	char md_root[PATH_MAX];	/* root directory */
+	char md_path[PATH_MAX];	/* current directory */
+	DIR *md_dir;
+	enum subdir md_subdir;
+	unsigned int md_flags;
+};
 
 static int maildir_fd(const struct maildir *);
 static int maildir_genname(const struct maildir *, const char *,

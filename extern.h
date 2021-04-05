@@ -4,7 +4,6 @@
 #  include "compat-queue.h"
 #endif
 
-#include <dirent.h>
 #include <limits.h>
 #include <regex.h>
 #include <time.h>
@@ -49,20 +48,9 @@ struct environment {
 
 struct message;
 
-enum subdir {
-	SUBDIR_NEW,
-	SUBDIR_CUR,
-};
-
-struct maildir {
-	char md_root[PATH_MAX];	/* root directory */
-	char md_path[PATH_MAX];	/* current directory */
-	DIR *md_dir;
-	enum subdir md_subdir;
-	unsigned int md_flags;
+/* Flags passed to maildir_open(). */
 #define MAILDIR_WALK	0x00000001u
 #define MAILDIR_STDIN	0x00000002u
-};
 
 struct maildir_entry {
 	const char *e_dir;
