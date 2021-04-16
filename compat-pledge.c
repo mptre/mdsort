@@ -4,6 +4,9 @@ extern int unused;
 
 #ifndef HAVE_PLEDGE
 
+#include <stdint.h>
+#include <unistd.h>
+
 #include "extern.h"
 
 int
