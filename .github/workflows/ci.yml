@@ -33,6 +33,10 @@ jobs:
         include:
           - os: ubuntu-latest
             cppflags: -D_FORTIFY_SOURCE=2
+            nproc: nproc
+
+          - os: macos-latest
+            nproc: sysctl -n hw.logicalcpu
 
           - compiler: gcc
             cflags: -Wformat-signedness
@@ -82,11 +86,12 @@ jobs:
           set -ex
           [ -z "${{matrix.cc}}" ] || CC="${{matrix.cc}}"
           ${CC} -v
+          MAKE="make -j `${{matrix.nproc}}`"
           ./configure || :
           cat config.log
-          make test
+          ${MAKE} test
           # Ensure faults and assertions are free from side effects.
           CPPFLAGS="$(echo "$CPPFLAGS" | sed 's/-DDIAGNOSTIC//')"
           env CPPFLAGS="${CPPFLAGS} -DNDEBUG" ./configure || :
           cat config.log
-          make test "TESTFLAGS=${TESTFLAGS} -Tfault"
+          ${MAKE} test "TESTFLAGS=${TESTFLAGS} -Tfault"
