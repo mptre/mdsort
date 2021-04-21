@@ -1,4 +1,4 @@
-name: ci
+name: test
 
 on:
   - push
@@ -32,7 +32,6 @@ jobs:
 
         include:
           - os: ubuntu-latest
-            cppflags: -D_FORTIFY_SOURCE=2
             nproc: nproc
 
           - os: macos-latest
@@ -75,8 +74,8 @@ jobs:
         env:
           ASAN_OPTIONS: exitcode=66
           CC: ${{matrix.compiler}}
-          CPPFLAGS: -DDIAGNOSTIC ${{matrix.cppflags}}
           CFLAGS: -Werror -Wpedantic -Wshadow ${{matrix.cflags}}
+          CPPFLAGS: -DDIAGNOSTIC ${{matrix.cppflags}}
           DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
           EXEC: ${{matrix.exec}}
           MUSL: ${{matrix.musl}}
