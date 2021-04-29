@@ -2,6 +2,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -49,6 +50,8 @@ main(int argc, char *argv[])
 
 	if (pledge("stdio rpath wpath cpath fattr getpw proc exec", NULL) == -1)
 		err(1, "pledge");
+
+	setlocale(LC_CTYPE, "");
 
 	memset(&env, 0, sizeof(env));
 	TAILQ_INIT(&matches);

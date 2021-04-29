@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #include "extern.h"
 
@@ -42,6 +43,8 @@ static int expr_inspect_prefix(const struct expr *, const struct environment *);
 static int expr_match(struct expr *, struct match_list *, struct message *);
 static int expr_regexec(struct expr *, struct match_list *, struct message *,
     const struct environment *, const char *, const char *);
+
+static size_t strnwidth(const char *, size_t);
 
 /*
  * Allocate a new expression with the given type.
@@ -358,7 +361,7 @@ expr_inspect(const struct expr *ex, const struct match *mh,
 		if (lend == NULL)
 			lend = mh->mh_val + strlen(mh->mh_val);
 
-		len = end - beg;
+		len = strnwidth(mh->mh_val + beg, end - beg);
 		/* Try to compensate for the "^$" markers. */
 		if (len >= 2)
 			len -= 2;
@@ -856,4 +859,34 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 	}
 
 	return EXPR_MATCH;
+}
+
+static size_t
+strnwidth(const char *str, size_t len)
+{
+	size_t i;
+	size_t width = 0;
+
+	for (i = 0; i < len;) {
+		wchar_t wc;
+		int n;
+
+		n = mbtowc(&wc, &str[i], MB_CUR_MAX);
+		if (n == -1) {
+			mbtowc(NULL, NULL, MB_CUR_MAX);
+			i++;
+			width++;
+			continue;
+		}
+		if (n == 0)
+			break;
+		if (n > 0)
+			i += n;
+
+		n = wcwidth(wc);
+		if (n > 0)
+			width += n;
+	}
+
+	return width;
 }

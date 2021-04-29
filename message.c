@@ -54,10 +54,12 @@ static const char *findboundary(const char *, const char *, int *);
 static int parseboundary(const char *, char **);
 
 static char *b64decode(const char *);
+static unsigned char htoa(unsigned char, unsigned char *);
 static const char *skipline(const char *);
 static char *skipseparator(char *);
 static ssize_t strflags(unsigned int, unsigned char, char *, size_t);
 static int writefd(const char *);
+static char *qpdecode(const char *);
 
 char *
 message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
@@ -640,18 +642,21 @@ message_parse_headers(struct message *msg)
 static const char *
 message_decode_body(struct message *msg, const struct message *attachment)
 {
-	const char *encoding;
+	const char *enc;
 
-	encoding = message_get_header1(attachment, "Content-Transfer-Encoding");
-	if (encoding != NULL && strcmp(encoding, "base64") == 0) {
+	enc = message_get_header1(attachment, "Content-Transfer-Encoding");
+	if (enc != NULL && strcmp(enc, "base64") == 0) {
 		msg->me_buf_dec = b64decode(attachment->me_body);
 		if (msg->me_buf_dec == NULL)
 			warnx("%s: failed to decode body", msg->me_path);
+	} else if (enc != NULL && strcmp(enc, "quoted-printable") == 0) {
+		msg->me_buf_dec = qpdecode(attachment->me_body);
 	} else {
 		msg->me_buf_dec = strdup(attachment->me_body);
 		if (msg->me_buf_dec == NULL)
 			err(1, NULL);
 	}
+
 	return msg->me_buf_dec;
 }
 
@@ -972,6 +977,23 @@ b64decode(const char *str)
 	return (char *)buf;
 }
 
+/*
+ * Hexadecimal to ASCII.
+ */
+static unsigned char
+htoa(unsigned char c, unsigned char *res)
+{
+	if (c >= 'A' && c <= 'F') {
+		*res = 10 + (c - 'A');
+		return 0;
+	}
+	if (c >= '0' && c <= '9') {
+		*res = c - '0';
+		return 0;
+	}
+	return 1;
+}
+
 static const char *
 skipline(const char *s)
 {
@@ -1050,4 +1072,61 @@ writefd(const char *dir)
 		return -1;
 	}
 	return fd;
+}
+
+/*
+ * Decode quoted printable.
+ */
+static char *
+qpdecode(const char *str)
+{
+	char *buf;
+	size_t len;
+	size_t i = 0;
+	size_t j = 0;
+
+	len = strlen(str);
+	buf = malloc(len + 1);
+	if (buf == NULL)
+		err(1, NULL);
+
+	while (i < len) {
+		unsigned char hi, lo;
+
+		if (str[i] != '=') {
+			buf[j++] = str[i++];
+			continue;
+		}
+
+		if (i + 1 == len) {
+			/* '=' followed by nothing, copy as is. */
+			buf[j++] = str[i++];
+			break;
+		}
+
+		i++; /* consume '=' */
+		if (str[i] == '\n') {
+			/* Soft line break. */
+			i++;
+			continue;
+		}
+
+		if (i + 1 == len ||
+		    htoa(str[i], &hi) || htoa(str[i + 1], &lo)) {
+			/*
+			 * Either too few characters to make up a hexadecimal
+			 * representation or decoding failed. Copy the '=' and
+			 * let subsequent iterations copy the following
+			 * characters as is.
+			 */
+			buf[j++] = '=';
+			continue;
+		}
+
+		buf[j++] = (hi << 4) | lo;
+		i += 2;
+	}
+	buf[j] = '\0';
+
+	return buf;
 }

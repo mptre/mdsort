@@ -167,8 +167,9 @@ mdsort() {
 	_tmpdir="${TSHDIR}/_tmpdir"
 	mkdir "$_tmpdir"
 
-	(cd "$TSHDIR" && env "TMPDIR=${_tmpdir}" ${_fault} ${EXEC:-} \
-		"$MDSORT" $_args "$@") >"$_tmp" 2>&1 || _exit2="$?"
+	(cd "$TSHDIR" && env LC_ALL=en_US.UTF-8 "TMPDIR=${_tmpdir}" \
+		${_fault} ${EXEC:-} "$MDSORT" $_args "$@") \
+		>"$_tmp" 2>&1 || _exit2="$?"
 
 	# Find coredump(s) and optionally preserve them.
 	find "$TSHDIR" -name '*core*' >"$_core"
