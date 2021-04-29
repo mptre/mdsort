@@ -2,7 +2,7 @@
 
 ## News
 
-- Add support for decoding of qouted printable message bodies.
+- Add support for decoding of quoted printable message bodies.
   (61b9408)
   (Anton Lindqvist)
 
