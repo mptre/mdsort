@@ -197,6 +197,38 @@ mdsort() {
 	fi
 }
 
+# mkattach [-m multipart] dir -- type encoding body ...
+#
+# Create a message with one or many attachments.
+mkattach() {
+	local _mp="alternative"
+	local _body _dir _enc _type
+
+	while [ $# -gt 0 ]; do
+		case "$1" in
+		-m)	shift; _mp="$1";;
+		*)	break;;
+		esac
+		shift
+	done
+	_dir="$1"; : "${_dir:?}"; shift
+
+	while [ $# -gt 0 ]; do
+		_type="$1"; : "${_type:?}"; shift
+		_enc="$1"; : "${_enc:?}"; shift
+		_body="$1"; : "${_body:?}"; shift
+
+		printf -- '--boundary\nContent-Type: %s\n' "$_type"
+		if [ "$_enc" != "identity" ]; then
+			printf 'Content-Transfer-Encoding: %s\n' "$_enc"
+		fi
+		printf '\n%s\n' "$_body"
+
+		[ $# -eq 0 ] && printf -- '--boundary--\n'
+	done | mkmsg -H -b "$_dir" -- \
+		"Content-Type" "multipart/${_mp}; boundary=\"boundary\""
+}
+
 # mkmd dir ...
 mkmd() {
 	local _a _b
