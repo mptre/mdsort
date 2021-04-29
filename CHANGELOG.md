@@ -1,3 +1,11 @@
+# v9.1.0 - 2021-04-29
+
+## News
+
+- Add support for decoding of qouted printable message bodies.
+  (61b9408)
+  (Anton Lindqvist)
+
 # v9.0.0 - 2021-01-22
 
 ## Changes
