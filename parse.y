@@ -19,6 +19,7 @@ static int yygetc(void);
 static int yylex(void);
 static int yypeek(int);
 static void yyungetc(int);
+static void yyrecover(void);
 
 static void yypushl(int);
 static void yypopl(void);
@@ -118,9 +119,11 @@ typedef struct {
 %%
 
 grammar		: /* empty */
-		| grammar '\n'
-		| grammar macro '\n'
-		| grammar maildir '\n'
+		| grammar macro
+		| grammar maildir
+		| error {
+			yyrecover();
+		}
 		;
 
 macro		: MACRO '=' STRING {
@@ -166,21 +169,22 @@ maildir_path	: MAILDIR STRING {
 		}
 		;
 
-exprblock	: '{' optnl exprs '}' {
-			$$ = expr_alloc(EXPR_TYPE_BLOCK, lineno, $3, NULL);
+exprblock	: '{' exprs '}' {
+			$$ = expr_alloc(EXPR_TYPE_BLOCK, lineno, $2, NULL);
 		}
 		;
 
 exprs		: /* empty */ {
 			$$ = NULL;
 		}
-		| exprs expr nl {
+		| exprs expr {
 			if ($1 == NULL)
 				$$ = $2;
 			else
 				$$ = expr_alloc(EXPR_TYPE_OR, lineno, $1, $2);
 		}
-		| error nl {
+		| error {
+			yyrecover();
 			$$ = NULL;
 		}
 		;
@@ -415,13 +419,6 @@ optneg		: /* empty */ {
 		}
 		;
 
-optnl		: /* empty */
-		| '\n' optnl
-		;
-
-nl		: '\n' optnl
-		;
-
 %%
 
 /*
@@ -566,10 +563,8 @@ yylex(void)
 	lno = lineno;
 
 again:
-	for (c = yygetc(); c == ' ' || c == '\t'; c = yygetc())
+	for (c = yygetc(); isspace((unsigned char)c); c = yygetc())
 		continue;
-	if (c == '\\' && yypeek('\n'))
-		goto again;
 
 	/*
 	 * Macros must always be followed by `=', otherwise treat it as an
@@ -591,10 +586,8 @@ again:
 	if (c == '#') {
 		for (;;) {
 			c = yygetc();
-			if (c == '\n') {
-				yyungetc(c);
+			if (c == '\n')
 				goto again;
-			}
 			if (c == EOF)
 				return (token_save = 0);
 		}
@@ -827,6 +820,21 @@ yyungetc(int c)
 	if (c == '\n')
 		lineno--;
 	ungetc(c, yyfh);
+}
+
+/*
+ * Recover after encountering invalid grammar by discarding the current line.
+ */
+static void
+yyrecover(void)
+{
+	int c;
+
+	for (;;) {
+		c = yygetc();
+		if (c == '\n' || c == EOF)
+			break;
+	}
 }
 
 /*

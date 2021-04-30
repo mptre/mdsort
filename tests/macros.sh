@@ -70,7 +70,11 @@ if testcase -t memleak "macro not on root level"; then
 		dst = "dst"
 	}
 	EOF
-	mdsort -e - -- -n <<-EOF
+	mdsort -e -- -n >"$TMP1"
+	# Remove unstable output, some yacc implementations invokes yylex() more
+	# than once in case of an error.
+	sed -i -e '/unknown keyword: dst/d' "$TMP1"
+	assert_file - "$TMP1" <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
 fi

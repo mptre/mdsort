@@ -136,9 +136,6 @@ A rule starts with the
 .Ic match
 keyword followed by a condition then actions to perform if the condition
 evaluates to true.
-Each rule spans to the end of the current line but can extended over multiple
-lines using a backslash
-.Pq Sq \e .
 .Pp
 The conditions are as follows and may be negated:
 .Bl -tag -width Ds
@@ -344,7 +341,7 @@ inbox = "~/Maildir/INBOX"
 
 maildir "${inbox}" {
 	# Move messages from OpenBSD mailing lists into dedicated directories.
-	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i \e
+	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i
 		move "~/Maildir/openbsd-\e1"
 
 	# Label messages with the plus portion of the address.
@@ -352,12 +349,12 @@ maildir "${inbox}" {
 
 	# Conditionally move to a maildir named after the plus portion of the
 	# address.
-	match header "To" /user\e+(.+)@example.com/l and \e
+	match header "To" /user\e+(.+)@example.com/l and
 		isdirectory "~/Maildir/\e1" move "~/Maildir/\e1"
 
 	# Extract calendar attachments.
 	match all attachment {
-		match header "Content-Type" |text/calendar| \e
+		match header "Content-Type" |text/calendar|
 			exec stdin body "icalendar2calendar"
 	}
 

@@ -63,7 +63,7 @@ if testcase "comments"; then
 	cat <<-EOF >$CONF
 	# This is a comment.
 	maildir "~/Maildir/test1" {
-		match header "From" /user1@example.com/ \\
+		match header "From" /user1@example.com/
 			move "~/Maildir/user1" # comment
 			# move "~/Maildir/user2"
 		# Next rule...
@@ -89,16 +89,6 @@ if testcase "escape slash inside pattern"; then
 	}
 	EOF
 	mdsort - -- -n </dev/null
-fi
-
-if testcase -t memleak "rule must end with newline"; then
-	cat <<-EOF >$CONF
-	maildir "~/Maildir/test1" {
-		match header "From" /./ move "~/Maildir/Junk"}
-	EOF
-	mdsort -e - -- -n <<-EOF
-	mdsort.conf:2: syntax error
-	EOF
 fi
 
 if testcase "empty maildir path"; then

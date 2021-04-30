@@ -13,11 +13,11 @@ Example configuration:
 $ cat ~/.mdsort.conf
 maildir "~/Maildir/INBOX" {
 	# Move mdsort notifications from GitHub.
-	match header "From" /notifications@github.com/ and \
+	match header "From" /notifications@github.com/ and
 		header "Subject" /mdsort/ move "~/Maildir/mdsort"
 
 	# Move messages from OpenBSD mailing lists into dedicated directories.
-	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i \
+	match header { "Cc" "To" } /(bugs|misc|ports|tech)@openbsd.org/i
 		move "~/Maildir/openbsd-\1"
 
 	# Label messages with the plus portion of the address.
@@ -25,12 +25,12 @@ maildir "~/Maildir/INBOX" {
 
 	# Conditionally move to a maildir named after the plus portion of the
 	# address.
-	match header "To" /user\+(.+)@example.com/l and \
+	match header "To" /user\+(.+)@example.com/l and
 		isdirectory "~/Maildir/\1" move "~/Maildir/\1"
 
 	# Extract calendar attachments.
 	match all attachment {
-		match header "Content-Type" |text/calendar| \
+		match header "Content-Type" |text/calendar|
 			exec stdin body "icalendar2calendar"
 	}
 
