@@ -111,6 +111,22 @@ macros_init(struct macro_list *macros, unsigned int ctx)
 	TAILQ_INIT(&macros->ml_list);
 }
 
+void
+macros_free(struct macro_list *macros)
+{
+	struct macro *mc;
+
+	while ((mc = TAILQ_FIRST(&macros->ml_list)) != NULL) {
+		TAILQ_REMOVE(&macros->ml_list, mc, mc_entry);
+		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
+			free(mc->mc_name);
+			free(mc->mc_value);
+		}
+		if ((mc->mc_flags & MACRO_FLAG_STATIC) == 0)
+			free(mc);
+	}
+}
+
 int
 macros_insert(struct macro_list *macros, char *name, char *value,
     unsigned int flags, int lno)
@@ -119,8 +135,8 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 
 	if ((macro_context(name) & macros->ml_ctx) == 0)
 		return 1;
-	if (macros_find(macros, name) != NULL)
-		return 1;
+	if ((mc = macros_find(macros, name)) != NULL)
+		return !(mc->mc_flags & MACRO_FLAG_IMMUTABLE);
 
 	if (macros->ml_nmemb < macros->ml_size) {
 		mc = &macros->ml_v[macros->ml_nmemb++];

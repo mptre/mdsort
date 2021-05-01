@@ -355,9 +355,11 @@ struct macro {
 	unsigned int		 mc_flags;
 #define MACRO_FLAG_STATIC	0x00000001u	/* storage provided by ml_v */
 #define MACRO_FLAG_CONST	0x00000002u	/* may not be freed */
+#define MACRO_FLAG_IMMUTABLE	0x00000004u	/* not overriden, replace */
 
 	TAILQ_ENTRY(macro)	 mc_entry;
 };
+
 
 struct macro_list {
 	struct macro		ml_v[2];
@@ -365,10 +367,11 @@ struct macro_list {
 	size_t			ml_size;
 	unsigned int		ml_ctx;
 
-	TAILQ_HEAD(, macro)	ml_list;
+	TAILQ_HEAD(ml_list, macro) ml_list;
 };
 
 void		 macros_init(struct macro_list *, unsigned int);
+void		 macros_free(struct macro_list *);
 int		 macros_insert(struct macro_list *, char *, char *, unsigned int, int);
 void		 macros_insertc(struct macro_list *, const char *,
     const char *);
@@ -394,7 +397,7 @@ struct config_list {
 	TAILQ_HEAD(, config)	 cf_list;
 };
 
-struct config_list	*config_parse(const char *, const struct environment *);
+struct config_list	*config_parse(const char *, struct macro_list *, const struct environment *);
 void			 config_free(struct config_list *);
 
 /*

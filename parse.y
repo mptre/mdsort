@@ -24,7 +24,6 @@ static void yyrecover(void);
 static void yypushl(int);
 static void yypopl(void);
 
-static void macros_free(struct macro_list *);
 static void macros_validate(const struct macro_list *);
 
 static char *expand(char *, unsigned int);
@@ -450,7 +449,7 @@ optneg		: /* empty */ {
  * Otherwise, NULL is returned.
  */
 struct config_list *
-config_parse(const char *path, const struct environment *env)
+config_parse(const char *path, struct macro_list *macros, const struct environment *env)
 {
 	yyfh = fopen(path, "r");
 	if (yyfh == NULL) {
@@ -459,11 +458,7 @@ config_parse(const char *path, const struct environment *env)
 	}
 	yypath = path;
 	yyenv = env;
-
-	yyconfig.cf_macros = malloc(sizeof(*yyconfig.cf_macros));
-	if (yyconfig.cf_macros == NULL)
-		err(1, NULL);
-	macros_init(yyconfig.cf_macros, MACRO_CTX_DEFAULT);
+	yyconfig.cf_macros = macros;
 
 	TAILQ_INIT(&yyconfig.cf_list);
 
@@ -493,8 +488,6 @@ config_free(struct config_list *config)
 		expr_free(conf->expr);
 		free(conf);
 	}
-
-	macros_free(config->cf_macros);
 }
 
 static void
@@ -884,26 +877,6 @@ yypopl(void)
 
 	yylval.lineno = lineno_save;
 	lineno_save = -1;
-}
-
-static void
-macros_free(struct macro_list *macros)
-{
-	struct macro *mc;
-
-	if (macros == NULL)
-		return;
-
-	while ((mc = TAILQ_FIRST(&macros->ml_list)) != NULL) {
-		TAILQ_REMOVE(&macros->ml_list, mc, mc_entry);
-		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
-			free(mc->mc_name);
-			free(mc->mc_value);
-		}
-		if ((mc->mc_flags & MACRO_FLAG_STATIC) == 0)
-			free(mc);
-	}
-	free(macros);
 }
 
 static void
