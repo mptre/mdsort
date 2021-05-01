@@ -119,8 +119,14 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 
 	if ((macro_context(name) & macros->ml_ctx) == 0)
 		return 1;
-	if (macros_find(macros, name) != NULL)
+	if ((mc = macros_find(macros, name)) != NULL) {
+		if (mc->mc_flags & MACRO_FLAG_STICKY) {
+			if (flags & MACRO_FLAG_STICKY)
+				return 1;
+			return ++mc->mc_defs > 1;
+		}
 		return 1;
+	}
 
 	if (macros->ml_nmemb < macros->ml_size) {
 		mc = &macros->ml_v[macros->ml_nmemb++];
@@ -135,6 +141,7 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 	mc->mc_name = name;
 	mc->mc_value = value;
 	mc->mc_refs = 0;
+	mc->mc_defs = 0;
 	mc->mc_lno = lno;
 	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
 	return 0;

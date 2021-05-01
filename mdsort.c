@@ -57,8 +57,19 @@ main(int argc, char *argv[])
 	memset(&env, 0, sizeof(env));
 	TAILQ_INIT(&matches);
 
-	while ((c = getopt(argc, argv, "dnvf:")) != -1)
+	while ((c = getopt(argc, argv, "D:df:nv")) != -1)
 		switch (c) {
+		case 'D': {
+			char *eq;
+
+			if ((eq = strchr(optarg, '=')) == NULL)
+				errx(1, "missing macro separator: %s", optarg);
+			*eq = '\0';
+			if (macros_insert(&config.cl_macros, optarg, &eq[1],
+			    MACRO_FLAG_CONST | MACRO_FLAG_STICKY, 0))
+				errx(1, "invalid macro: %s", optarg);
+			break;
+		}
 		case 'd':
 			env.ev_options |= OPTION_DRYRUN;
 			break;
@@ -192,7 +203,8 @@ out:
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: mdsort [-dnv] [-f file] [-]\n");
+	fprintf(stderr, "usage: mdsort [-dnv] [-D macro=value] [-f file] "
+	    "[-]\n");
 	exit(1);
 }
 

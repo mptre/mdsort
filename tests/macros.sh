@@ -147,6 +147,69 @@ if testcase "macro used in wrong context"; then
 	EOF
 fi
 
+if testcase "sticky basic"; then
+	mkmd "src" "dst"
+	mkmsg "src/new"
+	cat <<-'EOF' >"$CONF"
+	maildir "${m}" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -- -D m=src
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "sticky precedence"; then
+	mkmd "src" "dst"
+	mkmsg "src/new"
+	cat <<-'EOF' >"$CONF"
+	m = "nein"
+	maildir "${m}" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -- -D m=src
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "sticky wrong context"; then
+	mdsort -e - -- -D path=src <<-EOF
+	mdsort: invalid macro: path
+	EOF
+fi
+
+if testcase "sticky redefined"; then
+	mdsort -e - -- -D one=1 -D one=2 <<-EOF
+	mdsort: invalid macro: one
+	EOF
+fi
+
+if testcase "sticky redefined config" ; then
+	cat <<-'EOF' >"$CONF"
+	m = "one"
+	m = "two"
+	maildir "${m}" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -e - -- -D m=nein <<-EOF
+	mdsort.conf:2: macro already defined: m
+	EOF
+fi
+
+if testcase "sticky unused"; then
+	cat <<-'EOF' >"$CONF"
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -e - -- -D unused=1 <<-EOF
+	mdsort.conf:0: unused macro: unused
+	EOF
+fi
+
 if testcase "action label with pre defined macros"; then
 	mkmd "src"
 	mkmsg "src/new"

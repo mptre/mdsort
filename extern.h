@@ -351,10 +351,12 @@ struct macro {
 	char			*mc_name;
 	char			*mc_value;
 	unsigned int		 mc_refs;
+	unsigned int		 mc_defs;
 	unsigned int		 mc_lno;
 	unsigned int		 mc_flags;
 #define MACRO_FLAG_STATIC	0x00000001u	/* storage provided by ml_v */
 #define MACRO_FLAG_CONST	0x00000002u	/* may not be freed */
+#define MACRO_FLAG_STICKY	0x00000004u	/* may not be overwritten */
 
 	TAILQ_ENTRY(macro)	 mc_entry;
 };
