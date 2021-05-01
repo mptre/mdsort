@@ -60,16 +60,12 @@ struct maildir_entry {
 
 struct maildir *maildir_open(const char *, unsigned int,
     const struct environment *);
-
 void maildir_close(struct maildir *);
 
 int maildir_walk(struct maildir *, struct maildir_entry *);
-
 int maildir_move(struct maildir *, const struct maildir *, struct message *,
     const struct environment *);
-
 int maildir_unlink(const struct maildir *, const char *);
-
 int maildir_write(struct maildir *, struct message *,
      const struct environment *);
 
@@ -84,9 +80,7 @@ struct message_flags {
 };
 
 char *message_flags_str(const struct message_flags *, char *, size_t);
-
 int message_flags_isset(const struct message_flags *, unsigned char);
-
 int message_flags_set(struct message_flags *, unsigned char, int);
 
 struct message {
@@ -115,26 +109,20 @@ struct message {
 TAILQ_HEAD(message_list, message);
 
 struct message *message_parse(const char *, int, const char *);
-
 void message_free(struct message *);
 
 int message_write(struct message *, int);
 
 int message_get_fd(struct message *, const struct environment *, int);
-
 const char *message_get_body(struct message *);
-
 const struct string_list *message_get_header(const struct message *,
     const char *);
-
 const char *message_get_header1(const struct message *, const char *);
 
 void message_set_header(struct message *, const char *, char *);
-
 int message_set_path(struct message *, const char *, const char *);
 
 struct message_list *message_get_attachments(struct message *);
-
 void message_list_free(struct message_list *);
 
 /*
@@ -271,22 +259,16 @@ struct match {
 TAILQ_HEAD(match_list, match);
 
 struct expr *expr_alloc(enum expr_type, int, struct expr *, struct expr *);
-
 void expr_free(struct expr *);
 
 void expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
     time_t);
-
 int expr_set_exec(struct expr *, struct string_list *, unsigned int);
-
 void expr_set_stat(struct expr *, char *, enum expr_stat);
-
 void expr_set_strings(struct expr *, struct string_list *);
-
 int expr_set_pattern(struct expr *, const char *, unsigned int, const char **);
 
 int expr_count(const struct expr *, enum expr_type);
-
 int expr_count_actions(const struct expr *);
 
 int expr_eval(struct expr *, struct match_list *, struct message *,
@@ -302,26 +284,18 @@ void expr_inspect(const struct expr *, const struct match *,
 struct macro_list;
 
 int matches_append(struct match_list *, struct match *);
-
 void matches_clear(struct match_list *);
-
 int matches_interpolate(struct match_list *);
-
 int matches_exec(const struct match_list *, struct maildir *, int *,
     const struct environment *);
-
 int matches_inspect(const struct match_list *, const struct environment *);
 
 struct match *match_alloc(struct expr *, struct message *);
-
 void match_free(struct match *);
 
 void match_copy(struct match *, const char *, const regmatch_t *, size_t);
-
 int match_interpolate(struct match *, const struct macro_list *);
-
 struct match *matches_find(struct match_list *, enum expr_type);
-
 int matches_remove(struct match_list *, enum expr_type);
 
 /*
@@ -346,15 +320,13 @@ struct string {
 TAILQ_HEAD(string_list, string);
 
 struct string_list *strings_alloc(void);
-
 void strings_free(struct string_list *);
-
-size_t strings_len(const struct string_list *);
 
 struct string *strings_append(struct string_list *, char *);
 struct string *strings_appendc(struct string_list *, const char *);
-
 char *strings_concat(const struct string_list *, char *, size_t *, size_t *);
+
+size_t strings_len(const struct string_list *);
 
 /*
  * macros ----------------------------------------------------------------------
@@ -389,6 +361,7 @@ int macros_insert(struct macro_list *, char *, char *, int);
 void macros_insertc(struct macro_list *, const char *, const char *);
 struct macro *macros_find(const struct macro_list *, const char *);
 unsigned int macro_context(const char *);
+
 ssize_t ismacro(const char *, char **);
 
 /*
@@ -409,7 +382,6 @@ struct config_list {
 };
 
 struct config_list *config_parse(const char *, const struct environment *);
-
 void config_free(struct config_list *);
 
 /*
