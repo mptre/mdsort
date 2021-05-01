@@ -7,6 +7,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl dnv
+.Op Fl D Ar macro=value
 .Op Fl f Ar file
 .Op Fl
 .Sh DESCRIPTION
@@ -26,6 +27,12 @@ output which messages would be moved with respect to the current rules.
 Specify an alternative configuration file.
 .It Fl n
 Check if the configuration file is valid.
+.It Fl D Ar macro=value
+Define
+.Ar macro
+to be set to
+.Ar value
+on the command line.
 .It Fl v
 Verbose mode.
 Multiple

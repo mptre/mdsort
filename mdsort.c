@@ -42,6 +42,7 @@ main(int argc, char *argv[])
 	struct maildir_entry me;
 	struct config_list *config;
 	struct config *conf;
+	struct macro_list macros;
 	struct maildir *md;
 	struct message *msg;
 	int c, w;
@@ -56,7 +57,9 @@ main(int argc, char *argv[])
 	memset(&env, 0, sizeof(env));
 	TAILQ_INIT(&matches);
 
-	while ((c = getopt(argc, argv, "dnvf:")) != -1)
+	macros_init(&macros, MACRO_CTX_DEFAULT);
+
+	while ((c = getopt(argc, argv, "dnvf:D:")) != -1)
 		switch (c) {
 		case 'd':
 			env.ev_options |= OPTION_DRYRUN;
@@ -70,6 +73,14 @@ main(int argc, char *argv[])
 		case 'v':
 			log_level++;
 			break;
+		case 'D': {
+			char *eq;
+			if ((eq = strchr(optarg, '=')) == NULL)
+				err(1, "invalid macro: %s", optarg);
+			*eq = '\0';
+			macros_inserti(&macros, optarg, eq + 1);
+			break;
+		}
 		default:
 			usage();
 		}
@@ -94,7 +105,7 @@ main(int argc, char *argv[])
 
 	if (env.ev_confpath == NULL)
 		env.ev_confpath = defaultconf(env.ev_home);
-	config = config_parse(env.ev_confpath, &env);
+	config = config_parse(env.ev_confpath, &macros, &env);
 	if (config == NULL) {
 		error = 1;
 		goto out;
@@ -160,6 +171,7 @@ loop:
 
 out:
 	config_free(config);
+	macros_free(&macros);
 
 	FAULT_SHUTDOWN();
 
@@ -177,7 +189,7 @@ static __dead void
 usage(void)
 {
 
-	fprintf(stderr, "usage: mdsort [-dnv] [-f file] [-]\n");
+	fprintf(stderr, "usage: mdsort [-dnv] [-D macro=value] [-f file] [-]\n");
 	exit(1);
 }
 
