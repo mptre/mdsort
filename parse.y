@@ -37,7 +37,7 @@ static const struct environment *yyenv;
 static FILE *yyfh;
 static const char *yypath;
 static char *stdinpath;
-static int lineno, lineno_save, parse_errors, pflag;
+static int lineno, lineno_save, sflag, parse_errors, pflag;
 
 typedef struct {
 	union {
@@ -102,6 +102,7 @@ typedef struct {
 %type <v.number>	exec_flag
 %type <v.number>	exec_flags
 %type <v.number>	optneg
+%type <v.number>	scalar
 %type <v.pattern>	PATTERN
 %type <v.pattern>	pattern
 %type <v.string>	MACRO
@@ -374,13 +375,21 @@ date_cmp	: '<' {
 		}
 		;
 
-date_age	: INT SCALAR {
+date_age	: INT scalar {
 			if ($1 > UINT_MAX / $2) {
 				yyerror("integer too large");
 				$$ = 0;
 			} else {
 				$$ = $1 * $2;
 			}
+		}
+		;
+
+scalar		: /* backdoor */ {
+			sflag = 1;
+		} SCALAR {
+			sflag = 0;
+			$$ = $2;
 		}
 		;
 
@@ -693,10 +702,6 @@ again:
 	}
 
 	if (islower((unsigned char)c)) {
-		size_t len;
-		int ambiguous = 0;
-		int match = -1;
-
 		for (; islower((unsigned char)c); c = yygetc()) {
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("keyword too long");
@@ -711,20 +716,26 @@ again:
 			if (strcmp(lexeme, keywords[i].str) == 0)
 				return (token_save = keywords[i].type);
 
-		len = strlen(lexeme);
-		for (i = 0; scalars[i].str != NULL; i++) {
-			if (strncmp(lexeme, scalars[i].str, len) == 0) {
-				if (match >= 0)
-					ambiguous++;
-				match = i;
+		if (sflag) {
+			size_t len;
+			int ambiguous = 0;
+			int match = -1;
+
+			len = strlen(lexeme);
+			for (i = 0; scalars[i].str != NULL; i++) {
+				if (strncmp(lexeme, scalars[i].str, len) == 0) {
+					if (match >= 0)
+						ambiguous++;
+					match = i;
+				}
 			}
-		}
-		if (ambiguous) {
-			yyerror("ambiguous keyword: %s", lexeme);
-			return (token_save = SCALAR);
-		} else if (match >= 0) {
-			yylval.v.number = scalars[match].val;
-			return (token_save = SCALAR);
+			if (ambiguous) {
+				yyerror("ambiguous keyword: %s", lexeme);
+				return (token_save = SCALAR);
+			} else if (match >= 0) {
+				yylval.v.number = scalars[match].val;
+				return (token_save = SCALAR);
+			}
 		}
 
 		yylval.v.string = strdup(lexeme);

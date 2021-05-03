@@ -64,6 +64,18 @@ if testcase "collision with keyword"; then
 	EOF
 fi
 
+if testcase "collision with date scalar"; then
+	cat <<-EOF >$CONF
+	s = "src"
+	seconds = "dst"
+
+	maildir "\${s}" {
+		match all move "\${seconds}"
+	}
+	EOF
+	mdsort -- -n
+fi
+
 if testcase -t memleak "macro not on root level"; then
 	cat <<-EOF >$CONF
 	maildir "src" {
