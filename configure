@@ -274,8 +274,8 @@ HAVE_YYSTYPE=0
 DEBUG="$(makevar DEBUG || :)"
 
 CC=$(makevar CC || fatal "CC: not defined")
-CFLAGS=$(DEBUG= makevar CFLAGS || :)
-CFLAGS="${CFLAGS} ${DEBUG} -Wall -Wextra -MD -MP"
+CFLAGS="$(unset CFLAGS DEBUG; makevar CFLAGS || :) ${CFLAGS:-} ${DEBUG}"
+CFLAGS="${CFLAGS} -Wall -Wextra -MD -MP"
 CPPFLAGS="$(makevar CPPFLAGS || :)"
 LDFLAGS="$(DEBUG= makevar LDFLAGS || :)"
 YACC=$(makevar YACC || fatal "YACC: not defined")
