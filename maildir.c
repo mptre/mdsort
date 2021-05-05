@@ -527,11 +527,7 @@ maildir_rename(const struct maildir *src, const struct maildir *dst,
 		return 1;
 
 	if (renameat(maildir_fd(src), srcname, maildir_fd(dst), dstname) == -1) {
-		int errno_save;
-
-		errno_save = errno;
 		warn("renameat");
-		errno = errno_save;
 		return 1;
 	}
 	return 0;
