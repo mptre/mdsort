@@ -107,7 +107,6 @@ err:
 void
 maildir_close(struct maildir *md)
 {
-
 	if (md == NULL)
 		return;
 
@@ -287,7 +286,6 @@ maildir_write(struct maildir *src, struct message *msg,
 int
 maildir_cmp(const struct maildir *md1, const struct maildir *md2)
 {
-
 	if (md1->md_subdir > md2->md_subdir)
 		return 1;
 	if (md1->md_subdir < md2->md_subdir)
@@ -298,7 +296,6 @@ maildir_cmp(const struct maildir *md1, const struct maildir *md2)
 static const char *
 maildir_next(struct maildir *md)
 {
-
 	if (md->md_flags & MAILDIR_STDIN)
 		return NULL;
 
@@ -316,7 +313,6 @@ maildir_next(struct maildir *md)
 static int
 maildir_opendir(struct maildir *md, const char *path)
 {
-
 	if (md->md_dir != NULL)
 		closedir(md->md_dir);
 
@@ -333,7 +329,6 @@ maildir_opendir(struct maildir *md, const char *path)
 static int
 maildir_fd(const struct maildir *md)
 {
-
 	return dirfd(md->md_dir);
 }
 

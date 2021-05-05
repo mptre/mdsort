@@ -169,7 +169,6 @@ void
 expr_set_date(struct expr *ex, enum expr_date_field field,
     enum expr_date_cmp cmp, time_t age)
 {
-
 	assert(ex->ex_type == EXPR_TYPE_DATE);
 
 	ex->ex_date.d_field = field;
@@ -207,7 +206,6 @@ expr_set_exec(struct expr *ex, struct string_list *cmd, unsigned int flags)
 void
 expr_set_strings(struct expr *ex, struct string_list *strings)
 {
-
 	ex->ex_strings = strings;
 }
 
@@ -287,7 +285,6 @@ int
 expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
-
 	return ex->ex_eval(ex, ml, msg, env);
 }
 
@@ -385,7 +382,6 @@ static int
 expr_eval_all(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
     struct message *UNUSED(msg), const struct environment *UNUSED(env))
 {
-
 	return EXPR_MATCH;
 }
 
@@ -680,7 +676,6 @@ static int
 expr_eval_neg(struct expr *ex, struct match_list *ml, struct message *msg,
     const struct environment *env)
 {
-
 	assert(ex->ex_rhs == NULL);
 
 	switch (expr_eval(ex->ex_lhs, ml, msg, env)) {

@@ -550,7 +550,6 @@ message_flags_parse(struct message_flags *flags, const char *path)
 static int
 message_flags_resolve(unsigned char flag, unsigned int *idx, unsigned int *mask)
 {
-
 	if (isupper((unsigned char)flag)) {
 		*idx = 0;
 		*mask = 1 << (flag - 'A');
@@ -997,7 +996,6 @@ htoa(unsigned char c, unsigned char *res)
 static const char *
 skipline(const char *s)
 {
-
 	for (;;) {
 		if (*s == '\0')
 			return s;

@@ -468,7 +468,6 @@ matches_merge(struct match_list *ml, struct match *mh)
 static const char *
 match_get(const struct match *mh, unsigned int idx)
 {
-
 	if (idx >= mh->mh_nmatches)
 		return NULL;
 	return mh->mh_matches[idx].m_str;

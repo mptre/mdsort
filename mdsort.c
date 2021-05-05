@@ -176,7 +176,6 @@ out:
 static __dead void
 usage(void)
 {
-
 	fprintf(stderr, "usage: mdsort [-dnv] [-f file] [-]\n");
 	exit(1);
 }
