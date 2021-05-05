@@ -29,8 +29,8 @@
 
 static int config_has_exec(const struct config_list *,
     const struct environment *);
-static int config_skip(const struct config *, const struct environment *);
 static const char *defaultconf(const char *);
+static int maildir_skip(const struct config *, const struct environment *);
 static void readenv(struct environment *);
 static __dead void usage(void);
 
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 		goto out;
 
 	TAILQ_FOREACH(conf, &config->cf_list, entry) {
-		if (config_skip(conf, &env))
+		if (maildir_skip(conf, &env))
 			continue;
 
 		md = maildir_open(conf->maildir.path, conf->maildir.flags,
@@ -193,27 +193,13 @@ config_has_exec(const struct config_list *config, const struct environment *env)
 		return 0;
 
 	TAILQ_FOREACH(conf, &config->cf_list, entry) {
-		if (config_skip(conf, env))
+		if (maildir_skip(conf, env))
 			continue;
 		if (expr_count(conf->expr, EXPR_TYPE_EXEC) > 0)
 			return 1;
 	}
 
 	return 0;
-}
-
-/*
- * Returns non-zero if the given configuration must be skipped.
- * Maildir configurations must be skipped when running in stdin mode and vice
- * versa.
- */
-static int
-config_skip(const struct config *conf, const struct environment *env)
-{
-	int dostdin = env->ev_options & OPTION_STDIN;
-
-	return (dostdin && (conf->maildir.flags & MAILDIR_STDIN) == 0) ||
-	    (!dostdin && (conf->maildir.flags & MAILDIR_STDIN));
 }
 
 static const char *
@@ -227,6 +213,19 @@ defaultconf(const char *home)
 	if (n < 0 || n >= siz)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return path;
+}
+
+/*
+ * Returns non-zero if the given maildir must be skipped. Maildirs must be
+ * skipped when running in stdin mode and vice versa.
+ */
+static int
+maildir_skip(const struct config *conf, const struct environment *env)
+{
+	int dostdin = env->ev_options & OPTION_STDIN;
+
+	return (dostdin && (conf->maildir.flags & MAILDIR_STDIN) == 0) ||
+	    (!dostdin && (conf->maildir.flags & MAILDIR_STDIN));
 }
 
 static void
