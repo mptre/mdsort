@@ -10,6 +10,7 @@
 #include "extern.h"
 
 int log_level = 0;
+const char *stdinpath = "/dev/stdin";
 
 /*
  * Allocate a list of strings.
@@ -361,6 +362,12 @@ appendc(char **buf, size_t *bufsiz, size_t *buflen, char ch)
 	str[0] = ch;
 	str[1] = '\0';
 	return append(buf, bufsiz, buflen, str);
+}
+
+int
+isstdin(const char *str)
+{
+	return str == stdinpath;
 }
 
 void

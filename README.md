@@ -38,7 +38,7 @@ maildir "~/Maildir/INBOX" {
 	match ! new move "~/Maildir/Archive"
 }
 
-maildir "~/Maildir/Trash" {
+maildir { "~/Maildir/Junk" "~/Maildir/Trash" } {
 	# Delete messages older than 2 weeks.
 	match date > 2 weeks discard
 }

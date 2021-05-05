@@ -399,10 +399,7 @@ ssize_t ismacro(const char *, char **);
  */
 
 struct config {
-	struct {
-		char *path;
-		unsigned int flags;
-	} maildir;
+	struct string_list *paths;
 	struct expr *expr;
 
 	TAILQ_ENTRY(config) entry;
@@ -429,6 +426,8 @@ size_t nspaces(const char *);
 
 size_t append(char **, size_t *, size_t *, const char *);
 size_t appendc(char **, size_t *, size_t *, char);
+
+int isstdin(const char *);
 
 extern int log_level;
 

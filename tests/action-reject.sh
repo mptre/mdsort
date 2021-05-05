@@ -14,9 +14,14 @@ if testcase "reject cannot be used outside stdin"; then
 	maildir "src" {
 		match all reject
 	}
+
+	maildir { "one" "two" } {
+		match all reject
+	}
 	EOF
 	mdsort -e - -- -n <<-EOF
 	mdsort.conf:3: reject cannot be used outside stdin
+	mdsort.conf:7: reject cannot be used outside stdin
 	EOF
 fi
 

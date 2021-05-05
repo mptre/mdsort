@@ -112,6 +112,10 @@ order where the first matching rule is favored.
 .Dq Ar path
 .Brq \& Ar rule ... \&
 .Xc
+.It Xo Ic maildir
+.Brq \& Ar path ... \&
+.Brq \& Ar rule ... \&
+.Xc
 A maildir rooted in
 .Ar path ;
 .Xr mdsort 1
@@ -362,7 +366,7 @@ maildir "${inbox}" {
 	match ! new move "~/Maildir/Archive"
 }
 
-maildir "~/Maildir/Trash" {
+maildir { "~/Maildir/Junk" "~/Maildir/Trash" } {
 	# Delete messages older than 2 weeks.
 	match date > 2 weeks discard
 }

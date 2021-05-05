@@ -30,7 +30,7 @@
 static int config_has_exec(const struct config_list *,
     const struct environment *);
 static const char *defaultconf(const char *);
-static int maildir_skip(const struct config *, const struct environment *);
+static int maildir_skip(const char *, const struct environment *);
 static void readenv(struct environment *);
 static __dead void usage(void);
 
@@ -109,53 +109,64 @@ main(int argc, char *argv[])
 		goto out;
 
 	TAILQ_FOREACH(conf, &config->cf_list, entry) {
-		if (maildir_skip(conf, &env))
-			continue;
+		const struct string *str;
 
-		md = maildir_open(conf->maildir.path, conf->maildir.flags,
-		    &env);
-		if (md == NULL) {
-			error = 1;
-			continue;
-		}
+		TAILQ_FOREACH(str, conf->paths, entry) {
+			const char *path = str->val;
+			unsigned int flags;
 
-		while ((w = maildir_walk(md, &me))) {
-			if (w == -1) {
+			if (maildir_skip(path, &env))
+				continue;
+
+			flags = MAILDIR_WALK;
+			if (isstdin(path))
+				flags |= MAILDIR_STDIN;
+			md = maildir_open(path, flags, &env);
+			if (md == NULL) {
 				error = 1;
-				break;
+				continue;
 			}
 
-			msg = message_parse(me.e_dir, me.e_dirfd, me.e_path);
-			if (msg == NULL) {
-				error = 1;
-				goto loop;
-			}
+			while ((w = maildir_walk(md, &me))) {
+				if (w == -1) {
+					error = 1;
+					break;
+				}
 
-			switch (expr_eval(conf->expr, &matches, msg, &env)) {
-			case EXPR_ERROR:
-				error = 1;
-				/* FALLTHROUGH */
-			case EXPR_NOMATCH:
-				goto loop;
-			}
+				msg = message_parse(me.e_dir, me.e_dirfd,
+				    me.e_path);
+				if (msg == NULL) {
+					error = 1;
+					goto loop;
+				}
 
-			if (matches_interpolate(&matches)) {
-				error = 1;
-				goto loop;
-			}
+				switch (expr_eval(conf->expr, &matches, msg,
+					    &env)) {
+				case EXPR_ERROR:
+					error = 1;
+					/* FALLTHROUGH */
+				case EXPR_NOMATCH:
+					goto loop;
+				}
 
-			if (matches_inspect(&matches, &env)) {
-				/* Dry run, we're done. */
-				goto loop;
-			}
+				if (matches_interpolate(&matches)) {
+					error = 1;
+					goto loop;
+				}
 
-			if (matches_exec(&matches, md, &reject, &env))
-				error = 1;
+				if (matches_inspect(&matches, &env)) {
+					/* Dry run, we're done. */
+					goto loop;
+				}
+
+				if (matches_exec(&matches, md, &reject, &env))
+					error = 1;
 loop:
-			message_free(msg);
-			matches_clear(&matches);
+				message_free(msg);
+				matches_clear(&matches);
+			}
+			maildir_close(md);
 		}
-		maildir_close(md);
 	}
 
 out:
@@ -193,10 +204,16 @@ config_has_exec(const struct config_list *config, const struct environment *env)
 		return 0;
 
 	TAILQ_FOREACH(conf, &config->cf_list, entry) {
-		if (maildir_skip(conf, env))
-			continue;
-		if (expr_count(conf->expr, EXPR_TYPE_EXEC) > 0)
-			return 1;
+		const struct string *str;
+
+		TAILQ_FOREACH(str, conf->paths, entry) {
+			if (maildir_skip(str->val, env))
+				continue;
+			if (expr_count(conf->expr, EXPR_TYPE_EXEC) > 0)
+				return 1;
+			/* All maildir paths share the same expression. */
+			break;
+		}
 	}
 
 	return 0;
@@ -220,12 +237,11 @@ defaultconf(const char *home)
  * skipped when running in stdin mode and vice versa.
  */
 static int
-maildir_skip(const struct config *conf, const struct environment *env)
+maildir_skip(const char *path, const struct environment *env)
 {
 	int dostdin = env->ev_options & OPTION_STDIN;
 
-	return (dostdin && (conf->maildir.flags & MAILDIR_STDIN) == 0) ||
-	    (!dostdin && (conf->maildir.flags & MAILDIR_STDIN));
+	return (dostdin && !isstdin(path)) || (!dostdin && isstdin(path));
 }
 
 static void
