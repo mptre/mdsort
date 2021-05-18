@@ -75,7 +75,7 @@ jobs:
           ASAN_OPTIONS: exitcode=66
           CC: ${{matrix.compiler}}
           CFLAGS: -Werror -Wpedantic -Wshadow ${{matrix.cflags}}
-          CPPFLAGS: -DDIAGNOSTIC ${{matrix.cppflags}}
+          CPPFLAGS: ${{matrix.cppflags}}
           DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
           EXEC: ${{matrix.exec}}
           MUSL: ${{matrix.musl}}
@@ -86,11 +86,10 @@ jobs:
           [ -z "${{matrix.cc}}" ] || CC="${{matrix.cc}}"
           ${CC} -v
           MAKE="make -j `${{matrix.nproc}}`"
-          ./configure || :
+          env CPPFLAGS="${CPPFLAGS} -DDIAGNOSTIC" ./configure || :
           cat config.log
           ${MAKE} test
           # Ensure faults and assertions are free from side effects.
-          CPPFLAGS="$(echo "$CPPFLAGS" | sed 's/-DDIAGNOSTIC//')"
           env CPPFLAGS="${CPPFLAGS} -DNDEBUG" ./configure || :
           cat config.log
           ${MAKE} test "TESTFLAGS=${TESTFLAGS} -Tfault"
