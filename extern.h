@@ -222,21 +222,18 @@ struct expr {
 			enum expr_date_cmp d_cmp;
 			enum expr_date_field d_field;
 			time_t d_age;
-		} u_date;
+		} ex_date;
 
 		struct {
 			unsigned int e_flags;
 #define EXPR_EXEC_STDIN	0x00000001u
 #define EXPR_EXEC_BODY	0x00000002u
-		} u_exec;
+		} ex_exec;
 
 		struct {
 			enum expr_stat s_stat;
-		} u_stat;
-	} ex_u;
-#define ex_date	ex_u.u_date
-#define ex_exec	ex_u.u_exec
-#define ex_stat	ex_u.u_stat
+		} ex_stat;
+	};
 
 	struct expr *ex_lhs;
 	struct expr *ex_rhs;

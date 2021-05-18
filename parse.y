@@ -51,7 +51,7 @@ typedef struct {
 		char *string;
 		struct string_list *strings;
 		time_t time;
-	} v;
+	};
 	int lineno;
 } YYSTYPE;
 
@@ -86,31 +86,31 @@ typedef struct {
 %token STRING
 %token SYNC
 
-%type <v.cmp>		date_cmp
-%type <v.expr>		expr
-%type <v.expr>		expr1
-%type <v.expr>		expr2
-%type <v.expr>		expr3
-%type <v.expr>		expraction
-%type <v.expr>		expractions
-%type <v.expr>		exprblock
-%type <v.expr>		exprs
-%type <v.field>		date_field
-%type <v.number>	INT
-%type <v.number>	SCALAR
-%type <v.number>	exec_flag
-%type <v.number>	exec_flags
-%type <v.number>	optneg
-%type <v.number>	scalar
-%type <v.pattern>	PATTERN
-%type <v.pattern>	pattern
-%type <v.string>	MACRO
-%type <v.string>	STRING
-%type <v.string>	flag
-%type <v.strings>	maildir_paths
-%type <v.strings>	stringblock
-%type <v.strings>	strings
-%type <v.time>		date_age
+%type <cmp>		date_cmp
+%type <expr>		expr
+%type <expr>		expr1
+%type <expr>		expr2
+%type <expr>		expr3
+%type <expr>		expraction
+%type <expr>		expractions
+%type <expr>		exprblock
+%type <expr>		exprs
+%type <field>		date_field
+%type <number>		INT
+%type <number>		SCALAR
+%type <number>		exec_flag
+%type <number>		exec_flags
+%type <number>		optneg
+%type <number>		scalar
+%type <pattern>		PATTERN
+%type <pattern>		pattern
+%type <string>		MACRO
+%type <string>		STRING
+%type <string>		flag
+%type <strings>		maildir_paths
+%type <strings>		stringblock
+%type <strings>		strings
+%type <time>		date_age
 
 %left AND OR
 %left NEG
@@ -605,7 +605,7 @@ again:
 	}
 
 	yylval.lineno = lineno;
-	yylval.v.number = c;
+	yylval.number = c;
 	if (c == EOF)
 		return (token_save = 0);
 	if (c == '!')
@@ -643,8 +643,8 @@ again:
 		len = strlen(lexeme);
 		if (len == 0)
 			yyerror("empty string");
-		yylval.v.string = strdup(lexeme);
-		if (yylval.v.string == NULL)
+		yylval.string = strdup(lexeme);
+		if (yylval.string == NULL)
 			err(1, NULL);
 		return (token_save = STRING);
 	}
@@ -668,24 +668,24 @@ again:
 			*buf++ = c;
 		}
 		*buf = '\0';
-		yylval.v.pattern.string = lexeme;
+		yylval.pattern.string = lexeme;
 
-		yylval.v.pattern.flags = 0;
+		yylval.pattern.flags = 0;
 		for (;;) {
 			c = yygetc();
 			switch (c) {
 			case 'i':
-				yylval.v.pattern.flags |= EXPR_PATTERN_ICASE;
+				yylval.pattern.flags |= EXPR_PATTERN_ICASE;
 				break;
 			case 'l':
-				if (yylval.v.pattern.flags & EXPR_PATTERN_UCASE)
+				if (yylval.pattern.flags & EXPR_PATTERN_UCASE)
 					yyerror("`l' and `u' flags cannot be combined");
-				yylval.v.pattern.flags |= EXPR_PATTERN_LCASE;
+				yylval.pattern.flags |= EXPR_PATTERN_LCASE;
 				break;
 			case 'u':
-				if (yylval.v.pattern.flags & EXPR_PATTERN_LCASE)
+				if (yylval.pattern.flags & EXPR_PATTERN_LCASE)
 					yyerror("`l' and `u' flags cannot be combined");
-				yylval.v.pattern.flags |= EXPR_PATTERN_UCASE;
+				yylval.pattern.flags |= EXPR_PATTERN_UCASE;
 				break;
 			default:
 				yyungetc(c);
@@ -697,24 +697,24 @@ again:
 	if (isdigit((unsigned char)c)) {
 		int overflow = 0;
 
-		yylval.v.number = 0;
+		yylval.number = 0;
 		for (; isdigit((unsigned char)c); c = yygetc()) {
 			if (overflow)
 				continue;
 
-			if (yylval.v.number > UINT_MAX / 10) {
+			if (yylval.number > UINT_MAX / 10) {
 				yyerror("integer too large");
 				overflow = 1;
 				continue;
 			}
-			yylval.v.number *= 10;
+			yylval.number *= 10;
 
-			if (yylval.v.number > UINT_MAX - (c - '0')) {
+			if (yylval.number > UINT_MAX - (c - '0')) {
 				yyerror("integer too large");
 				overflow = 1;
 				continue;
 			}
-			yylval.v.number += c - '0';
+			yylval.number += c - '0';
 		}
 		yyungetc(c);
 		return (token_save = INT);
@@ -752,13 +752,13 @@ again:
 				yyerror("ambiguous keyword: %s", lexeme);
 				return (token_save = SCALAR);
 			} else if (match >= 0) {
-				yylval.v.number = scalars[match].val;
+				yylval.number = scalars[match].val;
 				return (token_save = SCALAR);
 			}
 		}
 
-		yylval.v.string = strdup(lexeme);
-		if (yylval.v.string == NULL)
+		yylval.string = strdup(lexeme);
+		if (yylval.string == NULL)
 			err(1, NULL);
 		/*
 		 * At this point, it's unknown if a macro is expected. An error
