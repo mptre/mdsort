@@ -129,6 +129,7 @@ void message_list_free(struct message_list *);
  * expr ------------------------------------------------------------------------
  */
 
+struct match;
 struct match_list;
 
 enum expr_type {
@@ -232,6 +233,31 @@ struct expr {
 #define EXPR_NOMATCH	1
 #define EXPR_ERROR	-1
 
+struct expr *expr_alloc(enum expr_type, int, struct expr *, struct expr *);
+void expr_free(struct expr *);
+
+void expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
+    time_t);
+int expr_set_exec(struct expr *, struct string_list *, unsigned int);
+void expr_set_stat(struct expr *, char *, enum expr_stat);
+void expr_set_strings(struct expr *, struct string_list *);
+int expr_set_pattern(struct expr *, const char *, unsigned int, const char **);
+
+int expr_count(const struct expr *, enum expr_type);
+int expr_count_actions(const struct expr *);
+
+int expr_eval(struct expr *, struct match_list *, struct message *,
+    const struct environment *);
+
+void expr_inspect(const struct expr *, const struct match *,
+    const struct environment *);
+
+/*
+ * match ---------------------------------------------------------------------
+ */
+
+struct macro_list;
+
 struct match {
 	char mh_path[PATH_MAX];
 	char mh_maildir[PATH_MAX];
@@ -257,31 +283,6 @@ struct match {
 };
 
 TAILQ_HEAD(match_list, match);
-
-struct expr *expr_alloc(enum expr_type, int, struct expr *, struct expr *);
-void expr_free(struct expr *);
-
-void expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
-    time_t);
-int expr_set_exec(struct expr *, struct string_list *, unsigned int);
-void expr_set_stat(struct expr *, char *, enum expr_stat);
-void expr_set_strings(struct expr *, struct string_list *);
-int expr_set_pattern(struct expr *, const char *, unsigned int, const char **);
-
-int expr_count(const struct expr *, enum expr_type);
-int expr_count_actions(const struct expr *);
-
-int expr_eval(struct expr *, struct match_list *, struct message *,
-    const struct environment *);
-
-void expr_inspect(const struct expr *, const struct match *,
-    const struct environment *);
-
-/*
- * matches ---------------------------------------------------------------------
- */
-
-struct macro_list;
 
 int matches_append(struct match_list *, struct match *);
 void matches_clear(struct match_list *);
