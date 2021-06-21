@@ -125,7 +125,7 @@ install: all
 .PHONY: install
 
 lint:
-	mandoc -Tlint -Wstyle ${.CURDIR}/mdsort.1 ${.CURDIR}/mdsort.conf.5
+	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
 .PHONY: lint
 
 test: all
