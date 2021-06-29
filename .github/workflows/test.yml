@@ -73,7 +73,7 @@ jobs:
       - name: test
         env:
           ASAN_OPTIONS: exitcode=66
-          CC: ${{matrix.compiler}}
+          CC: ${{matrix.cc || matrix.compiler}}
           CFLAGS: -Werror -Wpedantic -Wshadow ${{matrix.cflags}}
           CPPFLAGS: ${{matrix.cppflags}}
           DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
@@ -83,7 +83,6 @@ jobs:
           VALGRIND_OPTS: ${{matrix.valgrind}}
         run: |
           set -ex
-          [ -z "${{matrix.cc}}" ] || CC="${{matrix.cc}}"
           ${CC} -v
           MAKE="make -j `${{matrix.nproc}}`"
           env CPPFLAGS="${CPPFLAGS} -DDIAGNOSTIC" ./configure || :
