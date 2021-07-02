@@ -1,3 +1,55 @@
+# v10.0.0 - 2021-07-02
+
+## Changes
+
+- Stop requiring explicit new lines in mdsort.conf.
+  (df1ab64)
+  (Anton Lindqvist)
+
+  The purpose of requiring explicit new lines after some grammar constructs was
+  to simplify error handling as it allowed the current line to be discarded.
+  This is a best effort approach allowing the parser to hopefully continue, in
+  the hopes of reporting more errors instead of halting.
+
+  Instead, stop requiring explicit new lines and skip the current line while
+  encountering an error. This makes line continuations (i.e. backslash)
+  redundant.
+
+  Existing configurations must be adjusted as follows:
+
+  ```
+  $ cat mdsort.conf
+  maildir "~/Maildir/INBOX" {
+    match date > 2 weeks \
+      move "~/Maildir/Archive"
+  }
+  $ sed -i -e 's/[[:space:]]*\\//' mdsort.conf
+  $ cat mdsort.conf
+  maildir "~/Maildir/INBOX" {
+    match date > 2 weeks
+      move "~/Maildir/Archive"
+  }
+  ```
+
+## News
+
+- Support more than one path per maildir declaration.
+  Allows the same rules to be applied to multiple maildirs.
+  (55f34f2)
+  (Anton Lindqvist)
+
+  ```
+  maildir { "~/Maildir/Junk" "~/Maildir/Trash" } {
+    match date modified > 2 weeks discard
+  }
+  ```
+
+## Bug fixes
+
+- Do not confuse macros and date scalars.
+  (3cf1e2e)
+  (Anton Lindqvist)
+
 # v9.1.0 - 2021-04-29
 
 ## News
