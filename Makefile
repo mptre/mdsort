@@ -25,6 +25,20 @@ SRCS+=	util.c
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
 
+KNFMT+=	compat-arc4random.c
+KNFMT+=	compat-pledge.c
+KNFMT+=	compat-utimensat.c
+KNFMT+=	expr.c
+KNFMT+=	extern.h
+KNFMT+=	fault.c
+KNFMT+=	fault.h
+KNFMT+=	maildir.c
+KNFMT+=	match.c
+KNFMT+=	mdsort.c
+KNFMT+=	message.c
+KNFMT+=	time.c
+KNFMT+=	util.c
+
 DISTFILES+=	CHANGELOG.md
 DISTFILES+=	GNUmakefile
 DISTFILES+=	LICENSE
@@ -115,6 +129,10 @@ distclean: clean
 		${.CURDIR}/mdsort-${VERSION}.sha256
 .PHONY: distclean
 
+format:
+	cd ${.CURDIR} && knfmt -i ${KNFMT}
+.PHONY: format
+
 install: all
 	@mkdir -p ${DESTDIR}${BINDIR}
 	${INSTALL} ${PROG} ${DESTDIR}${BINDIR}
@@ -126,6 +144,7 @@ install: all
 
 lint:
 	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
+	cd ${.CURDIR} && knfmt -d ${KNFMT}
 .PHONY: lint
 
 test: all
