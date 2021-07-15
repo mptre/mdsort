@@ -9,8 +9,8 @@
 
 #include "extern.h"
 
-int log_level = 0;
-const char *stdinpath = "/dev/stdin";
+int		 log_level = 0;
+const char	*stdinpath = "/dev/stdin";
 
 /*
  * Allocate a list of strings.
@@ -188,12 +188,12 @@ unsigned int
 macro_context(const char *name)
 {
 	static struct {
-		const char *name;
-		unsigned int ctx;
+		const char	*name;
+		unsigned int	 ctx;
 	} macros[] = {
 		{ "path",	MACRO_CTX_ACTION },
 
-		{ NULL,		MACRO_CTX_DEFAULT},
+		{ NULL,	MACRO_CTX_DEFAULT },
 	};
 	int i;
 

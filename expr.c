@@ -16,35 +16,37 @@
 #define EXPR_EVAL_ARGS	struct expr *, struct match_list *,	\
 	struct message *, const struct environment *
 
-static int expr_eval_all(EXPR_EVAL_ARGS);
-static int expr_eval_and(EXPR_EVAL_ARGS);
-static int expr_eval_attachment(EXPR_EVAL_ARGS);
-static int expr_eval_attachment_block(EXPR_EVAL_ARGS);
-static int expr_eval_block(EXPR_EVAL_ARGS);
-static int expr_eval_body(EXPR_EVAL_ARGS);
-static int expr_eval_break(EXPR_EVAL_ARGS);
-static int expr_eval_date(EXPR_EVAL_ARGS);
-static int expr_eval_discard(EXPR_EVAL_ARGS);
-static int expr_eval_exec(EXPR_EVAL_ARGS);
-static int expr_eval_flag(EXPR_EVAL_ARGS);
-static int expr_eval_header(EXPR_EVAL_ARGS);
-static int expr_eval_label(EXPR_EVAL_ARGS);
-static int expr_eval_match(EXPR_EVAL_ARGS);
-static int expr_eval_move(EXPR_EVAL_ARGS);
-static int expr_eval_neg(EXPR_EVAL_ARGS);
-static int expr_eval_new(EXPR_EVAL_ARGS);
-static int expr_eval_old(EXPR_EVAL_ARGS);
-static int expr_eval_or(EXPR_EVAL_ARGS);
-static int expr_eval_pass(EXPR_EVAL_ARGS);
-static int expr_eval_reject(EXPR_EVAL_ARGS);
-static int expr_eval_stat(EXPR_EVAL_ARGS);
+static int	expr_eval_all(EXPR_EVAL_ARGS);
+static int	expr_eval_and(EXPR_EVAL_ARGS);
+static int	expr_eval_attachment(EXPR_EVAL_ARGS);
+static int	expr_eval_attachment_block(EXPR_EVAL_ARGS);
+static int	expr_eval_block(EXPR_EVAL_ARGS);
+static int	expr_eval_body(EXPR_EVAL_ARGS);
+static int	expr_eval_break(EXPR_EVAL_ARGS);
+static int	expr_eval_date(EXPR_EVAL_ARGS);
+static int	expr_eval_discard(EXPR_EVAL_ARGS);
+static int	expr_eval_exec(EXPR_EVAL_ARGS);
+static int	expr_eval_flag(EXPR_EVAL_ARGS);
+static int	expr_eval_header(EXPR_EVAL_ARGS);
+static int	expr_eval_label(EXPR_EVAL_ARGS);
+static int	expr_eval_match(EXPR_EVAL_ARGS);
+static int	expr_eval_move(EXPR_EVAL_ARGS);
+static int	expr_eval_neg(EXPR_EVAL_ARGS);
+static int	expr_eval_new(EXPR_EVAL_ARGS);
+static int	expr_eval_old(EXPR_EVAL_ARGS);
+static int	expr_eval_or(EXPR_EVAL_ARGS);
+static int	expr_eval_pass(EXPR_EVAL_ARGS);
+static int	expr_eval_reject(EXPR_EVAL_ARGS);
+static int	expr_eval_stat(EXPR_EVAL_ARGS);
 
-static int expr_inspect_prefix(const struct expr *, const struct environment *);
-static int expr_match(struct expr *, struct match_list *, struct message *);
-static int expr_regexec(struct expr *, struct match_list *, struct message *,
-    const struct environment *, const char *, const char *);
+static int	expr_inspect_prefix(const struct expr *,
+    const struct environment *);
+static int	expr_match(struct expr *, struct match_list *,
+    struct message *);
+static int	expr_regexec(struct expr *, struct match_list *,
+    struct message *, const struct environment *, const char *, const char *);
 
-static size_t strnwidth(const char *, size_t);
+static size_t	strnwidth(const char *, size_t);
 
 /*
  * Allocate a new expression with the given type.
@@ -231,15 +233,15 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
     const char **errstr)
 {
 	struct {
-		unsigned int eflag;	/* expr pattern flag */
-		unsigned int pflag;	/* propagate expr pattern flag */
-		unsigned int rflag;	/* regcomp() flag(s) */
+		unsigned int	eflag;	/* expr pattern flag */
+		unsigned int	pflag;	/* propagate expr pattern flag */
+		unsigned int	rflag;	/* regcomp() flag(s) */
 	} fflags[] = {
 		{ EXPR_PATTERN_ICASE,	0,	REG_ICASE },
 		{ EXPR_PATTERN_LCASE,	1,	0 },
 		{ EXPR_PATTERN_UCASE,	1,	0 },
 
-		{ 0,			0,	0 },
+		{ 0,	0,	0 },
 	};
 	int error, i;
 	int rflags = REG_EXTENDED | REG_NEWLINE;
@@ -476,8 +478,8 @@ expr_eval_block(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_body(struct expr *ex, struct match_list *ml,
-    struct message *msg, const struct environment *env)
+expr_eval_body(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *env)
 {
 	const char *body;
 
@@ -485,7 +487,6 @@ expr_eval_body(struct expr *ex, struct match_list *ml,
 	if (body == NULL)
 		return EXPR_ERROR;
 	return expr_regexec(ex, ml, msg, env, "Body", body);
-
 }
 
 static int
@@ -506,8 +507,8 @@ expr_eval_break(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_date(struct expr *ex, struct match_list *ml,
-    struct message *msg, const struct environment *env)
+expr_eval_date(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *env)
 {
 	char buf[32];
 	const char *date;
@@ -603,8 +604,8 @@ expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_header(struct expr *ex, struct match_list *ml,
-    struct message *msg, const struct environment *env)
+expr_eval_header(struct expr *ex, struct match_list *ml, struct message *msg,
+    const struct environment *env)
 {
 	const struct string_list *values;
 	const struct string *key, *val;

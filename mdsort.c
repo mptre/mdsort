@@ -27,12 +27,12 @@
  */
 #define EX_PERMFAIL	1
 
-static int config_has_exec(const struct config_list *,
+static int		 config_has_exec(const struct config_list *,
     const struct environment *);
-static const char *defaultconf(const char *);
-static int maildir_skip(const char *, const struct environment *);
-static void readenv(struct environment *);
-static __dead void usage(void);
+static const char	*defaultconf(const char *);
+static int		 maildir_skip(const char *, const struct environment *);
+static void		 readenv(struct environment *);
+static __dead void	 usage(void);
 
 int
 main(int argc, char *argv[])
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 				}
 
 				switch (expr_eval(conf->expr, &matches, msg,
-					    &env)) {
+				    &env)) {
 				case EXPR_ERROR:
 					error = 1;
 					/* FALLTHROUGH */

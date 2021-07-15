@@ -3,8 +3,8 @@
 #define FAULT(probe)		fault((probe))
 #define FAULT_SHUTDOWN()	fault_shutdown()
 
-int fault(const char *);
-void fault_shutdown(void);
+int	fault(const char *);
+void	fault_shutdown(void);
 
 #else
 

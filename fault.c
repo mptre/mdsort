@@ -13,22 +13,22 @@
 #define ARGS_MAX	1024
 
 struct fault {
-	char fu_args[ARGS_MAX];
-	char fu_name[32];
-	int fu_errno;
-	unsigned int fu_hits;
+	char			fu_args[ARGS_MAX];
+	char			fu_name[32];
+	int			fu_errno;
+	unsigned int		fu_hits;
 
-	TAILQ_ENTRY(fault) fu_entry;
+	TAILQ_ENTRY(fault)	fu_entry;
 };
 
-TAILQ_HEAD(, fault) faults = TAILQ_HEAD_INITIALIZER(faults);
+TAILQ_HEAD(, fault)	faults = TAILQ_HEAD_INITIALIZER(faults);
 
-static void fault_init(void);
-static int fault_match(const char *);
+static void	fault_init(void);
+static int	fault_match(const char *);
 
-static const char *parse_attr(struct fault *, const char *, const char *);
+static const char	*parse_attr(struct fault *, const char *, const char *);
 
-static int cold = 1;
+static int	cold = 1;
 
 int
 fault(const char *name)

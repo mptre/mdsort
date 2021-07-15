@@ -9,12 +9,14 @@
 
 #include "extern.h"
 
-static const char *timeparse(const char *, struct tm *);
-static int tzparse(const char *, time_t *, const struct environment *);
-static int tzabbr(const char *, time_t *, const struct environment *);
-static int tzoff(const char *, time_t *);
+static const char	*timeparse(const char *, struct tm *);
+static int		 tzparse(const char *, time_t *,
+    const struct environment *);
+static int		 tzabbr(const char *, time_t *,
+    const struct environment *);
+static int		 tzoff(const char *, time_t *);
 
-static const char *formats[] = {
+static const char	*formats[] = {
 	"%a, %d %b %Y %H:%M:%S",
 	"%a, %d %b %Y %H:%M",
 	"%d %b %Y %H:%M:%S",

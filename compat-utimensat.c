@@ -27,8 +27,8 @@ utimensat(int fd, const char *path, const struct timespec times[2],
 	if (rfd == -1)
 		return -1;
 
-	if ((times[0].tv_nsec == UTIME_OMIT || times[1].tv_nsec == UTIME_OMIT)
-	    && fstat(rfd, &st) == -1) {
+	if ((times[0].tv_nsec == UTIME_OMIT ||
+	    times[1].tv_nsec == UTIME_OMIT) && fstat(rfd, &st) == -1) {
 		res = -1;
 		goto ret;
 	}

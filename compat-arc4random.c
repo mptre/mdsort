@@ -8,7 +8,7 @@ extern int unused;
 #include <stdint.h>
 #include <unistd.h>
 
-static int rrand(const char *, uint32_t *);
+static int	rrand(const char *, uint32_t *);
 
 uint32_t
 arc4random(void)

@@ -13,14 +13,14 @@
 
 #include "extern.h"
 
-static void matches_merge(struct match_list *, struct match *);
+static void	matches_merge(struct match_list *, struct match *);
 
-static const char *match_get(const struct match *, unsigned int);
+static const char	*match_get(const struct match *, unsigned int);
 
-static int exec(char *const *, int);
-static int interpolate(const struct match *, const struct macro_list *,
+static int	exec(char *const *, int);
+static int	interpolate(const struct match *, const struct macro_list *,
     const char *, char **);
-static ssize_t isbackref(const char *, unsigned int *);
+static ssize_t	isbackref(const char *, unsigned int *);
 
 /*
  * Append the given match to the list and construct the maildir destination path
@@ -77,7 +77,6 @@ matches_clear(struct match_list *ml)
 		TAILQ_REMOVE(ml, mh, mh_entry);
 		match_free(mh);
 	}
-
 }
 
 int
@@ -412,7 +411,6 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 			mh->mh_exec[nargs++] = arg;
 		}
 		break;
-
 	}
 
 	default:

@@ -19,47 +19,51 @@
 #include "extern.h"
 
 struct header {
-	unsigned int id;
+	unsigned int		 id;
 
-	unsigned int flags;
+	unsigned int		 flags;
 #define HEADER_FLAG_DIRTY	0x00000001u	/* val must be freed */
 
-	const char *key;
-	char *val;
-	struct string_list *values;	/* list of all values for key */
+	const char		*key;
+	char			*val;
+	struct string_list	*values;	/* list of all values for key */
 };
 
 struct slice {
-	char *s_beg;
-	char *s_end;
+	char	*s_beg;
+	char	*s_end;
 };
 
-static int message_flags_parse(struct message_flags *, const char *);
-static int message_flags_resolve(unsigned char, unsigned int *, unsigned int *);
-static struct header *message_headers_alloc(struct message *);
-static int message_is_content_type(const struct message *, const char *);
-static const char *message_parse_headers(struct message *);
-static const char *message_decode_body(struct message *,
+static int		 message_flags_parse(struct message_flags *,
+    const char *);
+static int		 message_flags_resolve(unsigned char, unsigned int *,
+    unsigned int *);
+static struct header	*message_headers_alloc(struct message *);
+static int		 message_is_content_type(const struct message *,
+    const char *);
+static const char	*message_parse_headers(struct message *);
+static const char	*message_decode_body(struct message *,
     const struct message *);
 
-static int cmpheaderid(const void *, const void *);
-static int cmpheaderkey(const void *, const void *);
-static int findheader(char *, struct slice *, struct slice *);
-static ssize_t searchheader(const struct header *, size_t, const char *,
+static int	 cmpheaderid(const void *, const void *);
+static int	 cmpheaderkey(const void *, const void *);
+static int	 findheader(char *, struct slice *, struct slice *);
+static ssize_t	 searchheader(const struct header *, size_t, const char *,
     size_t *);
-static char *unfoldheader(const char *);
+static char	*unfoldheader(const char *);
 
-static int parseattachments(struct message *, struct message_list *, int);
-static const char *findboundary(const char *, const char *, int *);
-static int parseboundary(const char *, char **);
+static int		 parseattachments(struct message *,
+    struct message_list *, int);
+static const char	*findboundary(const char *, const char *, int *);
+static int		 parseboundary(const char *, char **);
 
-static char *b64decode(const char *);
-static unsigned char htoa(unsigned char, unsigned char *);
-static const char *skipline(const char *);
-static char *skipseparator(char *);
-static ssize_t strflags(unsigned int, unsigned char, char *, size_t);
-static int writefd(const char *);
-static char *qpdecode(const char *);
+static char		*b64decode(const char *);
+static unsigned char	 htoa(unsigned char, unsigned char *);
+static const char	*skipline(const char *);
+static char		*skipseparator(char *);
+static ssize_t		 strflags(unsigned int, unsigned char, char *, size_t);
+static int		 writefd(const char *);
+static char		*qpdecode(const char *);
 
 char *
 message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
@@ -289,8 +293,7 @@ out:
  * The caller is responsible for closing the returned file descriptor.
  */
 int
-message_get_fd(struct message *msg, const struct environment *env,
-    int dobody)
+message_get_fd(struct message *msg, const struct environment *env, int dobody)
 {
 	int fd;
 
@@ -1022,7 +1025,6 @@ skipseparator(char *str)
 	if (p == NULL)
 		return str;
 	return p + 1;
-
 }
 
 static ssize_t

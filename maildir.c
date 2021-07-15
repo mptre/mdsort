@@ -22,28 +22,29 @@ enum subdir {
 };
 
 struct maildir {
-	char md_root[PATH_MAX];	/* root directory */
-	char md_path[PATH_MAX];	/* current directory */
-	DIR *md_dir;
-	enum subdir md_subdir;
-	unsigned int md_flags;
+	char		 md_root[PATH_MAX];	/* root directory */
+	char		 md_path[PATH_MAX];	/* current directory */
+	DIR		*md_dir;
+	enum subdir	 md_subdir;
+	unsigned int	 md_flags;
 };
 
-static int maildir_fd(const struct maildir *);
-static int maildir_genname(const struct maildir *, const char *,
+static int		 maildir_fd(const struct maildir *);
+static int		 maildir_genname(const struct maildir *, const char *,
     char *, size_t, const struct environment *);
-static const char *maildir_next(struct maildir *);
-static int maildir_opendir(struct maildir *, const char *);
-static int maildir_stdin(struct maildir *, const struct environment *);
-static const char *maildir_set_path(struct maildir *);
-static int maildir_read(struct maildir *, struct maildir_entry *);
-static int maildir_rename(const struct maildir *, const struct maildir *,
-    const char *, const char *);
+static const char	*maildir_next(struct maildir *);
+static int		 maildir_opendir(struct maildir *, const char *);
+static int		 maildir_stdin(struct maildir *,
+    const struct environment *);
+static const char	*maildir_set_path(struct maildir *);
+static int		 maildir_read(struct maildir *, struct maildir_entry *);
+static int		 maildir_rename(const struct maildir *,
+    const struct maildir *, const char *, const char *);
 
-static int isfile(int, const char *);
-static int msgflags(const struct maildir *, const struct maildir *,
+static int	isfile(int, const char *);
+static int	msgflags(const struct maildir *, const struct maildir *,
     const struct message *, char *, size_t);
-static int parsesubdir(const char *, enum subdir *);
+static int	parsesubdir(const char *, enum subdir *);
 
 /*
  * Open the maildir directory located at path.
@@ -338,8 +339,8 @@ maildir_fd(const struct maildir *md)
  * Otherwise, -1 is returned.
  */
 static int
-maildir_genname(const struct maildir *dst, const char *flags,
-    char *buf, size_t bufsiz, const struct environment *env)
+maildir_genname(const struct maildir *dst, const char *flags, char *buf,
+    size_t bufsiz, const struct environment *env)
 {
 	long long ts;
 	unsigned int count;
@@ -401,7 +402,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	int error = 0;
 
 	if (pathjoin(md->md_root, sizeof(md->md_root), env->ev_tmpdir,
-		    "mdsort-XXXXXXXX") == NULL) {
+	    "mdsort-XXXXXXXX") == NULL) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return 1;
 	}
@@ -521,7 +522,8 @@ maildir_rename(const struct maildir *src, const struct maildir *dst,
 	if (FAULT("maildir_rename"))
 		return 1;
 
-	if (renameat(maildir_fd(src), srcname, maildir_fd(dst), dstname) == -1) {
+	if (renameat(maildir_fd(src), srcname, maildir_fd(dst), dstname) ==
+	    -1) {
 		warn("renameat");
 		return 1;
 	}
