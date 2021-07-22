@@ -172,3 +172,19 @@ if testcase -t fdleak "file descriptors"; then
 	EOF
 	mdsort >/dev/null
 fi
+
+if testcase "label and exec"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all label "label" exec stdin "cat"
+	}
+	EOF
+	mdsort >"$TMP1"
+	assert_file - "$TMP1" <<-EOF
+	Content-Type: text/plain
+	X-Label: label
+
+	EOF
+fi

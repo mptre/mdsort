@@ -468,8 +468,13 @@ message_set_header(struct message *msg, const char *header, char *val)
 	}
 }
 
+/*
+ * Associate the given message with a new file. If fd is not equal to -1, it is
+ * expected to reference the new file.
+ */
 int
-message_set_path(struct message *msg, const char *path, const char *name)
+message_set_file(struct message *msg, const char *path, const char *name,
+    int fd)
 {
 	size_t siz;
 
@@ -485,6 +490,12 @@ message_set_path(struct message *msg, const char *path, const char *name)
 	if (strlcpy(msg->me_name, name, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return 1;
+	}
+
+	if (fd != -1) {
+		if (msg->me_fd != -1)
+			close(msg->me_fd);
+		msg->me_fd = fd;
 	}
 
 	return 0;

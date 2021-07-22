@@ -122,7 +122,7 @@ const char			*message_get_header1(const struct message *,
     const char *);
 
 void	message_set_header(struct message *, const char *, char *);
-int	message_set_path(struct message *, const char *, const char *);
+int	message_set_file(struct message *, const char *, const char *, int);
 
 struct message_list	*message_get_attachments(struct message *);
 void			 message_list_free(struct message_list *);

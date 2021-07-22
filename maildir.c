@@ -223,7 +223,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	}
 
 	if (error == 0)
-		error = message_set_path(msg, dst->md_path, dstname);
+		error = message_set_file(msg, dst->md_path, dstname, -1);
 
 	return error;
 }
@@ -263,7 +263,6 @@ maildir_write(struct maildir *src, struct message *msg,
 		return 1;
 
 	error = message_write(msg, fd);
-	close(fd);
 	if (error == 0)
 		error = maildir_unlink(src, msg->me_name);
 
@@ -275,9 +274,30 @@ maildir_write(struct maildir *src, struct message *msg,
 	if (error)
 		(void)maildir_unlink(src, name);
 
-	if (error == 0)
-		error = message_set_path(msg, src->md_path, name);
+	if (error == 0) {
+		int rdfd;
 
+		/*
+		 * Update the message fd as the newly written message might have
+		 * been modified due to addition of headers etc. This is of
+		 * importance to let any following action(s) operating on the
+		 * same message to observe the modifications. Note, a message fd
+		 * must be readable as opposed of the one from maildir_genname()
+		 * which is only writeable.
+		 */
+		rdfd = openat(maildir_fd(src), name, O_RDONLY | O_CLOEXEC);
+		if (rdfd == -1) {
+			warn("openat: %s/%s", src->md_path, name);
+			error = 1;
+			goto out;
+		}
+		error = message_set_file(msg, src->md_path, name, rdfd);
+		if (error)
+			close(rdfd);
+	}
+
+out:
+	close(fd);
 	return error;
 }
 
