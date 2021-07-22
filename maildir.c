@@ -385,7 +385,7 @@ maildir_genname(const struct maildir *md, const char *flags, char *buf,
 				    __func__, buf);
 				continue;
 			}
-			warn("openat: %s", buf);
+			warn("openat: %s/%s", md->md_path, buf);
 			return -1;
 		}
 		return fd;
