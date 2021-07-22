@@ -250,21 +250,21 @@ maildir_unlink(const struct maildir *md, const char *path)
  * assuming the write succeeded.
  */
 int
-maildir_write(struct maildir *src, struct message *msg,
+maildir_write(struct maildir *md, struct message *msg,
     const struct environment *env)
 {
 	char flags[FLAGS_MAX], name[NAME_MAX + 1];
 	int error, fd;
 
-	if (msgflags(src, src, msg, flags, sizeof(flags)))
+	if (msgflags(md, md, msg, flags, sizeof(flags)))
 		return 1;
-	fd = maildir_genname(src, flags, name, sizeof(name), env);
+	fd = maildir_genname(md, flags, name, sizeof(name), env);
 	if (fd == -1)
 		return 1;
 
 	error = message_write(msg, fd);
 	if (error == 0)
-		error = maildir_unlink(src, msg->me_name);
+		error = maildir_unlink(md, msg->me_name);
 
 	/*
 	 * Either writing the new message or removing
@@ -272,7 +272,7 @@ maildir_write(struct maildir *src, struct message *msg,
 	 * effects by removing the new message.
 	 */
 	if (error)
-		(void)maildir_unlink(src, name);
+		(void)maildir_unlink(md, name);
 
 	if (error == 0) {
 		int rdfd;
@@ -285,13 +285,13 @@ maildir_write(struct maildir *src, struct message *msg,
 		 * must be readable as opposed of the one from maildir_genname()
 		 * which is only writeable.
 		 */
-		rdfd = openat(maildir_fd(src), name, O_RDONLY | O_CLOEXEC);
+		rdfd = openat(maildir_fd(md), name, O_RDONLY | O_CLOEXEC);
 		if (rdfd == -1) {
-			warn("openat: %s/%s", src->md_path, name);
+			warn("openat: %s/%s", md->md_path, name);
 			error = 1;
 			goto out;
 		}
-		error = message_set_file(msg, src->md_path, name, rdfd);
+		error = message_set_file(msg, md->md_path, name, rdfd);
 		if (error)
 			close(rdfd);
 	}
@@ -359,7 +359,7 @@ maildir_fd(const struct maildir *md)
  * Otherwise, -1 is returned.
  */
 static int
-maildir_genname(const struct maildir *dst, const char *flags, char *buf,
+maildir_genname(const struct maildir *md, const char *flags, char *buf,
     size_t bufsiz, const struct environment *env)
 {
 	long long ts;
@@ -377,7 +377,7 @@ maildir_genname(const struct maildir *dst, const char *flags, char *buf,
 			warnc(ENAMETOOLONG, "%s", __func__);
 			return -1;
 		}
-		fd = openat(maildir_fd(dst), buf,
+		fd = openat(maildir_fd(md), buf,
 		    O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, S_IRUSR | S_IWUSR);
 		if (fd == -1) {
 			if (errno == EEXIST) {
