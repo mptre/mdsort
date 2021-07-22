@@ -450,8 +450,8 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	for (;;) {
 		nr = read(STDIN_FILENO, buf, sizeof(buf));
 		if (nr == -1) {
-			error = 1;
 			warn("read");
+			error = 1;
 			goto out;
 		}
 		if (nr == 0)
@@ -459,8 +459,8 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 
 		nw = write(fd, buf, nr);
 		if (nw == -1) {
-			error = 1;
 			warn("write: %s/%s", path, name);
+			error = 1;
 			goto out;
 		}
 	}
