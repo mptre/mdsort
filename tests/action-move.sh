@@ -118,8 +118,8 @@ if testcase -t fault "message path too long"; then
 		match all move "dst"
 	}
 	EOF
-	mdsort -e -f "name=message_set_path,errno=ENAMETOOLONG" - <<-EOF
-	mdsort: fault: message_set_path
+	mdsort -e -f "name=message_set_file,errno=ENAMETOOLONG" - <<-EOF
+	mdsort: fault: message_set_file
 	EOF
 	assert_empty "src/new"
 	refute_empty "dst/new"

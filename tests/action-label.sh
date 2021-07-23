@@ -246,8 +246,8 @@ if testcase -t fault "message path too long"; then
 		match all label "foo"
 	}
 	EOF
-	mdsort -e -f "name=message_set_path,errno=ENAMETOOLONG" - <<-EOF
-	mdsort: fault: message_set_path
+	mdsort -e -f "name=message_set_file,errno=ENAMETOOLONG" - <<-EOF
+	mdsort: fault: message_set_file
 	EOF
 	refute_empty "src/new"
 fi

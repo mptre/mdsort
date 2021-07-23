@@ -478,7 +478,7 @@ message_set_file(struct message *msg, const char *path, const char *name,
 {
 	size_t siz;
 
-	if (FAULT("message_set_path"))
+	if (FAULT("message_set_file"))
 		return 1;
 
 	if (pathjoin(msg->me_path, sizeof(msg->me_path), path, name) == NULL) {
