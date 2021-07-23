@@ -254,7 +254,7 @@ maildir_write(struct maildir *md, struct message *msg,
     const struct environment *env)
 {
 	char flags[FLAGS_MAX], name[NAME_MAX + 1];
-	int error, fd;
+	int error, fd, rdfd;
 
 	if (msgflags(md, md, msg, flags, sizeof(flags)))
 		return 1;
@@ -263,41 +263,34 @@ maildir_write(struct maildir *md, struct message *msg,
 		return 1;
 
 	error = message_write(msg, fd);
-	if (error == 0)
+	close(fd);
+	if (!error)
 		error = maildir_unlink(md, msg->me_name);
-
 	/*
-	 * Either writing the new message or removing
-	 * the old one failed, try to reduce side
-	 * effects by removing the new message.
+	 * Either writing the new message or removing the old one failed, try to
+	 * reduce side effects by removing the new message.
 	 */
-	if (error)
+	if (error) {
 		(void)maildir_unlink(md, name);
-
-	if (error == 0) {
-		int rdfd;
-
-		/*
-		 * Update the message fd as the newly written message might have
-		 * been modified due to addition of headers etc. This is of
-		 * importance to let any following action(s) operating on the
-		 * same message to observe the modifications. Note, a message fd
-		 * must be readable as opposed of the one from maildir_genname()
-		 * which is only writeable.
-		 */
-		rdfd = openat(maildir_fd(md), name, O_RDONLY | O_CLOEXEC);
-		if (rdfd == -1) {
-			warn("openat: %s/%s", md->md_path, name);
-			error = 1;
-			goto out;
-		}
-		error = message_set_file(msg, md->md_path, name, rdfd);
-		if (error)
-			close(rdfd);
+		return error;
 	}
 
-out:
-	close(fd);
+	/*
+	 * Update the message fd as the newly written message might have been
+	 * modified due to addition of headers etc. This is of importance to let
+	 * any following action(s) operating on the same message to observe the
+	 * modifications. Note, a message fd must be readable as opposed of the
+	 * one from maildir_genname() which is only writeable.
+	 */
+	rdfd = openat(maildir_fd(md), name, O_RDONLY | O_CLOEXEC);
+	if (rdfd == -1) {
+		warn("openat: %s/%s", md->md_path, name);
+		return 1;
+	}
+	error = message_set_file(msg, md->md_path, name, rdfd);
+	if (error)
+		close(rdfd);
+
 	return error;
 }
 
