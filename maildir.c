@@ -204,7 +204,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 		 * different file systems. Fallback to writing a new message.
 		 */
 		error = message_write(msg, fd);
-		if (error == 0)
+		if (!error)
 			error = maildir_unlink(src, srcname);
 	}
 	/*
@@ -216,13 +216,12 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 
 	close(fd);
 
-	if (error == 0 && doutime &&
-	    utimensat(dstfd, dstname, times, 0) == -1) {
+	if (!error && doutime && utimensat(dstfd, dstname, times, 0) == -1) {
 		warn("utimensat");
 		error = 1;
 	}
 
-	if (error == 0)
+	if (!error)
 		error = message_set_file(msg, dst->md_path, dstname, -1);
 
 	return error;
