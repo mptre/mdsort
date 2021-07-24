@@ -84,7 +84,7 @@ int	 message_flags_isset(const struct message_flags *, unsigned char);
 int	 message_flags_set(struct message_flags *, unsigned char, int);
 
 struct message {
-	char			 me_path[PATH_MAX];		/* full path */
+	char			 me_path[PATH_MAX];	/* full path */
 	char			 me_name[NAME_MAX + 1];	/* file name */
 	const char		*me_body;
 	char			*me_buf;
@@ -93,7 +93,7 @@ struct message {
 	unsigned int		 me_flags;
 #define MESSAGE_FLAG_ATTACHMENT	0x00000001u
 
-	struct message_flags	 me_mflags;	/* maildir flags */
+	struct message_flags	 me_mflags;		/* maildir flags */
 
 	struct {
 		struct header	*h_v;
