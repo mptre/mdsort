@@ -635,7 +635,7 @@ message_parse_headers(struct message *msg)
 
 	buf = skipseparator(msg->me_buf);
 
-	while (findheader(buf, &ks, &vs) == 0) {
+	while (findheader(buf, &ks, &vs)) {
 		struct header *hdr = message_headers_alloc(msg);
 
 		hdr->key = ks.s_beg;
@@ -743,7 +743,7 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 
 	for (i = 0; str[i] != ':'; i++) {
 		if (str[i] == '\0' || isspace((unsigned char)str[i]))
-			return 1;
+			return 0;
 	}
 	ks->s_beg = str;
 	ks->s_end = str + i;
@@ -761,7 +761,7 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 
 		p = strchr(&str[i], '\n');
 		if (p == NULL)
-			return 1;
+			return 0;
 		i += p - &str[i];
 
 		/* If '\n' is followed by spaces, assume line continuation. */
@@ -773,7 +773,7 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 	vs->s_end = str + i;
 	*vs->s_end = '\0';
 
-	return 0;
+	return 1;
 }
 
 /*

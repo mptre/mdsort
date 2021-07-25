@@ -35,7 +35,7 @@ fault(const char *name)
 {
 	fault_init();
 
-	if (fault_match(name) == 0)
+	if (!fault_match(name))
 		return 0;
 	warnx("fault: %s", name);
 	return 1;
@@ -67,7 +67,7 @@ fault_init(void)
 {
 	const char *str;
 
-	if (cold == 0)
+	if (!cold)
 		return;
 
 	str = getenv("FAULT");
