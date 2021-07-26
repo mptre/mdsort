@@ -23,7 +23,7 @@
  * When reading messages from stdin and a reject rule is matched, always exit
  * non-zero indicating permanent failure.
  * The actual number is quite arbitrary but something that at least OpenSMTPD
- * will interpret as a permanent failure during mda delivery.
+ * will interpret as a permanent failure during MDA delivery.
  */
 #define EX_PERMFAIL	1
 
