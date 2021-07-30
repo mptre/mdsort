@@ -1,3 +1,11 @@
+# v10.0.1 - 2021-07-30
+
+## Bug fixes
+
+- Make label changes visible to exec actions.
+  (9957acd, f074701)
+  (Anton Lindqvist)
+
 # v10.0.0 - 2021-07-02
 
 ## Changes
