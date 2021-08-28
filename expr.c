@@ -429,9 +429,6 @@ expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
 		return EXPR_ERROR;
-	if (TAILQ_FIRST(attachments) == NULL)
-		return EXPR_NOMATCH;
-
 	TAILQ_FOREACH(attach, attachments, me_entry) {
 		int ev2;
 
