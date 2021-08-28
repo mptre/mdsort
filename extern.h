@@ -182,6 +182,12 @@ enum expr_stat {
 	EXPR_STAT_DIR,
 };
 
+struct expr_eval_arg {
+	struct match_list		*ea_ml;
+	struct message			*ea_msg;
+	const struct environment	*ea_env;
+};
+
 struct expr {
 	enum expr_type		 ex_type;
 	int			 ex_lno;
@@ -191,8 +197,8 @@ struct expr {
 #define EXPR_FLAG_INTERPOLATE	0x00000004u
 #define EXPR_FLAG_PATH		0x00000008u
 
-	int			 (*ex_eval)(struct expr *, struct match_list *,
-	    struct message *, const struct environment *);
+	int			 (*ex_eval)(struct expr *,
+	    struct expr_eval_arg *);
 
 	const char		*ex_label;
 
@@ -249,8 +255,7 @@ int	expr_set_pattern(struct expr *, const char *, unsigned int,
 int	expr_count(const struct expr *, enum expr_type);
 int	expr_count_actions(const struct expr *);
 
-int	expr_eval(struct expr *, struct match_list *, struct message *,
-    const struct environment *);
+int	expr_eval(struct expr *, struct expr_eval_arg *);
 
 void	expr_inspect(const struct expr *, const struct match *,
     const struct environment *);

@@ -13,31 +13,29 @@
 
 #include "extern.h"
 
-#define EXPR_EVAL_ARGS	struct expr *, struct match_list *,	\
-	struct message *, const struct environment *
-
-static int	expr_eval_all(EXPR_EVAL_ARGS);
-static int	expr_eval_and(EXPR_EVAL_ARGS);
-static int	expr_eval_attachment(EXPR_EVAL_ARGS);
-static int	expr_eval_attachment_block(EXPR_EVAL_ARGS);
-static int	expr_eval_block(EXPR_EVAL_ARGS);
-static int	expr_eval_body(EXPR_EVAL_ARGS);
-static int	expr_eval_break(EXPR_EVAL_ARGS);
-static int	expr_eval_date(EXPR_EVAL_ARGS);
-static int	expr_eval_discard(EXPR_EVAL_ARGS);
-static int	expr_eval_exec(EXPR_EVAL_ARGS);
-static int	expr_eval_flag(EXPR_EVAL_ARGS);
-static int	expr_eval_header(EXPR_EVAL_ARGS);
-static int	expr_eval_label(EXPR_EVAL_ARGS);
-static int	expr_eval_match(EXPR_EVAL_ARGS);
-static int	expr_eval_move(EXPR_EVAL_ARGS);
-static int	expr_eval_neg(EXPR_EVAL_ARGS);
-static int	expr_eval_new(EXPR_EVAL_ARGS);
-static int	expr_eval_old(EXPR_EVAL_ARGS);
-static int	expr_eval_or(EXPR_EVAL_ARGS);
-static int	expr_eval_pass(EXPR_EVAL_ARGS);
-static int	expr_eval_reject(EXPR_EVAL_ARGS);
-static int	expr_eval_stat(EXPR_EVAL_ARGS);
+static int	expr_eval_all(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_and(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_attachment(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_attachment_block(struct expr *,
+    struct expr_eval_arg *);
+static int	expr_eval_block(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_body(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_break(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_date(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_discard(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_exec(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_flag(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_header(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_label(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_match(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_move(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_neg(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_new(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_old(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_or(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_pass(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_reject(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_stat(struct expr *, struct expr_eval_arg *);
 
 static int	expr_inspect_prefix(const struct expr *,
     const struct environment *);
@@ -284,10 +282,9 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
  * Otherwise, non-zero is returned.
  */
 int
-expr_eval(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return ex->ex_eval(ex, ml, msg, env);
+	return ex->ex_eval(ex, ea);
 }
 
 /*
@@ -381,28 +378,26 @@ expr_inspect(const struct expr *ex, const struct match *mh,
 }
 
 static int
-expr_eval_all(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
-    struct message *UNUSED(msg), const struct environment *UNUSED(env))
+expr_eval_all(struct expr *UNUSED(ex), struct expr_eval_arg *UNUSED(ea))
 {
 	return EXPR_MATCH;
 }
 
 static int
-expr_eval_and(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval_and(struct expr *ex, struct expr_eval_arg *ea)
 {
 	int ev;
 
-	if ((ev = expr_eval(ex->ex_lhs, ml, msg, env)) != EXPR_MATCH)
+	if ((ev = expr_eval(ex->ex_lhs, ea)) != EXPR_MATCH)
 		return ev; /* no match or error, short-circuit */
-	return expr_eval(ex->ex_rhs, ml, msg, env);
+	return expr_eval(ex->ex_rhs, ea);
 }
 
 static int
-expr_eval_attachment(struct expr *ex, struct match_list *ml,
-    struct message *msg, const struct environment *env)
+expr_eval_attachment(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct message_list *attachments;
+	struct message *msg = ea->ea_msg;
 	struct message *attach;
 
 	attachments = message_get_attachments(msg);
@@ -412,7 +407,9 @@ expr_eval_attachment(struct expr *ex, struct match_list *ml,
 	TAILQ_FOREACH(attach, attachments, me_entry) {
 		int ev;
 
-		ev = expr_eval(ex->ex_lhs, ml, attach, env);
+		ea->ea_msg = attach;
+		ev = expr_eval(ex->ex_lhs, ea);
+		ea->ea_msg = msg;
 		if (ev == EXPR_NOMATCH)
 			continue;
 		return ev;	/* match or error, return */
@@ -422,10 +419,10 @@ expr_eval_attachment(struct expr *ex, struct match_list *ml,
 }
 
 static int
-expr_eval_attachment_block(struct expr *ex, struct match_list *ml,
-    struct message *msg, const struct environment *env)
+expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct message_list *attachments;
+	struct message *msg = ea->ea_msg;
 	struct message *attach;
 	int ev = EXPR_NOMATCH;
 
@@ -436,7 +433,12 @@ expr_eval_attachment_block(struct expr *ex, struct match_list *ml,
 		return EXPR_NOMATCH;
 
 	TAILQ_FOREACH(attach, attachments, me_entry) {
-		switch (expr_eval(ex->ex_lhs, ml, attach, env)) {
+		int ev2;
+
+		ea->ea_msg = attach;
+		ev2 = expr_eval(ex->ex_lhs, ea);
+		ea->ea_msg = msg;
+		switch (ev2) {
 		case EXPR_ERROR:
 			return EXPR_ERROR;
 		case EXPR_MATCH:
@@ -449,27 +451,26 @@ expr_eval_attachment_block(struct expr *ex, struct match_list *ml,
 }
 
 static int
-expr_eval_block(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval_block(struct expr *ex, struct expr_eval_arg *ea)
 {
 	int ev;
 
-	ev = expr_eval(ex->ex_lhs, ml, msg, env);
+	ev = expr_eval(ex->ex_lhs, ea);
 	if (ev == EXPR_ERROR)
 		return EXPR_ERROR;
 
-	if (matches_find(ml, EXPR_TYPE_BREAK) != NULL) {
-		matches_clear(ml);
+	if (matches_find(ea->ea_ml, EXPR_TYPE_BREAK) != NULL) {
+		matches_clear(ea->ea_ml);
 		return EXPR_NOMATCH; /* break, continue evaluation */
 	}
 
-	if (matches_find(ml, EXPR_TYPE_PASS) != NULL) {
+	if (matches_find(ea->ea_ml, EXPR_TYPE_PASS) != NULL) {
 		/*
 		 * If removing the pass action results in a match list without
 		 * any actions left, we got a pass followed by no effective
 		 * action. Therefore treat it as a no match.
 		 */
-		if (matches_remove(ml, EXPR_TYPE_PASS) == 0)
+		if (matches_remove(ea->ea_ml, EXPR_TYPE_PASS) == 0)
 			return EXPR_NOMATCH;
 		return EXPR_MATCH;
 	}
@@ -478,25 +479,23 @@ expr_eval_block(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_body(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval_body(struct expr *ex, struct expr_eval_arg *ea)
 {
 	const char *body;
 
-	body = message_get_body(msg);
+	body = message_get_body(ea->ea_msg);
 	if (body == NULL)
 		return EXPR_ERROR;
-	return expr_regexec(ex, ml, msg, env, "Body", body);
+	return expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env, "Body", body);
 }
 
 static int
-expr_eval_break(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_break(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, msg);
-	if (matches_append(ml, mh))
+	mh = match_alloc(ex, ea->ea_msg);
+	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
 	/*
@@ -507,18 +506,17 @@ expr_eval_break(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_date(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 {
 	char buf[32];
 	const char *date;
 	time_t delta, tim;
 
 	if (ex->ex_date.d_field == EXPR_DATE_FIELD_HEADER) {
-		date = message_get_header1(msg, "Date");
+		date = message_get_header1(ea->ea_msg, "Date");
 		if (date == NULL)
 			return EXPR_NOMATCH;
-		if (time_parse(date, &tim, env))
+		if (time_parse(date, &tim, ea->ea_env))
 			return EXPR_ERROR;
 	} else {
 		struct stat st;
@@ -541,8 +539,8 @@ expr_eval_date(struct expr *ex, struct match_list *ml, struct message *msg,
 			ts = &st.st_ctim;
 			break;
 		}
-		if (stat(msg->me_path, &st) == -1) {
-			warn("stat: %s", msg->me_path);
+		if (stat(ea->ea_msg->me_path, &st) == -1) {
+			warn("stat: %s", ea->ea_msg->me_path);
 			return EXPR_ERROR;
 		}
 		tim = ts->tv_sec;
@@ -551,7 +549,7 @@ expr_eval_date(struct expr *ex, struct match_list *ml, struct message *msg,
 			return EXPR_ERROR;
 	}
 
-	delta = env->ev_now - tim;
+	delta = ea->ea_env->ev_now - tim;
 	switch (ex->ex_date.d_cmp) {
 	case EXPR_DATE_CMP_LT:
 		if (!(delta < ex->ex_date.d_age))
@@ -564,32 +562,29 @@ expr_eval_date(struct expr *ex, struct match_list *ml, struct message *msg,
 	}
 
 	/* Populate matches, only used during dry run. */
-	return expr_regexec(ex, ml, msg, env, "Date", date);
+	return expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env, "Date", date);
 }
 
 static int
-expr_eval_exec(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_exec(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return expr_match(ex, ml, msg);
+	return expr_match(ex, ea->ea_ml, ea->ea_msg);
 }
 
 static int
-expr_eval_discard(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_discard(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return expr_match(ex, ml, msg);
+	return expr_match(ex, ea->ea_ml, ea->ea_msg);
 }
 
 static int
-expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_flag(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 	const char *subdir;
 	size_t siz;
 
-	mh = match_alloc(ex, msg);
+	mh = match_alloc(ex, ea->ea_msg);
 	subdir = TAILQ_FIRST(ex->ex_strings)->val;
 	siz = sizeof(mh->mh_subdir);
 	if (strlcpy(mh->mh_subdir, subdir, siz) >= siz) {
@@ -598,27 +593,27 @@ expr_eval_flag(struct expr *ex, struct match_list *ml, struct message *msg,
 		return EXPR_ERROR;
 	}
 
-	if (matches_append(ml, mh))
+	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
 }
 
 static int
-expr_eval_header(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval_header(struct expr *ex, struct expr_eval_arg *ea)
 {
 	const struct string_list *values;
 	const struct string *key, *val;
 
 	TAILQ_FOREACH(key, ex->ex_strings, entry) {
-		values = message_get_header(msg, key->val);
+		values = message_get_header(ea->ea_msg, key->val);
 		if (values == NULL)
 			continue;
 
 		TAILQ_FOREACH(val, values, entry) {
 			int ev;
 
-			ev = expr_regexec(ex, ml, msg, env, key->val, val->val);
+			ev = expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env,
+			    key->val, val->val);
 			if (ev == EXPR_NOMATCH)
 				continue;
 			return ev;	/* match or error, return */
@@ -628,15 +623,13 @@ expr_eval_header(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_label(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_label(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return expr_match(ex, ml, msg);
+	return expr_match(ex, ea->ea_ml, ea->ea_msg);
 }
 
 static int
-expr_eval_match(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval_match(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
@@ -644,23 +637,22 @@ expr_eval_match(struct expr *ex, struct match_list *ml, struct message *msg,
 	 * Behaves like and with the exception of adding itself to the match
 	 * list. The match is later used by matches_find_interpolate().
 	 */
-	mh = match_alloc(ex, msg);
-	if (matches_append(ml, mh))
+	mh = match_alloc(ex, ea->ea_msg);
+	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
-	return expr_eval_and(ex, ml, msg, env);
+	return expr_eval_and(ex, ea);
 }
 
 static int
-expr_eval_move(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_move(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 	const char *maildir;
 	size_t siz;
 
 	maildir = TAILQ_FIRST(ex->ex_strings)->val;
-	mh = match_alloc(ex, msg);
+	mh = match_alloc(ex, ea->ea_msg);
 	siz = sizeof(mh->mh_maildir);
 	if (strlcpy(mh->mh_maildir, maildir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
@@ -668,18 +660,17 @@ expr_eval_move(struct expr *ex, struct match_list *ml, struct message *msg,
 		return EXPR_ERROR;
 	}
 
-	if (matches_append(ml, mh))
+	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
 }
 
 static int
-expr_eval_neg(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval_neg(struct expr *ex, struct expr_eval_arg *ea)
 {
 	assert(ex->ex_rhs == NULL);
 
-	switch (expr_eval(ex->ex_lhs, ml, msg, env)) {
+	switch (expr_eval(ex->ex_lhs, ea)) {
 	case EXPR_ERROR:
 		return EXPR_ERROR;
 	case EXPR_NOMATCH:
@@ -687,55 +678,51 @@ expr_eval_neg(struct expr *ex, struct match_list *ml, struct message *msg,
 	}
 
 	/* No match, invalidate match below current expression. */
-	matches_clear(ml);
+	matches_clear(ea->ea_ml);
 	return EXPR_NOMATCH;
 }
 
 static int
-expr_eval_new(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
-    struct message *msg, const struct environment *UNUSED(env))
+expr_eval_new(struct expr *UNUSED(ex), struct expr_eval_arg *ea)
 {
 	char buf[NAME_MAX + 1];
 
-	if (pathslice(msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
+	if (pathslice(ea->ea_msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
 	    strcmp(buf, "new"))
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
 }
 
 static int
-expr_eval_old(struct expr *UNUSED(ex), struct match_list *UNUSED(ml),
-    struct message *msg, const struct environment *UNUSED(env))
+expr_eval_old(struct expr *UNUSED(ex), struct expr_eval_arg *ea)
 {
 	char buf[NAME_MAX + 1];
 
-	if (message_flags_isset(&msg->me_mflags, 'S'))
+	if (message_flags_isset(&ea->ea_msg->me_mflags, 'S'))
 		return EXPR_NOMATCH;
-	if (pathslice(msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
+	if (pathslice(ea->ea_msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
 	    strcmp(buf, "cur"))
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
 }
 
 static int
-expr_eval_or(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env)
+expr_eval_or(struct expr *ex, struct expr_eval_arg *ea)
 {
 	int ev;
 
-	if ((ev = expr_eval(ex->ex_lhs, ml, msg, env)) != EXPR_NOMATCH)
+	if ((ev = expr_eval(ex->ex_lhs, ea)) != EXPR_NOMATCH)
 		return ev; /* match or error, short-circuit */
-	return expr_eval(ex->ex_rhs, ml, msg, env);
+	return expr_eval(ex->ex_rhs, ea);
 }
 
 static int
-expr_eval_pass(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_pass(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, msg);
-	if (matches_append(ml, mh))
+	mh = match_alloc(ex, ea->ea_msg);
+	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
 	/*
@@ -748,15 +735,13 @@ expr_eval_pass(struct expr *ex, struct match_list *ml, struct message *msg,
 }
 
 static int
-expr_eval_reject(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_reject(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return expr_match(ex, ml, msg);
+	return expr_match(ex, ea->ea_ml, ea->ea_msg);
 }
 
 static int
-expr_eval_stat(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *UNUSED(env))
+expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct stat st;
 	struct match *mh;
@@ -764,8 +749,8 @@ expr_eval_stat(struct expr *ex, struct match_list *ml, struct message *msg,
 	size_t siz;
 	int ev = EXPR_NOMATCH;
 
-	mh = match_alloc(ex, msg);
-	if (matches_append(ml, mh)) {
+	mh = match_alloc(ex, ea->ea_msg);
+	if (matches_append(ea->ea_ml, mh)) {
 		ev = EXPR_ERROR;
 		goto out;
 	}
@@ -787,7 +772,7 @@ expr_eval_stat(struct expr *ex, struct match_list *ml, struct message *msg,
 	}
 
 out:
-	TAILQ_REMOVE(ml, mh, mh_entry);
+	TAILQ_REMOVE(ea->ea_ml, mh, mh_entry);
 	match_free(mh);
 
 	return ev;

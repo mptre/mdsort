@@ -128,6 +128,11 @@ main(int argc, char *argv[])
 			}
 
 			while ((w = maildir_walk(md, &me))) {
+				struct expr_eval_arg ea = {
+					.ea_ml	= &matches,
+					.ea_env	= &env,
+				};
+
 				if (w == -1) {
 					error = 1;
 					break;
@@ -139,9 +144,9 @@ main(int argc, char *argv[])
 					error = 1;
 					goto loop;
 				}
+				ea.ea_msg = msg;
 
-				switch (expr_eval(conf->expr, &matches, msg,
-				    &env)) {
+				switch (expr_eval(conf->expr, &ea)) {
 				case EXPR_ERROR:
 					error = 1;
 					/* FALLTHROUGH */
