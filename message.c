@@ -36,8 +36,8 @@ struct slice {
 
 static int		 message_flags_parse(struct message_flags *,
     const char *);
-static int		 message_flags_resolve(unsigned char, unsigned int *,
-    unsigned int *);
+static int		 message_flags_resolve(struct message_flags *,
+    unsigned char, unsigned int **, unsigned int *);
 static struct header	*message_headers_alloc(struct message *);
 static int		 message_is_content_type(const struct message *,
     const char *);
@@ -66,7 +66,7 @@ static int		 writefd(const char *);
 static char		*qpdecode(const char *);
 
 char *
-message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
+message_flags_str(const struct message_flags *mf, char *buf, size_t bufsiz)
 {
 	ssize_t n;
 	size_t i = 0;
@@ -78,16 +78,15 @@ message_flags_str(const struct message_flags *flags, char *buf, size_t bufsiz)
 	buf[i++] = ':';
 	buf[i++] = '2';
 	buf[i++] = ',';
-	n = strflags(flags->mf_flags[0], 'A', &buf[i], bufsiz - i);
+	n = strflags(mf->mf_upper, 'A', &buf[i], bufsiz - i);
 	if (n == -1)
 		goto err;
 	i += n;
-	n = strflags(flags->mf_flags[1], 'a', &buf[i], bufsiz - i);
+	n = strflags(mf->mf_lower, 'a', &buf[i], bufsiz - i);
 	if (n == -1)
 		goto err;
 	i += n;
 	buf[i] = '\0';
-
 	return buf;
 
 err:
@@ -96,29 +95,31 @@ err:
 }
 
 int
-message_flags_isset(const struct message_flags *flags, unsigned char flag)
+message_flags_isset(const struct message_flags *mf, unsigned char flag)
 {
-	unsigned int idx, mask;
+	unsigned int *flags;
+	unsigned int mask;
 
-	if (message_flags_resolve(flag, &idx, &mask))
+	if (message_flags_resolve((struct message_flags *)mf, flag, &flags,
+	    &mask))
 		return 0;
-	if (flags->mf_flags[idx] & mask)
+	if (*flags & mask)
 		return 1;
 	return 0;
 }
 
 int
-message_flags_set(struct message_flags *flags, unsigned char flag, int add)
+message_flags_set(struct message_flags *mf, unsigned char flag, int add)
 {
-	unsigned int idx, mask;
+	unsigned int *flags;
+	unsigned int mask;
 
-	if (message_flags_resolve(flag, &idx, &mask))
+	if (message_flags_resolve(mf, flag, &flags, &mask))
 		return 1;
-
 	if (add)
-		flags->mf_flags[idx] |= mask;
+		*flags |= mask;
 	else
-		flags->mf_flags[idx] &= ~mask;
+		*flags &= ~mask;
 	return 0;
 }
 
@@ -540,7 +541,7 @@ message_list_free(struct message_list *messages)
 }
 
 static int
-message_flags_parse(struct message_flags *flags, const char *path)
+message_flags_parse(struct message_flags *mf, const char *path)
 {
 	const char *p;
 	int i;
@@ -554,7 +555,7 @@ message_flags_parse(struct message_flags *flags, const char *path)
 	}
 
 	for (i = 3; p[i] != '\0'; i++) {
-		if (message_flags_set(flags, p[i], 1))
+		if (message_flags_set(mf, p[i], 1))
 			return 1;
 	}
 
@@ -562,15 +563,16 @@ message_flags_parse(struct message_flags *flags, const char *path)
 }
 
 static int
-message_flags_resolve(unsigned char flag, unsigned int *idx, unsigned int *mask)
+message_flags_resolve(struct message_flags *mf, unsigned char flag,
+    unsigned int **flags, unsigned int *mask)
 {
-	if (isupper((unsigned char)flag)) {
-		*idx = 0;
+	if (isupper(flag)) {
+		*flags = &mf->mf_upper;
 		*mask = 1 << (flag - 'A');
 		return 0;
 	}
-	if (islower((unsigned char)flag)) {
-		*idx = 1;
+	if (islower(flag)) {
+		*flags = &mf->mf_lower;
 		*mask = 1 << (flag - 'a');
 		return 0;
 	}

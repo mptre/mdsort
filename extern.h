@@ -76,7 +76,8 @@ int	maildir_cmp(const struct maildir *, const struct maildir *);
  */
 
 struct message_flags {
-	unsigned int	mf_flags[2];	/* 0: uppercase, 1: lowercase */
+	unsigned int	mf_upper;
+	unsigned int	mf_lower;
 };
 
 char	*message_flags_str(const struct message_flags *, char *, size_t);
