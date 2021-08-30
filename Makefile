@@ -123,12 +123,6 @@ dist:
 	rm -r $$d
 .PHONY: dist
 
-distclean: clean
-	rm -f ${.CURDIR}/config.h ${.CURDIR}/config.log ${.CURDIR}/config.mk \
-		${.CURDIR}/mdsort-${VERSION}.tar.gz \
-		${.CURDIR}/mdsort-${VERSION}.sha256
-.PHONY: distclean
-
 format:
 	cd ${.CURDIR} && knfmt -i ${KNFMT}
 .PHONY: format
