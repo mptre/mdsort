@@ -68,10 +68,8 @@ typedef struct {
 %token EXEC
 %token FLAG
 %token HEADER
-%token INT
 %token ISDIRECTORY
 %token LABEL
-%token MACRO
 %token MAILDIR
 %token MATCH
 %token MODIFIED
@@ -79,38 +77,35 @@ typedef struct {
 %token NEW
 %token OLD
 %token PASS
-%token PATTERN
 %token REJECT
-%token SCALAR
 %token STDIN
-%token STRING
 %token SYNC
 
-%type <cmp>		date_cmp
-%type <expr>		expr
-%type <expr>		expr1
-%type <expr>		expr2
-%type <expr>		expr3
-%type <expr>		expraction
-%type <expr>		expractions
-%type <expr>		exprblock
-%type <expr>		exprs
-%type <field>		date_field
-%type <number>		INT
-%type <number>		SCALAR
-%type <number>		exec_flag
-%type <number>		exec_flags
-%type <number>		optneg
-%type <number>		scalar
-%type <pattern>		PATTERN
-%type <pattern>		pattern
-%type <string>		MACRO
-%type <string>		STRING
-%type <string>		flag
-%type <strings>		maildir_paths
-%type <strings>		stringblock
-%type <strings>		strings
-%type <time>		date_age
+%type	<cmp>		date_cmp
+%type	<expr>		expr
+%type	<expr>		expr1
+%type	<expr>		expr2
+%type	<expr>		expr3
+%type	<expr>		expraction
+%type	<expr>		expractions
+%type	<expr>		exprblock
+%type	<expr>		exprs
+%type	<field>		date_field
+%token	<number>	INT
+%token	<number>	SCALAR
+%type	<number>	exec_flag
+%type	<number>	exec_flags
+%type	<number>	optneg
+%type	<number>	scalar
+%token	<pattern>	PATTERN
+%type	<pattern>	pattern
+%token	<string>	MACRO
+%token	<string>	STRING
+%type	<string>	flag
+%type	<strings>	maildir_paths
+%type	<strings>	stringblock
+%type	<strings>	strings
+%type	<time>		date_age
 
 %left AND OR
 %left NEG
