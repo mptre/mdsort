@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         compiler: [gcc, clang]
-        mode: [asan, ubsan, musl, valgrind]
+        mode: [asan, ubsan, musl, valgrind, bison]
         exclude:
           - os: macos-latest
             compiler: gcc
@@ -27,6 +27,13 @@ jobs:
             os: macos-latest
 
           - mode: valgrind
+            os: ubuntu-latest
+            compiler: clang
+
+          - mode: bison
+            os: macos-latest
+
+          - mode: bison
             os: ubuntu-latest
             compiler: clang
 
@@ -63,6 +70,10 @@ jobs:
             testflags: -Tmemleak
             valgrind: --quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all
 
+          - mode: bison
+            yacc: bison
+            yflags: -y -Werror
+
     steps:
       - uses: actions/checkout@v2
 
@@ -81,6 +92,8 @@ jobs:
           MUSL: ${{matrix.musl}}
           TESTFLAGS: -Tfdleak ${{matrix.testflags}}
           VALGRIND_OPTS: ${{matrix.valgrind}}
+          YACC: ${{matrix.yacc || 'yacc'}}
+          YFLAGS: ${{matrix.yflags}}
         run: |
           set -ex
           ${CC} -v
