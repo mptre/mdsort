@@ -536,7 +536,9 @@ maildir_rename(const struct maildir *src, const struct maildir *dst,
 
 	if (renameat(maildir_fd(src), srcname,
 	    maildir_fd(dst), dstname) == -1) {
-		warn("renameat");
+		/* Silence as we're about to recover. */
+		if (errno != EXDEV)
+			warn("renameat");
 		return 1;
 	}
 	return 0;
