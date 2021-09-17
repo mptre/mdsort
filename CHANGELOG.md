@@ -329,14 +329,6 @@
 
 # v4.2.0 - 2019-09-14
 
-## Bug fixes
-
-- Using a date condition followed by another condition that produces matches to
-  be used during interpolation did not work since the matches from the date
-  condition erroneously was favored.
-  (f464cd1)
-  (Anton Lindqvist)
-
 ## News
 
 - Call `fsync(2)` after writing out messages read from stdin.
@@ -356,13 +348,15 @@
   }
   ```
 
-# v4.1.0 - 2019-08-21
-
 ## Bug fixes
 
-- Add missing space for NUL-terminator when using `NAME_MAX` sized buffers.
-  (9a59987)
+- Using a date condition followed by another condition that produces matches to
+  be used during interpolation did not work since the matches from the date
+  condition erroneously was favored.
+  (f464cd1)
   (Anton Lindqvist)
+
+# v4.1.0 - 2019-08-21
 
 ## News
 
@@ -376,6 +370,12 @@
 
 - Lower or upper case a matched string used during interpolation.
   (8aa5be6)
+  (Anton Lindqvist)
+
+## Bug fixes
+
+- Add missing space for NUL-terminator when using `NAME_MAX` sized buffers.
+  (9a59987)
   (Anton Lindqvist)
 
 # v4.0.0 - 2019-07-04
