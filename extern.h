@@ -351,6 +351,7 @@ struct macro {
 	char			*mc_name;
 	char			*mc_value;
 	unsigned int		 mc_refs;
+	unsigned int		 mc_defs;
 	unsigned int		 mc_lno;
 	unsigned int		 mc_flags;
 #define MACRO_FLAG_STATIC	0x00000001u	/* storage provided by ml_v */
@@ -373,8 +374,6 @@ struct macro_list {
 void		 macros_init(struct macro_list *, unsigned int);
 void		 macros_free(struct macro_list *);
 int		 macros_insert(struct macro_list *, char *, char *, unsigned int, int);
-void		 macros_insertc(struct macro_list *, const char *,
-    const char *);
 struct macro	*macros_find(const struct macro_list *, const char *);
 unsigned int	 macro_context(const char *);
 

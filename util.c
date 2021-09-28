@@ -135,9 +135,11 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 
 	if ((macro_context(name) & macros->ml_ctx) == 0)
 		return 1;
-	if ((mc = macros_find(macros, name)) != NULL)
-		return !(mc->mc_flags & MACRO_FLAG_IMMUTABLE);
-
+	if ((mc = macros_find(macros, name)) != NULL) {
+		if (mc->mc_flags & MACRO_FLAG_IMMUTABLE)
+			return ++mc->mc_defs > 1;
+		return 1;
+	}
 	if (macros->ml_nmemb < macros->ml_size) {
 		mc = &macros->ml_v[macros->ml_nmemb++];
 		mc->mc_flags = flags | MACRO_FLAG_STATIC;
@@ -151,42 +153,10 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 	mc->mc_name = name;
 	mc->mc_value = value;
 	mc->mc_refs = 0;
+	mc->mc_defs = !(flags & MACRO_FLAG_IMMUTABLE);
 	mc->mc_lno = lno;
 	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
 	return 0;
-}
-
-/*
- * Insert a constant macro, only used for non-default contexts.
- * Note, the macro list does not claim memory ownership of the given name and
- * value thus the caller must ensure that the lifetime of the two aforementioned
- * pointers supersedes the macro list.
- */
-void
-macros_insertc(struct macro_list *macros, const char *name, const char *value)
-{
-	struct macro *mc;
-
-	/* Santity check. */
-	if ((macro_context(name) & macros->ml_ctx) == 0)
-		errx(1, "%s: %s: macro not available in context",
-		    __func__, name);
-	if (macros_find(macros, name) != NULL)
-		errx(1, "%s: %s: macro already defined", __func__, name);
-
-	/*
-	 * A macro list used in a non-default context is always stack allocated.
-	 * Therefore ensure that the stack storage is sufficient.
-	 */
-	if (macros->ml_nmemb == macros->ml_size)
-		errx(1, "%s: stack storage exhausted", __func__);
-
-	mc = &macros->ml_v[macros->ml_nmemb++];
-	mc->mc_flags = MACRO_FLAG_STATIC | MACRO_FLAG_CONST;
-	/* Dangerous business ahead but a macro is never mutated. */
-	mc->mc_name = (char *)name;
-	mc->mc_value = (char *)value;
-	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
 }
 
 struct macro *

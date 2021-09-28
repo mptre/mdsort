@@ -79,8 +79,7 @@ main(int argc, char *argv[])
 			if ((eq = strchr(optarg, '=')) == NULL)
 				err(1, "invalid macro: %s", optarg);
 			*eq = '\0';
-			flags = MACRO_FLAG_CONST;
-			flags |= MACRO_FLAG_STATIC;
+			flags = MACRO_FLAG_CONST | MACRO_FLAG_STATIC;
 			flags |= MACRO_FLAG_IMMUTABLE;
 			macros_insert(&macros, optarg, eq + 1, flags, 0);
 			break;

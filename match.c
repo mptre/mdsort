@@ -87,7 +87,8 @@ matches_interpolate(struct match_list *ml)
 
 	/* Construct action macro context. */
 	macros_init(&macros, MACRO_CTX_ACTION);
-	macros_insertc(&macros, "path", TAILQ_FIRST(ml)->mh_msg->me_path);
+	macros_insert(&macros, "path", TAILQ_FIRST(ml)->mh_msg->me_path,
+	    MACRO_FLAG_STATIC | MACRO_FLAG_CONST, 0);
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		if (match_interpolate(mh, &macros))
