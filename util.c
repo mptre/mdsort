@@ -112,7 +112,8 @@ macros_init(struct macro_list *macros, unsigned int ctx)
 }
 
 int
-macros_insert(struct macro_list *macros, char *name, char *value, int lno)
+macros_insert(struct macro_list *macros, char *name, char *value,
+    unsigned int flags, int lno)
 {
 	struct macro *mc;
 
@@ -123,12 +124,12 @@ macros_insert(struct macro_list *macros, char *name, char *value, int lno)
 
 	if (macros->ml_nmemb < macros->ml_size) {
 		mc = &macros->ml_v[macros->ml_nmemb++];
-		mc->mc_flags = MACRO_FLAG_STATIC;
+		mc->mc_flags = flags | MACRO_FLAG_STATIC;
 	} else {
 		mc = malloc(sizeof(*mc));
 		if (mc == NULL)
 			err(1, NULL);
-		mc->mc_flags = 0;
+		mc->mc_flags = flags;
 	}
 
 	mc->mc_name = name;

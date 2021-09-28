@@ -122,7 +122,7 @@ grammar		: /* empty */
 
 macro		: MACRO '=' STRING {
 			$3 = expand($3, MACRO_CTX_DEFAULT);
-			if (macros_insert(&yyconfig->cl_macros, $1, $3, lineno))
+			if (macros_insert(&yyconfig->cl_macros, $1, $3, 0, lineno))
 				yyerror("macro already defined: %s", $1);
 		}
 		;

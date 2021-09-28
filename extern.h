@@ -369,7 +369,8 @@ struct macro_list {
 };
 
 void		 macros_init(struct macro_list *, unsigned int);
-int		 macros_insert(struct macro_list *, char *, char *, int);
+int		 macros_insert(struct macro_list *, char *, char *,
+    unsigned int, int);
 void		 macros_insertc(struct macro_list *, const char *,
     const char *);
 struct macro	*macros_find(const struct macro_list *, const char *);
