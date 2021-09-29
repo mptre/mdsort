@@ -3,20 +3,20 @@ if testcase "basic"; then
 	mkmsg "src1/new"
 	mkmsg "src2/new"
 	mkmsg "src3/new"
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	one = "dst1"
 	maildir "src1" {
-		match all move "\${one}"
+		match all move "${one}"
 	}
 
 	two = "dst2"
 	maildir "src2" {
-		match all move "\${two}"
+		match all move "${two}"
 	}
 
 	three = "dst3"
 	maildir "src3" {
-		match all exec { "echo" "\${three}" }
+		match all exec { "echo" "${three}" }
 	}
 	EOF
 	mdsort - <<-EOF
@@ -31,13 +31,13 @@ fi
 if testcase "nested macro"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	head = "d"
 	tail = "t"
-	dst = "\${head}s\${tail}"
+	dst = "${head}s${tail}"
 
 	maildir "src" {
-		match all move "\${dst}"
+		match all move "${dst}"
 	}
 	EOF
 	mdsort
@@ -46,7 +46,7 @@ if testcase "nested macro"; then
 fi
 
 if testcase "empty macro"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	empty = ""
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -56,7 +56,7 @@ if testcase "empty macro"; then
 fi
 
 if testcase "collision with keyword"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir = "maildir"
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -65,19 +65,19 @@ if testcase "collision with keyword"; then
 fi
 
 if testcase "collision with date scalar"; then
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	s = "src"
 	seconds = "dst"
 
-	maildir "\${s}" {
-		match all move "\${seconds}"
+	maildir "${s}" {
+		match all move "${seconds}"
 	}
 	EOF
 	mdsort -- -n
 fi
 
 if testcase -t memleak "macro not on root level"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		dst = "dst"
 	}
@@ -92,9 +92,9 @@ if testcase -t memleak "macro not on root level"; then
 fi
 
 if testcase "unknown macro"; then
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match all move "\${dst}"
+		match all move "${dst}"
 	}
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -103,12 +103,12 @@ if testcase "unknown macro"; then
 fi
 
 if testcase "unused macro"; then
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	dst = "dst"
 	trash = "trash"
 
 	maildir "src" {
-		match all move "\${dst}"
+		match all move "${dst}"
 	}
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -117,9 +117,9 @@ if testcase "unused macro"; then
 fi
 
 if testcase "unterminated macro"; then
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match all move "\${dst"
+		match all move "${dst"
 	}
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -137,9 +137,9 @@ if testcase "pre defined macros cannot be redefined"; then
 fi
 
 if testcase "macro used in wrong context"; then
-	cat <<-EOF >"$CONF"
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match header "\${path}" /./ move "dst"
+		match header "${path}" /./ move "dst"
 	}
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -214,9 +214,9 @@ if testcase "action label with pre defined macros"; then
 	mkmd "src"
 	mkmsg "src/new"
 	_label="$(findmsg "src/new")"
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match all label "\${path}"
+		match all label "${path}"
 	}
 	EOF
 	mdsort
@@ -227,9 +227,9 @@ fi
 if testcase "action exec with pre defined macros"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match all exec { "sh" "-c" "echo \${path}" }
+		match all exec { "sh" "-c" "echo ${path}" }
 	}
 	EOF
 	mdsort - <<-EOF
@@ -244,10 +244,10 @@ fi
 if testcase "action attachment with pre defined macros"; then
 	mkmd "src"
 	mkmsg -A "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
 		match all attachment {
-			match all exec { "echo" "\${path}" }
+			match all exec { "echo" "${path}" }
 		}
 	}
 	EOF
