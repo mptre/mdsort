@@ -122,7 +122,7 @@ grammar		: /* empty */
 
 macro		: MACRO '=' STRING {
 			$3 = expand($3, MACRO_CTX_DEFAULT);
-			if (macros_insert(&yyconfig->cf_macros, $1, $3, lineno))
+			if (macros_insert(&yyconfig->cl_macros, $1, $3, lineno))
 				yyerror("macro already defined: %s", $1);
 		}
 		;
@@ -153,7 +153,7 @@ maildir		: maildir_paths exprblock {
 				err(1, NULL);
 			conf->paths = $1;
 			conf->expr = $2;
-			TAILQ_INSERT_TAIL(&yyconfig->cf_list, conf, entry);
+			TAILQ_INSERT_TAIL(&yyconfig->cl_list, conf, entry);
 		}
 		;
 
@@ -169,7 +169,7 @@ maildir_paths	: MAILDIR strings {
 			const struct config *conf;
 			extern const char *stdinpath;
 
-			TAILQ_FOREACH(conf, &yyconfig->cf_list, entry) {
+			TAILQ_FOREACH(conf, &yyconfig->cl_list, entry) {
 				const struct string *str;
 
 				TAILQ_FOREACH(str, conf->paths, entry) {
@@ -446,8 +446,8 @@ optneg		: /* empty */ {
 void
 config_init(struct config_list *config)
 {
-	macros_init(&config->cf_macros, MACRO_CTX_DEFAULT);
-	TAILQ_INIT(&config->cf_list);
+	macros_init(&config->cl_macros, MACRO_CTX_DEFAULT);
+	TAILQ_INIT(&config->cl_list);
 }
 
 int
@@ -466,7 +466,7 @@ config_parse(struct config_list *config, const char *path, const struct environm
 	lineno_save = -1;
 	yyparse();
 	fclose(yyfh);
-	macros_validate(&yyconfig->cf_macros);
+	macros_validate(&yyconfig->cl_macros);
 	return parse_errors;
 }
 
@@ -479,15 +479,15 @@ config_free(struct config_list *config)
 	if (config == NULL)
 		return;
 
-	while ((conf = TAILQ_FIRST(&config->cf_list)) != NULL) {
-		TAILQ_REMOVE(&config->cf_list, conf, entry);
+	while ((conf = TAILQ_FIRST(&config->cl_list)) != NULL) {
+		TAILQ_REMOVE(&config->cl_list, conf, entry);
 		strings_free(conf->paths);
 		expr_free(conf->expr);
 		free(conf);
 	}
 
-	while ((mc = TAILQ_FIRST(&config->cf_macros.ml_list)) != NULL) {
-		TAILQ_REMOVE(&config->cf_macros.ml_list, mc, mc_entry);
+	while ((mc = TAILQ_FIRST(&config->cl_macros.ml_list)) != NULL) {
+		TAILQ_REMOVE(&config->cl_macros.ml_list, mc, mc_entry);
 		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
 			free(mc->mc_name);
 			free(mc->mc_value);
@@ -905,7 +905,7 @@ static char *
 expand(char *str, unsigned int curctx)
 {
 	str = expandtilde(str, yyenv->ev_home);
-	str = expandmacros(str, &yyconfig->cf_macros, curctx);
+	str = expandmacros(str, &yyconfig->cl_macros, curctx);
 	return str;
 }
 

@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	if (env.ev_options & OPTION_SYNTAX)
 		goto out;
 
-	TAILQ_FOREACH(conf, &config.cf_list, entry) {
+	TAILQ_FOREACH(conf, &config.cl_list, entry) {
 		const struct string *str;
 
 		TAILQ_FOREACH(str, conf->paths, entry) {
@@ -208,7 +208,7 @@ config_has_exec(const struct config_list *config, const struct environment *env)
 	if (env->ev_options & OPTION_DRYRUN)
 		return 0;
 
-	TAILQ_FOREACH(conf, &config->cf_list, entry) {
+	TAILQ_FOREACH(conf, &config->cl_list, entry) {
 		const struct string *str;
 
 		TAILQ_FOREACH(str, conf->paths, entry) {

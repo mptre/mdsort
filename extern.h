@@ -389,9 +389,9 @@ struct config {
 };
 
 struct config_list {
-	struct macro_list	cf_macros;
+	struct macro_list	cl_macros;
 
-	TAILQ_HEAD(, config)	cf_list;
+	TAILQ_HEAD(, config)	cl_list;
 };
 
 void	config_init(struct config_list *);
