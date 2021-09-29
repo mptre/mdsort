@@ -389,13 +389,15 @@ struct config {
 };
 
 struct config_list {
-	struct macro_list	*cf_macros;
+	struct macro_list	cf_macros;
 
-	TAILQ_HEAD(, config)	 cf_list;
+	TAILQ_HEAD(, config)	cf_list;
 };
 
-struct config_list	*config_parse(const char *, const struct environment *);
-void			 config_free(struct config_list *);
+void	config_init(struct config_list *);
+int	config_parse(struct config_list *, const char *,
+    const struct environment *);
+void	config_free(struct config_list *);
 
 /*
  * util ------------------------------------------------------------------------

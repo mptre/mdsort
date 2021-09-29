@@ -24,7 +24,6 @@ static void yyrecover(void);
 static void yypushl(int);
 static void yypopl(void);
 
-static void macros_free(struct macro_list *);
 static void macros_validate(const struct macro_list *);
 
 static char *expand(char *, unsigned int);
@@ -32,7 +31,7 @@ static char *expandmacros(char *, struct macro_list *, unsigned int);
 static struct string_list *expandstrings(struct string_list *, unsigned int);
 static char *expandtilde(char *, const char *);
 
-static struct config_list yyconfig;
+static struct config_list *yyconfig;
 static const struct environment *yyenv;
 static FILE *yyfh;
 static const char *yypath;
@@ -123,7 +122,7 @@ grammar		: /* empty */
 
 macro		: MACRO '=' STRING {
 			$3 = expand($3, MACRO_CTX_DEFAULT);
-			if (macros_insert(yyconfig.cf_macros, $1, $3, lineno))
+			if (macros_insert(&yyconfig->cf_macros, $1, $3, lineno))
 				yyerror("macro already defined: %s", $1);
 		}
 		;
@@ -154,7 +153,7 @@ maildir		: maildir_paths exprblock {
 				err(1, NULL);
 			conf->paths = $1;
 			conf->expr = $2;
-			TAILQ_INSERT_TAIL(&yyconfig.cf_list, conf, entry);
+			TAILQ_INSERT_TAIL(&yyconfig->cf_list, conf, entry);
 		}
 		;
 
@@ -170,7 +169,7 @@ maildir_paths	: MAILDIR strings {
 			const struct config *conf;
 			extern const char *stdinpath;
 
-			TAILQ_FOREACH(conf, &yyconfig.cf_list, entry) {
+			TAILQ_FOREACH(conf, &yyconfig->cf_list, entry) {
 				const struct string *str;
 
 				TAILQ_FOREACH(str, conf->paths, entry) {
@@ -444,45 +443,38 @@ optneg		: /* empty */ {
 
 %%
 
-/*
- * Parses the configuration located at path and returns a config list on
- * success.
- * Otherwise, NULL is returned.
- */
-struct config_list *
-config_parse(const char *path, const struct environment *env)
+void
+config_init(struct config_list *config)
+{
+	macros_init(&config->cf_macros, MACRO_CTX_DEFAULT);
+	TAILQ_INIT(&config->cf_list);
+}
+
+int
+config_parse(struct config_list *config, const char *path, const struct environment *env)
 {
 	yyfh = fopen(path, "r");
 	if (yyfh == NULL) {
 		warn("%s", path);
-		return NULL;
+		return 1;
 	}
+	yyconfig = config;
 	yypath = path;
 	yyenv = env;
-
-	yyconfig.cf_macros = malloc(sizeof(*yyconfig.cf_macros));
-	if (yyconfig.cf_macros == NULL)
-		err(1, NULL);
-	macros_init(yyconfig.cf_macros, MACRO_CTX_DEFAULT);
-
-	TAILQ_INIT(&yyconfig.cf_list);
 
 	lineno = 1;
 	lineno_save = -1;
 	yyparse();
 	fclose(yyfh);
-	macros_validate(yyconfig.cf_macros);
-	if (parse_errors > 0) {
-		config_free(&yyconfig);
-		return NULL;
-	}
-	return &yyconfig;
+	macros_validate(&yyconfig->cf_macros);
+	return parse_errors;
 }
 
 void
 config_free(struct config_list *config)
 {
 	struct config *conf;
+	struct macro *mc;
 
 	if (config == NULL)
 		return;
@@ -494,7 +486,15 @@ config_free(struct config_list *config)
 		free(conf);
 	}
 
-	macros_free(config->cf_macros);
+	while ((mc = TAILQ_FIRST(&config->cf_macros.ml_list)) != NULL) {
+		TAILQ_REMOVE(&config->cf_macros.ml_list, mc, mc_entry);
+		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
+			free(mc->mc_name);
+			free(mc->mc_value);
+		}
+		if ((mc->mc_flags & MACRO_FLAG_STATIC) == 0)
+			free(mc);
+	}
 }
 
 static void
@@ -887,26 +887,6 @@ yypopl(void)
 }
 
 static void
-macros_free(struct macro_list *macros)
-{
-	struct macro *mc;
-
-	if (macros == NULL)
-		return;
-
-	while ((mc = TAILQ_FIRST(&macros->ml_list)) != NULL) {
-		TAILQ_REMOVE(&macros->ml_list, mc, mc_entry);
-		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
-			free(mc->mc_name);
-			free(mc->mc_value);
-		}
-		if ((mc->mc_flags & MACRO_FLAG_STATIC) == 0)
-			free(mc);
-	}
-	free(macros);
-}
-
-static void
 macros_validate(const struct macro_list *macros)
 {
 	const struct macro *mc;
@@ -925,7 +905,7 @@ static char *
 expand(char *str, unsigned int curctx)
 {
 	str = expandtilde(str, yyenv->ev_home);
-	str = expandmacros(str, yyconfig.cf_macros, curctx);
+	str = expandmacros(str, &yyconfig->cf_macros, curctx);
 	return str;
 }
 

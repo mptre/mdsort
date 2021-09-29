@@ -37,10 +37,10 @@ static __dead void	 usage(void);
 int
 main(int argc, char *argv[])
 {
+	struct config_list config;
 	struct environment env;
 	struct match_list matches;
 	struct maildir_entry me;
-	struct config_list *config;
 	struct config *conf;
 	struct maildir *md;
 	struct message *msg;
@@ -53,6 +53,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
+	config_init(&config);
 	memset(&env, 0, sizeof(env));
 	TAILQ_INIT(&matches);
 
@@ -94,21 +95,20 @@ main(int argc, char *argv[])
 
 	if (env.ev_confpath == NULL)
 		env.ev_confpath = defaultconf(env.ev_home);
-	config = config_parse(env.ev_confpath, &env);
-	if (config == NULL) {
+	if (config_parse(&config, env.ev_confpath, &env)) {
 		error = 1;
 		goto out;
 	}
 
 	/* Drop exec privilegies unless needed. */
-	if (!config_has_exec(config, &env))
+	if (!config_has_exec(&config, &env))
 		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 			err(1, "pledge");
 
 	if (env.ev_options & OPTION_SYNTAX)
 		goto out;
 
-	TAILQ_FOREACH(conf, &config->cf_list, entry) {
+	TAILQ_FOREACH(conf, &config.cf_list, entry) {
 		const struct string *str;
 
 		TAILQ_FOREACH(str, conf->paths, entry) {
@@ -175,7 +175,7 @@ loop:
 	}
 
 out:
-	config_free(config);
+	config_free(&config);
 
 	FAULT_SHUTDOWN();
 

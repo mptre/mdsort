@@ -105,7 +105,7 @@ strings_concat(const struct string_list *strings, char *buf, size_t *bufsiz,
 void
 macros_init(struct macro_list *macros, unsigned int ctx)
 {
-	macros->ml_nmemb = 0;
+	memset(macros, 0, sizeof(*macros));
 	macros->ml_size = sizeof(macros->ml_v) / sizeof(macros->ml_v[0]);
 	macros->ml_ctx = ctx;
 	TAILQ_INIT(&macros->ml_list);
