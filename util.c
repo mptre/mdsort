@@ -111,21 +111,21 @@ macros_init(struct macro_list *macros, unsigned int ctx)
 	TAILQ_INIT(&macros->ml_list);
 }
 
-int
+enum macro_error
 macros_insert(struct macro_list *macros, char *name, char *value,
     unsigned int flags, int lno)
 {
 	struct macro *mc;
 
 	if ((macro_context(name) & macros->ml_ctx) == 0)
-		return 1;
+		return MACRO_ERR_CTX;
 	if ((mc = macros_find(macros, name)) != NULL) {
 		if (mc->mc_flags & MACRO_FLAG_STICKY) {
-			if (flags & MACRO_FLAG_STICKY)
-				return 1;
-			return ++mc->mc_defs > 1;
+			if ((flags & MACRO_FLAG_STICKY) || ++mc->mc_defs > 1)
+				return MACRO_ERR_EXIST;
+			return MACRO_ERR_STICKY;
 		}
-		return 1;
+		return MACRO_ERR_EXIST;
 	}
 
 	if (macros->ml_nmemb < macros->ml_size) {
@@ -144,7 +144,7 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 	mc->mc_defs = 0;
 	mc->mc_lno = lno;
 	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
-	return 0;
+	return MACRO_ERR_NONE;
 }
 
 /*

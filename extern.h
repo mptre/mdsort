@@ -347,6 +347,13 @@ size_t	strings_len(const struct string_list *);
 #define MACRO_CTX_DEFAULT	0x00000001u
 #define MACRO_CTX_ACTION	0x00000002u
 
+enum macro_error {
+	MACRO_ERR_NONE,
+	MACRO_ERR_CTX,
+	MACRO_ERR_EXIST,
+	MACRO_ERR_STICKY,
+};
+
 struct macro {
 	char			*mc_name;
 	char			*mc_value;
@@ -371,7 +378,7 @@ struct macro_list {
 };
 
 void		 macros_init(struct macro_list *, unsigned int);
-int		 macros_insert(struct macro_list *, char *, char *,
+enum macro_error macros_insert(struct macro_list *, char *, char *,
     unsigned int, int);
 void		 macros_insertc(struct macro_list *, const char *,
     const char *);

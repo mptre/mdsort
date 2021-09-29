@@ -121,9 +121,21 @@ grammar		: /* empty */
 		;
 
 macro		: MACRO '=' STRING {
+			struct macro_list *macros = &yyconfig->cl_macros;
+
 			$3 = expand($3, MACRO_CTX_DEFAULT);
-			if (macros_insert(&yyconfig->cl_macros, $1, $3, 0, lineno))
+			switch (macros_insert(macros, $1, $3, 0, lineno)) {
+			case MACRO_ERR_NONE:
+				break;
+			case MACRO_ERR_CTX:
+			case MACRO_ERR_EXIST:
 				yyerror("macro already defined: %s", $1);
+				/* FALLTHROUGH */
+			case MACRO_ERR_STICKY:
+				free($1);
+				free($3);
+				break;
+			}
 		}
 		;
 

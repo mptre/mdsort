@@ -127,7 +127,7 @@ if testcase "unterminated macro"; then
 	EOF
 fi
 
-if testcase -t memleak "pre defined macros cannot be redefined"; then
+if testcase "pre defined macros cannot be redefined"; then
 	cat <<-EOF >"$CONF"
 	path = "path"
 	EOF
