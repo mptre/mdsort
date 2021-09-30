@@ -130,12 +130,11 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 
 	if (macros->ml_nmemb < macros->ml_size) {
 		mc = &macros->ml_v[macros->ml_nmemb++];
-		mc->mc_flags = flags | MACRO_FLAG_STATIC;
+		flags |= MACRO_FLAG_STATIC;
 	} else {
 		mc = malloc(sizeof(*mc));
 		if (mc == NULL)
 			err(1, NULL);
-		mc->mc_flags = flags;
 	}
 
 	mc->mc_name = name;
@@ -143,6 +142,7 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 	mc->mc_refs = 0;
 	mc->mc_defs = 0;
 	mc->mc_lno = lno;
+	mc->mc_flags = flags;
 	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
 	return MACRO_ERR_NONE;
 }
@@ -156,14 +156,7 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 void
 macros_insertc(struct macro_list *macros, const char *name, const char *value)
 {
-	struct macro *mc;
-
-	/* Santity check. */
-	if ((macro_context(name) & macros->ml_ctx) == 0)
-		errx(1, "%s: %s: macro not available in context",
-		    __func__, name);
-	if (macros_find(macros, name) != NULL)
-		errx(1, "%s: %s: macro already defined", __func__, name);
+	enum macro_error error;
 
 	/*
 	 * A macro list used in a non-default context is always stack allocated.
@@ -172,12 +165,11 @@ macros_insertc(struct macro_list *macros, const char *name, const char *value)
 	if (macros->ml_nmemb == macros->ml_size)
 		errx(1, "%s: stack storage exhausted", __func__);
 
-	mc = &macros->ml_v[macros->ml_nmemb++];
-	mc->mc_flags = MACRO_FLAG_STATIC | MACRO_FLAG_CONST;
-	/* Dangerous business ahead but a macro is never mutated. */
-	mc->mc_name = (char *)name;
-	mc->mc_value = (char *)value;
-	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
+	/* Dangerous casting ahead but a macro is never mutated. */
+	error = macros_insert(macros, (char *)name, (char *)value,
+	    MACRO_FLAG_CONST, 0);
+	if (error)
+		errx(1, "%s: error %d", __func__, error);
 }
 
 struct macro *
