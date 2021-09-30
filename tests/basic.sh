@@ -1,7 +1,7 @@
 if testcase "tilde expansion"; then
 	mkmd "src" "dst"
 	echo "Hello Bob" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/src" {
 		match body /Bob/ move "~/dst"
 	}
@@ -14,7 +14,7 @@ fi
 if testcase "escape slash in pattern"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "foo/bar"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "Subject" /foo\/bar/ move "dst"
 	}
@@ -28,7 +28,7 @@ if testcase "match negate binds to the innermost condition"; then
 	mkmd "src" "dst"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "admin@example.com"
 	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match ! body /hello/i or header "To" /user/ move "dst"
 	}
@@ -42,7 +42,7 @@ if testcase "match negate nested condition"; then
 	mkmd "src" "dst"
 	echo "Hello!" | mkmsg -b "src/new" -- "To" "admin@example.com"
 	echo "Bye!" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match !(body /hello/i or header "To" /admin/) move "dst"
 	}
@@ -56,7 +56,7 @@ if testcase "match nested with interpolation"; then
 	mkmd "src" "dst"
 	echo "foo" | mkmsg -b "src/new" -- "To" "user@example.com"
 	echo "dst" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ {
 			match new {
@@ -73,7 +73,7 @@ fi
 if testcase "match nested without interpolation matches"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new {
 			match new move "dst"
@@ -89,7 +89,7 @@ if testcase "match nested with negate"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/new" -- "To" "admin@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new {
 			match ! header "To" /admin/ move "dst"
@@ -108,7 +108,7 @@ fi
 if testcase "match case insensitive"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "UsEr@ExAmPlE.CoM"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/i move "dst"
 	}
@@ -121,7 +121,7 @@ fi
 if testcase "match lowercase"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@DST.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /dst/il move "\0"
 	}
@@ -134,7 +134,7 @@ fi
 if testcase "match uppercase"; then
 	mkmd "src" "DST"
 	mkmsg "src/new" -- "To" "user@dst.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /dst/u move "\0"
 	}
@@ -147,7 +147,7 @@ fi
 if testcase "unique suffix is preserved when valid"; then
 	mkmd "src" "dst"
 	mkmsg -s ":2,S" "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ move "dst"
 	}
@@ -161,7 +161,7 @@ fi
 if testcase "destination interpolation first match is favored"; then
 	mkmd "src" "first"
 	mkmsg "src/new" -- "To" "first@last.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /(first)/ and header "To" /(last)/ move "\1"
 	}
@@ -200,7 +200,7 @@ fi
 if testcase "destination interpolation negative"; then
 	mkmd "src" "\-1"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /./ move "\-1"
 	}
@@ -213,7 +213,7 @@ fi
 if testcase "destination interpolation non-decimal"; then
 	mkmd "src" "userx1"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /(user)/ move "\0x1"
 	}
@@ -250,19 +250,19 @@ if testcase "destination interpolation with negate"; then
 fi
 
 if testcase "unknown option"; then
-	mdsort -e -- -1 >$TMP1
-	grep -q 'usage' $TMP1 || fail - "expected usage output" <$TMP1
+	mdsort -e -- -1 >"$TMP1"
+	grep -q 'usage' "$TMP1" || fail - "expected usage output" <"$TMP1"
 fi
 
 if testcase "extraneous option"; then
-	mdsort -e -- extraneous >$TMP1
-	grep -q 'usage' $TMP1 || fail - "expected usage output" <$TMP1
+	mdsort -e -- extraneous >"$TMP1"
+	grep -q 'usage' "$TMP1" || fail - "expected usage output" <"$TMP1"
 fi
 
 if testcase "long filename"; then
 	mkmd "src" "dst"
 	touch "${TSHDIR}/src/new/$(genstr "$NAME_MAX")"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all move "dst"
 	}
@@ -275,7 +275,7 @@ fi
 if testcase "pattern delimiter"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "From" "/dst@example.com/"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "From" @/(dst)\@example.com/@ move "dst"
 	}

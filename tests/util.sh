@@ -167,6 +167,7 @@ mdsort() {
 	_tmpdir="${TSHDIR}/_tmpdir"
 	mkdir "$_tmpdir"
 
+	# shellcheck disable=SC2086
 	(cd "$TSHDIR" && env LC_ALL=en_US.UTF-8 "TMPDIR=${_tmpdir}" \
 		${_fault} ${EXEC:-} "$MDSORT" $_args "$@") \
 		>"$_tmp" 2>&1 || _exit2="$?"
@@ -310,7 +311,7 @@ mkmsg() {
 			Second attachment.
 			--deadbeef--
 			EOF
-		elif [ $_body -eq 1 ]; then
+		elif [ "$_body" -eq 1 ]; then
 			cat
 		fi
 	} >"$_path"
@@ -366,6 +367,7 @@ fi
 # Enable hardening malloc(3) options on OpenBSD.
 case "$(uname -s)" in
 OpenBSD)	export MALLOC_OPTIONS="RS";;
+*)		;;
 esac
 
 # Number of messages created by mkmsg.

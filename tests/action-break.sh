@@ -1,5 +1,5 @@
 if testcase "break is mutually exclusive with all other actions"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all move "dst" break
 		match all flag new break
@@ -20,7 +20,7 @@ if testcase "root level"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/new" -- "To" "admin@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user@example.com/ break
 
@@ -38,7 +38,7 @@ if testcase "nested level"; then
 	mkmd "src" "d0" "d3"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/new" -- "To" "admin@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new {
 			match new {

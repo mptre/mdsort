@@ -2,7 +2,7 @@ if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
 	mkmsg "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new move "dst"
 	}
@@ -18,7 +18,7 @@ if testcase "negate"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
 	mkmsg "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match ! new move "dst"
 	}

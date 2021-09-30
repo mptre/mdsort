@@ -1,7 +1,7 @@
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new {
 			match header "To" /admin/ move "admin"

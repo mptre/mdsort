@@ -1,5 +1,5 @@
 if testcase "conf"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all pass pass
 		match all move "dst" pass
@@ -17,7 +17,7 @@ fi
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all flag new pass
 		match all move "dst"
@@ -31,7 +31,7 @@ fi
 if testcase "last match"; then
 	mkmd "src"
 	mkmsg "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all flag new pass
 		match header "Subject" /nein/ move "junk"
@@ -45,7 +45,7 @@ fi
 if testcase "nested block"; then
 	mkmd "src" "dst"
 	mkmsg "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all {
 			match all flag new pass
@@ -62,7 +62,7 @@ fi
 if testcase "dangling"; then
 	mkmd "src"
 	mkmsg "src/cur" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ pass
 		match all {

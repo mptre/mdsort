@@ -1,7 +1,7 @@
 if testcase "basic"; then
 	mkmd "src" "dst"
 	echo "Hello Bob" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /Bob/ move "dst"
 	}
@@ -14,7 +14,7 @@ fi
 if testcase "negate"; then
 	mkmd "src" "dst"
 	echo "Hello Alice" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match ! body /Bob/ move "dst"
 	}
@@ -27,7 +27,7 @@ fi
 if testcase "empty body"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /Bob/ move "dst"
 	}
@@ -40,7 +40,7 @@ fi
 if testcase "malformed body"; then
 	mkmd "src" "dst"
 	printf 'To: user@example.com\nSubject: foo' | mkmsg "src/new" -
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /Bob/ move "dst"
 	}
@@ -53,7 +53,7 @@ fi
 if testcase "empty message"; then
 	mkmd "src" "dst"
 	mkmsg -b "src/new" </dev/null
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /Bob/ or header "From" /Bob/ move "dst"
 	}
@@ -66,7 +66,7 @@ fi
 if testcase "destination interpolation"; then
 	mkmd "src" "example"
 	echo "Hello example" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /example/ move "\0"
 	}
@@ -79,7 +79,7 @@ fi
 if testcase "dry run first line"; then
 	mkmd "src" "dst"
 	echo "Hello" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /hello/i move "dst"
 	}
@@ -94,7 +94,7 @@ fi
 if testcase "dry run first line no newline"; then
 	mkmd "src" "dst"
 	printf 'To: user@example.com\n\nHello' | mkmsg -b "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /hello/i move "dst"
 	}
@@ -115,7 +115,7 @@ if testcase "dry run middle line"; then
 	Hello hello
 	Bye
 	EOF
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /hello/ move "dst"
 	}
@@ -132,7 +132,7 @@ if testcase "dry run tabs in body"; then
 	mkmsg -b "src/new" <<EOF
 	src/tests/modules: t_kcov.c
 EOF
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /(kcov)/ label "\1"
 	}

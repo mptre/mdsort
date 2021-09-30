@@ -1,5 +1,5 @@
 if testcase "reject is mutually exclusive with all other actions"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all move "foo" reject
 	}
@@ -10,7 +10,7 @@ if testcase "reject is mutually exclusive with all other actions"; then
 fi
 
 if testcase "reject cannot be used outside stdin"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all reject
 	}
@@ -26,7 +26,7 @@ if testcase "reject cannot be used outside stdin"; then
 fi
 
 if testcase "reject"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all reject
 	}
@@ -35,7 +35,7 @@ if testcase "reject"; then
 fi
 
 if testcase "dry run"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all reject
 	}

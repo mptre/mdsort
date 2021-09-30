@@ -2,15 +2,15 @@ if testcase "basic"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "one"
 	mkmsg "src/new" -- "To" "two"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /.*/ exec { "echo" "\0" }
 	}
 	EOF
 	# The order in which entries are returned from readdir(3) is not
 	# deterministic.
-	mdsort | sort >$TMP1
-	assert_file - $TMP1 <<-EOF
+	mdsort | sort >"$TMP1"
+	assert_file - "$TMP1" <<-EOF
 	one
 	two
 	EOF
@@ -19,19 +19,19 @@ fi
 if testcase "stdin defaults to /dev/null"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all exec "cat"
 	}
 	EOF
-	echo nein | mdsort >$TMP1
-	assert_file - $TMP1 </dev/null
+	echo nein | mdsort >"$TMP1"
+	assert_file - "$TMP1" </dev/null
 fi
 
 if testcase "stdin"; then
 	mkmd "src"
 	echo body | mkmsg -b "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all exec stdin "cat" exec stdin "cat"
 	}
@@ -100,7 +100,7 @@ fi
 if testcase "exit non-zero"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all exec { "sh" "-c" "exit 1" }
 	}
@@ -113,9 +113,9 @@ fi
 if testcase "exit signal"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match all exec { "sh" "-c" "kill -9 \$$" }
+		match all exec { "sh" "-c" "kill -9 $$" }
 	}
 	EOF
 	mdsort -e - <<-EOF
@@ -126,7 +126,7 @@ fi
 if testcase "command not found"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all exec "command-not-found"
 	}
@@ -136,14 +136,14 @@ fi
 
 if testcase "remote code execution"; then
 	mkmd "src"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match header "To" /.*/ exec { "sh" "-c" "echo \0" }
 	}
 	EOF
-	printf "To: user; echo pwned\n\n" >$TMP1
-	mdsort -- - <$TMP1 >$TMP2
-	assert_file - $TMP2 <<-EOF
+	printf "To: user; echo pwned\n\n" >"$TMP1"
+	mdsort -- - <"$TMP1" >"$TMP2"
+	assert_file - "$TMP2" <<-EOF
 	user
 	pwned
 	EOF
@@ -153,7 +153,7 @@ fi
 if testcase "interpolation out of bounds"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all exec { "sh" "-c" "ls \0" }
 	}
@@ -165,9 +165,9 @@ fi
 if testcase -t fdleak "file descriptors"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match all exec { "sh" "-c" "i=3; while [ \$i -lt 10 ]; do command >&\$i && exit 1; i=\$((i + 1)); done" }
+		match all exec { "sh" "-c" "i=3; while [ $i -lt 10 ]; do command >&$i && exit 1; i=$((i + 1)); done" }
 	}
 	EOF
 	mdsort >/dev/null

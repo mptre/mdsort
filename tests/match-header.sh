@@ -2,7 +2,7 @@ if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/cur" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user@example.com/ move "dst"
 	}
@@ -17,7 +17,7 @@ fi
 if testcase "negate"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "admin@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match ! header "To" /user/ move "dst"
 	}
@@ -30,7 +30,7 @@ fi
 if testcase "line continuation"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "$(printf 'foo\n\t bar')"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "Subject" /^foo bar$/ move "dst"
 	}
@@ -44,7 +44,7 @@ if testcase "many headers"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/cur" -- "Cc" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header { "Cc" "To" } /user/ move "dst"
 	}
@@ -64,7 +64,7 @@ if testcase "duplicate headers"; then
 		"To" "bar@example.com"
 	mkmsg "src/new" -- "To" "foo@example.com" "To" "bar@example.com" \
 		"To" "root@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ move "user"
 		match header "To" /admin/ move "admin"
@@ -81,7 +81,7 @@ fi
 if testcase "key comparison is case insensitive"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "to" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ move "dst"
 	}
@@ -94,7 +94,7 @@ fi
 if testcase "destination interpolation"; then
 	mkmd "src" "user-example"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /(user)@([^\.]+).com/ move "\1-\2"
 	}
@@ -107,7 +107,7 @@ fi
 if testcase "dry run first line"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /example.com/ move "dst"
 	}
@@ -123,11 +123,11 @@ if testcase "dry run middle line"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" \
 		"$(printf 'admin@a.com,\n\tuser@a.com,\n\tno-reply@a.com')"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ move "dst"
 	}
-	cat <<EOF >$TMP1
+	cat <<EOF >"$TMP1"
 	mdsort - -- -d <<EOF
 $(findmsg "src/new") -> dst/new
 mdsort.conf:2: To: admin@a.com, user@a.com, no-reply@a.com
@@ -139,7 +139,7 @@ if testcase "dry run last line"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" \
 		"$(printf 'admin@example.com,\n\tuser@example.com')"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ move "dst"
 	}
@@ -154,7 +154,7 @@ fi
 if testcase "dry run negate"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "admin@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match ! header "To" /user/ move "dst"
 	}
@@ -167,7 +167,7 @@ fi
 if testcase "dry run many subexpressions"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /(example).(com)/ move "dst"
 	}

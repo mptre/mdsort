@@ -1,7 +1,7 @@
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match old move "dst"
 	}
@@ -14,7 +14,7 @@ fi
 if testcase "negate"; then
 	mkmd "src" "dst"
 	mkmsg "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match ! old move "dst"
 	}
@@ -27,7 +27,7 @@ fi
 if testcase "seen flag present"; then
 	mkmd "src" "dst"
 	mkmsg -s ":2,S" "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match old move "dst"
 	}
@@ -40,7 +40,7 @@ fi
 if testcase "invalid flags"; then
 	mkmd "src"
 	mkmsg -s ":1," "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match old move "dst"
 	}

@@ -1,7 +1,7 @@
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkattach "src/new" "text/plain; charset=utf-8" "base64" "$(b64 hello)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /hello/ move "dst"
 	}
@@ -16,7 +16,7 @@ if testcase "plain text is favored over html"; then
 	mkattach "src/new" \
 		"text/html" "base64" "$(b64 html)" \
 		"text/plain" "base64" "$(b64 plain)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /plain/ move "dst"
 	}
@@ -35,7 +35,7 @@ if testcase "multiple plain text"; then
 	mkattach "src/new" \
 		"text/plain" "base64" "$(b64 second)" \
 		"text/plain" "base64" "$(b64 first)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /first/ move "dst"
 	}
@@ -48,7 +48,7 @@ fi
 if testcase "multiple body rules"; then
 	mkmd "src" "dst"
 	mkattach "src/new" "text/plain" "base64" "$(b64 hello)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /nein/ move "dst"
 		match body /hello/ move "dst"
@@ -63,7 +63,7 @@ fi
 if testcase "unknown type"; then
 	mkmd "src" "dst"
 	mkattach "src/new" "image/jpeg" "base64" "$(b64 encode)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /$(b64 encode)/ move "dst"
 	}
@@ -78,7 +78,7 @@ fi
 if testcase "unknown encoding"; then
 	mkmd "src" "dst"
 	mkattach "src/new" "text/plain" "base32" "$(b64 encode)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /$(echo encode | b64)/ move "dst"
 	}
@@ -92,7 +92,7 @@ fi
 if testcase "unknown multipart"; then
 	mkmd "src"
 	mkattach -m "unknown" "src/new" "text/plain" "base64" "$(b64 hello)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /hello/ move "dst"
 	}
@@ -104,7 +104,7 @@ fi
 if testcase "invalid base64"; then
 	mkmd "src"
 	mkattach "src/new" "text/plain" "base64" "invalid"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /./ move "dst"
 	}
@@ -116,7 +116,7 @@ fi
 if testcase "no attachments"; then
 	mkmd "src" "dst"
 	b64 hello | mkmsg -b "src/new" -- "Content-Transfer-Encoding" "base64"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match body /hello/ move "dst"
 	}

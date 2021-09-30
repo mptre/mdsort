@@ -1,5 +1,5 @@
 if testcase "discard is mutually exclusive with all other actions"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all move "dst" discard
 		match all flag new discard
@@ -19,7 +19,7 @@ fi
 if testcase "discard"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all discard
 	}
@@ -31,7 +31,7 @@ fi
 if testcase "dry run"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ discard
 	}

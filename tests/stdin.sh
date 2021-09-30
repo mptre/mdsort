@@ -1,5 +1,5 @@
 if testcase "stdin may only be defined once"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all move "dst"
 	}
@@ -16,7 +16,7 @@ fi
 if testcase "maildir rules are skipped"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all move "dst"
 	}
@@ -28,7 +28,7 @@ fi
 if testcase "stdin rule is skipped"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all move "dst"
 	}
@@ -39,7 +39,7 @@ fi
 
 if testcase "move"; then
 	mkmd "dst"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all move "dst"
 	}
@@ -49,7 +49,7 @@ if testcase "move"; then
 fi
 
 if testcase "discard"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all discard
 	}
@@ -58,7 +58,7 @@ if testcase "discard"; then
 fi
 
 if testcase "match date modified"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match date modified > 30 seconds move "dst"
 	}
@@ -67,7 +67,7 @@ if testcase "match date modified"; then
 fi
 
 if testcase "temporary failure"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all move "dst"
 	}
@@ -76,7 +76,7 @@ if testcase "temporary failure"; then
 fi
 
 if testcase -t memleak "temporary config failure"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	invalid
 	EOF
 	mdsort -t -- - </dev/null >/dev/null
@@ -100,13 +100,13 @@ if testcase "mbox separator"; then
 fi
 
 if testcase "dry run"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	stdin {
 		match all move "dst"
 	}
 	EOF
 	mdsort -- -d - </dev/null >"$TMP1"
-	assert_file - $TMP1 <<-EOF
+	assert_file - "$TMP1" <<-EOF
 	<stdin> -> dst/new
 	EOF
 fi

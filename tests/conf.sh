@@ -1,5 +1,5 @@
 if testcase "sanity"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
 		match header "From" /user@example.com/ move "~/Maildir/Junk"
 
@@ -55,12 +55,12 @@ if testcase "sanity"; then
 fi
 
 if testcase "empty"; then
-	: >$CONF
+	: >"$CONF"
 	mdsort - -- -n </dev/null
 fi
 
 if testcase "comments"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	# This is a comment.
 	maildir "~/Maildir/test1" {
 		match header "From" /user1@example.com/
@@ -74,7 +74,7 @@ if testcase "comments"; then
 fi
 
 if testcase "escape quote inside string"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir\"" {
 		match all move "dst"
 	}
@@ -83,7 +83,7 @@ if testcase "escape quote inside string"; then
 fi
 
 if testcase "escape slash inside pattern"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
 		match header "From" /user\// move "~/Maildir/test2"
 	}
@@ -92,7 +92,7 @@ if testcase "escape slash inside pattern"; then
 fi
 
 if testcase "empty maildir path"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "" {}
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -101,7 +101,7 @@ if testcase "empty maildir path"; then
 fi
 
 if testcase -t memleak "unknown keyword"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	noway
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -111,7 +111,7 @@ if testcase -t memleak "unknown keyword"; then
 fi
 
 if testcase -t memleak "invalid line continuation"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" \ {
 	}
 	EOF
@@ -136,7 +136,7 @@ if testcase "missing file"; then
 fi
 
 if testcase "invalid pattern"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
 		match body /(/ move "~/Maildir/test2"
 		match header "From" /(/ move "~/Maildir/test2"
@@ -146,7 +146,7 @@ if testcase "invalid pattern"; then
 fi
 
 if testcase "missing header name"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
 		match header "" /./ move "~/Maildir/test2"
 		match header { "" } /./ move "~/Maildir/test2"
@@ -159,7 +159,7 @@ if testcase "missing header name"; then
 fi
 
 if testcase "empty move destination"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
 		match new move ""
 	}
@@ -170,9 +170,9 @@ if testcase "empty move destination"; then
 fi
 
 if testcase -t memleak "keyword too long"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
-		$(genstr $BUFSIZ)
+		$(genstr "$BUFSIZ")
 	}
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -182,8 +182,8 @@ if testcase -t memleak "keyword too long"; then
 fi
 
 if testcase "string too long"; then
-	cat <<-EOF >$CONF
-	maildir "$(genstr $BUFSIZ)" {}
+	cat <<-EOF >"$CONF"
+	maildir "$(genstr "$BUFSIZ")" {}
 	EOF
 	mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: string too long
@@ -192,7 +192,7 @@ if testcase "string too long"; then
 fi
 
 if testcase "string unterminated"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -202,9 +202,9 @@ if testcase "string unterminated"; then
 fi
 
 if testcase -t memleak "pattern too long"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
-		match header "From" /$(genstr $BUFSIZ)/ \
+		match header "From" /$(genstr "$BUFSIZ")/ \
 			move "~/Maildir/test2"
 	}
 	EOF
@@ -215,7 +215,7 @@ if testcase -t memleak "pattern too long"; then
 fi
 
 if testcase -t memleak "pattern unterminated"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
 		match header "From" /
 	}
@@ -227,8 +227,8 @@ if testcase -t memleak "pattern unterminated"; then
 fi
 
 if testcase -t tilde "maildir path too long after tilde expansion"; then
-	cat <<-EOF >$CONF
-	maildir "~/$(genstr $((PATH_MAX - 10)))" {}
+	cat <<-EOF >"$CONF"
+	maildir "~/$(genstr "$((PATH_MAX - 10))")" {}
 	EOF
 	HOME=/home/user mdsort -e - -- -n <<-EOF
 	mdsort.conf:1: path too long
@@ -236,10 +236,10 @@ if testcase -t tilde "maildir path too long after tilde expansion"; then
 fi
 
 if testcase -t tilde "destination path too long after tilde expansion"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/test1" {
 		match header "From" /./ \
-			move "~/$(genstr $((PATH_MAX - 10)))"
+			move "~/$(genstr "$((PATH_MAX - 10))")"
 	}
 	EOF
 	HOME=/home/user mdsort -e - -- -n <<-EOF
@@ -248,7 +248,7 @@ if testcase -t tilde "destination path too long after tilde expansion"; then
 fi
 
 if testcase -t memleak "missing left-hand expr with and"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/INBOX" {
 		match and new move "~/Maildir/Junk"
 	}
@@ -259,7 +259,7 @@ if testcase -t memleak "missing left-hand expr with and"; then
 fi
 
 if testcase -t memleak "missing right-hand expr with and"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/INBOX" {
 		match new and move "~/Maildir/Junk"
 	}
@@ -270,7 +270,7 @@ if testcase -t memleak "missing right-hand expr with and"; then
 fi
 
 if testcase "empty match block"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/INBOX" {
 	}
 	EOF
@@ -280,7 +280,7 @@ if testcase "empty match block"; then
 fi
 
 if testcase "empty nested match block"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/INBOX" {
 		match new {
 		}
@@ -292,7 +292,7 @@ if testcase "empty nested match block"; then
 fi
 
 if testcase "missing action"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/INBOX" {
 		match new
 	}
@@ -303,7 +303,7 @@ if testcase "missing action"; then
 fi
 
 if testcase "lower and upper case flags are mutually exclusive"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/INBOX" {
 		match header "From" /a/lu move "dst"
 		match header "From" /a/ul move "dst"

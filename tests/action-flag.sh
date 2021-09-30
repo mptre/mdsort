@@ -1,7 +1,7 @@
 if testcase "flag as new"; then
 	mkmd "src"
 	mkmsg "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match !new flag new
 	}
@@ -14,7 +14,7 @@ fi
 if testcase "flag as not new"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new flag !new
 	}
@@ -27,7 +27,7 @@ fi
 if testcase "flag and move"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new move "dst" flag !new
 	}
@@ -40,7 +40,7 @@ fi
 if testcase "move and flag"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new flag !new move "dst"
 	}
@@ -53,7 +53,7 @@ fi
 if testcase "flag as not new when path flags are missing"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new flag !new
 	}
@@ -67,7 +67,7 @@ fi
 if testcase "flag as not new when path flags are lowercase"; then
 	mkmd "src"
 	mkmsg -s ":2,s" "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new flag !new
 	}
@@ -81,7 +81,7 @@ fi
 if testcase "flag as not new when path flags are invalid"; then
 	mkmd "src"
 	mkmsg  -s ":1,S" "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new flag !new
 	}
@@ -95,7 +95,7 @@ fi
 if testcase "flag as not new when path flags are already present"; then
 	mkmd "src"
 	mkmsg -s ":2,S" "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new flag !new
 	}
@@ -109,7 +109,7 @@ fi
 if testcase "flag as not new when path flags are valid"; then
 	mkmd "src"
 	mkmsg -s ":2,R" "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new flag !new
 	}
@@ -122,7 +122,7 @@ fi
 if testcase "flag as new when seen flag is already present"; then
 	mkmd "src"
 	mkmsg -s ":2,S" "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all flag new
 	}
@@ -138,7 +138,7 @@ if testcase "flag as new when already new"; then
 	mkmd "src"
 	mkmsg "src/new"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all flag new
 	}
@@ -151,7 +151,7 @@ fi
 if testcase "redundant flag actions"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all flag new flag !new flag new
 	}

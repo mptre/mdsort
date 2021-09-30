@@ -1,5 +1,5 @@
 if testcase "scalar abbreviation"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 1 second move "dst"
 		match date > 1 minute move "dst"
@@ -12,7 +12,7 @@ if testcase "scalar abbreviation"; then
 fi
 
 if testcase "scalar abbreviation ambiguous"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 1m move "dst"
 	}
@@ -23,7 +23,7 @@ if testcase "scalar abbreviation ambiguous"; then
 fi
 
 if testcase "age too large"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 4294967296 seconds move "dst"
 		match date > 9999999999 seconds move "dst"
@@ -36,7 +36,7 @@ if testcase "age too large"; then
 fi
 
 if testcase "age and scalar too large"; then
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 4294967295 years move "dst"
 	}
@@ -50,7 +50,7 @@ if testcase "greater than"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$(now -1)"
 	mkmsg "src/new" -- "Date" "$(now -60)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 30 seconds move "dst"
 	}
@@ -64,7 +64,7 @@ if testcase "less than"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$(now -1)"
 	mkmsg "src/new" -- "Date" "$(now -60)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date < 30 seconds move "dst"
 	}
@@ -82,7 +82,7 @@ if testcase "date format variations"; then
 	mkmsg "src/new" -- "Date" "$(now -f '%d %b %Y %H:%M:%S %z' -60)"
 	# Timezone abbreviation without offset.
 	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M:%S GMT' -86400)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 30 seconds move "dst"
 	}
@@ -95,7 +95,7 @@ fi
 if testcase "invalid date"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$(now -f '%d' -60)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 30 seconds move "dst"
 	}
@@ -108,7 +108,7 @@ fi
 if testcase -t regress "interpolation"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$(now -60)" "From" "dst"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 30 seconds and header "From" /dst/ move "\0"
 	}
@@ -122,7 +122,7 @@ if testcase "dry run"; then
 	_d="$(now -120)"
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$_d"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 1 minute move "dst"
 	}
@@ -140,7 +140,7 @@ fi
 if testcase "dry run modified"; then
 	mkmd "src" "dst"
 	mkmsg -m "$(now -f "%Y%m%d%H%M.%S" -120)" "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date modified > 1 minute move "dst"
 	}
@@ -151,7 +151,7 @@ fi
 if testcase "header"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Date" "$(now -60)"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date header > 30 seconds move "dst"
 	}
@@ -165,7 +165,7 @@ fi
 if testcase "access"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date access > 30 seconds move "dst"
 	}
@@ -177,7 +177,7 @@ fi
 if testcase "created"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date created > 30 seconds move "dst"
 	}
@@ -188,7 +188,7 @@ fi
 if testcase "modified"; then
 	mkmd "src" "dst"
 	mkmsg -m "$(now -f "%Y%m%d%H%M.%S" -60)" "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date modified > 30 seconds move "dst"
 	}

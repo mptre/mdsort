@@ -1,7 +1,7 @@
 if testcase "no x-label header"; then
 	mkmd "src"
 	mkmsg -H "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label "label"
 	}
@@ -14,7 +14,7 @@ fi
 if testcase "x-label header present but empty"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" ""
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label "label"
 	}
@@ -27,12 +27,12 @@ fi
 if testcase "multiple x-label headers"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" "one" "X-Label" "two" "X-Subject" "hello"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label "label"
 	}
 	EOF
-	cat <<-EOF >$TMP1
+	cat <<-EOF >"$TMP1"
 	X-Label: one two label
 	X-Subject: hello
 
@@ -40,13 +40,13 @@ if testcase "multiple x-label headers"; then
 	mdsort
 	refute_empty "src/new"
 	assert_label "one two label" "$(findmsg "src/new")"
-	assert_file "$(findmsg -p "src/new")" $TMP1
+	assert_file "$(findmsg -p "src/new")" "$TMP1" 
 fi
 
 if testcase "multiple labels and x-label present"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" "one"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label { "two" "three" }
 	}
@@ -59,7 +59,7 @@ fi
 if testcase "multiple labels and no x-label present"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label { "one" "two" }
 	}
@@ -72,7 +72,7 @@ fi
 if testcase "multiple labels already present"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" "one two three"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label { "two" "three" }
 	}
@@ -85,7 +85,7 @@ fi
 if testcase "many label actions"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match new label "1" label "2" label { "3" "4" }
 	}
@@ -98,7 +98,7 @@ fi
 if testcase "label and move"; then
 	mkmd "src" "dst"
 	mkmsg -H "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label "label" move "dst"
 	}
@@ -112,7 +112,7 @@ fi
 if testcase "move and label"; then
 	mkmd "src" "dst"
 	mkmsg -H "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all move "dst" label "label"
 	}
@@ -126,7 +126,7 @@ fi
 if testcase "label and flag"; then
 	mkmd "src"
 	mkmsg -H "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label "label" flag !new
 	}
@@ -140,7 +140,7 @@ fi
 if testcase "flag and label"; then
 	mkmd "src"
 	mkmsg -H "src/cur"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all flag !new label "label"
 	}
@@ -154,7 +154,7 @@ fi
 if testcase "label and pass"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ label "user" pass
 		match header "To" /example/ label "example" pass
@@ -170,7 +170,7 @@ fi
 if testcase "label and pass with interpolation"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user/ label "\0" pass
 		match header "To" /example/ label "\0" pass
@@ -186,7 +186,7 @@ fi
 if testcase "interpolation with no x-label header"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "To" "user+label@example.com"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "To" /user\+(.+)@example.com/ label "\1"
 	}
@@ -199,7 +199,7 @@ fi
 if testcase "interpolation with x-label header"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" "label"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "X-Label" /.+/ label "\0"
 	}
@@ -213,7 +213,7 @@ fi
 if testcase "interpolation out of bounds"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "X-Label" "label"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "X-Label" /.+/ label "label \1"
 	}
@@ -257,7 +257,7 @@ fi
 if testcase "dry run label and move"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >$CONF
+	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match all label "label" move "dst"
 	}
