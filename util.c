@@ -169,7 +169,7 @@ macros_insertc(struct macro_list *macros, const char *name, const char *value)
 	error = macros_insert(macros, (char *)name, (char *)value,
 	    MACRO_FLAG_CONST, 0);
 	if (error)
-		errx(1, "%s: error %d", __func__, error);
+		errx(1, "%s: error %u", __func__, error);
 }
 
 struct macro *
