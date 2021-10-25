@@ -1,19 +1,3 @@
-if testcase "conf"; then
-	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match all pass pass
-		match all move "dst" pass
-		match all pass move "dst"
-		match all pass
-	}
-	EOF
-	mdsort -e - -- -n <<-EOF
-	mdsort.conf:2: pass cannot be combined with another action
-	mdsort.conf:3: pass cannot be combined with another action
-	mdsort.conf:4: pass cannot be combined with another action
-	EOF
-fi
-
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/cur"

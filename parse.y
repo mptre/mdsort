@@ -781,7 +781,7 @@ again:
 static void
 expr_validate(const struct expr *ex)
 {
-	int nactions, nflag, nlabel, npass;
+	int nactions;
 
 	if (ex == NULL) {
 		yyerror("missing action");
@@ -798,15 +798,6 @@ expr_validate(const struct expr *ex)
 		if (expr_count(ex, EXPR_TYPE_REJECT) > 0)
 			yyerror("reject cannot be combined with another "
 			    "action");
-	}
-
-	npass = expr_count(ex, EXPR_TYPE_PASS);
-	if (npass > 0) {
-		/* Pass can only be used in conjuction with flag and label. */
-		nflag = expr_count(ex, EXPR_TYPE_FLAG);
-		nlabel = expr_count(ex, EXPR_TYPE_LABEL);
-		if (nactions - nflag - nlabel - 1 > 0)
-			yyerror("pass cannot be combined with another action");
 	}
 
 	yypopl();
