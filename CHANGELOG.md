@@ -1,3 +1,36 @@
+# v11.0.0 - 2021-10-25
+
+## Changes
+
+- Allow break action to be combined with all other actions.
+  (c3c2b62)
+  (Anton Lindqvist)
+
+- Allow pass action to be combined with all other actions.
+  (e4a3168)
+  (Anton Lindqvist)
+
+## News
+
+- Add support for defining macros on the command line.
+  Useful while performing one shot maildir operations.
+  (b318a7f)
+  (Josuah Demangeon)
+
+  ```
+  $ cat archive.conf
+  maildir "${box}" {
+    match date > 6 months move "~/Maildir/Archive"
+  }
+  $ ls | xargs -I{} mdsort -f archive.conf -D box={}
+  ```
+
+## Bug fixes
+
+- Fix bison warnings regarding non-terminal types.
+  (f1c7e2d)
+  (Anton Lindqvist)
+
 # v10.0.1 - 2021-07-30
 
 ## Bug fixes
