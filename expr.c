@@ -457,7 +457,7 @@ expr_eval_block(struct expr *ex, struct expr_eval_arg *ea)
 		return EXPR_ERROR;
 
 	if (matches_find(ea->ea_ml, EXPR_TYPE_BREAK) != NULL) {
-		matches_clear(ea->ea_ml);
+		matches_remove(ea->ea_ml, EXPR_TYPE_BREAK);
 		return EXPR_NOMATCH; /* break, continue evaluation */
 	}
 

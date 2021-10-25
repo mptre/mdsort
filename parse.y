@@ -792,8 +792,6 @@ expr_validate(const struct expr *ex)
 
 	nactions = expr_count_actions(ex);
 	if (nactions > 1) {
-		if (expr_count(ex, EXPR_TYPE_BREAK) > 0)
-			yyerror("break cannot be combined with another action");
 		if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
 			yyerror("discard cannot be combined with another "
 			    "action");

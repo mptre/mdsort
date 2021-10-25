@@ -1,21 +1,3 @@
-if testcase "break is mutually exclusive with all other actions"; then
-	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match all move "dst" break
-		match all flag new break
-		match all discard break
-		match all break break
-	}
-	EOF
-	mdsort -e - -- -n <<-EOF
-	mdsort.conf:2: break cannot be combined with another action
-	mdsort.conf:3: break cannot be combined with another action
-	mdsort.conf:4: break cannot be combined with another action
-	mdsort.conf:4: discard cannot be combined with another action
-	mdsort.conf:5: break cannot be combined with another action
-	EOF
-fi
-
 if testcase "root level"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
@@ -59,4 +41,55 @@ if testcase "nested level"; then
 	assert_empty "src/new"
 	refute_empty "d0/new"
 	refute_empty "d3/new"
+fi
+
+if testcase "move, break and move"; then
+	mkmd "src" "dst1" "dst2"
+	mkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all {
+			match all move "dst1" break
+		}
+		match all move "dst2"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	assert_empty "dst1/new"
+	refute_empty "dst2/new"
+fi
+
+if testcase "label, pass and break"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all label "pass" pass
+		match all {
+			match all break
+		}
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+	assert_label pass "$(findmsg "src/new")"
+fi
+
+if testcase "label, pass, label, break and move"; then
+	mkmd "src" "dst"
+	mkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all label "one" pass
+		match all {
+			match all label "two" break
+		}
+		match all move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+	assert_label "one two" "$(findmsg "dst/new")"
 fi
