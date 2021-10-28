@@ -13,14 +13,20 @@
 
 #include "extern.h"
 
+struct backref {
+	unsigned int br_mi;	/* match index */
+	unsigned int br_si;	/* subexpression index */
+};
+
 static void	matches_merge(struct match_list *, struct match *);
 
-static const char	*match_get(const struct match *, unsigned int);
+static const char	*match_get(const struct match *,
+    const struct backref *);
 
 static int	exec(char *const *, int);
 static int	interpolate(const struct match *, const struct macro_list *,
     const char *, char **);
-static ssize_t	isbackref(const char *, unsigned int *);
+static ssize_t	isbackref(const char *, struct backref *);
 
 /*
  * Append the given match to the list and construct the maildir destination path
@@ -331,26 +337,7 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 int
 match_interpolate(struct match *mh, const struct macro_list *macros)
 {
-	const struct match *mi = NULL;
-	const struct match *tmp = mh;
 	struct message *msg = mh->mh_msg;
-
-	/*
-	 * Search backwards for the last expr that can be used for
-	 * interpolation.
-	 */
-	for (;;) {
-		const struct expr *ex = tmp->mh_expr;
-
-		if (ex->ex_type == EXPR_TYPE_MATCH)
-			break;
-		if (ex->ex_flags & EXPR_FLAG_INTERPOLATE)
-			mi = tmp;
-
-		tmp = TAILQ_PREV(tmp, match_list, mh_entry);
-		if (tmp == NULL)
-			break;
-	}
 
 	switch (mh->mh_expr->ex_type) {
 	case EXPR_TYPE_STAT:
@@ -358,7 +345,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		char *path = NULL;
 		size_t n, siz;
 
-		if (interpolate(mi, macros, mh->mh_path, &path))
+		if (interpolate(mh, macros, mh->mh_path, &path))
 			return 1;
 		siz = sizeof(mh->mh_path);
 		n = strlcpy(mh->mh_path, path, siz);
@@ -383,7 +370,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 			buf = strings_concat(labels, buf, &bufsiz, &buflen);
 		buf = strings_concat(mh->mh_expr->ex_strings, buf, &bufsiz,
 		    &buflen);
-		error = interpolate(mi, macros, buf, &label);
+		error = interpolate(mh, macros, buf, &label);
 		free(buf);
 		if (error)
 			return 1;
@@ -406,7 +393,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
 			char *arg = NULL;
 
-			if (interpolate(mi, macros, str->val, &arg))
+			if (interpolate(mh, macros, str->val, &arg))
 				return 1;
 			mh->mh_exec[nargs++] = arg;
 		}
@@ -464,15 +451,39 @@ matches_merge(struct match_list *ml, struct match *mh)
 }
 
 static const char *
-match_get(const struct match *mh, unsigned int idx)
+match_get(const struct match *mh, const struct backref *br)
 {
-	if (idx >= mh->mh_nmatches)
+	const struct match *tmp = mh;
+	const struct match *mi = NULL;
+	unsigned int i = 0;
+
+	/* Go backwards to the start of the given match. */
+	for (;;) {
+		tmp = TAILQ_PREV(tmp, match_list, mh_entry);
+		if (tmp == NULL)
+			return NULL;
+		if (tmp->mh_expr->ex_type == EXPR_TYPE_MATCH)
+			break;
+	}
+
+	for (;;) {
+		tmp = TAILQ_NEXT(tmp, mh_entry);
+		if (tmp == NULL || tmp == mh)
+			return NULL;
+		if ((tmp->mh_expr->ex_flags & EXPR_FLAG_INTERPOLATE) &&
+		    i++ == br->br_mi) {
+			mi = tmp;
+			break;
+		}
+	}
+	if (mi == NULL || br->br_si >= mi->mh_nmatches)
 		return NULL;
-	return mh->mh_matches[idx].m_str;
+
+	return mi->mh_matches[br->br_si].m_str;
 }
 
 static ssize_t
-isbackref(const char *str, unsigned int *br)
+isbackref(const char *str, struct backref *br)
 {
 	char *end;
 	unsigned long val;
@@ -484,7 +495,8 @@ isbackref(const char *str, unsigned int *br)
 	if (val > INT_MAX)
 		return -1;
 
-	*br = val;
+	br->br_mi = 0;
+	br->br_si = val;
 	return end - str;
 }
 
@@ -552,10 +564,10 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 	size_t i = 0;
 
 	while (str[i] != '\0') {
+		struct backref br;
 		const char *sub;
 		char *macro;
 		ssize_t n;
-		unsigned int br;
 
 		n = isbackref(&str[i], &br);
 		if (n < 0)
@@ -563,7 +575,7 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 		if (n > 0) {
 			if (mh == NULL)
 				goto brerr;
-			sub = match_get(mh, br);
+			sub = match_get(mh, &br);
 			if (sub == NULL)
 				goto brerr;
 
