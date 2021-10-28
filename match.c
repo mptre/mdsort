@@ -485,18 +485,31 @@ match_get(const struct match *mh, const struct backref *br)
 static ssize_t
 isbackref(const char *str, struct backref *br)
 {
+	const char *s = str;
 	char *end;
 	unsigned long val;
 
-	if (str[0] != '\\' || !isdigit((unsigned char)str[1]))
+	if (s[0] != '\\' || !isdigit((unsigned char)s[1]))
 		return 0;
 
-	val = strtoul(&str[1], &end, 10);
+	val = strtoul(&s[1], &end, 10);
 	if (val > INT_MAX)
 		return -1;
+	s = end;
 
-	br->br_mi = 0;
-	br->br_si = val;
+	if (s[0] == '.') {
+		br->br_mi = val;
+		val = strtoul(&s[1], &end, 10);
+		if (val > INT_MAX)
+			return -1;
+		br->br_si = val;
+	} else {
+		if (s[0] == '\\' && s[1] == '.')
+			end++;
+		br->br_mi = 0;
+		br->br_si = val;
+	}
+
 	return end - str;
 }
 

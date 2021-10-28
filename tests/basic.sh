@@ -249,6 +249,75 @@ if testcase "interpolation with negate"; then
 	EOF
 fi
 
+if testcase "interpolation tuple"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" "dst@example.com"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match	header "To" /example/ and
+			header "To" /(dst)/
+			move "\1.1"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "interpolation tuple out of bounds"; then
+	mkmd "src"
+	mkmsg "src/new" -- "To" "dst@example.com"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match header "To" /example/ move "\1.1"
+	}
+	EOF
+	mdsort -e - <<-'EOF'
+	mdsort: \1.1/new: invalid back-reference
+	EOF
+fi
+
+if testcase "interpolation tuple out of range"; then
+	mkmd "src"
+	mkmsg "src/new" -- "To" "dst@example.com"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match header "To" /example/ move "\1.99999999999999999999"
+	}
+	EOF
+	mdsort -e - <<-'EOF'
+	mdsort: \1.99999999999999999999/new: invalid back-reference
+	EOF
+fi
+
+if testcase "interpolation tuple without matches"; then
+	mkmd "src"
+	mkmsg "src/new" -- "To" "dst@example.com"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match	header "To" /example/ or
+			header "To" /(nein)/
+			move "\1.1"
+	}
+	EOF
+	mdsort -e - <<-'EOF'
+	mdsort: \1.1/new: invalid back-reference
+	EOF
+fi
+
+if testcase "interpolation tuple escape"; then
+	mkmd "src" "dst.1"
+	mkmsg "src/new" -- "To" "dst@example.com"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match header "To" /dst/ move "\0\.1"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst.1/new"
+fi
+
 if testcase "unknown option"; then
 	mdsort -e -- -1 >"$TMP1"
 	grep -q 'usage' "$TMP1" || fail - "expected usage output" <"$TMP1"
