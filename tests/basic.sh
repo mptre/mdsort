@@ -52,39 +52,6 @@ if testcase "match negate nested condition"; then
 	refute_empty "dst/new"
 fi
 
-if testcase "match nested with interpolation"; then
-	mkmd "src" "dst"
-	echo "foo" | mkmsg -b "src/new" -- "To" "user@example.com"
-	echo "dst" | mkmsg -b "src/new" -- "To" "user@example.com"
-	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match header "To" /user/ {
-			match new {
-				match body /dst/ move "\0"
-			}
-		}
-	}
-	EOF
-	mdsort
-	refute_empty "src/new"
-	refute_empty "dst/new"
-fi
-
-if testcase "match nested without interpolation matches"; then
-	mkmd "src" "dst"
-	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match new {
-			match new move "dst"
-		}
-	}
-	EOF
-	mdsort
-	assert_empty "src/new"
-	refute_empty "dst/new"
-fi
-
 if testcase "match nested with negate"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
@@ -158,7 +125,40 @@ if testcase "unique suffix is preserved when valid"; then
 	assert_find "dst/new" "*:2,S"
 fi
 
-if testcase "destination interpolation first match is favored"; then
+if testcase "interpolation nested match"; then
+	mkmd "src" "dst"
+	echo "foo" | mkmsg -b "src/new" -- "To" "user@example.com"
+	echo "dst" | mkmsg -b "src/new" -- "To" "user@example.com"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match header "To" /user/ {
+			match new {
+				match body /dst/ move "\0"
+			}
+		}
+	}
+	EOF
+	mdsort
+	refute_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "interpolation nested match without matches"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "To" "user@example.com"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match new {
+			match new move "dst"
+		}
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
+if testcase "interpolation first match is favored"; then
 	mkmd "src" "first"
 	mkmsg "src/new" -- "To" "first@last.com"
 	cat <<-EOF >"$CONF"
@@ -171,33 +171,33 @@ if testcase "destination interpolation first match is favored"; then
 	refute_empty "first/new"
 fi
 
-if testcase "destination interpolation out of bounds"; then
+if testcase "interpolation out of bounds"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >"$CONF"
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match header "To" /./ move "\\1"
+		match header "To" /./ move "\1"
 	}
 	EOF
-	mdsort -e - <<-EOF
-	mdsort: \\1/new: invalid back-reference
+	mdsort -e - <<-'EOF'
+	mdsort: \1/new: invalid back-reference
 	EOF
 fi
 
-if testcase "destination interpolation out of range"; then
+if testcase "interpolation out of range"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >"$CONF"
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match header "To" /./ move "\\99999999999999999999"
+		match header "To" /./ move "\99999999999999999999"
 	}
 	EOF
-	mdsort -e - <<-EOF
-	mdsort: \\99999999999999999999/new: invalid back-reference
+	mdsort -e - <<-'EOF'
+	mdsort: \99999999999999999999/new: invalid back-reference
 	EOF
 fi
 
-if testcase "destination interpolation negative"; then
+if testcase "interpolation negative"; then
 	mkmd "src" "\-1"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >"$CONF"
@@ -210,7 +210,7 @@ if testcase "destination interpolation negative"; then
 	refute_empty "\-1/new"
 fi
 
-if testcase "destination interpolation non-decimal"; then
+if testcase "interpolation non-decimal"; then
 	mkmd "src" "userx1"
 	mkmsg "src/new" -- "To" "user@example.com"
 	cat <<-EOF >"$CONF"
@@ -223,29 +223,29 @@ if testcase "destination interpolation non-decimal"; then
 	refute_empty "userx1/new"
 fi
 
-if testcase "destination interpolation with none body/header"; then
+if testcase "interpolation with none body/header"; then
 	mkmd "src" ""
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >"$CONF"
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match new move "\\1"
+		match new move "\1"
 	}
 	EOF
-	mdsort -e - <<-EOF
-	mdsort: \\1/new: invalid back-reference
+	mdsort -e - <<-'EOF'
+	mdsort: \1/new: invalid back-reference
 	EOF
 fi
 
-if testcase "destination interpolation with negate"; then
+if testcase "interpolation with negate"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
-	cat <<-EOF >"$CONF"
+	cat <<-'EOF' >"$CONF"
 	maildir "src" {
-		match ! header "To" /(user)/ or new move "\\1"
+		match ! header "To" /(user)/ or new move "\1"
 	}
 	EOF
-	mdsort -e - <<-EOF
-	mdsort: \\1/new: invalid back-reference
+	mdsort -e - <<-'EOF'
+	mdsort: \1/new: invalid back-reference
 	EOF
 fi
 
