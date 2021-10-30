@@ -586,8 +586,6 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 		if (n < 0)
 			goto brerr;
 		if (n > 0) {
-			if (mh == NULL)
-				goto brerr;
 			sub = match_get(mh, &br);
 			if (sub == NULL)
 				goto brerr;
