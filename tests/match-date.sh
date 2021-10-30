@@ -94,7 +94,16 @@ fi
 
 if testcase "invalid date"; then
 	mkmd "src" "dst"
-	mkmsg "src/new" -- "Date" "$(now -f '%d' -60)"
+	# Invalid format.
+	mkmsg "src/new" -- "Date" "$(now -f '%d')"
+	# Timezone hours too large.
+	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M:%S -9900')"
+	# Timezone hours invalid.
+	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M:%S -9a00')"
+	# Timezone minutes too large.
+	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M:%S +0099')"
+	# Timezone minutes invalid.
+	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M:%S +009a')"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match date > 30 seconds move "dst"

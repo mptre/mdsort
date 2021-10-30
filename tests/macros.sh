@@ -210,6 +210,17 @@ if testcase "sticky unused"; then
 	EOF
 fi
 
+if testcase "sticky invalid"; then
+	cat <<-'EOF' >"$CONF"
+	maildir "src" {
+		match all move "dst"
+	}
+	EOF
+	mdsort -e - -- -D invalid <<-EOF
+	mdsort: missing macro separator: invalid
+	EOF
+fi
+
 if testcase "action label with pre defined macros"; then
 	mkmd "src"
 	mkmsg "src/new"
