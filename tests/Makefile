@@ -25,9 +25,22 @@ TESTS+=	match-new.sh
 TESTS+=	match-old.sh
 TESTS+=	stdin.sh
 
+SHLINT+=	${TESTS}
+SHLINT+=	util.sh
+
+SHELLCHECKFLAGS+=	-f gcc
+SHELLCHECKFLAGS+=	-s ksh
+SHELLCHECKFLAGS+=	-o add-default-case
+SHELLCHECKFLAGS+=	-o avoid-nullary-conditions
+SHELLCHECKFLAGS+=	-o quote-safe-variables
+
 .SUFFIXES: .sh .fake
 
 .sh.fake:
 	sh ${.CURDIR}/t.sh ${TESTFLAGS} ${.CURDIR}/util.sh ${.CURDIR}/$<
 
 all: ${TESTS:.sh=.fake}
+
+lint:
+	cd ${.CURDIR} && shellcheck ${SHELLCHECKFLAGS} ${SHLINT}
+.PHONY: lint

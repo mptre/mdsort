@@ -71,7 +71,7 @@ if testcase -t fault "exdev"; then
 	EOF
 	assert_empty "src/new"
 	refute_empty "dst/new"
-	cat "$(findmsg -p "dst/new")" | assert_file "$TMP1" -
+	assert_file "$TMP1" - <"$(findmsg -p "dst/new")"
 fi
 
 # Ensure that a failure in the message write fallback logic does not leave any

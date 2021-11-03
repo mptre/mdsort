@@ -21,7 +21,7 @@ _assert_empty() {
 		_dir="${TSHDIR}/${_dir}"
 	fi
 
-	ls "${_dir}" 2>/dev/null | cmp -s - /dev/null
+	find "${_dir}" -mindepth 1 2>/dev/null | cmp -s - /dev/null
 }
 
 # assert_find dir pattern [message]
@@ -112,8 +112,8 @@ findmsg() {
 		shift
 	done
 
-	find "${TSHDIR}/${1}" -type f |
-	xargs grep -l "$_pattern" |
+	find "${TSHDIR}/${1}" -print0 -type f |
+	xargs -0 grep -l "$_pattern" |
 	$_cmd >"$_tmp"
 
 	if [ "$(wc -l "$_tmp" | awk '{print $1}')" -ne 1 ]; then
@@ -342,20 +342,21 @@ now() {
 		_tim=$((_tim + $1))
 	fi
 
+	# shellcheck disable=SC2086,SC2248
 	${DATE}${_tim} "+${_fmt}"
 }
 
 ls "${MDSORT:?}" >/dev/null || exit 1
 
 # Temporary files used in tests.
-CONF="${TSHDIR}/mdsort.conf"
-TMP1="${TSHDIR}/tmp1"
-TMP2="${TSHDIR}/tmp2"
+CONF="${TSHDIR}/mdsort.conf"; export CONF
+TMP1="${TSHDIR}/tmp1"; export TMP1
+TMP2="${TSHDIR}/tmp2"; export TMP2
 
 # Platform specific values.
-BUFSIZ=$(cppvar BUFSIZ || echo 0)
-NAME_MAX=$(cppvar NAME_MAX || echo 0)
-PATH_MAX=$(cppvar PATH_MAX || echo 0)
+BUFSIZ=$(cppvar BUFSIZ || echo 0); export BUFSIZ
+NAME_MAX=$(cppvar NAME_MAX || echo 0); export NAME_MAX
+PATH_MAX=$(cppvar PATH_MAX || echo 0); export PATH_MAX
 
 # Figure out date(1) seconds option.
 if date -r 0 >/dev/null 2>&1; then

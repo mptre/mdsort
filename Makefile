@@ -139,6 +139,7 @@ install: all
 lint:
 	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
 	cd ${.CURDIR} && knfmt -d ${KNFMT}
+	${MAKE} -C ${.CURDIR}/tests lint
 .PHONY: lint
 
 test: all
