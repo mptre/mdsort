@@ -11,7 +11,7 @@
 #include "fault.h"
 
 /* Annotate the argument as unused. */
-#define UNUSED(x)	__##x __attribute__((__unused__))
+#define UNUSED(x)	_##x __attribute__((__unused__))
 
 /*
  * environment -----------------------------------------------------------------
