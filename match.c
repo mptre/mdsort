@@ -387,10 +387,10 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 
 		/* Make room for NULL-terminator. */
 		len = strings_len(mh->mh_expr->ex_strings) + 1;
-		mh->mh_exec = reallocarray(NULL, len, sizeof(char *));
+		mh->mh_exec = reallocarray(NULL, len, sizeof(*mh->mh_exec));
 		if (mh->mh_exec == NULL)
 			err(1, NULL);
-		memset(mh->mh_exec, 0, len * sizeof(char *));
+		memset(mh->mh_exec, 0, len * sizeof(*mh->mh_exec));
 		mh->mh_nexec = len;
 		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
 			char *arg = NULL;
