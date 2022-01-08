@@ -1,12 +1,9 @@
 #include "config.h"
 
-#include <sys/wait.h>
-
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -23,7 +20,6 @@ static void	matches_merge(struct match_list *, struct match *);
 static const char	*match_get(const struct match *,
     const struct backref *);
 
-static int	exec(char *const *, int);
 static int	interpolate(const struct match *, const struct macro_list *,
     const char *, char **);
 static ssize_t	isbackref(const char *, struct backref *);
@@ -177,6 +173,12 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			error = exec(mh->mh_exec, fd);
 			if (fd != -1)
 				close(fd);
+			if (error > 0) {
+				warnx("%s: exited %d", mh->mh_exec[0], error);
+			} else if (error < 0) {
+				/* Warning already emitted by exec(). */
+				error = 1;
+			}
 			break;
 		}
 
@@ -511,58 +513,6 @@ isbackref(const char *str, struct backref *br)
 	}
 
 	return end - str;
-}
-
-static int
-exec(char *const *argv, int fdin)
-{
-	pid_t pid;
-	int error = 1;
-	int status;
-	int doclose = 0;
-
-	if (fdin == -1) {
-		doclose = 1;
-		fdin = open("/dev/null", O_RDONLY | O_CLOEXEC);
-		if (fdin == -1) {
-			warn("open: /dev/null");
-			goto out;
-		}
-	}
-
-	pid = fork();
-	if (pid == -1) {
-		warn("fork");
-		goto out;
-	}
-	if (pid == 0) {
-		if (dup2(fdin, 0) == -1)
-			err(1, "dup2");
-		execvp(argv[0], argv);
-		warn("%s", argv[0]);
-		_exit(1);
-	}
-
-	if (waitpid(pid, &status, 0) == -1) {
-		warn("waitpid");
-		goto out;
-	}
-	if (WIFEXITED(status)) {
-		error = WEXITSTATUS(status);
-		if (error)
-			warnx("%s: %s: exited %d", __func__, argv[0], error);
-	}
-	if (WIFSIGNALED(status)) {
-		error = WTERMSIG(status);
-		if (error)
-			warnx("%s: %s: killed by signal %d",
-			    __func__, argv[0], error);
-	}
-
-out:
-	if (doclose && fdin != -1)
-		close(fdin);
-	return error;
 }
 
 /*

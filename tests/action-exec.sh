@@ -106,7 +106,7 @@ if testcase "exit non-zero"; then
 	}
 	EOF
 	mdsort -e - <<-EOF
-	mdsort: exec: sh: exited 1
+	mdsort: sh: exited 1
 	EOF
 fi
 
@@ -119,7 +119,7 @@ if testcase "exit signal"; then
 	}
 	EOF
 	mdsort -e - <<-EOF
-	mdsort: exec: sh: killed by signal 9
+	mdsort: sh: exited 137
 	EOF
 fi
 

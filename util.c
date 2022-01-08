@@ -1,11 +1,15 @@
 #include "config.h"
 
+#include <sys/wait.h>
+
 #include <assert.h>
 #include <err.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "extern.h"
 
@@ -230,6 +234,62 @@ ismacro(const char *str, char **macro)
 	if (*macro == NULL)
 		err(1, NULL);
 	return i + 1;
+}
+
+/*
+ * Execute external command. If fdin is equal to -1, /dev/null will be used as
+ * standard input. Returns one of the following:
+ *
+ *     >0    Command exited non-zero.
+ *      0    Command exited zero.
+ *     <0    Fatal error.
+ */
+int
+exec(char *const *argv, int fdin)
+{
+	pid_t pid;
+	int error = 1;
+	int status;
+	int doclose = 0;
+
+	if (fdin == -1) {
+		doclose = 1;
+		fdin = open("/dev/null", O_RDONLY | O_CLOEXEC);
+		if (fdin == -1) {
+			warn("open: /dev/null");
+			error = -1;
+			goto out;
+		}
+	}
+
+	pid = fork();
+	if (pid == -1) {
+		warn("fork");
+		error = -1;
+		goto out;
+	}
+	if (pid == 0) {
+		if (dup2(fdin, 0) == -1)
+			err(1, "dup2");
+		execvp(argv[0], argv);
+		warn("%s", argv[0]);
+		_exit(1);
+	}
+
+	if (waitpid(pid, &status, 0) == -1) {
+		warn("waitpid");
+		error = -1;
+		goto out;
+	}
+	if (WIFEXITED(status))
+		error = WEXITSTATUS(status);
+	if (WIFSIGNALED(status))
+		error = 128 + WTERMSIG(status);
+
+out:
+	if (doclose && fdin != -1)
+		close(fdin);
+	return error;
 }
 
 /*
