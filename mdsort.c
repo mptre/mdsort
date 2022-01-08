@@ -210,7 +210,7 @@ usage(void)
 
 /*
  * Returns non-zero if any of the expressions associated with the given
- * configuration includes an exec action.
+ * configuration requires execution of external commands.
  */
 static int
 config_has_exec(const struct config_list *config, const struct environment *env)

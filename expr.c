@@ -631,8 +631,9 @@ expr_eval_match(struct expr *ex, struct expr_eval_arg *ea)
 	struct match *mh;
 
 	/*
-	 * Behaves like and with the exception of adding itself to the match
-	 * list. The match is later used by matches_find_interpolate().
+	 * Behaves like EXPR_TYPE_AND with the exception of adding itself to the
+	 * match list. Such match is used as a sentinel when finding matches
+	 * eligble for interpolation.
 	 */
 	mh = match_alloc(ex, ea->ea_msg);
 	if (matches_append(ea->ea_ml, mh))
