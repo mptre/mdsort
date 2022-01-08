@@ -61,6 +61,7 @@ typedef struct {
 %token ATTACHMENT
 %token BODY
 %token BREAK
+%token COMMAND
 %token CREATED
 %token DATE
 %token DISCARD
@@ -280,6 +281,12 @@ expr3		: BODY pattern {
 			$$ = expr_alloc(EXPR_TYPE_STAT, lineno, NULL, NULL);
 			path = expand($2, MACRO_CTX_DEFAULT);
 			expr_set_stat($$, path, EXPR_STAT_DIR);
+		}
+		| COMMAND strings {
+			$$ = expr_alloc(EXPR_TYPE_COMMAND, lineno, NULL, NULL);
+			$2 = expandstrings($2, MACRO_CTX_DEFAULT);
+			if (expr_set_exec($$, $2, 0))
+				yyerror("invalid command options");
 		}
 		| '(' expr1 ')' {
 			$$ = $2;
@@ -554,6 +561,7 @@ yylex(void)
 		{ "attachment",		ATTACHMENT },
 		{ "body",		BODY },
 		{ "break",		BREAK },
+		{ "command",		COMMAND },
 		{ "created",		CREATED },
 		{ "date",		DATE },
 		{ "discard",		DISCARD },

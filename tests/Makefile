@@ -17,6 +17,7 @@ TESTS+=	match-attachment.sh
 TESTS+=	match-body-b64.sh
 TESTS+=	match-body-qp.sh
 TESTS+=	match-body.sh
+TESTS+=	match-command.sh
 TESTS+=	match-date.sh
 TESTS+=	match-header.sh
 TESTS+=	match-isdirectory.sh

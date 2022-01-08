@@ -21,6 +21,7 @@ static int	expr_eval_attachment_block(struct expr *,
 static int	expr_eval_block(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_body(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_break(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_command(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_date(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_discard(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_exec(struct expr *, struct expr_eval_arg *);
@@ -106,6 +107,9 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_STAT:
 		ex->ex_eval = &expr_eval_stat;
+		break;
+	case EXPR_TYPE_COMMAND:
+		ex->ex_eval = &expr_eval_command;
 		break;
 	case EXPR_TYPE_MOVE:
 		ex->ex_eval = &expr_eval_move;
@@ -500,6 +504,33 @@ expr_eval_break(struct expr *ex, struct expr_eval_arg *ea)
 	 * later inverted by expr_eval_block().
 	 */
 	return EXPR_MATCH;
+}
+
+static int
+expr_eval_command(struct expr *ex, struct expr_eval_arg *ea)
+{
+	struct match *mh;
+	int ev = EXPR_NOMATCH;
+	int error;
+
+	mh = match_alloc(ex, ea->ea_msg);
+	if (matches_append(ea->ea_ml, mh))
+		return EXPR_ERROR;
+
+	if (match_interpolate(mh, NULL)) {
+		ev = EXPR_ERROR;
+	} else if ((error = exec(mh->mh_exec, -1)) != 0) {
+		/* A non-zero exit is not considered fatal. */
+		if (error < 0)
+			ev = EXPR_ERROR;
+	} else {
+		ev = EXPR_MATCH;
+	}
+
+	TAILQ_REMOVE(ea->ea_ml, mh, mh_entry);
+	match_free(mh);
+
+	return ev;
 }
 
 static int

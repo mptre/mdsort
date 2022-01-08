@@ -216,9 +216,7 @@ static int
 config_has_exec(const struct config_list *config, const struct environment *env)
 {
 	const struct config *conf;
-
-	if (env->ev_options & OPTION_DRYRUN)
-		return 0;
+	int nexec = 0;
 
 	TAILQ_FOREACH(conf, &config->cl_list, entry) {
 		const struct string *str;
@@ -226,14 +224,16 @@ config_has_exec(const struct config_list *config, const struct environment *env)
 		TAILQ_FOREACH(str, conf->paths, entry) {
 			if (maildir_skip(str->val, env))
 				continue;
-			if (expr_count(conf->expr, EXPR_TYPE_EXEC) > 0)
+			if (expr_count(conf->expr, EXPR_TYPE_COMMAND) > 0)
 				return 1;
+			if (expr_count(conf->expr, EXPR_TYPE_EXEC) > 0)
+				nexec++;
 			/* All maildir paths share the same expression. */
 			break;
 		}
 	}
 
-	return 0;
+	return (env->ev_options & OPTION_DRYRUN) == 0 && nexec > 0;
 }
 
 static const char *

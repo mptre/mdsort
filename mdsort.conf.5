@@ -164,6 +164,21 @@ Evaluates to true for any message.
 Evaluates to true if the message body matches
 .Ar pattern .
 .It Xo Op Ic \&!
+.Tg command
+.Ic command
+.Dq Ar command
+.Xc
+.It Xo Op Ic \&!
+.Ic command
+.No { Do Ar command Dc Ar ... No }
+.Xc
+Evaluates to true if
+.Ar command
+exits zero.
+The
+.Ar command
+is interpolated.
+.It Xo Op Ic \&!
 .Tg date
 .Ic date
 .Op Ar field

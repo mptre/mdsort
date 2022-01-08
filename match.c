@@ -380,6 +380,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		break;
 	}
 
+	case EXPR_TYPE_COMMAND:
 	case EXPR_TYPE_EXEC: {
 		const struct string *str;
 		size_t len;

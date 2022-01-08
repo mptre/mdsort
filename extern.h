@@ -154,6 +154,7 @@ enum expr_type {
 	EXPR_TYPE_NEW,
 	EXPR_TYPE_OLD,
 	EXPR_TYPE_STAT,
+	EXPR_TYPE_COMMAND,
 
 	/* actions */
 	EXPR_TYPE_MOVE,
