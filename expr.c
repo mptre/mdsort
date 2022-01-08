@@ -843,15 +843,16 @@ static size_t
 strnwidth(const char *str, size_t len)
 {
 	size_t i;
+	size_t max = MB_CUR_MAX;
 	size_t width = 0;
 
 	for (i = 0; i < len;) {
 		wchar_t wc;
 		int n;
 
-		n = mbtowc(&wc, &str[i], MB_CUR_MAX);
+		n = mbtowc(&wc, &str[i], max);
 		if (n == -1) {
-			mbtowc(NULL, NULL, MB_CUR_MAX);
+			mbtowc(NULL, NULL, max);
 			i++;
 			width++;
 			continue;
