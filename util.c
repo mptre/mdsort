@@ -208,12 +208,10 @@ macro_context(const char *name)
  * Determine if the given string starts with a macro. Returns one of the
  * following:
  *
- *     >0   The length of the found macro. The caller is responsible for freeing
- *          the memory pointed to in name.
- *
- *     0    Macro not found.
- *
- *     -1   Unterminated macro found.
+ *     >0    The length of the found macro. The caller is responsible for
+ *           freeing the memory pointed to in name.
+ *      0    Macro not found.
+ *     -1    Unterminated macro found.
  */
 ssize_t
 ismacro(const char *str, char **macro)

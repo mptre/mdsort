@@ -132,10 +132,8 @@ maildir_close(struct maildir *md)
  *
  *     1    A new file was encountered and the maildir entry is populated with
  *          the details.
- *
  *     0    All files have been traversed.
- *
- *     -1   An error occurred.
+ *    -1    An error occurred.
  */
 int
 maildir_walk(struct maildir *md, struct maildir_entry *me)
