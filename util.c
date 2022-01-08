@@ -273,7 +273,7 @@ exec(char *const *argv, int fdin)
 			err(1, "dup2");
 		execvp(argv[0], argv);
 		warn("%s", argv[0]);
-		_exit(1);
+		_exit(127);
 	}
 
 	if (waitpid(pid, &status, 0) == -1) {
@@ -281,8 +281,11 @@ exec(char *const *argv, int fdin)
 		error = -1;
 		goto out;
 	}
-	if (WIFEXITED(status))
+	if (WIFEXITED(status)) {
 		error = WEXITSTATUS(status);
+		if (error == 127)
+			error = -1;
+	}
 	if (WIFSIGNALED(status))
 		error = 128 + WTERMSIG(status);
 
