@@ -402,7 +402,24 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		break;
 	}
 
-	default:
+	case EXPR_TYPE_BLOCK:
+	case EXPR_TYPE_AND:
+	case EXPR_TYPE_OR:
+	case EXPR_TYPE_NEG:
+	case EXPR_TYPE_MATCH:
+	case EXPR_TYPE_ALL:
+	case EXPR_TYPE_ATTACHMENT:
+	case EXPR_TYPE_BODY:
+	case EXPR_TYPE_DATE:
+	case EXPR_TYPE_HEADER:
+	case EXPR_TYPE_NEW:
+	case EXPR_TYPE_OLD:
+	case EXPR_TYPE_FLAG:
+	case EXPR_TYPE_DISCARD:
+	case EXPR_TYPE_BREAK:
+	case EXPR_TYPE_PASS:
+	case EXPR_TYPE_REJECT:
+	case EXPR_TYPE_ATTACHMENT_BLOCK:
 		break;
 	}
 
