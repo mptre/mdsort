@@ -96,8 +96,6 @@ if testcase "invalid date"; then
 	mkmd "src" "dst"
 	# Invalid format.
 	mkmsg "src/new" -- "Date" "$(now -f '%d')"
-	# Timezone hours too large.
-	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M:%S -9900')"
 	# Timezone minutes too large.
 	mkmsg "src/new" -- "Date" "$(now -f '%a, %d %b %Y %H:%M:%S +0099')"
 	# Timezone minutes invalid.
