@@ -112,8 +112,7 @@ findmsg() {
 		shift
 	done
 
-	find "${TSHDIR}/${1}" -print0 -type f |
-	xargs -0 grep -l "$_pattern" |
+	grep -Rl "$_pattern" "${TSHDIR}/${1}" |
 	$_cmd >"$_tmp"
 
 	if [ "$(wc -l "$_tmp" | awk '{print $1}')" -ne 1 ]; then
