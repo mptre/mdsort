@@ -1,5 +1,3 @@
-set -e
-
 mkls "$@" \
 SRCS \
 	*.c \
