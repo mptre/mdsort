@@ -1,3 +1,23 @@
+# v11.2.0 - 2022-01-09
+
+## News
+
+- Add command matcher, evalutes to true if command exits zero.
+  (d350f45)
+  (Anton Lindqvist)
+
+  Can for instance be used to detect duplicates:
+
+  ```
+  stdin {
+    match header "Message-ID" /.*/ and
+          command { "grep" "-Rq" "\0" "~/Maildir/INBOX" }
+          discard
+
+    match all move "~/Maildir/INBOX"
+  }
+  ```
+
 # v11.1.0 - 2021-10-28
 
 ## News
