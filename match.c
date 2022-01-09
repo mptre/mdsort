@@ -17,7 +17,7 @@ struct backref {
 
 static void	matches_merge(struct match_list *, struct match *);
 
-static const char	*match_get(const struct match *,
+static const char	*match_backref(const struct match *,
     const struct backref *);
 
 static int	interpolate(const struct match *, const struct macro_list *,
@@ -471,7 +471,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 }
 
 static const char *
-match_get(const struct match *mh, const struct backref *br)
+match_backref(const struct match *mh, const struct backref *br)
 {
 	const struct match *tmp = mh;
 	const struct match *mi = NULL;
@@ -554,7 +554,7 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 		if (n < 0)
 			goto brerr;
 		if (n > 0) {
-			sub = match_get(mh, &br);
+			sub = match_backref(mh, &br);
 			if (sub == NULL)
 				goto brerr;
 
