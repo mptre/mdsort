@@ -850,7 +850,6 @@ yypeek(int want)
 static void
 yyungetc(int c)
 {
-
 	if (c == '\n')
 		lineno--;
 	ungetc(c, yyfh);
@@ -878,7 +877,6 @@ yyrecover(void)
 static void
 yypushl(int lno)
 {
-
 	assert(lineno_save == -1);
 	lineno_save = yylval.lineno;
 	yylval.lineno = lno;
@@ -890,7 +888,6 @@ yypushl(int lno)
 static void
 yypopl(void)
 {
-
 	yylval.lineno = lineno_save;
 	lineno_save = -1;
 }
