@@ -5,7 +5,7 @@
 - Allow interpolation using matches from a specific pattern.
   One long standing annoyance with interpolation is the fact the matches from
   the first matching pattern are favored when there's multiple patterns in play.
-  Therefore extend interpolation to optionally accept the pattern to operate on:
+  Therefore extend interpolation to optionally accept the pattern to operate on.
   (85298fc)
   (Anton Lindqvist)
 
