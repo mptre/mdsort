@@ -63,7 +63,7 @@ static const char	*skipline(const char *);
 static char		*skipseparator(char *);
 static ssize_t		 strflags(unsigned int, unsigned char, char *, size_t);
 static int		 writefd(const char *);
-static char		*qpdecode(const char *);
+static char		*qpdecode(const char *, size_t);
 
 char *
 message_flags_str(const struct message_flags *mf, char *buf, size_t bufsiz)
@@ -665,7 +665,8 @@ message_decode_body(struct message *msg, const struct message *attachment)
 		if (msg->me_buf_dec == NULL)
 			warnx("%s: failed to decode body", msg->me_path);
 	} else if (enc != NULL && strcmp(enc, "quoted-printable") == 0) {
-		msg->me_buf_dec = qpdecode(attachment->me_body);
+		msg->me_buf_dec = qpdecode(attachment->me_body,
+		    strlen(attachment->me_body));
 	} else {
 		msg->me_buf_dec = strdup(attachment->me_body);
 		if (msg->me_buf_dec == NULL)
@@ -1091,14 +1092,12 @@ writefd(const char *dir)
  * Decode quoted printable.
  */
 static char *
-qpdecode(const char *str)
+qpdecode(const char *str, size_t len)
 {
 	char *buf;
-	size_t len;
 	size_t i = 0;
 	size_t j = 0;
 
-	len = strlen(str);
 	buf = malloc(len + 1);
 	if (buf == NULL)
 		err(1, NULL);
