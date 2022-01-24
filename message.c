@@ -50,6 +50,7 @@ static int	 cmpheaderkey(const void *, const void *);
 static int	 findheader(char *, struct slice *, struct slice *);
 static ssize_t	 searchheader(const struct header *, size_t, const char *,
     size_t *);
+static char	*decodeheader(const char *);
 static char	*unfoldheader(const char *);
 
 static int		 parseattachments(struct message *,
@@ -63,7 +64,7 @@ static const char	*skipline(const char *);
 static char		*skipseparator(char *);
 static ssize_t		 strflags(unsigned int, unsigned char, char *, size_t);
 static int		 writefd(const char *);
-static char		*qpdecode(const char *, size_t);
+static char		*qpdecode(const char *, size_t, int);
 
 char *
 message_flags_str(const struct message_flags *mf, char *buf, size_t bufsiz)
@@ -408,7 +409,7 @@ message_get_header(const struct message *msg, const char *header)
 		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
 			char *val;
 
-			val = unfoldheader(tmp->val);
+			val = decodeheader(tmp->val);
 			strings_append(hdr->values, val);
 		}
 	}
@@ -666,7 +667,7 @@ message_decode_body(struct message *msg, const struct message *attachment)
 			warnx("%s: failed to decode body", msg->me_path);
 	} else if (enc != NULL && strcmp(enc, "quoted-printable") == 0) {
 		msg->me_buf_dec = qpdecode(attachment->me_body,
-		    strlen(attachment->me_body));
+		    strlen(attachment->me_body), 0);
 	} else {
 		msg->me_buf_dec = strdup(attachment->me_body);
 		if (msg->me_buf_dec == NULL)
@@ -696,6 +697,89 @@ cmpheaderkey(const void *p1, const void *p2)
 	const struct header *h2 = p2;
 
 	return strcasecmp(h1->key, h2->key);
+}
+
+/*
+ * Decode header which can either be encoded using quoted printable or base64,
+ * see RFC 2047.
+ */
+static char *
+decodeheader(const char *str)
+{
+	struct string_list *strings = NULL;
+	const char *qs;
+	char *dec;
+
+	qs = dec = unfoldheader(str);
+	for (;;) {
+		const char *qe;
+		size_t len;
+		char enc;
+
+		if (strncmp(qs, "=?", 2))
+			break;
+		qs += 2;
+		qs = strchr(qs, '?');
+		if (qs == NULL)
+			goto err;
+		qs += 1;
+		enc = *qs;
+		qs += 1;
+		if (*qs != '?')
+			goto err;
+		qs += 1;
+
+		qe = strstr(qs, "?=");
+		if (qe == NULL)
+			goto err;
+
+		if (strings == NULL)
+			strings = strings_alloc();
+		len = qe - qs;
+		switch (enc) {
+		case 'B': {
+			char *src, *dst;
+
+			/* b64decode() requires a NUL-terminator. */
+			src = strndup(qs, len);
+			if (src == NULL)
+				goto err;
+			dst = b64decode(src);
+			free(src);
+			if (dst == NULL)
+				goto err;
+			strings_append(strings, dst);
+			break;
+		}
+
+		case 'Q':
+			strings_append(strings, qpdecode(qs, len, 1));
+			break;
+
+		default:
+			goto err;
+		}
+
+		qe += 2;
+		while (isspace((unsigned char)qe[0]))
+			qe++;
+		qs = qe;
+	}
+
+	if (strings != NULL) {
+		char *buf = NULL;
+		size_t buflen = 0;
+		size_t bufsiz = 0;
+
+		free(dec);
+		dec = strings_concat(strings, buf, &bufsiz, &buflen);
+		strings_free(strings);
+	}
+
+	return dec;
+err:
+	strings_free(strings);
+	return dec;
 }
 
 /*
@@ -1089,10 +1173,11 @@ writefd(const char *dir)
 }
 
 /*
- * Decode quoted printable.
+ * Decode quoted printable and optionally spaces encoded as underscores, see RFC
+ * 2047.
  */
 static char *
-qpdecode(const char *str, size_t len)
+qpdecode(const char *str, size_t len, int dospace)
 {
 	char *buf;
 	size_t i = 0;
@@ -1105,6 +1190,11 @@ qpdecode(const char *str, size_t len)
 	while (i < len) {
 		unsigned char hi, lo;
 
+		if (str[i] == '_' && dospace) {
+			buf[j++] = ' ';
+			i++;
+			continue;
+		}
 		if (str[i] != '=') {
 			buf[j++] = str[i++];
 			continue;
