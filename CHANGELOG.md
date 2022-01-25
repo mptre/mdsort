@@ -1,3 +1,11 @@
+# v11.3.0 - 2022-01-25
+
+## News
+
+- Handle headers encoded using quoted printable or base64.
+  (29e149b)
+  (Anton Lindqvist)
+
 # v11.2.0 - 2022-01-09
 
 ## News
