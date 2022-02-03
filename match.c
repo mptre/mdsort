@@ -368,10 +368,12 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		int error;
 
 		labels = message_get_header(msg, "X-Label");
-		if (labels != NULL)
-			buf = strings_concat(labels, buf, &bufsiz, &buflen);
-		buf = strings_concat(mh->mh_expr->ex_strings, buf, &bufsiz,
-		    &buflen);
+		if (labels != NULL) {
+			buf = strings_concat(labels,
+			    buf, &bufsiz, &buflen, ' ');
+		}
+		buf = strings_concat(mh->mh_expr->ex_strings,
+		    buf, &bufsiz, &buflen, ' ');
 		error = interpolate(mh, macros, buf, &label);
 		free(buf);
 		if (error)

@@ -32,7 +32,7 @@ if testcase "line continuation"; then
 	mkmsg "src/new" -- "Subject" "$(printf 'foo\n\t bar')"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "Subject" /^foo bar$/ move "dst"
+		match header "Subject" /^foobar$/ move "dst"
 	}
 	EOF
 	mdsort
@@ -146,8 +146,8 @@ if testcase "dry run last line"; then
 	EOF
 	mdsort - -- -d <<EOF
 $(findmsg "src/new") -> dst/new
-mdsort.conf:2: To: admin@example.com, user@example.com
-                                      ^  $
+mdsort.conf:2: To: admin@example.com,user@example.com
+                                     ^  $
 EOF
 fi
 

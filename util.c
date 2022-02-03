@@ -89,7 +89,7 @@ strings_appendc(struct string_list *strings, const char *val)
 
 char *
 strings_concat(const struct string_list *strings, char *buf, size_t *bufsiz,
-    size_t *buflen)
+    size_t *buflen, char delim)
 {
 	const struct string *str;
 	int nmemb = 0;
@@ -98,8 +98,8 @@ strings_concat(const struct string_list *strings, char *buf, size_t *bufsiz,
 		nmemb = 1;
 
 	TAILQ_FOREACH(str, strings, entry) {
-		if (nmemb > 0)
-			appendc(&buf, bufsiz, buflen, ' ');
+		if (delim != 0 && nmemb > 0)
+			appendc(&buf, bufsiz, buflen, delim);
 		if (append(&buf, bufsiz, buflen, str->val))
 			nmemb++;
 	}

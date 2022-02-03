@@ -13,11 +13,11 @@ fi
 
 if testcase "multiple lines"; then
 	mkmd "src" "dst"
-	mkmsg "src/new" -- \
-		"Subject" "$(printf '=?UTF-8?Q?ny?=\n =?UTF-8?Q?fr=C3=A5ga_r=C3=B6rande?=')"
+	mkmsg "src/new" -- "Subject" \
+		"$(printf '=?utf-8?B?zojOus60zr/Pg863IGUtzrvOv86zzrHPgc65zrHPg868zr/P?=\n =?utf-8?B?jSDPg8+EzrHOuM61z4HOrs+CIDEzODI0OTI0IM6ZzrHOvc6/z4XOsc+B?=\n =?utf-8?B?zq/Ov8+F?=')"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "Subject" /ny fråga/ move "dst"
+		match header "Subject" /Έκδοση e-λογαριασμού/ move "dst"
 	}
 	EOF
 	mdsort
@@ -87,7 +87,6 @@ if testcase "invalid multiple lines"; then
 fi
 
 if testcase "dry run"; then
-
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?Q?ny_fr=C3=A5ga_r=C3=B6rande?="
 	cat <<-EOF >"$CONF"

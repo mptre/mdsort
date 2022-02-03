@@ -772,7 +772,7 @@ decodeheader(const char *str)
 		size_t bufsiz = 0;
 
 		free(dec);
-		dec = strings_concat(strings, buf, &bufsiz, &buflen);
+		dec = strings_concat(strings, buf, &bufsiz, &buflen, 0);
 		strings_free(strings);
 	}
 
@@ -811,8 +811,6 @@ unfoldheader(const char *str)
 		end = strchr(str, '\n');
 		if (end == NULL)
 			end = str + strlen(str);
-		if (i > 0)
-			dec[i++] = ' ';
 		while (str != end)
 			dec[i++] = *str++;
 

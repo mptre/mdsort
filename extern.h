@@ -337,7 +337,7 @@ void			 strings_free(struct string_list *);
 struct string	*strings_append(struct string_list *, char *);
 struct string	*strings_appendc(struct string_list *, const char *);
 char		*strings_concat(const struct string_list *, char *, size_t *,
-    size_t *);
+    size_t *, char);
 
 size_t	strings_len(const struct string_list *);
 
