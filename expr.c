@@ -375,7 +375,7 @@ expr_inspect(const struct expr *ex, const struct match *mh,
 		} else {
 			fprintf(stdout, "%*s", pindent, "");
 		}
-		indent = beg - (lbeg - mh->mh_val) + pindent;
+		indent = pindent + strnwidth(lbeg, beg - (lbeg - mh->mh_val));
 		fprintf(stdout, "%.*s\n%*s^%*s$\n",
 		    (int)(lend - lbeg), lbeg, indent, "", len, "");
 	}

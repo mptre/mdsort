@@ -100,3 +100,19 @@ mdsort.conf:2: Subject: ny fråga rörande
                         ^      $
 EOF
 fi
+
+if testcase "dry run multiple lines"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "Subject" \
+		"$(printf '=?utf-8?B?zojOus60zr/Pg863IGUtzrvOv86zzrHPgc65zrHPg868zr/P?=\n =?utf-8?B?jSDPg8+EzrHOuM61z4HOrs+CIDEzODI0OTI0IM6ZzrHOvc6/z4XOsc+B?=\n =?utf-8?B?zq/Ov8+F?=')"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match header "Subject" /e-λογαριασμού/ move "dst"
+	}
+	EOF
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> dst/new
+mdsort.conf:2: Subject: Έκδοση e-λογαριασμού σταθερής 13824924 Ιανουαρίου
+                               ^           $
+EOF
+fi
