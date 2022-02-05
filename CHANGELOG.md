@@ -1,3 +1,17 @@
+# v11.3.1 - 2022-02-05
+
+## Bug fixes
+
+- Fix header unfold bug.
+  Unfolding a header value consisting of multiple lines must discard any
+  preceding whitespace on the subsequent lines.
+  (a434b66)
+  (Anton Lindqvist)
+
+- Fix dry run UTF-8 output bug.
+  (0602db3)
+  (Anton Lindqvist)
+
 # v11.3.0 - 2022-01-25
 
 ## News
