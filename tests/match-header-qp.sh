@@ -10,6 +10,7 @@ subject() {
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?Q?ny_fr=C3=A5ga_r=C3=B6rande?="
+	mkmsg "src/new" -- "Subject" "=?UTF-8?q?ny_fr=C3=A5ga_r=C3=B6rande?="
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "Subject" /ny fråga/ move "dst"

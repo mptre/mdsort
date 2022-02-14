@@ -736,7 +736,7 @@ decodeheader(const char *str)
 		if (strings == NULL)
 			strings = strings_alloc();
 		len = qe - qs;
-		switch (enc) {
+		switch (toupper((unsigned char)enc)) {
 		case 'B': {
 			char *src, *dst;
 
