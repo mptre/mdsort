@@ -1,3 +1,11 @@
+# 11.3.2 - 2022-02-19
+
+## Bug fixes
+
+- RFC 2047 encodings must be treated as case insensitive.
+  (3e43062)
+  (Anton Lindqvist)
+
 # v11.3.1 - 2022-02-05
 
 ## Bug fixes
