@@ -143,11 +143,11 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 	str = p + 1;
 
 	if (strncmp(key, "errno", keysiz) == 0) {
-#define ERRNO(e) do {								\
-		if (strncmp(val, #e, valsiz) == 0) {				\
-			fu->fu_errno = e;					\
-			goto out;						\
-		}								\
+#define ERRNO(e) do {							\
+		if (strncmp(val, #e, valsiz) == 0) {			\
+			fu->fu_errno = e;				\
+			goto out;					\
+		}							\
 } while (0)
 		ERRNO(EINVAL);
 		ERRNO(ENAMETOOLONG);
