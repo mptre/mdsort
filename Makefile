@@ -127,7 +127,7 @@ dist:
 .PHONY: dist
 
 format:
-	cd ${.CURDIR} && knfmt -i ${KNFMT}
+	cd ${.CURDIR} && knfmt -is ${KNFMT}
 .PHONY: format
 
 install: all
@@ -141,7 +141,7 @@ install: all
 
 lint:
 	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
-	cd ${.CURDIR} && knfmt -d ${KNFMT}
+	cd ${.CURDIR} && knfmt -ds ${KNFMT}
 	${MAKE} -C ${.CURDIR}/tests lint
 .PHONY: lint
 
