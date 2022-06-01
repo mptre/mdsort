@@ -385,8 +385,8 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 	case EXPR_TYPE_COMMAND:
 	case EXPR_TYPE_EXEC: {
 		const struct string *str;
-		size_t len;
 		size_t nargs = 0;
+		size_t len;
 
 		/* Make room for NULL-terminator. */
 		len = strings_len(mh->mh_expr->ex_strings) + 1;

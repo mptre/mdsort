@@ -172,9 +172,9 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	};
 	struct stat sb;
 	const char *srcname;
-	int dstfd, fd, srcfd;
 	int doutime = 0;
 	int error = 0;
+	int dstfd, fd, srcfd;
 
 	srcname = msg->me_name;
 	srcfd = maildir_fd(src);
@@ -385,8 +385,8 @@ maildir_genname(const struct maildir *md, const char *flags, char *buf,
 static const char *
 maildir_set_path(struct maildir *md)
 {
-	const char *path;
 	const char *subdir = NULL;
+	const char *path;
 
 	switch (md->md_subdir) {
 	case SUBDIR_NEW:
@@ -408,8 +408,8 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 	char buf[BUFSIZ], name[NAME_MAX + 1];
 	const char *path;
 	ssize_t nr, nw;
-	int fd;
 	int error = 0;
+	int fd;
 
 	if (pathjoin(md->md_root, sizeof(md->md_root), env->ev_tmpdir,
 	    "mdsort-XXXXXXXX") == NULL) {

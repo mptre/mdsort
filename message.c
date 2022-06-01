@@ -228,8 +228,8 @@ message_write(struct message *msg, int fd)
 {
 	FILE *fh;
 	unsigned int i;
-	int newfd;
 	int error = 0;
+	int newfd;
 
 	/*
 	 * Since fclose(3) uncondtionally closes the file descriptor, operate on
@@ -358,8 +358,8 @@ const char *
 message_get_body(struct message *msg)
 {
 	struct message_list *attachments;
-	const struct message *attach;
 	const struct message *found = NULL;
+	const struct message *attach;
 
 	if (msg->me_buf_dec != NULL)
 		return msg->me_buf_dec;
@@ -738,7 +738,7 @@ decodeheader(const char *str)
 		len = qe - qs;
 		switch (toupper((unsigned char)enc)) {
 		case 'B': {
-			char *src, *dst;
+			char *dst, *src;
 
 			/* b64decode() requires a NUL-terminator. */
 			src = strndup(qs, len);
@@ -871,7 +871,7 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
     size_t *nfound)
 {
 	struct header needle;
-	ssize_t hi, mi, lo;
+	ssize_t hi, lo, mi;
 
 	*nfound = 0;
 

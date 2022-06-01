@@ -44,9 +44,9 @@ main(int argc, char *argv[])
 	struct config *conf;
 	struct maildir *md;
 	struct message *msg;
-	int c, w;
 	int error = 0;
 	int reject = 0;
+	int c, w;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw proc exec", NULL) == -1)
 		err(1, "pledge");
@@ -240,7 +240,7 @@ static const char *
 defaultconf(const char *home)
 {
 	static char path[PATH_MAX];
-	int siz, n;
+	int n, siz;
 
 	siz = sizeof(path);
 	n = snprintf(path, siz, "%s/.mdsort.conf", home);

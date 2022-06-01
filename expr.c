@@ -245,8 +245,8 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 
 		{ 0,	0,	0 },
 	};
-	int error, i;
 	int rflags = REG_EXTENDED | REG_NEWLINE;
+	int error, i;
 
 	assert(ex->ex_re.r_nmatches == 0);
 
@@ -333,8 +333,8 @@ expr_inspect(const struct expr *ex, const struct match *mh,
 {
 	const char *lbeg, *lend, *p;
 	unsigned int i;
-	int len, indent, pindent;
 	int printkey = 1;
+	int indent, len, pindent;
 
 	if ((ex->ex_flags & EXPR_FLAG_INSPECT) == 0)
 		return;
@@ -812,8 +812,8 @@ expr_inspect_prefix(const struct expr *ex, const struct environment *env)
 {
 	const char *path;
 	size_t len;
-	int n;
 	int nwrite = 0;
+	int n;
 
 	path = env->ev_confpath;
 	len = strlen(env->ev_home);
@@ -874,9 +874,9 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 static size_t
 strnwidth(const char *str, size_t len)
 {
-	size_t i;
 	size_t max = MB_CUR_MAX;
 	size_t width = 0;
+	size_t i;
 
 	for (i = 0; i < len;) {
 		wchar_t wc;

@@ -123,7 +123,7 @@ fault_match(const char *name)
 static const char *
 parse_attr(struct fault *fu, const char *str, const char *end)
 {
-	const char *key, *val, *p;
+	const char *key, *p, *val;
 	ssize_t siz;
 	size_t keysiz, valsiz;
 	int n;

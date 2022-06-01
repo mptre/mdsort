@@ -248,8 +248,8 @@ exec(char *const *argv, int fdin)
 {
 	pid_t pid;
 	int error = 1;
-	int status;
 	int doclose = 0;
+	int status;
 
 	if (fdin == -1) {
 		doclose = 1;
@@ -319,10 +319,10 @@ pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end)
 {
 	const char *p;
 	char *bp;
-	int docopy, i;
 	int isabs = 0;
 	int isrange = 1;
 	int ncomps = 0;
+	int docopy, i;
 
 	if (*path == '/')
 		isabs = 1;
