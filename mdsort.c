@@ -266,13 +266,14 @@ readenv(struct environment *env)
 {
 	struct passwd *pw;
 	struct tm *tm;
-	char *p;
+	const char *p;
+	char *dot;
 	size_t siz;
 
 	if (gethostname(env->ev_hostname, sizeof(env->ev_hostname)) == -1)
 		err(1, "gethostname");
-	else if ((p = strchr(env->ev_hostname, '.')) != NULL)
-		*p = '\0';
+	else if ((dot = strchr(env->ev_hostname, '.')) != NULL)
+		*dot = '\0';
 
 	if ((p = getenv("HOME")) == NULL || *p == '\0') {
 		log_debug("%s: HOME: unset or empty\n", __func__);
