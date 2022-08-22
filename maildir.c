@@ -179,6 +179,12 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	srcname = msg->me_name;
 	srcfd = maildir_fd(src);
 
+	if ((src->md_flags & MAILDIR_STDIN) &&
+	    strcmp(src->md_root, dst->md_root) == 0) {
+		warnx("cannot move message to temporary directory");
+		return 1;
+	}
+
 	if ((src->md_flags & MAILDIR_STDIN) == 0) {
 		if (fstatat(srcfd, srcname, &sb, 0) != -1) {
 			times[1] = sb.st_mtim;

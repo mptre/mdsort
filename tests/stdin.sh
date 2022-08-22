@@ -48,6 +48,13 @@ if testcase "move"; then
 	refute_empty "dst/new"
 fi
 
+if testcase "move to temporary directory"; then
+	cat <<-EOF >"$CONF"
+	stdin { match all flag new }
+	EOF
+	mdsort -t -- - </dev/null >/dev/null
+fi
+
 if testcase "discard"; then
 	cat <<-EOF >"$CONF"
 	stdin {
