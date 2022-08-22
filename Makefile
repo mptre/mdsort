@@ -72,6 +72,7 @@ DISTFILES+=	tests/action-break.sh
 DISTFILES+=	tests/action-discard.sh
 DISTFILES+=	tests/action-exec.sh
 DISTFILES+=	tests/action-flag.sh
+DISTFILES+=	tests/action-flags.sh
 DISTFILES+=	tests/action-label.sh
 DISTFILES+=	tests/action-move.sh
 DISTFILES+=	tests/action-pass.sh

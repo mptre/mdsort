@@ -3,6 +3,7 @@ TESTS+=	action-break.sh
 TESTS+=	action-discard.sh
 TESTS+=	action-exec.sh
 TESTS+=	action-flag.sh
+TESTS+=	action-flags.sh
 TESTS+=	action-label.sh
 TESTS+=	action-move.sh
 TESTS+=	action-pass.sh

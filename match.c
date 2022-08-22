@@ -113,6 +113,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 
 		switch (mh->mh_expr->ex_type) {
 		case EXPR_TYPE_FLAG:
+		case EXPR_TYPE_FLAGS:
 		case EXPR_TYPE_MOVE:
 			/*
 			 * Move message and update the source maildir and
@@ -418,6 +419,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 	case EXPR_TYPE_NEW:
 	case EXPR_TYPE_OLD:
 	case EXPR_TYPE_FLAG:
+	case EXPR_TYPE_FLAGS:
 	case EXPR_TYPE_DISCARD:
 	case EXPR_TYPE_BREAK:
 	case EXPR_TYPE_PASS:
