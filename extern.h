@@ -82,7 +82,8 @@ struct message_flags {
 
 char	*message_flags_str(const struct message_flags *, char *, size_t);
 int	 message_flags_isset(const struct message_flags *, unsigned char);
-int	 message_flags_set(struct message_flags *, unsigned char, int);
+int	 message_flags_clr(struct message_flags *, unsigned char);
+int	 message_flags_set(struct message_flags *, unsigned char);
 
 struct message {
 	char			 me_path[PATH_MAX];	/* full path */

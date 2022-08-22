@@ -560,11 +560,11 @@ msgflags(const struct maildir *src, const struct maildir *dst,
 	struct message_flags flags = msg->me_mflags;
 
 	if (src->md_subdir == SUBDIR_NEW && dst->md_subdir == SUBDIR_CUR) {
-		if (message_flags_set(&flags, 'S', 1))
+		if (message_flags_set(&flags, 'S'))
 			return 1;
 	} else if (src->md_subdir == SUBDIR_CUR &&
 	    dst->md_subdir == SUBDIR_NEW) {
-		if (message_flags_set(&flags, 'S', 0))
+		if (message_flags_clr(&flags, 'S'))
 			return 1;
 	}
 

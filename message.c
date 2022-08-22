@@ -110,17 +110,26 @@ message_flags_isset(const struct message_flags *mf, unsigned char flag)
 }
 
 int
-message_flags_set(struct message_flags *mf, unsigned char flag, int add)
+message_flags_clr(struct message_flags *mf, unsigned char flag)
 {
 	unsigned int *flags;
 	unsigned int mask;
 
 	if (message_flags_resolve(mf, flag, &flags, &mask))
 		return 1;
-	if (add)
-		*flags |= mask;
-	else
-		*flags &= ~mask;
+	*flags &= ~mask;
+	return 0;
+}
+
+int
+message_flags_set(struct message_flags *mf, unsigned char flag)
+{
+	unsigned int *flags;
+	unsigned int mask;
+
+	if (message_flags_resolve(mf, flag, &flags, &mask))
+		return 1;
+	*flags |= mask;
 	return 0;
 }
 
@@ -556,7 +565,7 @@ message_flags_parse(struct message_flags *mf, const char *path)
 	}
 
 	for (i = 3; p[i] != '\0'; i++) {
-		if (message_flags_set(mf, p[i], 1))
+		if (message_flags_set(mf, p[i]))
 			return 1;
 	}
 
