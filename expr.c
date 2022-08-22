@@ -26,6 +26,7 @@ static int	expr_eval_date(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_discard(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_exec(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_flag(struct expr *, struct expr_eval_arg *);
+static int	expr_eval_flags(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_header(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_label(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_match(struct expr *, struct expr_eval_arg *);
@@ -117,6 +118,10 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_FLAG:
 		ex->ex_eval = &expr_eval_flag;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
+		break;
+	case EXPR_TYPE_FLAGS:
+		ex->ex_eval = &expr_eval_flags;
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_DISCARD:
@@ -620,6 +625,23 @@ expr_eval_flag(struct expr *ex, struct expr_eval_arg *ea)
 		match_free(mh);
 		return EXPR_ERROR;
 	}
+
+	if (matches_append(ea->ea_ml, mh))
+		return EXPR_ERROR;
+	return EXPR_MATCH;
+}
+
+static int
+expr_eval_flags(struct expr *ex, struct expr_eval_arg *ea)
+{
+	struct match *mh;
+	const char *flags;
+
+	mh = match_alloc(ex, ea->ea_msg);
+	flags = TAILQ_FIRST(ex->ex_strings)->val;
+	for (; *flags != '\0'; flags++)
+		if (message_flags_set(&ea->ea_msg->me_mflags, *flags, 1))
+			warn("could not apply flag '%c' to the message", *flags);
 
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;

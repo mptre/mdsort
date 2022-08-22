@@ -67,6 +67,7 @@ typedef struct {
 %token DISCARD
 %token EXEC
 %token FLAG
+%token FLAGS
 %token HEADER
 %token ISDIRECTORY
 %token LABEL
@@ -326,6 +327,14 @@ expraction	: BREAK {
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
 		}
+		| FLAGS STRING {
+			struct string_list *strings;
+
+			$$ = expr_alloc(EXPR_TYPE_FLAGS, lineno, NULL, NULL);
+			strings = strings_alloc();
+			strings_append(strings, $2);
+			expr_set_strings($$, strings);
+		}
 		| DISCARD {
 			$$ = expr_alloc(EXPR_TYPE_DISCARD, lineno, NULL, NULL);
 		}
@@ -567,6 +576,7 @@ yylex(void)
 		{ "discard",		DISCARD },
 		{ "exec",		EXEC },
 		{ "flag",		FLAG },
+		{ "flags",		FLAGS },
 		{ "header",		HEADER },
 		{ "isdirectory",	ISDIRECTORY },
 		{ "label",		LABEL },
