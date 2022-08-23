@@ -817,14 +817,15 @@ unfoldheader(const char *str)
 		if (*str == '\0')
 			break;
 
+		for (; *str == '\t'; str++)
+			continue;
 		end = strchr(str, '\n');
 		if (end == NULL)
 			end = str + strlen(str);
 		while (str != end)
 			dec[i++] = *str++;
-
-		for (; isspace((unsigned char)*str); str++)
-			continue;
+		if (*str == '\n')
+			str++;
 	}
 	dec[i] = '\0';
 	return dec;

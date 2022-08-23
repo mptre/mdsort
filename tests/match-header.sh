@@ -32,7 +32,7 @@ if testcase "line continuation"; then
 	mkmsg "src/new" -- "Subject" "$(printf 'foo\n\t bar')"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "Subject" /^foobar$/ move "dst"
+		match header "Subject" /^foo bar$/ move "dst"
 	}
 	EOF
 	mdsort
