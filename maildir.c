@@ -573,11 +573,7 @@ msgflags(const struct maildir *src, const struct maildir *dst,
 		if (message_flags_clr(&flags, 'S'))
 			return 1;
 	}
-
-	if (message_flags_str(&flags, buf, bufsiz) == NULL)
-		return 1;
-
-	return 0;
+	return message_flags_str(&flags, buf, bufsiz) == NULL ? 1 : 0;
 }
 
 static int
