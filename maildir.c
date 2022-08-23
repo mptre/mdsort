@@ -158,8 +158,7 @@ maildir_walk(struct maildir *md, struct maildir_entry *me)
 
 /*
  * Move the message located in src to dst. The message path will be updated
- * accordingly.
- * Returns zero on success, non-zero otherwise.
+ * accordingly. Returns zero on success, non-zero otherwise.
  */
 int
 maildir_move(struct maildir *src, const struct maildir *dst,
@@ -232,8 +231,8 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 }
 
 /*
- * Remove the path located in the given maildir.
- * Returns zero on success, non-zero otherwise.
+ * Remove the path located in the given maildir. Returns zero on success,
+ * non-zero otherwise.
  */
 int
 maildir_unlink(const struct maildir *md, const char *path)
@@ -350,9 +349,8 @@ maildir_fd(const struct maildir *md)
 }
 
 /*
- * Create a new file rooted in the given maildir.
- * Returns a write-only file descriptor to the newly created file.
- * Otherwise, -1 is returned.
+ * Create a new file rooted in the given maildir. Returns a write-only file
+ * descriptor to the newly created file. Otherwise, -1 is returned.
  */
 static int
 maildir_genname(const struct maildir *md, const char *flags, char *buf,
