@@ -1,3 +1,28 @@
+# 11.4.0 - 2022-08-30
+
+## News
+
+- Prevent move action to temporary stdin directory.
+  (d58b6d7)
+  (Anton Lindqvist)
+
+- Add flags action used to add message flags.
+  (6a32b03)
+  (Josuah Demangeon)
+
+  ```
+  stdin {
+    match header "Subject" /important/i flags "F" pass
+    match all move "~/Maildir/INBOX"
+  }
+  ```
+
+## Bug fixes
+
+- Preserve white space in header line continuations.
+  (2b0a510)
+  (Anton Lindqvist)
+
 # 11.3.2 - 2022-02-19
 
 ## Bug fixes
