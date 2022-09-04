@@ -25,6 +25,7 @@ SRCS+=	util.c
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
 
+KNFMT+=	cdefs.h
 KNFMT+=	compat-arc4random.c
 KNFMT+=	compat-pledge.c
 KNFMT+=	compat-utimensat.c
@@ -44,6 +45,7 @@ DISTFILES+=	GNUmakefile
 DISTFILES+=	LICENSE
 DISTFILES+=	Makefile
 DISTFILES+=	README.md
+DISTFILES+=	cdefs.h
 DISTFILES+=	compat-arc4random.c
 DISTFILES+=	compat-base64.c
 DISTFILES+=	compat-errc.c

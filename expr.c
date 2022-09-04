@@ -11,6 +11,7 @@
 #include <string.h>
 #include <wchar.h>
 
+#include "cdefs.h"
 #include "extern.h"
 
 static int	expr_eval_all(struct expr *, struct expr_eval_arg *);
