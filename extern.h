@@ -193,9 +193,13 @@ struct expr {
 	enum expr_type		 ex_type;
 	int			 ex_lno;
 	unsigned int		 ex_flags;
+/* Denotes an action. */
 #define EXPR_FLAG_ACTION	0x00000001u
+/* Associated with a match that must be displayed during dry run. */
 #define EXPR_FLAG_INSPECT	0x00000002u
+/* Associated with a match that can be used during interpolation. */
 #define EXPR_FLAG_INTERPOLATE	0x00000004u
+/* Associated with a match that requires a maildir destination path. */
 #define EXPR_FLAG_PATH		0x00000008u
 
 	int			 (*ex_eval)(struct expr *,
