@@ -40,6 +40,18 @@ KNFMT+=	message.c
 KNFMT+=	time.c
 KNFMT+=	util.c
 
+CPPCHECK+=	compat-arc4random.c
+CPPCHECK+=	compat-pledge.c
+CPPCHECK+=	compat-utimensat.c
+CPPCHECK+=	expr.c
+CPPCHECK+=	fault.c
+CPPCHECK+=	maildir.c
+CPPCHECK+=	match.c
+CPPCHECK+=	mdsort.c
+CPPCHECK+=	message.c
+CPPCHECK+=	time.c
+CPPCHECK+=	util.c
+
 DISTFILES+=	CHANGELOG.md
 DISTFILES+=	GNUmakefile
 DISTFILES+=	LICENSE
@@ -147,6 +159,12 @@ lint:
 	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
 	${MAKE} -C ${.CURDIR}/tests lint
 .PHONY: lint
+
+lint-cppcheck:
+	cd ${.CURDIR} && cppcheck --quiet --enable=all --error-exitcode=1 \
+		--max-configs=2 --suppress-xml=cppcheck-suppressions.xml \
+		${CPPCHECK}
+.PHONY: lint-cppcheck
 
 test: all
 	${MAKE} -C ${.CURDIR}/tests \

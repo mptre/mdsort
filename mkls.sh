@@ -7,6 +7,9 @@ KNFMT \
 	!(compat-*).c !(config|compat-queue).h \
 	compat-?(arc4random|pledge|utimensat).c \
 	-- \
+CPPCHECK \
+	!(compat-*).c compat-?(arc4random|pledge|utimensat).c \
+	-- \
 DISTFILES \
 	*.1 *.5 *.c !(config).h *.md \
 	GNUmakefile LICENSE Makefile configure parse.y \
