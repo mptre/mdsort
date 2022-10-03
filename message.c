@@ -637,7 +637,7 @@ message_is_content_type(const struct message *msg, const char *needle)
 		return 0;
 
 	len = strlen(needle);
-	if (strncmp(type, needle, len) ||
+	if (strncmp(type, needle, len) != 0 ||
 	    (type[len] != ';' && type[len] != '\0'))
 		return 0;
 
@@ -730,7 +730,7 @@ decodeheader(const char *str)
 		size_t len;
 		char enc;
 
-		if (strncmp(qs, "=?", 2))
+		if (strncmp(qs, "=?", 2) != 0)
 			break;
 		qs += 2;
 		qs = strchr(qs, '?');
@@ -1015,11 +1015,11 @@ findboundary(const char *boundary, const char *s, int *term)
 		skip = 1;
 		beg = s;
 
-		if (strncmp(s, "--", 2))
+		if (strncmp(s, "--", 2) != 0)
 			continue;
 		s += 2;
 
-		if (strncmp(s, boundary, len))
+		if (strncmp(s, boundary, len) != 0)
 			continue;
 		s += len;
 
@@ -1042,7 +1042,7 @@ parseboundary(const char *str, char **boundary)
 
 	needle = "multipart/";
 	len = strlen(needle);
-	if (strncmp(str, needle, len))
+	if (strncmp(str, needle, len) != 0)
 		return 0;
 	str += len;
 	for (; *str != '\0' && *str != ';'; str++)
@@ -1054,7 +1054,7 @@ parseboundary(const char *str, char **boundary)
 
 	needle = "boundary=\"";
 	len = strlen(needle);
-	if (strncmp(str, needle, len))
+	if (strncmp(str, needle, len) != 0)
 		return 0;
 	str += len;
 	p = str;
@@ -1131,7 +1131,7 @@ skipseparator(char *str)
 	const char separator[] = "From ";
 	char *p;
 
-	if (strncmp(str, separator, sizeof(separator) - 1))
+	if (strncmp(str, separator, sizeof(separator) - 1) != 0)
 		return str;
 
 	p = strchr(str, '\n');

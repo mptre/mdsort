@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	if (argc > 0) {
-		if (strcmp(*argv, "-"))
+		if (strcmp(*argv, "-") != 0)
 			usage();
 		argc--;
 		argv++;

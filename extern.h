@@ -242,9 +242,9 @@ struct expr {
 };
 
 /* Return values for expr_eval(). */
-#define EXPR_MATCH	0
-#define EXPR_NOMATCH	1
-#define EXPR_ERROR	-1
+#define EXPR_MATCH	(0)
+#define EXPR_NOMATCH	(1)
+#define EXPR_ERROR	(-1)
 
 struct expr	*expr_alloc(enum expr_type, int, struct expr *, struct expr *);
 void		 expr_free(struct expr *);

@@ -144,8 +144,8 @@ tzabbr(const char *str, time_t *tz, const struct environment *env)
 static int
 tzoff(const char *str, time_t *tz)
 {
-	int hours = 0;
-	int minutes = 0;
+	time_t hours = 0;
+	time_t minutes = 0;
 	int i, sign;
 
 	if (str[0] == '+')

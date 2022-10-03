@@ -746,7 +746,7 @@ expr_eval_new(struct expr *UNUSED(ex), struct expr_eval_arg *ea)
 	char buf[NAME_MAX + 1];
 
 	if (pathslice(ea->ea_msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
-	    strcmp(buf, "new"))
+	    strcmp(buf, "new") != 0)
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
 }
@@ -759,7 +759,7 @@ expr_eval_old(struct expr *UNUSED(ex), struct expr_eval_arg *ea)
 	if (message_flags_isset(&ea->ea_msg->me_mflags, 'S'))
 		return EXPR_NOMATCH;
 	if (pathslice(ea->ea_msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
-	    strcmp(buf, "cur"))
+	    strcmp(buf, "cur") != 0)
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
 }
