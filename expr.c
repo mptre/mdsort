@@ -657,10 +657,11 @@ expr_eval_flags(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_header(struct expr *ex, struct expr_eval_arg *ea)
 {
-	const struct string_list *values;
 	const struct string *key, *val;
 
 	TAILQ_FOREACH(key, ex->ex_strings, entry) {
+		const struct string_list *values;
+
 		values = message_get_header(ea->ea_msg, key->val);
 		if (values == NULL)
 			continue;

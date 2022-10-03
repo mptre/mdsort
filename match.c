@@ -310,14 +310,14 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
     size_t nmemb)
 {
 	char *cpy;
-	size_t i, len;
+	size_t i;
 
 	mh->mh_matches = reallocarray(NULL, nmemb, sizeof(*mh->mh_matches));
 	if (mh->mh_matches == NULL)
 		err(1, NULL);
 	mh->mh_nmatches = nmemb;
 	for (i = 0; i < nmemb; i++) {
-		size_t j;
+		size_t j, len;
 
 		len = off[i].rm_eo - off[i].rm_so;
 		cpy = strndup(str + off[i].rm_so, len);

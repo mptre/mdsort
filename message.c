@@ -403,9 +403,9 @@ message_get_body(struct message *msg)
 const struct string_list *
 message_get_header(const struct message *msg, const char *header)
 {
-	struct header *hdr, *tmp;
+	struct header *hdr;
 	ssize_t idx;
-	size_t i, nfound;
+	size_t nfound;
 
 	idx = searchheader(msg->me_headers.h_v, msg->me_headers.h_nmemb,
 	    header, &nfound);
@@ -414,6 +414,9 @@ message_get_header(const struct message *msg, const char *header)
 
 	hdr = &msg->me_headers.h_v[idx];
 	if (hdr->values == NULL) {
+		struct header *tmp;
+		size_t i;
+
 		hdr->values = strings_alloc();
 		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
 			char *val;
@@ -443,7 +446,7 @@ message_set_header(struct message *msg, const char *header, char *val)
 {
 	struct header *hdr;
 	ssize_t idx;
-	size_t nfound, tail;
+	size_t nfound;
 
 	idx = searchheader(msg->me_headers.h_v, msg->me_headers.h_nmemb,
 	    header, &nfound);
@@ -457,6 +460,8 @@ message_set_header(struct message *msg, const char *header, char *val)
 		    sizeof(*msg->me_headers.h_v), cmpheaderkey);
 	} else {
 		if (nfound > 1) {
+			size_t tail;
+
 			/*
 			 * Multiple occurrences of the given header.
 			 * Remove all occurrences except the first one.
@@ -881,7 +886,7 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
     size_t *nfound)
 {
 	struct header needle;
-	ssize_t hi, lo, mi;
+	ssize_t hi, lo;
 
 	*nfound = 0;
 
@@ -893,6 +898,7 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 	lo = 0;
 	hi = nmemb - 1;
 	while (lo <= hi) {
+		ssize_t mi;
 		int cmp;
 
 		mi = lo + (hi - lo)/2;
@@ -992,13 +998,14 @@ parseattachments(struct message *msg, struct message_list *attachments,
 static const char *
 findboundary(const char *boundary, const char *s, int *term)
 {
-	const char *beg;
 	size_t len;
 	int skip = 0;
 
 	len = strlen(boundary);
 
 	for (;;) {
+		const char *beg;
+
 		*term = 0;
 
 		if (skip)

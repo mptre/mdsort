@@ -322,7 +322,7 @@ pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end)
 	int isabs = 0;
 	int isrange = 1;
 	int ncomps = 0;
-	int docopy, i;
+	int i;
 
 	if (*path == '/')
 		isabs = 1;
@@ -344,6 +344,8 @@ pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end)
 	p = path;
 	bp = buf;
 	for (i = 0; i < ncomps; i++) {
+		int docopy;
+
 		if (*p == '\0')
 			break;
 

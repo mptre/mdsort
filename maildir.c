@@ -138,13 +138,13 @@ maildir_close(struct maildir *md)
 int
 maildir_walk(struct maildir *md, struct maildir_entry *me)
 {
-	const char *path;
-	int r;
-
 	if ((md->md_flags & MAILDIR_WALK) == 0)
 		return 0;
 
 	for (;;) {
+		const char *path;
+		int r;
+
 		if ((r = maildir_read(md, me)))
 			return r;
 
@@ -358,11 +358,12 @@ maildir_genname(const struct maildir *md, const char *flags, char *buf,
 {
 	long long ts;
 	unsigned int count;
-	int fd, n;
 
 	ts = env->ev_now;
 	count = arc4random() % 128;
 	for (;;) {
+		int fd, n;
+
 		count++;
 		n = snprintf(buf, bufsiz, "%lld.%d_%u.%s%s",
 		    ts, env->ev_pid, count, env->ev_hostname,

@@ -74,10 +74,11 @@ time_parse(const char *str, time_t *res, const struct environment *env)
 static const char *
 timeparse(const char *str, struct tm *tm)
 {
-	const char *end;
 	int i;
 
 	for (i = 0; formats[i] != NULL; i++) {
+		const char *end;
+
 		end = strptime(str, formats[i], tm);
 		if (end != NULL)
 			return end;
