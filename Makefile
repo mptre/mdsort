@@ -40,6 +40,21 @@ KNFMT+=	message.c
 KNFMT+=	time.c
 KNFMT+=	util.c
 
+CLANGTIDY+=	cdefs.h
+CLANGTIDY+=	compat-arc4random.c
+CLANGTIDY+=	compat-pledge.c
+CLANGTIDY+=	compat-utimensat.c
+CLANGTIDY+=	expr.c
+CLANGTIDY+=	extern.h
+CLANGTIDY+=	fault.c
+CLANGTIDY+=	fault.h
+CLANGTIDY+=	maildir.c
+CLANGTIDY+=	match.c
+CLANGTIDY+=	mdsort.c
+CLANGTIDY+=	message.c
+CLANGTIDY+=	time.c
+CLANGTIDY+=	util.c
+
 CPPCHECK+=	compat-arc4random.c
 CPPCHECK+=	compat-pledge.c
 CPPCHECK+=	compat-utimensat.c
@@ -159,6 +174,10 @@ lint:
 	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
 	${MAKE} -C ${.CURDIR}/tests lint
 .PHONY: lint
+
+lint-clang-tidy:
+	cd ${.CURDIR} && clang-tidy --quiet ${CLANGTIDY}
+.PHONY: lint-clang-tidy
 
 lint-cppcheck:
 	cd ${.CURDIR} && cppcheck --quiet --enable=all --error-exitcode=1 \
