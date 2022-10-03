@@ -105,3 +105,14 @@ jobs:
           env CPPFLAGS="${CPPFLAGS} -DNDEBUG" ./configure || :
           cat config.log
           ${MAKE} test "TESTFLAGS=${TESTFLAGS} -Tfault"
+
+  cppcheck:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: dependenices
+        run: sudo apt-get update && sudo apt-get install cppcheck
+      - name: cppcheck
+        run: |
+          ./configure
+          make lint-cppcheck
