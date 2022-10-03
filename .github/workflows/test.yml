@@ -106,6 +106,15 @@ jobs:
           cat config.log
           ${MAKE} test "TESTFLAGS=${TESTFLAGS} -Tfault"
 
+  clang-tidy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: clang-tidy
+        run: |
+          ./configure
+          make lint-clang-tidy
+
   cppcheck:
     runs-on: ubuntu-22.04
     steps:
