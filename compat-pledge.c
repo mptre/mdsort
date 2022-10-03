@@ -7,6 +7,7 @@ extern int unused;
 #include <stdint.h>
 #include <unistd.h>
 
+#include "cdefs.h"
 #include "extern.h"
 
 int
