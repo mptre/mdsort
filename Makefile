@@ -143,8 +143,8 @@ install: all
 .PHONY: install
 
 lint:
-	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
 	cd ${.CURDIR} && knfmt -ds ${KNFMT}
+	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
 	${MAKE} -C ${.CURDIR}/tests lint
 .PHONY: lint
 
