@@ -17,6 +17,7 @@ static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
 static int yygetc(void);
 static int yylex(void);
+static int yylex1(int);
 static int yypeek(int);
 static void yyungetc(int);
 static void yyrecover(void);
@@ -560,6 +561,15 @@ yyerror(const char *fmt, ...)
 static int
 yylex(void)
 {
+	static int last_token;
+
+	last_token = yylex1(last_token);
+	return last_token;
+}
+
+static int
+yylex1(int last_token)
+{
 	static struct {
 		const char *str;
 		int type;
@@ -608,7 +618,6 @@ yylex(void)
 		{ NULL,		0 },
 	};
 	static char lexeme[BUFSIZ];
-	static int token_save;
 	char *buf;
 	int c, i, lno;
 
@@ -623,7 +632,7 @@ again:
 	 * Macros must always be followed by `=', otherwise treat it as an
 	 * unknown keyword.
 	 */
-	if (token_save == MACRO && c != '=') {
+	if (last_token == MACRO && c != '=') {
 		yypushl(lno);
 		yyerror("unknown keyword: %s", lexeme);
 		yypopl();
@@ -632,9 +641,9 @@ again:
 	yylval.lineno = lineno;
 	yylval.number = c;
 	if (c == EOF)
-		return (token_save = 0);
+		return 0;
 	if (c == '!')
-		return (token_save = NEG);
+		return NEG;
 
 	if (c == '#') {
 		for (;;) {
@@ -642,7 +651,7 @@ again:
 			if (c == '\n')
 				goto again;
 			if (c == EOF)
-				return (token_save = 0);
+				return 0;
 		}
 	}
 
@@ -655,12 +664,12 @@ again:
 			c = yygetc();
 			if (c == EOF) {
 				yyerror("unterminated string");
-				return (token_save = 0);
+				return 0;
 			}
 
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("string too long");
-				return (token_save = 0);
+				return 0;
 			}
 			*buf++ = c;
 		}
@@ -671,7 +680,7 @@ again:
 		yylval.string = strdup(lexeme);
 		if (yylval.string == NULL)
 			err(1, NULL);
-		return (token_save = STRING);
+		return STRING;
 	}
 
 	if (pflag) {
@@ -683,12 +692,12 @@ again:
 			c = yygetc();
 			if (c == EOF) {
 				yyerror("unterminated pattern");
-				return (token_save = 0);
+				return 0;
 			}
 
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("pattern too long");
-				return (token_save = 0);
+				return 0;
 			}
 			*buf++ = c;
 		}
@@ -714,7 +723,7 @@ again:
 				break;
 			default:
 				yyungetc(c);
-				return (token_save = PATTERN);
+				return PATTERN;
 			}
 		}
 	}
@@ -742,14 +751,14 @@ again:
 			yylval.number += c - '0';
 		}
 		yyungetc(c);
-		return (token_save = INT);
+		return INT;
 	}
 
 	if (islower((unsigned char)c)) {
 		for (; islower((unsigned char)c); c = yygetc()) {
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("keyword too long");
-				return (token_save = 0);
+				return 0;
 			}
 			*buf++ = c;
 		}
@@ -758,7 +767,7 @@ again:
 
 		for (i = 0; keywords[i].str != NULL; i++)
 			if (strcmp(lexeme, keywords[i].str) == 0)
-				return (token_save = keywords[i].type);
+				return keywords[i].type;
 
 		if (sflag) {
 			size_t len;
@@ -775,10 +784,10 @@ again:
 			}
 			if (ambiguous) {
 				yyerror("ambiguous keyword: %s", lexeme);
-				return (token_save = SCALAR);
+				return SCALAR;
 			} else if (match >= 0) {
 				yylval.number = scalars[match].val;
-				return (token_save = SCALAR);
+				return SCALAR;
 			}
 		}
 
@@ -790,10 +799,10 @@ again:
 		 * is emitted upon the next invocation of yylex() if the macro
 		 * was unexpected.
 		 */
-		return (token_save = MACRO);
+		return MACRO;
 	}
 
-	return (token_save = c);
+	return c;
 }
 
 static void
