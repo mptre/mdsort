@@ -1,3 +1,11 @@
+# 11.5.0 - 2022-10-19
+
+## News
+
+- Add add-header action used to add a header to a matched message.
+  (c26a614)
+  (Anton Lindqvist)
+
 # 11.4.0 - 2022-08-30
 
 ## News
