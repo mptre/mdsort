@@ -6,6 +6,12 @@
   (c26a614)
   (Anton Lindqvist)
 
+## Bug fixes
+
+- Headers encoded using quoted printable can be followed by plain text.
+  (0ef8a31, 4495422)
+  (Anton Lindqvist)
+
 # 11.4.0 - 2022-08-30
 
 ## News
