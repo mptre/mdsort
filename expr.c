@@ -155,6 +155,7 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		break;
 	case EXPR_TYPE_ATTACHMENT_BLOCK:
 		ex->ex_eval = &expr_eval_attachment_block;
+		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
 	}
 
