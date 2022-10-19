@@ -171,8 +171,8 @@ expr_free(struct expr *ex)
 	expr_free(ex->ex_lhs);
 	expr_free(ex->ex_rhs);
 	strings_free(ex->ex_strings);
-	regfree(&ex->ex_re.r_pattern);
-	free(ex->ex_re.r_matches);
+	regfree(&ex->ex_re.pattern);
+	free(ex->ex_re.matches);
 	free(ex);
 }
 
@@ -182,9 +182,9 @@ expr_set_date(struct expr *ex, enum expr_date_field field,
 {
 	assert(ex->ex_type == EXPR_TYPE_DATE);
 
-	ex->ex_date.d_field = field;
-	ex->ex_date.d_cmp = cmp;
-	ex->ex_date.d_age = age;
+	ex->ex_date.field = field;
+	ex->ex_date.cmp = cmp;
+	ex->ex_date.age = age;
 
 	/* Cheat a bit by adding a match all pattern used during dry run. */
 	(void)expr_set_pattern(ex, ".*", 0, NULL);
@@ -200,7 +200,7 @@ expr_set_stat(struct expr *ex, char *path, enum expr_stat stat)
 	strings = strings_alloc();
 	strings_append(strings, path);
 	expr_set_strings(ex, strings);
-	ex->ex_stat.s_stat = stat;
+	ex->ex_stat.stat = stat;
 }
 
 int
@@ -210,7 +210,7 @@ expr_set_exec(struct expr *ex, struct string_list *cmd, unsigned int flags)
 		return 1;
 
 	expr_set_strings(ex, cmd);
-	ex->ex_exec.e_flags = flags;
+	ex->ex_exec.flags = flags;
 	return 0;
 }
 
@@ -255,33 +255,33 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 	int rflags = REG_EXTENDED | REG_NEWLINE;
 	int error, i;
 
-	assert(ex->ex_re.r_nmatches == 0);
+	assert(ex->ex_re.nmatches == 0);
 
 	for (i = 0; fflags[i].eflag != 0; i++) {
 		if ((flags & fflags[i].eflag) == 0)
 			continue;
 
 		if (fflags[i].pflag)
-			ex->ex_re.r_flags |= fflags[i].eflag;
+			ex->ex_re.flags |= fflags[i].eflag;
 		if (fflags[i].rflag)
 			rflags |= fflags[i].rflag;
 		flags &= ~fflags[i].eflag;
 	}
 	assert(flags == 0);
 
-	if ((error = regcomp(&ex->ex_re.r_pattern, pattern, rflags)) != 0) {
+	if ((error = regcomp(&ex->ex_re.pattern, pattern, rflags)) != 0) {
 		if (errstr != NULL) {
 			static char buf[1024];
 
-			regerror(error, &ex->ex_re.r_pattern, buf, sizeof(buf));
+			regerror(error, &ex->ex_re.pattern, buf, sizeof(buf));
 			*errstr = buf;
 		}
 		return 1;
 	}
-	ex->ex_re.r_nmatches = ex->ex_re.r_pattern.re_nsub + 1;
-	ex->ex_re.r_matches = reallocarray(NULL, ex->ex_re.r_nmatches,
-	    sizeof(*ex->ex_re.r_matches));
-	if (ex->ex_re.r_matches == NULL)
+	ex->ex_re.nmatches = ex->ex_re.pattern.re_nsub + 1;
+	ex->ex_re.matches = reallocarray(NULL, ex->ex_re.nmatches,
+	    sizeof(*ex->ex_re.matches));
+	if (ex->ex_re.matches == NULL)
 		err(1, NULL);
 
 	return 0;
@@ -547,7 +547,7 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 	const char *date;
 	time_t delta, tim;
 
-	if (ex->ex_date.d_field == EXPR_DATE_FIELD_HEADER) {
+	if (ex->ex_date.field == EXPR_DATE_FIELD_HEADER) {
 		date = message_get_header1(ea->ea_msg, "Date");
 		if (date == NULL)
 			return EXPR_NOMATCH;
@@ -561,7 +561,7 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 		 */
 		struct timespec *ts = NULL;
 
-		switch (ex->ex_date.d_field) {
+		switch (ex->ex_date.field) {
 		case EXPR_DATE_FIELD_HEADER:
 			return EXPR_ERROR; /* UNREACHABLE */
 		case EXPR_DATE_FIELD_ACCESS:
@@ -585,13 +585,13 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 	}
 
 	delta = ea->ea_env->ev_now - tim;
-	switch (ex->ex_date.d_cmp) {
+	switch (ex->ex_date.cmp) {
 	case EXPR_DATE_CMP_LT:
-		if (!(delta < ex->ex_date.d_age))
+		if (!(delta < ex->ex_date.age))
 			return EXPR_NOMATCH;
 		break;
 	case EXPR_DATE_CMP_GT:
-		if (!(delta > ex->ex_date.d_age))
+		if (!(delta > ex->ex_date.age))
 			return EXPR_NOMATCH;
 		break;
 	}
@@ -822,7 +822,7 @@ expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 	} else if (match_interpolate(mh, NULL)) {
 		ev = EXPR_ERROR;
 	} else if (stat(mh->mh_path, &st) == 0) {
-		switch (ex->ex_stat.s_stat) {
+		switch (ex->ex_stat.stat) {
 		case EXPR_STAT_DIR:
 			if (S_ISDIR(st.st_mode))
 				ev = EXPR_MATCH;
@@ -877,15 +877,15 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 	struct match *mh;
 	int error;
 
-	error = regexec(&ex->ex_re.r_pattern, val, ex->ex_re.r_nmatches,
-	    ex->ex_re.r_matches, 0);
+	error = regexec(&ex->ex_re.pattern, val, ex->ex_re.nmatches,
+	    ex->ex_re.matches, 0);
 	if (error == REG_NOMATCH)
 		return EXPR_NOMATCH;
 	if (error != 0)
 		return EXPR_ERROR;
 
 	mh = match_alloc(ex, msg);
-	match_copy(mh, val, ex->ex_re.r_matches, ex->ex_re.r_nmatches);
+	match_copy(mh, val, ex->ex_re.matches, ex->ex_re.nmatches);
 	if (matches_append(ml, mh))
 		return EXPR_ERROR;
 

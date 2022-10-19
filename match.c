@@ -160,7 +160,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			break;
 
 		case EXPR_TYPE_EXEC: {
-			unsigned int flags = mh->mh_expr->ex_exec.e_flags;
+			unsigned int flags = mh->mh_expr->ex_exec.flags;
 			int fd = -1;
 
 			if (flags & EXPR_EXEC_STDIN) {
@@ -323,11 +323,11 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 		cpy = strndup(str + off[i].rm_so, len);
 		if (cpy == NULL)
 			err(1, NULL);
-		if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_LCASE) {
+		if (mh->mh_expr->ex_re.flags & EXPR_PATTERN_LCASE) {
 			for (j = 0; cpy[j] != '\0'; j++)
 				cpy[j] = tolower((unsigned char)cpy[j]);
 		}
-		if (mh->mh_expr->ex_re.r_flags & EXPR_PATTERN_UCASE) {
+		if (mh->mh_expr->ex_re.flags & EXPR_PATTERN_UCASE) {
 			for (j = 0; cpy[j] != '\0'; j++)
 				cpy[j] = toupper((unsigned char)cpy[j]);
 		}

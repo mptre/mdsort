@@ -210,10 +210,10 @@ struct expr {
 	struct string_list	*ex_strings;
 
 	struct {
-		regex_t		 r_pattern;
-		regmatch_t	*r_matches;
-		size_t		 r_nmatches;
-		unsigned int	 r_flags;
+		regex_t		 pattern;
+		regmatch_t	*matches;
+		size_t		 nmatches;
+		unsigned int	 flags;
 #define EXPR_PATTERN_ICASE	0x00000001u
 #define EXPR_PATTERN_LCASE	0x00000002u
 #define EXPR_PATTERN_UCASE	0x00000004u
@@ -221,19 +221,19 @@ struct expr {
 
 	union {
 		struct {
-			enum expr_date_cmp	d_cmp;
-			enum expr_date_field	d_field;
-			time_t			d_age;
+			enum expr_date_cmp	cmp;
+			enum expr_date_field	field;
+			time_t			age;
 		} ex_date;
 
 		struct {
-			unsigned int	e_flags;
+			unsigned int	flags;
 #define EXPR_EXEC_STDIN	0x00000001u
 #define EXPR_EXEC_BODY	0x00000002u
 		} ex_exec;
 
 		struct {
-			enum expr_stat	s_stat;
+			enum expr_stat	stat;
 		} ex_stat;
 	};
 
