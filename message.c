@@ -726,13 +726,16 @@ decodeheader(const char *str)
 
 	qs = dec = unfoldheader(str);
 	for (;;) {
-		const char *qe;
+		const char *p, *qe;
 		size_t len;
 		char enc;
 
-		if (strncmp(qs, "=?", 2) != 0)
+		p = qs;
+		while (isspace((unsigned char)p[0]))
+			p++;
+		if (strncmp(p, "=?", 2) != 0)
 			break;
-		qs += 2;
+		qs = &p[2];	/* consume "=?" */
 		qs = strchr(qs, '?');
 		if (qs == NULL)
 			goto err;
@@ -774,10 +777,7 @@ decodeheader(const char *str)
 			goto err;
 		}
 
-		qe += 2;
-		while (isspace((unsigned char)qe[0]))
-			qe++;
-		qs = qe;
+		qs = &qe[2];	/* consume "?=" */
 	}
 	if (strings != NULL) {
 		char *buf = NULL;

@@ -39,7 +39,7 @@ if testcase "followed by ascii"; then
 	mkmsg "src/new" -- "Subject" "$(subject) ascii"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "Subject" /ascii/ move "dst"
+		match header "Subject" / ascii/ move "dst"
 	}
 	EOF
 	mdsort
@@ -89,19 +89,6 @@ if testcase "invalid missing trailing delimiter"; then
 	cat <<-EOF >"$CONF"
 	maildir "src" {
 		match header "Subject" /ny fråga/ move "dst"
-	}
-	EOF
-	mdsort
-	refute_empty "src/new"
-fi
-
-if testcase "invalid multiple lines"; then
-	mkmd "src"
-	mkmsg "src/new" -- \
-		"Subject" "=?UTF-8?Q?ny?=\n fraga"
-	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match header "Subject" /ny fraga/ move "dst"
 	}
 	EOF
 	mdsort
