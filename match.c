@@ -151,6 +151,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			break;
 
 		case EXPR_TYPE_LABEL:
+		case EXPR_TYPE_ADD_HEADER:
 			if (maildir_write(src, msg, env))
 				error = 1;
 			break;
@@ -403,6 +404,16 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 				return 1;
 			mh->mh_exec[nargs++] = arg;
 		}
+		break;
+	}
+
+	case EXPR_TYPE_ADD_HEADER: {
+		const struct expr *ex = mh->mh_expr;
+		char *val = NULL;
+
+		if (interpolate(mh, macros, ex->ex_add_header.val, &val))
+			return 1;
+		message_set_header(msg, ex->ex_add_header.key, val);
 		break;
 	}
 

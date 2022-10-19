@@ -165,6 +165,7 @@ enum expr_type {
 	EXPR_TYPE_REJECT,
 	EXPR_TYPE_EXEC,
 	EXPR_TYPE_ATTACHMENT_BLOCK,
+	EXPR_TYPE_ADD_HEADER,
 };
 
 enum expr_date_cmp {
@@ -235,6 +236,11 @@ struct expr {
 		struct {
 			enum expr_stat	stat;
 		} ex_stat;
+
+		struct {
+			char *key;
+			char *val;
+		} ex_add_header;
 	};
 
 	struct expr		*ex_lhs;
@@ -249,6 +255,7 @@ struct expr {
 struct expr	*expr_alloc(enum expr_type, int, struct expr *, struct expr *);
 void		 expr_free(struct expr *);
 
+void	expr_set_add_header(struct expr *, char *, char *);
 void	expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
     time_t);
 int	expr_set_exec(struct expr *, struct string_list *, unsigned int);

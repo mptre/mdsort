@@ -1,3 +1,4 @@
+TESTS+=	action-add-header.sh
 TESTS+=	action-attachment.sh
 TESTS+=	action-break.sh
 TESTS+=	action-discard.sh

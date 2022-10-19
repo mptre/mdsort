@@ -14,6 +14,7 @@
 #include "cdefs.h"
 #include "extern.h"
 
+static int	expr_eval_add_header(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_all(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_and(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_attachment(struct expr *, struct expr_eval_arg *);
@@ -157,6 +158,11 @@ expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
 		ex->ex_eval = &expr_eval_attachment_block;
 		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
+	case EXPR_TYPE_ADD_HEADER:
+		ex->ex_eval = &expr_eval_add_header;
+		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
+		ex->ex_label = "<add-header>";
+		break;
 	}
 
 	return ex;
@@ -173,7 +179,18 @@ expr_free(struct expr *ex)
 	strings_free(ex->ex_strings);
 	regfree(&ex->ex_re.pattern);
 	free(ex->ex_re.matches);
+	if (ex->ex_type == EXPR_TYPE_ADD_HEADER) {
+		free(ex->ex_add_header.key);
+		free(ex->ex_add_header.val);
+	}
 	free(ex);
+}
+
+void
+expr_set_add_header(struct expr *ex, char *key, char *val)
+{
+	ex->ex_add_header.key = key;
+	ex->ex_add_header.val = val;
 }
 
 void
@@ -386,6 +403,17 @@ expr_inspect(const struct expr *ex, const struct match *mh,
 		fprintf(stdout, "%.*s\n%*s^%*s$\n",
 		    (int)(lend - lbeg), lbeg, indent, "", len, "");
 	}
+}
+
+static int
+expr_eval_add_header(struct expr *ex, struct expr_eval_arg *ea)
+{
+	struct match *mh;
+
+	mh = match_alloc(ex, ea->ea_msg);
+	if (matches_append(ea->ea_ml, mh))
+		return EXPR_ERROR;
+	return EXPR_MATCH;
 }
 
 static int

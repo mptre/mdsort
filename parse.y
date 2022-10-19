@@ -58,6 +58,7 @@ typedef struct {
 %}
 
 %token ACCESS
+%token ADDHEADER
 %token ALL
 %token ATTACHMENT
 %token BODY
@@ -361,6 +362,11 @@ expraction	: BREAK {
 			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT_BLOCK, lineno, $2,
 			    NULL);
 		}
+		| ADDHEADER STRING STRING {
+			$$ = expr_alloc(EXPR_TYPE_ADD_HEADER, lineno, NULL,
+			    NULL);
+			expr_set_add_header($$, $2, $3);
+		}
 		;
 
 
@@ -575,6 +581,7 @@ yylex1(int last_token)
 		int type;
 	} keywords[] = {
 		{ "access",		ACCESS },
+		{ "add-header",		ADDHEADER },
 		{ "all",		ALL },
 		{ "and",		AND },
 		{ "attachment",		ATTACHMENT },
@@ -755,7 +762,7 @@ again:
 	}
 
 	if (islower((unsigned char)c)) {
-		for (; islower((unsigned char)c); c = yygetc()) {
+		for (; islower((unsigned char)c) || c == '-'; c = yygetc()) {
 			if (buf == lexeme + sizeof(lexeme) - 1) {
 				yyerror("keyword too long");
 				return 0;

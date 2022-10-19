@@ -285,6 +285,20 @@ The only available action in
 .Ar rule
 is
 .Ic exec .
+.It Xo
+.Ic add-header
+.Dq Ar name
+.Dq Ar value
+.Xc
+Add header with
+.Ar name
+and
+.Ar value ,
+unconditionally replacing any existing header with the same
+.Ar name .
+The
+.Ar value
+is interpolated.
 .It Ic break
 Abort evaluation of the current block of rules.
 Especially useful when using nested
