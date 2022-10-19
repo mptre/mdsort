@@ -39,11 +39,4 @@
     <id>unusedFunction</id>
     <symbolName>expr_set_stat</symbolName>
   </suppress>
-
-  <!-- util.c -->
-  <suppress>
-    <fileName>util.c</fileName>
-    <id>unusedFunction</id>
-    <symbolName>strings_appendc</symbolName>
-  </suppress>
 </suppressions>
