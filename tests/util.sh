@@ -45,10 +45,15 @@ _assert_find() {
 
 # assert_label label file
 assert_label() {
+	assert_header "X-Label" "$1" "$2"
+}
+
+# assert_header key val file
+assert_header() {
 	local _got
 
-	_got="$(sed -n -e '/^X-Label/s/^[^:]*: //p' "${TSHDIR}/$2")"
-	assert_eq "$1" "$_got"
+	_got="$(sed -n -e "/^${1}/s/^[^:]*: //p" "${TSHDIR}/${3}")"
+	assert_eq "${2}" "$_got"
 }
 
 # b64 string ...
