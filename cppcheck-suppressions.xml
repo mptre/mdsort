@@ -22,6 +22,11 @@
   <suppress>
     <fileName>expr.c</fileName>
     <id>unusedFunction</id>
+    <symbolName>expr_set_add_header</symbolName>
+  </suppress>
+  <suppress>
+    <fileName>expr.c</fileName>
+    <id>unusedFunction</id>
     <symbolName>expr_set_exec</symbolName>
   </suppress>
   <suppress>
