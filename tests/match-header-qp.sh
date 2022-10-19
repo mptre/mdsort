@@ -34,6 +34,19 @@ if testcase "multiple lines"; then
 	refute_empty "dst/new"
 fi
 
+if testcase "followed by ascii"; then
+	mkmd "src" "dst"
+	mkmsg "src/new" -- "Subject" "$(subject) ascii"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match header "Subject" /ascii/ move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
 if testcase "invalid encoding"; then
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?A?ny_fr=C3=A5ga_r=C3=B6rande?="

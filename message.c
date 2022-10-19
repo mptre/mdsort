@@ -779,15 +779,16 @@ decodeheader(const char *str)
 			qe++;
 		qs = qe;
 	}
-
 	if (strings != NULL) {
 		char *buf = NULL;
 		size_t buflen = 0;
 		size_t bufsiz = 0;
 
-		free(dec);
-		dec = strings_concat(strings, buf, &bufsiz, &buflen, 0);
+		strings_appendc(strings, qs);
+		buf = strings_concat(strings, buf, &bufsiz, &buflen, 0);
 		strings_free(strings);
+		free(dec);
+		dec = buf;
 	}
 
 	return dec;
