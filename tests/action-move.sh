@@ -2,9 +2,7 @@ if testcase "many move actions"; then
 	mkmd "src" "dst1" "dst2" "dst3"
 	mkmsg "src/new"
 	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match all move "dst1" move "dst2" move "dst3"
-	}
+	maildir "src" { match all move "dst1" move "dst2" move "dst3" }
 	EOF
 	mdsort
 	assert_empty "src/new"
@@ -17,12 +15,10 @@ if testcase "destination missing"; then
 	mkmd "src"
 	mkmsg "src/new"
 	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match all move "dst"
-	}
+	maildir "src" { match all move "dst" }
 	EOF
 	mdsort -e - <<-EOF
-mdsort: opendir: dst/new: No such file or directory
+	mdsort: opendir: dst/new: No such file or directory
 	EOF
 fi
 
@@ -30,10 +26,8 @@ if testcase "interpolation too long"; then
 	_to="user@$(genstr "$PATH_MAX").com"
 	mkmd "src"
 	mkmsg "src/new" -- "To" "$_to"
-	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match header "To" /(.+)/ move "\\1"
-	}
+	cat <<-'EOF' >"$CONF"
+	maildir "src" { match header "To" /(.+)/ move "\1" }
 	EOF
 	mdsort -e - <<-EOF
 	mdsort: match_interpolate: $(errno ENAMETOOLONG)
@@ -44,10 +38,8 @@ fi
 if testcase "interpolation out of bounds"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match all move "/\\0"
-	}
+	cat <<-'EOF' >"$CONF"
+	maildir "src" { match all move "/\0" }
 	EOF
 	mdsort -e >/dev/null
 fi
@@ -62,9 +54,7 @@ if testcase -t fault "exdev"; then
 	EOF
 	cat "$(findmsg -p "src/new")" >"$TMP1"
 	cat <<-EOF >"$CONF"
-	maildir "src" {
-		match all move "dst"
-	}
+	maildir "src" { match all move "dst" }
 	EOF
 	mdsort -f "name=maildir_rename,errno=EXDEV" - <<-EOF
 	mdsort: fault: maildir_rename
@@ -80,9 +70,7 @@ if testcase -t fault "exdev write failure"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
 	cat >"$CONF" <<-EOF
-	maildir "src" {
-		match all move "dst"
-	}
+	maildir "src" { match all move "dst" }
 	EOF
 	mdsort -e -f "name=maildir_rename,errno=EXDEV:name=message_write" - <<-EOF
 	mdsort: fault: maildir_rename
@@ -98,9 +86,7 @@ if testcase -t fault "exdev unlink failure"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
 	cat >"$CONF" <<-EOF
-	maildir "src" {
-		match all move "dst"
-	}
+	maildir "src" { match all move "dst" }
 	EOF
 	mdsort -e -f "name=maildir_rename,errno=EXDEV:name=maildir_unlink" - <<-EOF
 	mdsort: fault: maildir_rename
@@ -114,9 +100,7 @@ if testcase -t fault "message path too long"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
 	cat >"$CONF" <<-EOF
-	maildir "src" {
-		match all move "dst"
-	}
+	maildir "src" { match all move "dst" }
 	EOF
 	mdsort -e -f "name=message_set_file,errno=ENAMETOOLONG" - <<-EOF
 	mdsort: fault: message_set_file
@@ -129,9 +113,7 @@ if testcase -t fault "rename failure"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
 	cat >"$CONF" <<-EOF
-	maildir "src" {
-		match all move "dst"
-	}
+	maildir "src" { match all move "dst" }
 	EOF
 	mdsort -e -f "name=maildir_rename,errno=ENOSPC" - <<-EOF
 	mdsort: fault: maildir_rename
