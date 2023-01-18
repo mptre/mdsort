@@ -143,6 +143,10 @@ clean:
 	rm -f ${DEPS} ${OBJS} ${PROG} parse.c y.tab.h
 .PHONY: clean
 
+cleandir: clean
+	cd ${.CURDIR} && rm -f config.h config.log config.mk
+.PHONY: cleandir
+
 dist:
 	set -e; \
 	d=mdsort-${VERSION}; \
