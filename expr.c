@@ -41,7 +41,7 @@ static int	expr_eval_pass(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_reject(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_stat(struct expr *, struct expr_eval_arg *);
 
-static int	expr_inspect_prefix(const struct expr *,
+static size_t	expr_inspect_prefix(const struct expr *,
     const struct environment *);
 static int	expr_match(struct expr *, struct match_list *,
     struct message *);
@@ -57,7 +57,8 @@ static size_t	strnwidth(const char *, size_t);
  * expr_free().
  */
 struct expr *
-expr_alloc(enum expr_type type, int lno, struct expr *lhs, struct expr *rhs)
+expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
+    struct expr *rhs)
 {
 	struct expr *ex;
 
@@ -261,7 +262,7 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 	struct {
 		unsigned int	eflag;	/* expr pattern flag */
 		unsigned int	pflag;	/* propagate expr pattern flag */
-		unsigned int	rflag;	/* regcomp() flag(s) */
+		int		rflag;	/* regcomp() flag(s) */
 	} fflags[] = {
 		{ EXPR_PATTERN_ICASE,	0,	REG_ICASE },
 		{ EXPR_PATTERN_LCASE,	1,	0 },
@@ -356,9 +357,9 @@ expr_inspect(const struct expr *ex, const struct match *mh,
     const struct environment *env)
 {
 	const char *lbeg, *lend, *p;
+	size_t indent, len, pindent;
 	unsigned int i;
 	int printkey = 1;
-	int indent, len, pindent;
 
 	if ((ex->ex_flags & EXPR_FLAG_INSPECT) == 0)
 		return;
@@ -366,7 +367,7 @@ expr_inspect(const struct expr *ex, const struct match *mh,
 	pindent = strlen(mh->mh_key) + 2;
 
 	for (i = 0; i < mh->mh_nmatches; i++) {
-		int beg, end;
+		size_t beg, end, plen;
 
 		beg = mh->mh_matches[i].m_beg;
 		end = mh->mh_matches[i].m_end;
@@ -397,11 +398,12 @@ expr_inspect(const struct expr *ex, const struct match *mh,
 			printkey = 0;
 			fprintf(stdout, "%s: ", mh->mh_key);
 		} else {
-			fprintf(stdout, "%*s", pindent, "");
+			fprintf(stdout, "%*s", (int)pindent, "");
 		}
-		indent = pindent + strnwidth(lbeg, beg - (lbeg - mh->mh_val));
+		plen = beg - (size_t)(lbeg - mh->mh_val);
+		indent = pindent + strnwidth(lbeg, plen);
 		fprintf(stdout, "%.*s\n%*s^%*s$\n",
-		    (int)(lend - lbeg), lbeg, indent, "", len, "");
+		    (int)(lend - lbeg), lbeg, (int)indent, "", (int)len, "");
 	}
 }
 
@@ -865,12 +867,12 @@ out:
 	return ev;
 }
 
-static int
+static size_t
 expr_inspect_prefix(const struct expr *ex, const struct environment *env)
 {
 	const char *path;
+	size_t nwrite = 0;
 	size_t len;
-	int nwrite = 0;
 	int n;
 
 	path = env->ev_confpath;
@@ -878,12 +880,12 @@ expr_inspect_prefix(const struct expr *ex, const struct environment *env)
 	if (strncmp(path, env->ev_home, len) == 0) {
 		n = fprintf(stdout, "~");
 		if (n > 0)
-			nwrite += n;
+			nwrite += (size_t)n;
 		path += len;
 	}
-	n = fprintf(stdout, "%s:%d: ", path, ex->ex_lno);
+	n = fprintf(stdout, "%s:%u: ", path, ex->ex_lno);
 	if (n > 0)
-		nwrite += n;
+		nwrite += (size_t)n;
 	return nwrite;
 }
 
@@ -950,11 +952,11 @@ strnwidth(const char *str, size_t len)
 		if (n == 0)
 			break;
 		if (n > 0)
-			i += n;
+			i += (size_t)n;
 
 		n = wcwidth(wc);
 		if (n > 0)
-			width += n;
+			width += (size_t)n;
 	}
 
 	return width;

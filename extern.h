@@ -192,7 +192,7 @@ struct expr_eval_arg {
 
 struct expr {
 	enum expr_type		 ex_type;
-	int			 ex_lno;
+	unsigned int		 ex_lno;
 	unsigned int		 ex_flags;
 /* Denotes an action. */
 #define EXPR_FLAG_ACTION	0x00000001u
@@ -252,7 +252,8 @@ struct expr {
 #define EXPR_NOMATCH	(1)
 #define EXPR_ERROR	(-1)
 
-struct expr	*expr_alloc(enum expr_type, int, struct expr *, struct expr *);
+struct expr	*expr_alloc(enum expr_type, unsigned int, struct expr *,
+    struct expr *);
 void		 expr_free(struct expr *);
 
 void	expr_set_add_header(struct expr *, char *, char *);
