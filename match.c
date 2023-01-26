@@ -318,9 +318,11 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 		err(1, NULL);
 	mh->mh_nmatches = nmemb;
 	for (i = 0; i < nmemb; i++) {
-		size_t j, len;
+		size_t eo, j, len, so;
 
-		len = off[i].rm_eo - off[i].rm_so;
+		so = (size_t)off[i].rm_so;
+		eo = (size_t)off[i].rm_eo;
+		len = eo - so;
 		cpy = strndup(str + off[i].rm_so, len);
 		if (cpy == NULL)
 			err(1, NULL);
@@ -333,8 +335,8 @@ match_copy(struct match *mh, const char *str, const regmatch_t *off,
 				cpy[j] = toupper((unsigned char)cpy[j]);
 		}
 		mh->mh_matches[i].m_str = cpy;
-		mh->mh_matches[i].m_beg = off[i].rm_so;
-		mh->mh_matches[i].m_end = off[i].rm_eo;
+		mh->mh_matches[i].m_beg = so;
+		mh->mh_matches[i].m_end = eo;
 	}
 }
 
@@ -574,7 +576,7 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 				goto brerr;
 
 			append(buf, &bufsiz, &buflen, sub);
-			i += n;
+			i += (size_t)n;
 			continue;
 		}
 
@@ -590,7 +592,7 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 				goto mcerr;
 
 			append(buf, &bufsiz, &buflen, mc->mc_value);
-			i += n;
+			i += (size_t)n;
 			continue;
 		}
 
