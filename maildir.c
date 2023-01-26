@@ -452,7 +452,7 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 		if (nr == 0)
 			break;
 
-		nw = write(fd, buf, nr);
+		nw = write(fd, buf, (size_t)nr);
 		if (nw == -1) {
 			warn("write: %s/%s", path, name);
 			error = 1;
