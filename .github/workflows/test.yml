@@ -85,7 +85,7 @@ jobs:
         env:
           ASAN_OPTIONS: exitcode=66
           CC: ${{matrix.cc || matrix.compiler}}
-          CFLAGS: -Werror -Wpedantic -Wshadow ${{matrix.cflags}}
+          CFLAGS: -Werror -Wmissing-prototypes -Wpedantic -Wshadow -Wwrite-strings ${{matrix.cflags}}
           CPPFLAGS: ${{matrix.cppflags}}
           DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
           EXEC: ${{matrix.exec}}
