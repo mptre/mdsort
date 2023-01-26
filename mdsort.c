@@ -240,11 +240,11 @@ static const char *
 defaultconf(const char *home)
 {
 	static char path[PATH_MAX];
-	int n, siz;
+	size_t siz = sizeof(path);
+	int n;
 
-	siz = sizeof(path);
 	n = snprintf(path, siz, "%s/.mdsort.conf", home);
-	if (n < 0 || n >= siz)
+	if (n < 0 || (size_t)n >= siz)
 		errc(1, ENAMETOOLONG, "%s", __func__);
 	return path;
 }
