@@ -22,7 +22,7 @@ static int yypeek(int);
 static void yyungetc(int);
 static void yyrecover(void);
 
-static void yypushl(int);
+static void yypushl(unsigned int);
 static void yypopl(void);
 
 static void macros_validate(const struct macro_list *);
@@ -36,7 +36,8 @@ static struct config_list *yyconfig;
 static const struct environment *yyenv;
 static FILE *yyfh;
 static const char *yypath;
-static int lineno, lineno_save, sflag, parse_errors, pflag;
+static unsigned int lineno, lineno_save;
+static int sflag, parse_errors, pflag;
 
 typedef struct {
 	union {
@@ -52,7 +53,7 @@ typedef struct {
 		struct string_list *strings;
 		time_t time;
 	};
-	int lineno;
+	unsigned int lineno;
 } YYSTYPE;
 
 %}
@@ -498,7 +499,7 @@ config_parse(struct config_list *config, const char *path, const struct environm
 	yyenv = env;
 
 	lineno = 1;
-	lineno_save = -1;
+	lineno_save = 0;
 	yyparse();
 	fclose(yyfh);
 	macros_validate(&yyconfig->cl_macros);
@@ -541,10 +542,10 @@ yyerror(const char *fmt, ...)
 	va_list ap;
 	int n;
 
-	n = snprintf(cp, bufsiz, "%s:%d: ", yypath, yylval.lineno);
+	n = snprintf(cp, bufsiz, "%s:%u: ", yypath, yylval.lineno);
 	if (n > 0 && (size_t)n < bufsiz) {
 		cp += n;
-		bufsiz -= n;
+		bufsiz -= (size_t)n;
 	}
 
 	va_start(ap, fmt);
@@ -552,7 +553,7 @@ yyerror(const char *fmt, ...)
 	va_end(ap);
 	if (n > 0 && (size_t)n < bufsiz) {
 		cp += n;
-		bufsiz -= n;
+		bufsiz -= (size_t)n;
 	}
 
 	/* Play it safe if any of the above failed. */
@@ -626,7 +627,8 @@ yylex1(int last_token)
 	};
 	static char lexeme[BUFSIZ];
 	char *buf;
-	int c, i, lno;
+	unsigned int lno;
+	int c, i;
 
 	buf = lexeme;
 	lno = lineno;
@@ -646,7 +648,7 @@ again:
 	}
 
 	yylval.lineno = lineno;
-	yylval.number = c;
+	yylval.number = (unsigned char)c;
 	if (c == EOF)
 		return 0;
 	if (c == '!')
@@ -740,6 +742,8 @@ again:
 
 		yylval.number = 0;
 		for (; isdigit((unsigned char)c); c = yygetc()) {
+			unsigned char u = (unsigned char)c;
+
 			if (overflow)
 				continue;
 
@@ -750,12 +754,12 @@ again:
 			}
 			yylval.number *= 10;
 
-			if (yylval.number > UINT_MAX - (c - '0')) {
+			if (yylval.number > UINT_MAX - (u - '0')) {
 				yyerror("integer too large");
 				overflow = 1;
 				continue;
 			}
-			yylval.number += c - '0';
+			yylval.number += u - '0';
 		}
 		yyungetc(c);
 		return INT;
@@ -901,9 +905,9 @@ yyrecover(void)
  * by a call to yypopl() in order to restore the previous line number.
  */
 static void
-yypushl(int lno)
+yypushl(unsigned int lno)
 {
-	assert(lineno_save == -1);
+	assert(lineno_save == 0);
 	lineno_save = yylval.lineno;
 	yylval.lineno = lno;
 }
@@ -915,7 +919,7 @@ static void
 yypopl(void)
 {
 	yylval.lineno = lineno_save;
-	lineno_save = -1;
+	lineno_save = 0;
 }
 
 static void
@@ -1005,7 +1009,7 @@ expandmacros(char *str, struct macro_list *macros, unsigned int curctx)
 			}
 
 			free(macro);
-			i += n;
+			i += (size_t)n;
 		} else {
 fallback:
 			appendc(&buf, &bufsiz, &buflen, str[i]);
@@ -1038,17 +1042,17 @@ static char *
 expandtilde(char *str, const char *home)
 {
 	char *buf;
-	int siz, n;
+	size_t siz = PATH_MAX;
+	int n;
 
 	if (*str != '~')
 		return str;
 
-	siz = PATH_MAX;
 	buf = malloc(siz);
 	if (buf == NULL)
 		err(1, NULL);
 	n = snprintf(buf, siz, "%s%s", home, str + 1);
-	if (n < 0 || n >= siz)
+	if (n < 0 || (size_t)n >= siz)
 		yyerror("path too long");
 	free(str);
 	return buf;
