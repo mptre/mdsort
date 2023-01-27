@@ -1,12 +1,6 @@
 #include <limits.h>	/* NAME_MAX, PATH_MAX */
 #include <stddef.h>	/* size_t */
 
-#ifdef HAVE_QUEUE
-#  include <sys/queue.h>
-#else
-#  include "compat-queue.h"
-#endif
-
 struct environment;
 
 struct message_flags {
@@ -32,12 +26,8 @@ struct message {
 		size_t		 h_size;
 	} me_headers;
 
-	struct message_list	*me_attachments;
-
-	TAILQ_ENTRY(message)	 me_entry;
+	struct message		*me_attachments;	/* VECTOR(struct message) */
 };
-
-TAILQ_HEAD(message_list, message);
 
 char	*message_flags_str(const struct message_flags *, char *, size_t);
 int	 message_flags_isset(const struct message_flags *, char);
@@ -59,5 +49,4 @@ const char	*message_get_header1(const struct message *,
 void	message_set_header(struct message *, const char *, char *);
 int	message_set_file(struct message *, const char *, const char *, int);
 
-struct message_list	*message_get_attachments(struct message *);
-void			 message_list_free(struct message_list *);
+struct message	*message_get_attachments(struct message *);

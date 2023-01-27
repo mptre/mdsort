@@ -48,6 +48,8 @@ static const char	*message_parse_headers(struct message *);
 static const char	*message_decode_body(struct message *,
     const struct message *);
 
+static void	message_free_attachments(struct message *);
+
 static int	 cmpheaderid(const void *, const void *);
 static int	 cmpheaderkey(const void *, const void *);
 static int	 findheader(char *, struct slice *, struct slice *);
@@ -217,7 +219,7 @@ message_free(struct message *msg)
 	if (msg == NULL)
 		return;
 
-	message_list_free(msg->me_attachments);
+	message_free_attachments(msg);
 
 	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
 		struct header *hdr = &msg->me_headers.h_v[i];
@@ -232,7 +234,8 @@ message_free(struct message *msg)
 	free(msg->me_buf);
 	free(msg->me_buf_dec);
 	free(msg->me_headers.h_v);
-	free(msg);
+	if ((msg->me_flags & MESSAGE_FLAG_ATTACHMENT) == 0)
+		free(msg);
 }
 
 int
@@ -369,9 +372,9 @@ message_get_fd(struct message *msg, const struct environment *env, int dobody)
 const char *
 message_get_body(struct message *msg)
 {
-	struct message_list *attachments;
+	VECTOR(struct message) attachments;
 	const struct message *found = NULL;
-	const struct message *attach;
+	size_t i;
 
 	if (msg->me_buf_dec != NULL)
 		return msg->me_buf_dec;
@@ -384,7 +387,9 @@ message_get_body(struct message *msg)
 		return NULL;
 
 	/* Scan attachments, favor plain text over HTML. */
-	TAILQ_FOREACH(attach, attachments, me_entry) {
+	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
+		const struct message *attach = &attachments[i];
+
 		if (message_is_content_type(attach, "text/plain")) {
 			found = attach;
 			break;
@@ -521,38 +526,34 @@ message_set_file(struct message *msg, const char *path, const char *name,
  * Parse all attachments in message into the given message list.
  * Returns non NULL-on success, even if no attachments where found.
  */
-struct message_list *
+struct message *
 message_get_attachments(struct message *msg)
 {
 	if (msg->me_attachments != NULL)
 		return msg->me_attachments;
 
-	msg->me_attachments = malloc(sizeof(*msg->me_attachments));
-	if (msg->me_attachments == NULL)
+	if (VECTOR_INIT(msg->me_attachments) == NULL)
 		err(1, NULL);
-	TAILQ_INIT(msg->me_attachments);
-
 	if (parseattachments(msg, msg, 0)) {
-		message_list_free(msg->me_attachments);
-		msg->me_attachments = NULL;
+		message_free_attachments(msg);
 		return NULL;
 	}
 	return msg->me_attachments;
 }
 
-void
-message_list_free(struct message_list *messages)
+static void
+message_free_attachments(struct message *msg)
 {
-	struct message *msg;
-
-	if (messages == NULL)
+	if (msg->me_attachments == NULL)
 		return;
 
-	while ((msg = TAILQ_FIRST(messages)) != NULL) {
-		TAILQ_REMOVE(messages, msg, me_entry);
-		message_free(msg);
+	while (!VECTOR_EMPTY(msg->me_attachments)) {
+		struct message *attach;
+
+		attach = VECTOR_POP(msg->me_attachments);
+		message_free(attach);
 	}
-	free(messages);
+	VECTOR_FREE(msg->me_attachments);
 }
 
 static int
@@ -972,7 +973,7 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 		if (beg == NULL || end == NULL)
 			continue;
 
-		attach = calloc(1, sizeof(*attach));
+		attach = VECTOR_CALLOC(parent->me_attachments);
 		if (attach == NULL)
 			err(1, NULL);
 		attach->me_fd = -1;
@@ -986,7 +987,6 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 		(void)strlcpy(attach->me_name, msg->me_name,
 		    sizeof(attach->me_name));
 		attach->me_body = message_parse_headers(attach);
-		TAILQ_INSERT_TAIL(parent->me_attachments, attach, me_entry);
 
 		if (parseattachments(attach, parent, depth + 1)) {
 			term = 0;

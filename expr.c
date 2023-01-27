@@ -439,15 +439,16 @@ expr_eval_and(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_attachment(struct expr *ex, struct expr_eval_arg *ea)
 {
-	struct message_list *attachments;
+	VECTOR(struct message) attachments;
 	struct message *msg = ea->ea_msg;
-	struct message *attach;
+	size_t i;
 
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
 		return EXPR_ERROR;
 
-	TAILQ_FOREACH(attach, attachments, me_entry) {
+	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
+		struct message *attach = &attachments[i];
 		int ev;
 
 		ea->ea_msg = attach;
@@ -464,15 +465,16 @@ expr_eval_attachment(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 {
-	struct message_list *attachments;
+	VECTOR(struct message) attachments;
 	struct message *msg = ea->ea_msg;
-	struct message *attach;
 	int ev = EXPR_NOMATCH;
+	size_t i;
 
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
 		return EXPR_ERROR;
-	TAILQ_FOREACH(attach, attachments, me_entry) {
+	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
+		struct message *attach = &attachments[i];
 		int ev2;
 
 		ea->ea_msg = attach;
