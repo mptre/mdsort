@@ -20,12 +20,7 @@ struct message {
 
 	struct message_flags	 me_mflags;		/* maildir flags */
 
-	struct {
-		struct header	*h_v;
-		size_t		 h_nmemb;
-		size_t		 h_size;
-	} me_headers;
-
+	struct header		*me_headers;		/* VECTOR(struct header) */
 	struct message		*me_attachments;	/* VECTOR(struct message) */
 };
 

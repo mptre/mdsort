@@ -51,8 +51,8 @@ static const char	*message_decode_body(struct message *,
 
 static void	message_free_attachments(struct message *);
 
-static int	 cmpheaderid(const void *, const void *);
-static int	 cmpheaderkey(const void *, const void *);
+static int	 cmpheaderid(const struct header *, const struct header *);
+static int	 cmpheaderkey(const struct header *, const struct header *);
 static int	 findheader(char *, struct slice *, struct slice *);
 static ssize_t	 searchheader(const struct header *, size_t, const char *,
     size_t *);
@@ -170,6 +170,8 @@ message_parse(const char *dir, int dirfd, const char *path)
 	msg->me_buf = malloc(msgsize);
 	if (msg->me_buf == NULL)
 		err(1, NULL);
+	if (VECTOR_INIT(msg->me_headers) == NULL)
+		err(1, NULL);
 
 	if (pathjoin(msg->me_path, sizeof(msg->me_path), dir, path) == NULL) {
 		warnc(ENAMETOOLONG, "%s", __func__);
@@ -217,16 +219,15 @@ err:
 void
 message_free(struct message *msg)
 {
-	size_t i;
-
 	if (msg == NULL)
 		return;
 
 	message_free_attachments(msg);
 
-	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
-		struct header *hdr = &msg->me_headers.h_v[i];
+	while (!VECTOR_EMPTY(msg->me_headers)) {
+		struct header *hdr;
 
+		hdr = VECTOR_POP(msg->me_headers);
 		if (hdr->values != NULL) {
 			while (!VECTOR_EMPTY(hdr->values))
 				free(*VECTOR_POP(hdr->values));
@@ -235,12 +236,12 @@ message_free(struct message *msg)
 		if (hdr->flags & HEADER_FLAG_DIRTY)
 			free(hdr->val);
 	}
+	VECTOR_FREE(msg->me_headers);
 
 	if (msg->me_fd != -1)
 		close(msg->me_fd);
 	free(msg->me_buf);
 	free(msg->me_buf_dec);
-	free(msg->me_headers.h_v);
 	if ((msg->me_flags & MESSAGE_FLAG_ATTACHMENT) == 0)
 		free(msg);
 }
@@ -271,12 +272,10 @@ message_write(struct message *msg, int fd)
 	}
 
 	/* Preserve ordering of headers. */
-	if (msg->me_headers.h_nmemb > 0)
-		qsort(msg->me_headers.h_v, msg->me_headers.h_nmemb,
-		    sizeof(*msg->me_headers.h_v), cmpheaderid);
+	VECTOR_SORT(msg->me_headers, cmpheaderid);
 
-	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
-		const struct header *hdr = &msg->me_headers.h_v[i];
+	for (i = 0; i < VECTOR_LENGTH(msg->me_headers); i++) {
+		const struct header *hdr = &msg->me_headers[i];
 
 		if (fprintf(fh, "%s: %s\n", hdr->key, hdr->val) < 0) {
 			warn("fprintf");
@@ -422,12 +421,12 @@ message_get_header(const struct message *msg, const char *header)
 	ssize_t idx;
 	size_t nfound;
 
-	idx = searchheader(msg->me_headers.h_v, msg->me_headers.h_nmemb,
+	idx = searchheader(msg->me_headers, VECTOR_LENGTH(msg->me_headers),
 	    header, &nfound);
 	if (idx == -1)
 		return NULL;
 
-	hdr = &msg->me_headers.h_v[idx];
+	hdr = &msg->me_headers[idx];
 	if (hdr->values == NULL) {
 		struct header *tmp;
 		size_t i;
@@ -460,16 +459,14 @@ message_set_header(struct message *msg, const char *header, char *val)
 	ssize_t idx;
 	size_t nfound;
 
-	idx = searchheader(msg->me_headers.h_v, msg->me_headers.h_nmemb,
+	idx = searchheader(msg->me_headers, VECTOR_LENGTH(msg->me_headers),
 	    header, &nfound);
 	if (idx == -1) {
 		hdr = message_headers_alloc(msg);
 		hdr->flags = HEADER_FLAG_DIRTY;
 		hdr->key = header;
 		hdr->val = val;
-
-		qsort(msg->me_headers.h_v, msg->me_headers.h_nmemb,
-		    sizeof(*msg->me_headers.h_v), cmpheaderkey);
+		VECTOR_SORT(msg->me_headers, cmpheaderkey);
 	} else {
 		if (nfound > 1) {
 			size_t i = (size_t)idx;
@@ -479,14 +476,15 @@ message_set_header(struct message *msg, const char *header, char *val)
 			 * Multiple occurrences of the given header.
 			 * Remove all occurrences except the first one.
 			 */
-			tail = msg->me_headers.h_nmemb - (i + nfound);
-			memmove(&msg->me_headers.h_v[i + 1],
-			    &msg->me_headers.h_v[i + nfound],
-			    tail * sizeof(*msg->me_headers.h_v));
-			msg->me_headers.h_nmemb -= nfound - 1;
+			tail = VECTOR_LENGTH(msg->me_headers) - (i + nfound);
+			memmove(&msg->me_headers[i + 1],
+			    &msg->me_headers[i + nfound],
+			    tail * sizeof(*msg->me_headers));
+			for (; nfound > 1; nfound--)
+				VECTOR_POP(msg->me_headers);
 		}
 
-		hdr = &msg->me_headers.h_v[idx];
+		hdr = &msg->me_headers[idx];
 		if (hdr->flags & HEADER_FLAG_DIRTY)
 			free(hdr->val);
 		else
@@ -610,29 +608,11 @@ static struct header *
 message_headers_alloc(struct message *msg)
 {
 	struct header *hdr;
-	size_t siz;
 
-	if (msg->me_headers.h_nmemb + 1 < msg->me_headers.h_size)
-		goto out;
-
-	siz = msg->me_headers.h_size;
-	if (siz == 0)
-		siz = 16;
-	else if (siz > SIZE_MAX / 2)
-		errc(1, EOVERFLOW, "%s", __func__);
-	else
-		siz *= 2;
-	msg->me_headers.h_v = reallocarray(msg->me_headers.h_v, siz,
-	    sizeof(*msg->me_headers.h_v));
-	if (msg->me_headers.h_v == NULL)
+	hdr = VECTOR_CALLOC(msg->me_headers);
+	if (hdr == NULL)
 		err(1, NULL);
-	msg->me_headers.h_size = siz;
-
-out:
-	hdr = &msg->me_headers.h_v[msg->me_headers.h_nmemb];
-	memset(hdr, 0, sizeof(*hdr));
-	hdr->id = msg->me_headers.h_nmemb;
-	msg->me_headers.h_nmemb++;
+	hdr->id = VECTOR_LENGTH(msg->me_headers);
 	return hdr;
 }
 
@@ -670,9 +650,7 @@ message_parse_headers(struct message *msg)
 
 		buf = vs.s_end + 1;
 	}
-	if (msg->me_headers.h_nmemb > 0)
-		qsort(msg->me_headers.h_v, msg->me_headers.h_nmemb,
-		    sizeof(*msg->me_headers.h_v), cmpheaderkey);
+	VECTOR_SORT(msg->me_headers, cmpheaderkey);
 
 	for (; *buf == '\n'; buf++)
 		continue;
@@ -702,25 +680,19 @@ message_decode_body(struct message *msg, const struct message *attachment)
 }
 
 static int
-cmpheaderid(const void *p1, const void *p2)
+cmpheaderid(const struct header *a, const struct header *b)
 {
-	const struct header *h1 = p1;
-	const struct header *h2 = p2;
-
-	if (h1->id < h2->id)
+	if (a->id < b->id)
 		return -1;
-	if (h1->id > h2->id)
+	if (a->id > b->id)
 		return 1;
 	return 0;
 }
 
 static int
-cmpheaderkey(const void *p1, const void *p2)
+cmpheaderkey(const struct header *a, const struct header *b)
 {
-	const struct header *h1 = p1;
-	const struct header *h2 = p2;
-
-	return strcasecmp(h1->key, h2->key);
+	return strcasecmp(a->key, b->key);
 }
 
 /*
@@ -985,6 +957,8 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 		len = (size_t)(end - beg);
 		attach->me_buf = strndup(beg, len);
 		if (attach->me_buf == NULL)
+			err(1, NULL);
+		if (VECTOR_INIT(attach->me_headers) == NULL)
 			err(1, NULL);
 		(void)strlcpy(attach->me_path, msg->me_path,
 		    sizeof(attach->me_path));
