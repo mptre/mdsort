@@ -184,7 +184,7 @@ maildir_paths	: MAILDIR strings {
 		}
 		| STDIN {
 			const struct config *conf;
-			extern const char *stdinpath;
+			char *path;
 
 			TAILQ_FOREACH(conf, &yyconfig->cl_list, entry) {
 				const struct string *str;
@@ -196,7 +196,10 @@ maildir_paths	: MAILDIR strings {
 			}
 
 			$$ = strings_alloc();
-			strings_appendc($$, stdinpath);
+			path = strdup("/dev/stdin");
+			if (path == NULL)
+				err(1, NULL);
+			strings_append($$, path);
 		}
 		;
 

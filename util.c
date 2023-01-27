@@ -13,8 +13,7 @@
 
 #include "extern.h"
 
-int		 log_level = 0;
-const char	*stdinpath = "/dev/stdin";
+int	log_level = 0;
 
 /*
  * Allocate a list of strings.
@@ -429,7 +428,7 @@ appendc(char **buf, size_t *bufsiz, size_t *buflen, char ch)
 int
 isstdin(const char *str)
 {
-	return str == stdinpath;
+	return strcmp(str, "/dev/stdin") == 0;
 }
 
 void
