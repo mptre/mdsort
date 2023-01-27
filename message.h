@@ -49,5 +49,4 @@ const char	*message_get_header1(const struct message *,
 void	message_set_header(struct message *, const char *, char *);
 int	message_set_file(struct message *, const char *, const char *, int);
 
-struct message	**message_get_attachments(struct message *);
-void		  message_free_attachments(struct message **);
+struct message	*message_get_attachments(struct message *);

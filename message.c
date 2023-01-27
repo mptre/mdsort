@@ -49,6 +49,8 @@ static const char	*message_parse_headers(struct message *);
 static const char	*message_decode_body(struct message *,
     const struct message *);
 
+static void	message_free_attachments(struct message *);
+
 static int	 cmpheaderid(const void *, const void *);
 static int	 cmpheaderkey(const void *, const void *);
 static int	 findheader(char *, struct slice *, struct slice *);
@@ -220,15 +222,7 @@ message_free(struct message *msg)
 	if (msg == NULL)
 		return;
 
-	if (msg->me_attachments != NULL) {
-		while (!VECTOR_EMPTY(msg->me_attachments)) {
-			struct message *attach;
-
-			attach = VECTOR_POP(msg->me_attachments);
-			message_free(attach);
-		}
-		VECTOR_FREE(msg->me_attachments);
-	}
+	message_free_attachments(msg);
 
 	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
 		struct header *hdr = &msg->me_headers.h_v[i];
@@ -385,7 +379,7 @@ message_get_fd(struct message *msg, const struct environment *env, int dobody)
 const char *
 message_get_body(struct message *msg)
 {
-	VECTOR(struct message *) attachments;
+	VECTOR(struct message) attachments;
 	const struct message *found = NULL;
 	size_t i;
 
@@ -401,7 +395,7 @@ message_get_body(struct message *msg)
 
 	/* Scan attachments, favor plain text over HTML. */
 	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
-		const struct message *attach = attachments[i];
+		const struct message *attach = &attachments[i];
 
 		if (message_is_content_type(attach, "text/plain")) {
 			found = attach;
@@ -413,7 +407,6 @@ message_get_body(struct message *msg)
 				found = attach;
 		}
 	}
-	message_free_attachments(attachments);
 	if (found == NULL)
 		return msg->me_body;
 
@@ -542,33 +535,34 @@ message_set_file(struct message *msg, const char *path, const char *name,
  * Parse all attachments in message into the given message list.
  * Returns non NULL-on success, even if no attachments where found.
  */
-struct message **
+struct message *
 message_get_attachments(struct message *msg)
 {
-	VECTOR(struct message *) attachments;
-	size_t i, n;
+	if (msg->me_attachments != NULL)
+		return msg->me_attachments;
 
-	if (msg->me_attachments == NULL) {
-		if (VECTOR_INIT(msg->me_attachments) == NULL)
-			err(1, NULL);
-		if (parseattachments(msg, msg, 0))
-			return NULL;
+	if (VECTOR_INIT(msg->me_attachments) == NULL)
+		err(1, NULL);
+	if (parseattachments(msg, msg, 0)) {
+		message_free_attachments(msg);
+		return NULL;
 	}
-
-	n = VECTOR_LENGTH(msg->me_attachments);
-	if (VECTOR_INIT(attachments) == NULL)
-		err(1, NULL);
-	if (VECTOR_RESERVE(attachments, n) == NULL)
-		err(1, NULL);
-	for (i = 0; i < n; i++)
-		*VECTOR_ALLOC(attachments) = &msg->me_attachments[i];
-	return attachments;
+	return msg->me_attachments;
 }
 
-void
-message_free_attachments(struct message **attachments)
+static void
+message_free_attachments(struct message *msg)
 {
-	VECTOR_FREE(attachments);
+	if (msg->me_attachments == NULL)
+		return;
+
+	while (!VECTOR_EMPTY(msg->me_attachments)) {
+		struct message *attach;
+
+		attach = VECTOR_POP(msg->me_attachments);
+		message_free(attach);
+	}
+	VECTOR_FREE(msg->me_attachments);
 }
 
 static int

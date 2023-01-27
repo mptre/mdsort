@@ -439,33 +439,33 @@ expr_eval_and(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_attachment(struct expr *ex, struct expr_eval_arg *ea)
 {
-	VECTOR(struct message *) attachments;
+	VECTOR(struct message) attachments;
 	struct message *msg = ea->ea_msg;
 	size_t i;
-	int ev = EXPR_NOMATCH;
 
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
 		return EXPR_ERROR;
+
 	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
-		struct message *attach = attachments[i];
+		struct message *attach = &attachments[i];
+		int ev;
 
 		ea->ea_msg = attach;
 		ev = expr_eval(ex->ex_lhs, ea);
 		ea->ea_msg = msg;
 		if (ev == EXPR_NOMATCH)
 			continue;
-		break;	/* match or error, return */
+		return ev;	/* match or error, return */
 	}
-	message_free_attachments(attachments);
 
-	return ev;
+	return EXPR_NOMATCH;
 }
 
 static int
 expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 {
-	VECTOR(struct message *) attachments;
+	VECTOR(struct message) attachments;
 	struct message *msg = ea->ea_msg;
 	int ev = EXPR_NOMATCH;
 	size_t i;
@@ -474,7 +474,7 @@ expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 	if (attachments == NULL)
 		return EXPR_ERROR;
 	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
-		struct message *attach = attachments[i];
+		struct message *attach = &attachments[i];
 		int ev2;
 
 		ea->ea_msg = attach;
@@ -488,7 +488,6 @@ expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 			break;
 		}
 	}
-	message_free_attachments(attachments);
 
 	return ev;
 }
