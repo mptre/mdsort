@@ -391,7 +391,7 @@ struct macro_list {
 
 void		 macros_init(struct macro_list *, unsigned int);
 enum macro_error macros_insert(struct macro_list *, char *, char *,
-    unsigned int, int);
+    unsigned int, unsigned int);
 void		 macros_insertc(struct macro_list *, const char *,
     const char *);
 struct macro	*macros_find(const struct macro_list *, const char *);

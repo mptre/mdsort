@@ -116,7 +116,7 @@ macros_init(struct macro_list *macros, unsigned int ctx)
 
 enum macro_error
 macros_insert(struct macro_list *macros, char *name, char *value,
-    unsigned int flags, int lno)
+    unsigned int flags, unsigned int lno)
 {
 	struct macro *mc;
 
@@ -232,7 +232,7 @@ ismacro(const char *str, char **macro)
 	*macro = strndup(&str[2], i - 2);
 	if (*macro == NULL)
 		err(1, NULL);
-	return i + 1;
+	return (ssize_t)(i + 1);
 }
 
 /*
