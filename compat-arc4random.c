@@ -29,7 +29,8 @@ static int
 rrand(const char *path, uint32_t *r)
 {
 	ssize_t n;
-	int fd, siz;
+	size_t siz;
+	int fd;
 
 	fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK);
 	if (fd == -1)
@@ -37,7 +38,7 @@ rrand(const char *path, uint32_t *r)
 	siz = sizeof(*r);
 	n = read(fd, r, siz);
 	close(fd);
-	if (n != siz)
+	if (n == -1 || (size_t)n != siz)
 		return 1;
 	return 0;
 }
