@@ -56,8 +56,8 @@ static ssize_t	 searchheader(const struct header *, size_t, const char *,
 static char	*decodeheader(const char *);
 static char	*unfoldheader(const char *);
 
-static int		 parseattachments(struct message *,
-    struct message_list *, int);
+static int		 parseattachments(struct message *, struct message *,
+    int);
 static const char	*findboundary(const char *, const char *, int *);
 static int		 parseboundary(const char *, char **);
 
@@ -532,7 +532,7 @@ message_get_attachments(struct message *msg)
 		err(1, NULL);
 	TAILQ_INIT(msg->me_attachments);
 
-	if (parseattachments(msg, msg->me_attachments, 0)) {
+	if (parseattachments(msg, msg, 0)) {
 		message_list_free(msg->me_attachments);
 		msg->me_attachments = NULL;
 		return NULL;
@@ -929,8 +929,7 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 }
 
 static int
-parseattachments(struct message *msg, struct message_list *attachments,
-    int depth)
+parseattachments(struct message *msg, struct message *parent, int depth)
 {
 	struct message *attach;
 	const char *b, *beg, *body, *end, *type;
@@ -987,9 +986,9 @@ parseattachments(struct message *msg, struct message_list *attachments,
 		(void)strlcpy(attach->me_name, msg->me_name,
 		    sizeof(attach->me_name));
 		attach->me_body = message_parse_headers(attach);
-		TAILQ_INSERT_TAIL(attachments, attach, me_entry);
+		TAILQ_INSERT_TAIL(parent->me_attachments, attach, me_entry);
 
-		if (parseattachments(attach, attachments, depth + 1)) {
+		if (parseattachments(attach, parent, depth + 1)) {
 			term = 0;
 			break;
 		}
