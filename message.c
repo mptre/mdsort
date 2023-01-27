@@ -36,8 +36,8 @@ struct slice {
 
 static int		 message_flags_parse(struct message_flags *,
     const char *);
-static int		 message_flags_resolve(struct message_flags *,
-    unsigned char, unsigned int **, unsigned int *);
+static int		 message_flags_resolve(struct message_flags *, char,
+    unsigned int **, unsigned int *);
 static struct header	*message_headers_alloc(struct message *);
 static int		 message_is_content_type(const struct message *,
     const char *);
@@ -59,7 +59,7 @@ static const char	*findboundary(const char *, const char *, int *);
 static int		 parseboundary(const char *, char **);
 
 static char		*b64decode(const char *);
-static unsigned char	 htoa(unsigned char, unsigned char *);
+static int		 htoa(char, char *);
 static const char	*skipline(const char *);
 static char		*skipseparator(char *);
 static ssize_t		 strflags(unsigned int, unsigned char, char *, size_t);
@@ -82,11 +82,11 @@ message_flags_str(const struct message_flags *mf, char *buf, size_t bufsiz)
 	n = strflags(mf->mf_upper, 'A', &buf[i], bufsiz - i);
 	if (n == -1)
 		goto err;
-	i += n;
+	i += (size_t)n;
 	n = strflags(mf->mf_lower, 'a', &buf[i], bufsiz - i);
 	if (n == -1)
 		goto err;
-	i += n;
+	i += (size_t)n;
 	buf[i] = '\0';
 	return buf;
 
@@ -96,7 +96,7 @@ err:
 }
 
 int
-message_flags_isset(const struct message_flags *mf, unsigned char flag)
+message_flags_isset(const struct message_flags *mf, char flag)
 {
 	unsigned int *flags;
 	unsigned int mask;
@@ -110,7 +110,7 @@ message_flags_isset(const struct message_flags *mf, unsigned char flag)
 }
 
 int
-message_flags_clr(struct message_flags *mf, unsigned char flag)
+message_flags_clr(struct message_flags *mf, char flag)
 {
 	unsigned int *flags;
 	unsigned int mask;
@@ -122,7 +122,7 @@ message_flags_clr(struct message_flags *mf, unsigned char flag)
 }
 
 int
-message_flags_set(struct message_flags *mf, unsigned char flag)
+message_flags_set(struct message_flags *mf, char flag)
 {
 	unsigned int *flags;
 	unsigned int mask;
@@ -189,7 +189,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 		} else if (n == 0) {
 			break;
 		}
-		msglen += n;
+		msglen += (size_t)n;
 	}
 	assert(msglen < msgsize);
 	msg->me_buf[msglen] = '\0';
@@ -322,16 +322,16 @@ message_get_fd(struct message *msg, const struct environment *env, int dobody)
 
 		len = strlen(body);
 		while (len > 0) {
-			ssize_t n;
+			ssize_t nw;
 
-			n = write(fd, body, len);
-			if (n == -1) {
+			nw = write(fd, body, len);
+			if (nw == -1) {
 				warn("write");
 				close(fd);
 				return -1;
 			}
-			len -= n;
-			body += n;
+			len -= (size_t)nw;
+			body += nw;
 		}
 	} else if (msg->me_flags & MESSAGE_FLAG_ATTACHMENT) {
 		fd = writefd(env->ev_tmpdir);
@@ -460,15 +460,16 @@ message_set_header(struct message *msg, const char *header, char *val)
 		    sizeof(*msg->me_headers.h_v), cmpheaderkey);
 	} else {
 		if (nfound > 1) {
+			size_t i = (size_t)idx;
 			size_t tail;
 
 			/*
 			 * Multiple occurrences of the given header.
 			 * Remove all occurrences except the first one.
 			 */
-			tail = msg->me_headers.h_nmemb - (idx + nfound);
-			memmove(&msg->me_headers.h_v[idx + 1],
-			    &msg->me_headers.h_v[idx + nfound],
+			tail = msg->me_headers.h_nmemb - (i + nfound);
+			memmove(&msg->me_headers.h_v[i + 1],
+			    &msg->me_headers.h_v[i + nfound],
 			    tail * sizeof(*msg->me_headers.h_v));
 			msg->me_headers.h_nmemb -= nfound - 1;
 		}
@@ -578,15 +579,15 @@ message_flags_parse(struct message_flags *mf, const char *path)
 }
 
 static int
-message_flags_resolve(struct message_flags *mf, unsigned char flag,
+message_flags_resolve(struct message_flags *mf, char flag,
     unsigned int **flags, unsigned int *mask)
 {
-	if (isupper(flag)) {
+	if (isupper((unsigned char)flag)) {
 		*flags = &mf->mf_upper;
 		*mask = 1 << (flag - 'A');
 		return 0;
 	}
-	if (islower(flag)) {
+	if (islower((unsigned char)flag)) {
 		*flags = &mf->mf_lower;
 		*mask = 1 << (flag - 'a');
 		return 0;
@@ -752,7 +753,7 @@ decodeheader(const char *str)
 
 		if (strings == NULL)
 			strings = strings_alloc();
-		len = qe - qs;
+		len = (size_t)(qe - qs);
 		switch (toupper((unsigned char)enc)) {
 		case 'B': {
 			char *dst, *src;
@@ -863,13 +864,13 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 		p = strchr(&str[i], '\n');
 		if (p == NULL)
 			return 0;
-		i += p - &str[i];
+		i += (size_t)(p - &str[i]);
 
 		/* If '\n' is followed by spaces, assume line continuation. */
 		n = nspaces(&str[i + 1]);
 		if (n == 0)
 			break;
-		i += n + 1;
+		i += (size_t)(n + 1);
 	}
 	vs->s_end = str + i;
 	*vs->s_end = '\0';
@@ -887,7 +888,7 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
     size_t *nfound)
 {
 	struct header needle;
-	ssize_t hi, lo;
+	size_t hi, lo;
 
 	*nfound = 0;
 
@@ -899,7 +900,7 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 	lo = 0;
 	hi = nmemb - 1;
 	while (lo <= hi) {
-		ssize_t mi;
+		size_t mi;
 		int cmp;
 
 		mi = lo + (hi - lo)/2;
@@ -916,12 +917,14 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 				if (cmpheaderkey(&needle, headers + end))
 					break;
 			*nfound = end - beg;
-			return beg;
+			return (ssize_t)beg;
 		}
 		if (cmp > 0)
 			lo = mi + 1;
-		else
+		else if (mi > 0)
 			hi = mi - 1;
+		else
+			break;
 	}
 	return -1;
 }
@@ -958,6 +961,8 @@ parseattachments(struct message *msg, struct message_list *attachments,
 	beg = end = NULL;
 	term = 0;
 	while (!term) {
+		size_t len;
+
 		b = findboundary(boundary, body, &term);
 		if (b == NULL)
 			break;
@@ -974,7 +979,8 @@ parseattachments(struct message *msg, struct message_list *attachments,
 			err(1, NULL);
 		attach->me_fd = -1;
 		attach->me_flags = MESSAGE_FLAG_ATTACHMENT;
-		attach->me_buf = strndup(beg, end - beg);
+		len = (size_t)(end - beg);
+		attach->me_buf = strndup(beg, len);
 		if (attach->me_buf == NULL)
 			err(1, NULL);
 		(void)strlcpy(attach->me_path, msg->me_path,
@@ -1063,7 +1069,7 @@ parseboundary(const char *str, char **boundary)
 		continue;
 	if (*p != '"')
 		return -1;
-	len = p - str;
+	len = (size_t)(p - str);
 	if (len == 0)
 		return -1;
 	*boundary = strndup(str, len);
@@ -1096,8 +1102,8 @@ b64decode(const char *str)
 /*
  * Hexadecimal to ASCII.
  */
-static unsigned char
-htoa(unsigned char c, unsigned char *res)
+static int
+htoa(char c, char *res)
 {
 	if (c >= 'A' && c <= 'F') {
 		*res = 10 + (c - 'A');
@@ -1156,7 +1162,7 @@ strflags(unsigned int flags, unsigned char offset, char *buf, size_t bufsiz)
 		buf[i++] = offset + bit;
 	}
 
-	return i;
+	return (ssize_t)i;
 }
 
 /*
@@ -1204,7 +1210,7 @@ qpdecode(const char *str, size_t len, int dospace)
 		err(1, NULL);
 
 	while (i < len) {
-		unsigned char hi, lo;
+		char hi, lo;
 
 		if (str[i] == '_' && dospace) {
 			buf[j++] = ' ';
