@@ -18,6 +18,7 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include "buffer.h"
 #include "extern.h"
 #include "vector.h"
 
@@ -70,6 +71,8 @@ static char		*skipseparator(char *);
 static ssize_t		 strflags(unsigned int, unsigned char, char *, size_t);
 static int		 writefd(const char *);
 static char		*qpdecode(const char *, size_t, int);
+static void		 qpdecode_buffer(struct buffer *, const char *, size_t,
+    int);
 
 char *
 message_flags_str(const struct message_flags *mf, char *buf, size_t bufsiz)
@@ -721,7 +724,7 @@ cmpheaderkey(const void *p1, const void *p2)
 static char *
 decodeheader(const char *str)
 {
-	struct string_list *strings = NULL;
+	struct buffer *bf = NULL;
 	const char *qs;
 	char *dec;
 
@@ -739,20 +742,20 @@ decodeheader(const char *str)
 		qs = &p[2];	/* consume "=?" */
 		qs = strchr(qs, '?');
 		if (qs == NULL)
-			goto err;
+			goto out;
 		qs += 1;
 		enc = *qs;
 		qs += 1;
 		if (*qs != '?')
-			goto err;
+			goto out;
 		qs += 1;
 
 		qe = strstr(qs, "?=");
 		if (qe == NULL)
-			goto err;
+			goto out;
 
-		if (strings == NULL)
-			strings = strings_alloc();
+		if (bf == NULL)
+			bf = buffer_alloc(128);
 		len = (size_t)(qe - qs);
 		switch (toupper((unsigned char)enc)) {
 		case 'B': {
@@ -761,40 +764,35 @@ decodeheader(const char *str)
 			/* b64decode() requires a NUL-terminator. */
 			src = strndup(qs, len);
 			if (src == NULL)
-				goto err;
+				goto out;
 			dst = b64decode(src);
 			free(src);
 			if (dst == NULL)
-				goto err;
-			strings_append(strings, dst);
+				goto out;
+			buffer_printf(bf, "%s", dst);
+			free(dst);
 			break;
 		}
 
 		case 'Q':
-			strings_append(strings, qpdecode(qs, len, 1));
+			qpdecode_buffer(bf, qs, len, 1);
 			break;
 
 		default:
-			goto err;
+			goto out;
 		}
 
 		qs = &qe[2];	/* consume "?=" */
 	}
-	if (strings != NULL) {
-		char *buf = NULL;
-		size_t buflen = 0;
-		size_t bufsiz = 0;
-
-		strings_appendc(strings, qs);
-		buf = strings_concat(strings, buf, &bufsiz, &buflen, 0);
-		strings_free(strings);
+	if (bf != NULL) {
+		buffer_printf(bf, "%s", qs);
+		buffer_putc(bf, '\0');
 		free(dec);
-		dec = buf;
+		dec = buffer_release(bf);
 	}
 
-	return dec;
-err:
-	strings_free(strings);
+out:
+	buffer_free(bf);
 	return dec;
 }
 
@@ -1199,30 +1197,37 @@ writefd(const char *dir)
 static char *
 qpdecode(const char *str, size_t len, int dospace)
 {
-	char *buf;
-	size_t i = 0;
-	size_t j = 0;
+	struct buffer *bf;
+	char *dec;
 
-	buf = malloc(len + 1);
-	if (buf == NULL)
-		err(1, NULL);
+	bf = buffer_alloc(128);
+	qpdecode_buffer(bf, str, len, dospace);
+	dec = buffer_release(bf);
+	buffer_free(bf);
+	return dec;
+}
+
+static void
+qpdecode_buffer(struct buffer *bf, const char *str, size_t len, int dospace)
+{
+	size_t i = 0;
 
 	while (i < len) {
 		char hi, lo;
 
 		if (str[i] == '_' && dospace) {
-			buf[j++] = ' ';
+			buffer_putc(bf, ' ');
 			i++;
 			continue;
 		}
 		if (str[i] != '=') {
-			buf[j++] = str[i++];
+			buffer_putc(bf, str[i++]);
 			continue;
 		}
 
 		if (i + 1 == len) {
 			/* '=' followed by nothing, copy as is. */
-			buf[j++] = str[i++];
+			buffer_putc(bf, str[i++]);
 			break;
 		}
 
@@ -1241,14 +1246,12 @@ qpdecode(const char *str, size_t len, int dospace)
 			 * let subsequent iterations copy the following
 			 * characters as is.
 			 */
-			buf[j++] = '=';
+			buffer_putc(bf, '=');
 			continue;
 		}
 
-		buf[j++] = (hi << 4) | lo;
+		buffer_putc(bf, (hi << 4) | lo);
 		i += 2;
 	}
-	buf[j] = '\0';
-
-	return buf;
+	buffer_putc(bf, '\0');
 }
