@@ -233,7 +233,11 @@ message_free(struct message *msg)
 	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
 		struct header *hdr = &msg->me_headers.h_v[i];
 
-		VECTOR_FREE(hdr->values);
+		if (hdr->values != NULL) {
+			while (!VECTOR_EMPTY(hdr->values))
+				free(*VECTOR_POP(hdr->values));
+			VECTOR_FREE(hdr->values);
+		}
 		if (hdr->flags & HEADER_FLAG_DIRTY)
 			free(hdr->val);
 	}
@@ -495,6 +499,8 @@ message_set_header(struct message *msg, const char *header, char *val)
 		else
 			hdr->flags |= HEADER_FLAG_DIRTY;
 		hdr->val = val;
+		while (!VECTOR_EMPTY(hdr->values))
+			free(*VECTOR_POP(hdr->values));
 		VECTOR_FREE(hdr->values);
 	}
 }
