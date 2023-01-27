@@ -21,6 +21,7 @@ SRCS+=	message.c
 SRCS+=	parse.c
 SRCS+=	time.c
 SRCS+=	util.c
+SRCS+=	vector.c
 
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
@@ -40,6 +41,8 @@ KNFMT+=	message.c
 KNFMT+=	message.h
 KNFMT+=	time.c
 KNFMT+=	util.c
+KNFMT+=	vector.c
+KNFMT+=	vector.h
 
 CLANGTIDY+=	cdefs.h
 CLANGTIDY+=	compat-arc4random.c
@@ -56,6 +59,8 @@ CLANGTIDY+=	message.c
 CLANGTIDY+=	message.h
 CLANGTIDY+=	time.c
 CLANGTIDY+=	util.c
+CLANGTIDY+=	vector.c
+CLANGTIDY+=	vector.h
 
 CPPCHECK+=	compat-arc4random.c
 CPPCHECK+=	compat-pledge.c
@@ -134,6 +139,8 @@ DISTFILES+=	tests/t.sh
 DISTFILES+=	tests/util.sh
 DISTFILES+=	time.c
 DISTFILES+=	util.c
+DISTFILES+=	vector.c
+DISTFILES+=	vector.h
 
 TESTFLAGS?=	-Tfault
 
