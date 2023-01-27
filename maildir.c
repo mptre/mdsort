@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include "extern.h"
+#include "message.h"
 
 #define FLAGS_MAX	64
 

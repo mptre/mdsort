@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "extern.h"
+#include "message.h"
 
 struct backref {
 	unsigned int br_mi;	/* match index */

@@ -1,3 +1,5 @@
+#include "message.h"
+
 #include "config.h"
 
 /* b64_pton() */

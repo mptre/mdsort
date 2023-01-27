@@ -13,6 +13,7 @@
 
 #include "cdefs.h"
 #include "extern.h"
+#include "message.h"
 
 static int	expr_eval_add_header(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_all(struct expr *, struct expr_eval_arg *);

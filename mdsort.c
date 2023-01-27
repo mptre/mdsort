@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "extern.h"
+#include "message.h"
 
 /*
  * When reading messages from stdin and an error occurred, always exit with

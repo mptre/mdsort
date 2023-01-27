@@ -37,6 +37,7 @@ KNFMT+=	maildir.c
 KNFMT+=	match.c
 KNFMT+=	mdsort.c
 KNFMT+=	message.c
+KNFMT+=	message.h
 KNFMT+=	time.c
 KNFMT+=	util.c
 
@@ -52,6 +53,7 @@ CLANGTIDY+=	maildir.c
 CLANGTIDY+=	match.c
 CLANGTIDY+=	mdsort.c
 CLANGTIDY+=	message.c
+CLANGTIDY+=	message.h
 CLANGTIDY+=	time.c
 CLANGTIDY+=	util.c
 
@@ -93,6 +95,7 @@ DISTFILES+=	mdsort.1
 DISTFILES+=	mdsort.c
 DISTFILES+=	mdsort.conf.5
 DISTFILES+=	message.c
+DISTFILES+=	message.h
 DISTFILES+=	parse.y
 DISTFILES+=	tests/GNUmakefile
 DISTFILES+=	tests/Makefile
