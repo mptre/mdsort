@@ -4,6 +4,7 @@ VERSION=	11.5.0
 
 PROG=	mdsort
 
+SRCS+=	buffer.c
 SRCS+=	compat-arc4random.c
 SRCS+=	compat-base64.c
 SRCS+=	compat-errc.c
@@ -26,6 +27,8 @@ SRCS+=	vector.c
 OBJS=	${SRCS:.c=.o}
 DEPS=	${SRCS:.c=.d}
 
+KNFMT+=	buffer.c
+KNFMT+=	buffer.h
 KNFMT+=	cdefs.h
 KNFMT+=	compat-arc4random.c
 KNFMT+=	compat-pledge.c
@@ -44,6 +47,8 @@ KNFMT+=	util.c
 KNFMT+=	vector.c
 KNFMT+=	vector.h
 
+CLANGTIDY+=	buffer.c
+CLANGTIDY+=	buffer.h
 CLANGTIDY+=	cdefs.h
 CLANGTIDY+=	compat-arc4random.c
 CLANGTIDY+=	compat-pledge.c
@@ -62,6 +67,7 @@ CLANGTIDY+=	util.c
 CLANGTIDY+=	vector.c
 CLANGTIDY+=	vector.h
 
+CPPCHECK+=	buffer.c
 CPPCHECK+=	compat-arc4random.c
 CPPCHECK+=	compat-pledge.c
 CPPCHECK+=	compat-utimensat.c
@@ -73,12 +79,15 @@ CPPCHECK+=	mdsort.c
 CPPCHECK+=	message.c
 CPPCHECK+=	time.c
 CPPCHECK+=	util.c
+CPPCHECK+=	vector.c
 
 DISTFILES+=	CHANGELOG.md
 DISTFILES+=	GNUmakefile
 DISTFILES+=	LICENSE
 DISTFILES+=	Makefile
 DISTFILES+=	README.md
+DISTFILES+=	buffer.c
+DISTFILES+=	buffer.h
 DISTFILES+=	cdefs.h
 DISTFILES+=	compat-arc4random.c
 DISTFILES+=	compat-base64.c
