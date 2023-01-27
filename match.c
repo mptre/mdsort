@@ -8,8 +8,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "buffer.h"
 #include "extern.h"
 #include "message.h"
+#include "vector.h"
 
 struct backref {
 	unsigned int br_mi;	/* match index */
@@ -365,20 +367,33 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 	}
 
 	case EXPR_TYPE_LABEL: {
-		const struct string_list *labels;
-		char *buf = NULL;
+		VECTOR(char *const) labels;
+		struct buffer *bf;
+		const struct string *str;
 		char *label = NULL;
-		size_t buflen = 0;
-		size_t bufsiz = 0;
+		char *buf;
 		int error;
+
+		bf = buffer_alloc(128);
 
 		labels = message_get_header(msg, "X-Label");
 		if (labels != NULL) {
-			buf = strings_concat(labels,
-			    buf, &bufsiz, &buflen, ' ');
+			size_t i;
+
+			for (i = 0; i < VECTOR_LENGTH(labels); i++) {
+				if (i > 0)
+					buffer_putc(bf, ' ');
+				buffer_printf(bf, "%s", labels[i]);
+			}
 		}
-		buf = strings_concat(mh->mh_expr->ex_strings,
-		    buf, &bufsiz, &buflen, ' ');
+		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
+			if (bf->bf_len > 0)
+				buffer_putc(bf, ' ');
+			buffer_printf(bf, "%s", str->val);
+		}
+		buffer_putc(bf, '\0');
+		buf = buffer_release(bf);
+		buffer_free(bf);
 		error = interpolate(mh, macros, buf, &label);
 		free(buf);
 		if (error)

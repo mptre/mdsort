@@ -49,12 +49,11 @@ void		 message_free(struct message *);
 
 int	message_write(struct message *, int);
 
-int				 message_get_fd(struct message *,
+int		 message_get_fd(struct message *,
     const struct environment *, int);
-const char			*message_get_body(struct message *);
-const struct string_list	*message_get_header(const struct message *,
-    const char *);
-const char			*message_get_header1(const struct message *,
+const char	*message_get_body(struct message *);
+char *const	*message_get_header(const struct message *, const char *);
+const char	*message_get_header1(const struct message *,
     const char *);
 
 void	message_set_header(struct message *, const char *, char *);

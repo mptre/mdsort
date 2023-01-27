@@ -14,6 +14,7 @@
 #include "cdefs.h"
 #include "extern.h"
 #include "message.h"
+#include "vector.h"
 
 static int	expr_eval_add_header(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_all(struct expr *, struct expr_eval_arg *);
@@ -689,20 +690,21 @@ expr_eval_flags(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_header(struct expr *ex, struct expr_eval_arg *ea)
 {
-	const struct string *key, *val;
+	const struct string *key;
 
 	TAILQ_FOREACH(key, ex->ex_strings, entry) {
-		const struct string_list *values;
+		VECTOR(char *const) values;
+		size_t j;
 
 		values = message_get_header(ea->ea_msg, key->val);
 		if (values == NULL)
 			continue;
 
-		TAILQ_FOREACH(val, values, entry) {
+		for (j = 0; j < VECTOR_LENGTH(values); j++) {
 			int ev;
 
 			ev = expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env,
-			    key->val, val->val);
+			    key->val, values[j]);
 			if (ev == EXPR_NOMATCH)
 				continue;
 			return ev;	/* match or error, return */

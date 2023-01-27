@@ -19,16 +19,17 @@
 #include <unistd.h>
 
 #include "extern.h"
+#include "vector.h"
 
 struct header {
-	unsigned int		 id;
+	unsigned int	 id;
 
-	unsigned int		 flags;
+	unsigned int	 flags;
 #define HEADER_FLAG_DIRTY	0x00000001u	/* val must be freed */
 
-	const char		*key;
-	char			*val;
-	struct string_list	*values;	/* list of all values for key */
+	const char	*key;
+	char		*val;
+	VECTOR(char *)	 values;	/* all values for key */
 };
 
 struct slice {
@@ -221,7 +222,7 @@ message_free(struct message *msg)
 	for (i = 0; i < msg->me_headers.h_nmemb; i++) {
 		struct header *hdr = &msg->me_headers.h_v[i];
 
-		strings_free(hdr->values);
+		VECTOR_FREE(hdr->values);
 		if (hdr->flags & HEADER_FLAG_DIRTY)
 			free(hdr->val);
 	}
@@ -402,7 +403,7 @@ message_get_body(struct message *msg)
 	return msg->me_buf_dec;
 }
 
-const struct string_list *
+char *const *
 message_get_header(const struct message *msg, const char *header)
 {
 	struct header *hdr;
@@ -419,13 +420,12 @@ message_get_header(const struct message *msg, const char *header)
 		struct header *tmp;
 		size_t i;
 
-		hdr->values = strings_alloc();
-		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
-			char *val;
-
-			val = decodeheader(tmp->val);
-			strings_append(hdr->values, val);
-		}
+		if (VECTOR_INIT(hdr->values) == NULL)
+			err(1, NULL);
+		if (VECTOR_RESERVE(hdr->values, nfound) == NULL)
+			err(1, NULL);
+		for (i = 0, tmp = hdr; i < nfound; i++, tmp++)
+			*VECTOR_ALLOC(hdr->values) = decodeheader(tmp->val);
 	}
 	return hdr->values;
 }
@@ -433,14 +433,12 @@ message_get_header(const struct message *msg, const char *header)
 const char *
 message_get_header1(const struct message *msg, const char *header)
 {
-	const struct string_list *values;
-	const struct string *str;
+	VECTOR(char *const) values;
 
 	values = message_get_header(msg, header);
-	if (values == NULL)
+	if (values == NULL || VECTOR_EMPTY(values))
 		return NULL;
-	str = TAILQ_FIRST(values);
-	return str->val;
+	return values[0];
 }
 
 void
@@ -482,8 +480,7 @@ message_set_header(struct message *msg, const char *header, char *val)
 		else
 			hdr->flags |= HEADER_FLAG_DIRTY;
 		hdr->val = val;
-		strings_free(hdr->values);
-		hdr->values = NULL;
+		VECTOR_FREE(hdr->values);
 	}
 }
 
