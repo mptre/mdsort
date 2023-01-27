@@ -124,22 +124,20 @@ static const char *
 parse_attr(struct fault *fu, const char *str, const char *end)
 {
 	const char *key, *p, *val;
-	ssize_t siz;
 	size_t keysiz, valsiz;
-	int n;
 
 	p = strchr(str, '=');
 	if (p == NULL)
 		errx(1, "%s: %s: invalid fault", __func__, str);
 	key = str;
-	keysiz = p - str;
+	keysiz = (size_t)(p - str);
 	str = p + 1;
 
 	p = strchr(str, ',');
 	if (p == NULL)
 		p = end;
 	val = str;
-	valsiz = p - str;
+	valsiz = (size_t)(p - str);
 	str = p + 1;
 
 	if (strncmp(key, "errno", keysiz) == 0) {
@@ -159,9 +157,12 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 		errx(1, "%s: %.*s: unknown errno value",
 		    __func__, (int)valsiz, val);
 	} else if (strncmp(key, "name", keysiz) == 0) {
+		size_t siz;
+		int n;
+
 		siz = sizeof(fu->fu_name);
 		n = snprintf(fu->fu_name, siz, "%.*s", (int)valsiz, val);
-		if (n < 0 || n >= siz)
+		if (n < 0 || (size_t)n >= siz)
 			errc(1, ENAMETOOLONG, "%s", __func__);
 	} else {
 		errx(1, "%s: %.*s: unknown fault attribute",
