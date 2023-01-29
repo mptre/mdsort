@@ -732,8 +732,11 @@ decodeheader(const char *str)
 		if (qe == NULL)
 			goto out;
 
-		if (bf == NULL)
+		if (bf == NULL) {
 			bf = buffer_alloc(128);
+			if (bf == NULL)
+				err(1, NULL);
+		}
 		len = (size_t)(qe - qs);
 		switch (toupper((unsigned char)enc)) {
 		case 'B': {
@@ -1181,6 +1184,8 @@ qpdecode(const char *str, size_t len, int dospace)
 	char *dec;
 
 	bf = buffer_alloc(128);
+	if (bf == NULL)
+		err(1, NULL);
 	qpdecode_buffer(bf, str, len, dospace);
 	dec = buffer_release(bf);
 	buffer_free(bf);

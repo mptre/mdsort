@@ -375,6 +375,8 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		int error;
 
 		bf = buffer_alloc(128);
+		if (bf == NULL)
+			err(1, NULL);
 
 		labels = message_get_header(msg, "X-Label");
 		if (labels != NULL) {
@@ -387,7 +389,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 			}
 		}
 		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
-			if (bf->bf_len > 0)
+			if (buffer_get_len(bf) > 0)
 				buffer_putc(bf, ' ');
 			buffer_printf(bf, "%s", str->val);
 		}
