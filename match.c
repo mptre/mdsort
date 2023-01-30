@@ -34,7 +34,7 @@ static ssize_t	isbackref(const char *, struct backref *);
 int
 matches_append(struct match_list *ml, struct match *mh)
 {
-	const char *p;
+	const char *p, *path;
 	size_t siz;
 
 	matches_merge(ml, mh);
@@ -43,23 +43,22 @@ matches_append(struct match_list *ml, struct match *mh)
 	if ((mh->mh_expr->ex_flags & EXPR_FLAG_PATH) == 0)
 		return 0;
 
+	path = message_get_path(mh->mh_msg);
 	if (mh->mh_maildir[0] == '\0') {
 		/* Infer maildir from message path. */
 		siz = sizeof(mh->mh_maildir);
-		p = pathslice(mh->mh_msg->me_path, mh->mh_maildir, siz, 0, -2);
+		p = pathslice(path, mh->mh_maildir, siz, 0, -2);
 		if (p == NULL) {
-			warnx("%s: %s: maildir not found",
-			    __func__, mh->mh_msg->me_path);
+			warnx("%s: %s: maildir not found", __func__, path);
 			return 1;
 		}
 	}
 	if (mh->mh_subdir[0] == '\0') {
 		/* Infer subdir from message path. */
 		siz = sizeof(mh->mh_subdir);
-		p = pathslice(mh->mh_msg->me_path, mh->mh_subdir, siz, -2, -2);
+		p = pathslice(path, mh->mh_subdir, siz, -2, -2);
 		if (p == NULL) {
-			warnx("%s: %s: subdir not found",
-			    __func__, mh->mh_msg->me_path);
+			warnx("%s: %s: subdir not found", __func__, path);
 			return 1;
 		}
 	}
@@ -92,7 +91,8 @@ matches_interpolate(struct match_list *ml)
 
 	/* Construct action macro context. */
 	macros_init(&macros, MACRO_CTX_ACTION);
-	macros_insertc(&macros, "path", TAILQ_FIRST(ml)->mh_msg->me_path);
+	macros_insertc(&macros, "path",
+	    message_get_path(TAILQ_FIRST(ml)->mh_msg));
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		if (match_interpolate(mh, &macros))
@@ -149,7 +149,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			break;
 
 		case EXPR_TYPE_DISCARD:
-			if (maildir_unlink(src, msg->me_name))
+			if (maildir_unlink(src, message_get_name(msg)))
 				error = 1;
 			break;
 
@@ -214,12 +214,14 @@ matches_inspect(const struct match_list *ml, const struct environment *env)
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		const struct expr *ex = mh->mh_expr;
 		const struct match *rhs;
+		const char *path;
 
 		if ((ex->ex_flags & EXPR_FLAG_ACTION) == 0)
 			continue;
 
+		path = message_get_path(msg);
 		log_info("%s -> %s\n",
-		    env->ev_options & OPTION_STDIN ? "<stdin>" : msg->me_path,
+		    env->ev_options & OPTION_STDIN ? "<stdin>" : path,
 		    ex->ex_label ? ex->ex_label : mh->mh_path);
 
 		if (!dryrun)

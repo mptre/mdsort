@@ -11,6 +11,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdint.h>	/* SIZE_MAX */
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,22 @@
 #include "buffer.h"
 #include "extern.h"
 #include "vector.h"
+
+struct message {
+	char			 me_path[PATH_MAX];	/* full path */
+	char			 me_name[NAME_MAX + 1];	/* file name */
+	const char		*me_body;
+	char			*me_buf;
+	char			*me_buf_dec;		/* decoded body */
+	int			 me_fd;
+	unsigned int		 me_flags;
+#define MESSAGE_FLAG_ATTACHMENT	0x00000001u
+
+	struct message_flags	 me_mflags;		/* maildir flags */
+
+	VECTOR(struct header)	 me_headers;
+	VECTOR(struct message)	 me_attachments;
+};
 
 struct header {
 	unsigned int	 id;
@@ -48,8 +65,6 @@ static int		 message_is_content_type(const struct message *,
 static const char	*message_parse_headers(struct message *);
 static const char	*message_decode_body(struct message *,
     const struct message *);
-
-static void	message_free_attachments(struct message *);
 
 static int	 cmpheaderid(const struct header *, const struct header *);
 static int	 cmpheaderkey(const struct header *, const struct header *);
@@ -222,7 +237,15 @@ message_free(struct message *msg)
 	if (msg == NULL)
 		return;
 
-	message_free_attachments(msg);
+	if (msg->me_attachments != NULL) {
+		while (!VECTOR_EMPTY(msg->me_attachments)) {
+			struct message *attach;
+
+			attach = VECTOR_POP(msg->me_attachments);
+			message_free(attach);
+		}
+		VECTOR_FREE(msg->me_attachments);
+	}
 
 	while (!VECTOR_EMPTY(msg->me_headers)) {
 		struct header *hdr;
@@ -378,7 +401,7 @@ message_get_fd(struct message *msg, const struct environment *env, int dobody)
 const char *
 message_get_body(struct message *msg)
 {
-	VECTOR(struct message) attachments;
+	VECTOR(struct message *) attachments;
 	const struct message *found = NULL;
 	size_t i;
 
@@ -394,7 +417,7 @@ message_get_body(struct message *msg)
 
 	/* Scan attachments, favor plain text over HTML. */
 	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
-		const struct message *attach = &attachments[i];
+		const struct message *attach = attachments[i];
 
 		if (message_is_content_type(attach, "text/plain")) {
 			found = attach;
@@ -406,6 +429,7 @@ message_get_body(struct message *msg)
 				found = attach;
 		}
 	}
+	message_free_attachments(attachments);
 	if (found == NULL)
 		return msg->me_body;
 
@@ -529,38 +553,55 @@ message_set_file(struct message *msg, const char *path, const char *name,
 	return 0;
 }
 
+const char *
+message_get_path(const struct message *msg)
+{
+	return msg->me_path;
+}
+
+struct message_flags *
+message_get_flags(const struct message *msg)
+{
+	return (struct message_flags *)&msg->me_mflags;
+}
+
+const char *
+message_get_name(const struct message *msg)
+{
+	return msg->me_name;
+}
+
 /*
  * Parse all attachments in message into the given message list.
  * Returns non NULL-on success, even if no attachments where found.
  */
-struct message *
+struct message **
 message_get_attachments(struct message *msg)
 {
-	if (msg->me_attachments != NULL)
-		return msg->me_attachments;
+	VECTOR(struct message *) attachments;
+	size_t i, n;
 
-	if (VECTOR_INIT(msg->me_attachments) == NULL)
-		err(1, NULL);
-	if (parseattachments(msg, msg, 0)) {
-		message_free_attachments(msg);
-		return NULL;
+	if (msg->me_attachments == NULL) {
+		if (VECTOR_INIT(msg->me_attachments) == NULL)
+			err(1, NULL);
+		if (parseattachments(msg, msg, 0))
+			return NULL;
 	}
-	return msg->me_attachments;
+
+	n = VECTOR_LENGTH(msg->me_attachments);
+	if (VECTOR_INIT(attachments) == NULL)
+		err(1, NULL);
+	if (VECTOR_RESERVE(attachments, n) == NULL)
+		err(1, NULL);
+	for (i = 0; i < n; i++)
+		*VECTOR_ALLOC(attachments) = &msg->me_attachments[i];
+	return attachments;
 }
 
-static void
-message_free_attachments(struct message *msg)
+void
+message_free_attachments(struct message **attachments)
 {
-	if (msg->me_attachments == NULL)
-		return;
-
-	while (!VECTOR_EMPTY(msg->me_attachments)) {
-		struct message *attach;
-
-		attach = VECTOR_POP(msg->me_attachments);
-		message_free(attach);
-	}
-	VECTOR_FREE(msg->me_attachments);
+	VECTOR_FREE(attachments);
 }
 
 static int

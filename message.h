@@ -1,4 +1,3 @@
-#include <limits.h>	/* NAME_MAX, PATH_MAX */
 #include <stddef.h>	/* size_t */
 
 struct environment;
@@ -6,22 +5,6 @@ struct environment;
 struct message_flags {
 	unsigned int	mf_upper;
 	unsigned int	mf_lower;
-};
-
-struct message {
-	char			 me_path[PATH_MAX];	/* full path */
-	char			 me_name[NAME_MAX + 1];	/* file name */
-	const char		*me_body;
-	char			*me_buf;
-	char			*me_buf_dec;		/* decoded body */
-	int			 me_fd;
-	unsigned int		 me_flags;
-#define MESSAGE_FLAG_ATTACHMENT	0x00000001u
-
-	struct message_flags	 me_mflags;		/* maildir flags */
-
-	struct header		*me_headers;		/* VECTOR(struct header) */
-	struct message		*me_attachments;	/* VECTOR(struct message) */
 };
 
 char	*message_flags_str(const struct message_flags *, char *, size_t);
@@ -34,14 +17,19 @@ void		 message_free(struct message *);
 
 int	message_write(struct message *, int);
 
-int		 message_get_fd(struct message *,
+int			 message_get_fd(struct message *,
     const struct environment *, int);
-const char	*message_get_body(struct message *);
-char *const	*message_get_header(const struct message *, const char *);
-const char	*message_get_header1(const struct message *,
+const char		*message_get_body(struct message *);
+char *const		*message_get_header(const struct message *,
     const char *);
+const char		*message_get_header1(const struct message *,
+    const char *);
+const char		*message_get_path(const struct message *);
+struct message_flags	*message_get_flags(const struct message *);
+const char		*message_get_name(const struct message *);
+
+struct message	**message_get_attachments(struct message *);
+void		  message_free_attachments(struct message **);
 
 void	message_set_header(struct message *, const char *, char *);
 int	message_set_file(struct message *, const char *, const char *, int);
-
-struct message	*message_get_attachments(struct message *);

@@ -439,33 +439,33 @@ expr_eval_and(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_attachment(struct expr *ex, struct expr_eval_arg *ea)
 {
-	VECTOR(struct message) attachments;
+	VECTOR(struct message *) attachments;
 	struct message *msg = ea->ea_msg;
 	size_t i;
+	int ev = EXPR_NOMATCH;
 
 	attachments = message_get_attachments(msg);
 	if (attachments == NULL)
 		return EXPR_ERROR;
-
 	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
-		struct message *attach = &attachments[i];
-		int ev;
+		struct message *attach = attachments[i];
 
 		ea->ea_msg = attach;
 		ev = expr_eval(ex->ex_lhs, ea);
 		ea->ea_msg = msg;
 		if (ev == EXPR_NOMATCH)
 			continue;
-		return ev;	/* match or error, return */
+		break;	/* match or error, return */
 	}
+	message_free_attachments(attachments);
 
-	return EXPR_NOMATCH;
+	return ev;
 }
 
 static int
 expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 {
-	VECTOR(struct message) attachments;
+	VECTOR(struct message *) attachments;
 	struct message *msg = ea->ea_msg;
 	int ev = EXPR_NOMATCH;
 	size_t i;
@@ -474,7 +474,7 @@ expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 	if (attachments == NULL)
 		return EXPR_ERROR;
 	for (i = 0; i < VECTOR_LENGTH(attachments); i++) {
-		struct message *attach = &attachments[i];
+		struct message *attach = attachments[i];
 		int ev2;
 
 		ea->ea_msg = attach;
@@ -488,6 +488,7 @@ expr_eval_attachment_block(struct expr *ex, struct expr_eval_arg *ea)
 			break;
 		}
 	}
+	message_free_attachments(attachments);
 
 	return ev;
 }
@@ -594,6 +595,7 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 		 * complain about it might being used uninitialized.
 		 */
 		struct timespec *ts = NULL;
+		const char *path;
 
 		switch (ex->ex_date.field) {
 		case EXPR_DATE_FIELD_HEADER:
@@ -608,8 +610,9 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 			ts = &st.st_ctim;
 			break;
 		}
-		if (stat(ea->ea_msg->me_path, &st) == -1) {
-			warn("stat: %s", ea->ea_msg->me_path);
+		path = message_get_path(ea->ea_msg);
+		if (stat(path, &st) == -1) {
+			warn("stat: %s", path);
 			return EXPR_ERROR;
 		}
 		tim = ts->tv_sec;
@@ -677,7 +680,7 @@ expr_eval_flags(struct expr *ex, struct expr_eval_arg *ea)
 
 	flags = TAILQ_FIRST(ex->ex_strings)->val;
 	for (; *flags != '\0'; flags++) {
-		if (message_flags_set(&msg->me_mflags, *flags))
+		if (message_flags_set(message_get_flags(msg), *flags))
 			error = 1;
 	}
 	if (error)
@@ -780,8 +783,10 @@ static int
 expr_eval_new(struct expr *UNUSED(ex), struct expr_eval_arg *ea)
 {
 	char buf[NAME_MAX + 1];
+	const char *path;
 
-	if (pathslice(ea->ea_msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
+	path = message_get_path(ea->ea_msg);
+	if (pathslice(path, buf, sizeof(buf), -2, -2) == NULL ||
 	    strcmp(buf, "new") != 0)
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;
@@ -791,10 +796,13 @@ static int
 expr_eval_old(struct expr *UNUSED(ex), struct expr_eval_arg *ea)
 {
 	char buf[NAME_MAX + 1];
+	const char *path;
 
-	if (message_flags_isset(&ea->ea_msg->me_mflags, 'S'))
+	if (message_flags_isset(message_get_flags(ea->ea_msg), 'S'))
 		return EXPR_NOMATCH;
-	if (pathslice(ea->ea_msg->me_path, buf, sizeof(buf), -2, -2) == NULL ||
+
+	path = message_get_path(ea->ea_msg);
+	if (pathslice(path, buf, sizeof(buf), -2, -2) == NULL ||
 	    strcmp(buf, "cur") != 0)
 		return EXPR_NOMATCH;
 	return EXPR_MATCH;

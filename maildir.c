@@ -176,7 +176,7 @@ maildir_move(struct maildir *src, const struct maildir *dst,
 	int error = 0;
 	int dstfd, fd, srcfd;
 
-	srcname = msg->me_name;
+	srcname = message_get_name(msg);
 	srcfd = maildir_fd(src);
 
 	if ((src->md_flags & MAILDIR_STDIN) &&
@@ -268,7 +268,7 @@ maildir_write(struct maildir *md, struct message *msg,
 	error = message_write(msg, fd);
 	close(fd);
 	if (!error)
-		error = maildir_unlink(md, msg->me_name);
+		error = maildir_unlink(md, message_get_name(msg));
 	/*
 	 * Either writing the new message or removing the old one failed, try to
 	 * reduce side effects by removing the new message.
@@ -563,7 +563,7 @@ static int
 msgflags(const struct maildir *src, const struct maildir *dst,
     const struct message *msg, char *buf, size_t bufsiz)
 {
-	struct message_flags flags = msg->me_mflags;
+	struct message_flags flags = *message_get_flags(msg);
 
 	if (src->md_subdir == SUBDIR_NEW && dst->md_subdir == SUBDIR_CUR) {
 		if (message_flags_set(&flags, 'S'))
