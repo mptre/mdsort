@@ -616,7 +616,7 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 			if (mc == NULL)
 				goto mcerr;
 
-			append(buf, &bufsiz, &buflen, mc->mc_value);
+			append(buf, &bufsiz, &buflen, macro_get_value(mc));
 			i += (size_t)n;
 			continue;
 		}

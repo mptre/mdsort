@@ -928,8 +928,8 @@ macros_validate(const struct macro_list *macros)
 	for (i = 0; i < VECTOR_LENGTH(unused); i++) {
 		const struct macro *mc = unused[i];
 
-		yypushl(mc->mc_lno);
-		yyerror("unused macro: %s", mc->mc_name);
+		yypushl(macro_get_lno(mc));
+		yyerror("unused macro: %s", macro_get_name(mc));
 		yypopl();
 	}
 	VECTOR_FREE(unused);
@@ -999,8 +999,8 @@ expandmacros(char *str, struct macro_list *macros, unsigned int curctx)
 
 			mc = macros_find(macros, macro);
 			if (mc != NULL) {
-				mc->mc_refs++;
-				append(&buf, &bufsiz, &buflen, mc->mc_value);
+				macro_ref(mc);
+				append(&buf, &bufsiz, &buflen, macro_get_value(mc));
 			} else {
 				yyerror("unknown macro used in string: %s",
 				    macro);

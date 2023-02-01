@@ -6,6 +6,15 @@
 
 #include "vector.h"
 
+struct macro {
+	char		*mc_name;
+	char		*mc_value;
+	unsigned int	 mc_refs;
+	unsigned int	 mc_defs;
+	unsigned int	 mc_lno;
+	unsigned int	 mc_flags;
+};
+
 struct macro_list {
 	unsigned int		ml_ctx;
 	VECTOR(struct macro)	ml_list;
@@ -127,6 +136,30 @@ macros_unused(const struct macro_list *macros)
 		*dst = mc;
 	}
 	return unused;
+}
+
+void
+macro_ref(struct macro *mc)
+{
+	mc->mc_refs++;
+}
+
+const char *
+macro_get_name(const struct macro *mc)
+{
+	return mc->mc_name;
+}
+
+const char *
+macro_get_value(const struct macro *mc)
+{
+	return mc->mc_value;
+}
+
+unsigned int
+macro_get_lno(const struct macro *mc)
+{
+	return mc->mc_lno;
 }
 
 unsigned int
