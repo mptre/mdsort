@@ -50,8 +50,6 @@ KNFMT+=	util.c
 KNFMT+=	vector.c
 KNFMT+=	vector.h
 
-CLANGTIDY+=	buffer.c
-CLANGTIDY+=	buffer.h
 CLANGTIDY+=	cdefs.h
 CLANGTIDY+=	compat-arc4random.c
 CLANGTIDY+=	compat-pledge.c
@@ -72,7 +70,6 @@ CLANGTIDY+=	util.c
 CLANGTIDY+=	vector.c
 CLANGTIDY+=	vector.h
 
-CPPCHECK+=	buffer.c
 CPPCHECK+=	compat-arc4random.c
 CPPCHECK+=	compat-pledge.c
 CPPCHECK+=	compat-utimensat.c
