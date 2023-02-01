@@ -11,6 +11,7 @@
 
 #include "extern.h"
 #include "macro.h"
+#include "vector.h"
 
 static void expr_validate(const struct expr *);
 static void expr_validate_attachment_block(const struct expr *);
@@ -920,16 +921,18 @@ yypopl(void)
 static void
 macros_validate(const struct macro_list *macros)
 {
-	const struct macro *mc;
+	struct macro **unused;
+	size_t i;
 
-	TAILQ_FOREACH(mc, &macros->ml_list, mc_entry) {
-		if (mc->mc_refs > 0)
-			continue;
+	unused = macros_unused(macros);
+	for (i = 0; i < VECTOR_LENGTH(unused); i++) {
+		const struct macro *mc = unused[i];
 
 		yypushl(mc->mc_lno);
 		yyerror("unused macro: %s", mc->mc_name);
 		yypopl();
 	}
+	VECTOR_FREE(unused);
 }
 
 static char *

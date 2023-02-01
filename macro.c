@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <err.h>
 
+#include "vector.h"
+
 struct macro_list *
 macros_alloc(unsigned int ctx)
 {
@@ -12,29 +14,28 @@ macros_alloc(unsigned int ctx)
 	macros = calloc(1, sizeof(*macros));
 	if (macros == NULL)
 		err(1, NULL);
-	macros->ml_size = sizeof(macros->ml_v) / sizeof(macros->ml_v[0]);
 	macros->ml_ctx = ctx;
-	TAILQ_INIT(&macros->ml_list);
+	if (VECTOR_INIT(macros->ml_list) == NULL)
+		err(1, NULL);
 	return macros;
 }
 
 void
 macros_free(struct macro_list *macros)
 {
-	struct macro *mc;
-
 	if (macros == NULL)
 		return;
 
-	while ((mc = TAILQ_FIRST(&macros->ml_list)) != NULL) {
-		TAILQ_REMOVE(&macros->ml_list, mc, mc_entry);
+	while (!VECTOR_EMPTY(macros->ml_list)) {
+		struct macro *mc;
+
+		mc = VECTOR_POP(macros->ml_list);
 		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
 			free(mc->mc_name);
 			free(mc->mc_value);
 		}
-		if ((mc->mc_flags & MACRO_FLAG_STATIC) == 0)
-			free(mc);
 	}
+	VECTOR_FREE(macros->ml_list);
 	free(macros);
 }
 
@@ -55,22 +56,15 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 		return MACRO_ERR_EXIST;
 	}
 
-	if (macros->ml_nmemb < macros->ml_size) {
-		mc = &macros->ml_v[macros->ml_nmemb++];
-		flags |= MACRO_FLAG_STATIC;
-	} else {
-		mc = malloc(sizeof(*mc));
-		if (mc == NULL)
-			err(1, NULL);
-	}
-
+	mc = VECTOR_CALLOC(macros->ml_list);
+	if (mc == NULL)
+		err(1, NULL);
 	mc->mc_name = name;
 	mc->mc_value = value;
 	mc->mc_refs = 0;
 	mc->mc_defs = 0;
 	mc->mc_lno = lno;
 	mc->mc_flags = flags;
-	TAILQ_INSERT_TAIL(&macros->ml_list, mc, mc_entry);
 	return MACRO_ERR_NONE;
 }
 
@@ -85,13 +79,6 @@ macros_insertc(struct macro_list *macros, const char *name, const char *value)
 {
 	enum macro_error error;
 
-	/*
-	 * A macro list used in a non-default context is always stack allocated.
-	 * Therefore ensure that the stack storage is sufficient.
-	 */
-	if (macros->ml_nmemb == macros->ml_size)
-		errx(1, "%s: stack storage exhausted", __func__);
-
 	/* Dangerous casting ahead but a macro is never mutated. */
 	error = macros_insert(macros, (char *)name, (char *)value,
 	    MACRO_FLAG_CONST, 0);
@@ -102,13 +89,39 @@ macros_insertc(struct macro_list *macros, const char *name, const char *value)
 struct macro *
 macros_find(const struct macro_list *macros, const char *name)
 {
-	struct macro *mc;
+	size_t i;
 
-	TAILQ_FOREACH(mc, &macros->ml_list, mc_entry) {
+	for (i = 0; i < VECTOR_LENGTH(macros->ml_list); i++) {
+		struct macro *mc = &macros->ml_list[i];
+
 		if (strcmp(mc->mc_name, name) == 0)
 			return mc;
 	}
 	return NULL;
+}
+
+struct macro **
+macros_unused(const struct macro_list *macros)
+{
+	VECTOR(struct macro *) unused;
+	size_t i;
+
+	if (VECTOR_INIT(unused) == NULL)
+		err(1, NULL);
+
+	for (i = 0; i < VECTOR_LENGTH(macros->ml_list); i++) {
+		struct macro *mc = &macros->ml_list[i];
+		struct macro **dst;
+
+		if (mc->mc_refs > 0)
+			continue;
+
+		dst = VECTOR_ALLOC(unused);
+		if (dst == NULL)
+			err(1, NULL);
+		*dst = mc;
+	}
+	return unused;
 }
 
 unsigned int
