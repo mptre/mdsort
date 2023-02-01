@@ -10,6 +10,7 @@
 
 #include "buffer.h"
 #include "extern.h"
+#include "macro.h"
 #include "message.h"
 #include "vector.h"
 
@@ -86,20 +87,24 @@ matches_clear(struct match_list *ml)
 int
 matches_interpolate(struct match_list *ml)
 {
-	struct macro_list macros;
+	struct macro_list *macros;
 	struct match *mh;
+	int error = 0;
 
+	macros = macros_alloc(MACRO_CTX_ACTION);
 	/* Construct action macro context. */
-	macros_init(&macros, MACRO_CTX_ACTION);
-	macros_insertc(&macros, "path",
+	macros_insertc(macros, "path",
 	    message_get_path(TAILQ_FIRST(ml)->mh_msg));
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
-		if (match_interpolate(mh, &macros))
-			return 1;
+		if (match_interpolate(mh, macros)) {
+			error = 1;
+			break;
+		}
 	}
 
-	return 0;
+	macros_free(macros);
+	return error;
 }
 
 int

@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "extern.h"
+#include "macro.h"
 #include "message.h"
 
 /*
@@ -63,12 +64,18 @@ main(int argc, char *argv[])
 		case 'D': {
 			char *eq;
 
-			if ((eq = strchr(optarg, '=')) == NULL)
-				errx(1, "missing macro separator: %s", optarg);
+			if ((eq = strchr(optarg, '=')) == NULL) {
+				warnx("missing macro separator: %s", optarg);
+				error = 1;
+				goto out;
+			}
 			*eq = '\0';
-			if (macros_insert(&config.cl_macros, optarg, &eq[1],
-			    MACRO_FLAG_CONST | MACRO_FLAG_STICKY, 0))
-				errx(1, "invalid macro: %s", optarg);
+			if (macros_insert(config.cl_macros, optarg, &eq[1],
+			    MACRO_FLAG_CONST | MACRO_FLAG_STICKY, 0)) {
+				warnx("invalid macro: %s", optarg);
+				error = 1;
+				goto out;
+			}
 			break;
 		}
 		case 'd':

@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "extern.h"
+#include "macro.h"
 
 static void expr_validate(const struct expr *);
 static void expr_validate_attachment_block(const struct expr *);
@@ -126,7 +127,7 @@ grammar		: /* empty */
 		;
 
 macro		: MACRO '=' STRING {
-			struct macro_list *macros = &yyconfig->cl_macros;
+			struct macro_list *macros = yyconfig->cl_macros;
 
 			$3 = expand($3, MACRO_CTX_DEFAULT);
 			switch (macros_insert(macros, $1, $3, 0, lineno)) {
@@ -485,7 +486,7 @@ optneg		: /* empty */ {
 void
 config_init(struct config_list *config)
 {
-	macros_init(&config->cl_macros, MACRO_CTX_DEFAULT);
+	config->cl_macros = macros_alloc(MACRO_CTX_DEFAULT);
 	TAILQ_INIT(&config->cl_list);
 }
 
@@ -505,7 +506,7 @@ config_parse(struct config_list *config, const char *path, const struct environm
 	lineno_save = 0;
 	yyparse();
 	fclose(yyfh);
-	macros_validate(&yyconfig->cl_macros);
+	macros_validate(yyconfig->cl_macros);
 	return parse_errors;
 }
 
@@ -513,26 +514,17 @@ void
 config_free(struct config_list *config)
 {
 	struct config *conf;
-	struct macro *mc;
 
 	if (config == NULL)
 		return;
+
+	macros_free(config->cl_macros);
 
 	while ((conf = TAILQ_FIRST(&config->cl_list)) != NULL) {
 		TAILQ_REMOVE(&config->cl_list, conf, entry);
 		strings_free(conf->paths);
 		expr_free(conf->expr);
 		free(conf);
-	}
-
-	while ((mc = TAILQ_FIRST(&config->cl_macros.ml_list)) != NULL) {
-		TAILQ_REMOVE(&config->cl_macros.ml_list, mc, mc_entry);
-		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
-			free(mc->mc_name);
-			free(mc->mc_value);
-		}
-		if ((mc->mc_flags & MACRO_FLAG_STATIC) == 0)
-			free(mc);
 	}
 }
 
@@ -944,7 +936,7 @@ static char *
 expand(char *str, unsigned int curctx)
 {
 	str = expandtilde(str, yyenv->ev_home);
-	str = expandmacros(str, &yyconfig->cl_macros, curctx);
+	str = expandmacros(str, yyconfig->cl_macros, curctx);
 	return str;
 }
 
