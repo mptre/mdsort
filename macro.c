@@ -6,6 +6,11 @@
 
 #include "vector.h"
 
+struct macro_list {
+	unsigned int		ml_ctx;
+	VECTOR(struct macro)	ml_list;
+};
+
 struct macro_list *
 macros_alloc(unsigned int ctx)
 {

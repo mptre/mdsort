@@ -21,11 +21,6 @@ struct macro {
 #define MACRO_FLAG_STICKY	0x00000002u	/* may not be overwritten */
 };
 
-struct macro_list {
-	unsigned int	 ml_ctx;
-	struct macro	*ml_list;	/* VECTOR(struct macro) */
-};
-
 struct macro_list	 *macros_alloc(unsigned int);
 void			  macros_free(struct macro_list *);
 enum macro_error	  macros_insert(struct macro_list *, char *, char *,
