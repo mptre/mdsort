@@ -43,8 +43,7 @@ strings_free(struct string_list *strings)
 
 	while ((str = TAILQ_FIRST(strings)) != NULL) {
 		TAILQ_REMOVE(strings, str, entry);
-		if ((str->flags & STRING_FLAG_CONST) == 0)
-			free(str->val);
+		free(str->val);
 		free(str);
 	}
 	free(strings);
@@ -70,18 +69,7 @@ strings_append(struct string_list *strings, char *val)
 	if (str == NULL)
 		err(1, NULL);
 	str->val = val;
-	str->flags = 0;
 	TAILQ_INSERT_TAIL(strings, str, entry);
-	return str;
-}
-
-struct string *
-strings_appendc(struct string_list *strings, const char *val)
-{
-	struct string *str;
-
-	str = strings_append(strings, (char *)val);
-	str->flags |= STRING_FLAG_CONST;
 	return str;
 }
 
