@@ -73,25 +73,6 @@ strings_append(struct string_list *strings, char *val)
 	return str;
 }
 
-char *
-strings_concat(const struct string_list *strings, char *buf, size_t *bufsiz,
-    size_t *buflen, char delim)
-{
-	const struct string *str;
-	int nmemb = 0;
-
-	if (buf != NULL && buf[0] != '\0')
-		nmemb = 1;
-
-	TAILQ_FOREACH(str, strings, entry) {
-		if (delim != 0 && nmemb > 0)
-			appendc(&buf, bufsiz, buflen, delim);
-		if (append(&buf, bufsiz, buflen, str->val))
-			nmemb++;
-	}
-	return buf;
-}
-
 /*
  * Execute external command. If fdin is equal to -1, /dev/null will be used as
  * standard input. Returns one of the following:

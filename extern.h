@@ -285,8 +285,6 @@ struct string_list	*strings_alloc(void);
 void			 strings_free(struct string_list *);
 
 struct string	*strings_append(struct string_list *, char *);
-char		*strings_concat(const struct string_list *, char *, size_t *,
-    size_t *, char);
 
 size_t	strings_len(const struct string_list *);
 
