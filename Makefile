@@ -6,7 +6,6 @@ PROG=	mdsort
 
 SRCS+=	buffer.c
 SRCS+=	compat-arc4random.c
-SRCS+=	compat-base64.c
 SRCS+=	compat-errc.c
 SRCS+=	compat-pledge.c
 SRCS+=	compat-reallocarray.c
@@ -99,7 +98,6 @@ DISTFILES+=	buffer.c
 DISTFILES+=	buffer.h
 DISTFILES+=	cdefs.h
 DISTFILES+=	compat-arc4random.c
-DISTFILES+=	compat-base64.c
 DISTFILES+=	compat-errc.c
 DISTFILES+=	compat-pledge.c
 DISTFILES+=	compat-queue.h
