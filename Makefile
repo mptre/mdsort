@@ -2,8 +2,6 @@ include ${.CURDIR}/config.mk
 
 VERSION=	11.5.0
 
-PROG=	mdsort
-
 SRCS+=	buffer.c
 SRCS+=	compat-arc4random.c
 SRCS+=	compat-errc.c
@@ -18,15 +16,17 @@ SRCS+=	fault.c
 SRCS+=	macro.c
 SRCS+=	maildir.c
 SRCS+=	match.c
-SRCS+=	mdsort.c
 SRCS+=	message.c
 SRCS+=	parse.c
 SRCS+=	time.c
 SRCS+=	util.c
 SRCS+=	vector.c
 
-OBJS=	${SRCS:.c=.o}
-DEPS=	${SRCS:.c=.d}
+SRCS_mdsort+=	${SRCS}
+SRCS_mdsort+=	mdsort.c
+OBJS_mdsort=	${SRCS_mdsort:.c=.o}
+DEPS_mdsort=	${SRCS_mdsort:.c=.d}
+PROG_mdsort=	mdsort
 
 KNFMT+=	buffer.c
 KNFMT+=	buffer.h
@@ -164,13 +164,13 @@ DISTFILES+=	vector.h
 
 TESTFLAGS?=	-Tfault
 
-all: ${PROG}
+all: ${PROG_mdsort}
 
-${PROG}: ${OBJS}
-	${CC} ${DEBUG} -o ${PROG} ${OBJS} ${LDFLAGS}
+${PROG_mdsort}: ${OBJS_mdsort}
+	${CC} ${DEBUG} -o ${PROG_mdsort} ${OBJS_mdsort} ${LDFLAGS}
 
 clean:
-	rm -f ${DEPS} ${OBJS} ${PROG} parse.c y.tab.h
+	rm -f ${DEPS_mdsort} ${OBJS_mdsort} ${PROG_mdsort} parse.c y.tab.h
 .PHONY: clean
 
 cleandir: clean
@@ -197,7 +197,7 @@ format:
 
 install: all
 	@mkdir -p ${DESTDIR}${BINDIR}
-	${INSTALL} ${PROG} ${DESTDIR}${BINDIR}
+	${INSTALL} ${PROG_mdsort} ${DESTDIR}${BINDIR}
 	@mkdir -p ${DESTDIR}${MANDIR}/man1
 	${INSTALL_MAN} ${.CURDIR}/mdsort.1 ${DESTDIR}${MANDIR}/man1
 	@mkdir -p ${DESTDIR}${MANDIR}/man5
@@ -223,8 +223,8 @@ lint-cppcheck:
 test: all
 	${MAKE} -C ${.CURDIR}/tests \
 		"COREDUMP=${.CURDIR}" \
-		"MDSORT=${.OBJDIR}/${PROG}" \
+		"MDSORT=${.OBJDIR}/${PROG_mdsort}" \
 		"TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
 
--include ${DEPS}
+-include ${DEPS_mdsort}
