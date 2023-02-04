@@ -39,4 +39,26 @@
     <id>unusedFunction</id>
     <symbolName>expr_set_stat</symbolName>
   </suppress>
+
+  <!-- macro.c -->
+  <suppress>
+    <fileName>macro.c</fileName>
+    <id>unusedFunction</id>
+    <symbolName>macro_get_name</symbolName>
+  </suppress>
+  <suppress>
+    <fileName>macro.c</fileName>
+    <id>unusedFunction</id>
+    <symbolName>macro_get_lno</symbolName>
+  </suppress>
+  <suppress>
+    <fileName>macro.c</fileName>
+    <id>unusedFunction</id>
+    <symbolName>macro_ref</symbolName>
+  </suppress>
+  <suppress>
+    <fileName>macro.c</fileName>
+    <id>unusedFunction</id>
+    <symbolName>macros_unused</symbolName>
+  </suppress>
 </suppressions>
