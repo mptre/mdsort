@@ -28,6 +28,12 @@ OBJS_mdsort=	${SRCS_mdsort:.c=.o}
 DEPS_mdsort=	${SRCS_mdsort:.c=.d}
 PROG_mdsort=	mdsort
 
+SRCS_test+=	${SRCS}
+SRCS_test+=	t.c
+OBJS_test=	${SRCS_test:.c=.o}
+DEPS_test=	${SRCS_test:.c=.d}
+PROG_test=	t
+
 KNFMT+=	buffer.c
 KNFMT+=	buffer.h
 KNFMT+=	cdefs.h
@@ -47,6 +53,7 @@ KNFMT+=	match.c
 KNFMT+=	mdsort.c
 KNFMT+=	message.c
 KNFMT+=	message.h
+KNFMT+=	t.c
 KNFMT+=	time.c
 KNFMT+=	util.c
 KNFMT+=	vector.c
@@ -69,6 +76,7 @@ CLANGTIDY+=	match.c
 CLANGTIDY+=	mdsort.c
 CLANGTIDY+=	message.c
 CLANGTIDY+=	message.h
+CLANGTIDY+=	t.c
 CLANGTIDY+=	time.c
 CLANGTIDY+=	util.c
 CLANGTIDY+=	vector.c
@@ -85,6 +93,7 @@ CPPCHECK+=	maildir.c
 CPPCHECK+=	match.c
 CPPCHECK+=	mdsort.c
 CPPCHECK+=	message.c
+CPPCHECK+=	t.c
 CPPCHECK+=	time.c
 CPPCHECK+=	util.c
 CPPCHECK+=	vector.c
@@ -122,6 +131,7 @@ DISTFILES+=	mdsort.conf.5
 DISTFILES+=	message.c
 DISTFILES+=	message.h
 DISTFILES+=	parse.y
+DISTFILES+=	t.c
 DISTFILES+=	tests/GNUmakefile
 DISTFILES+=	tests/Makefile
 DISTFILES+=	tests/action-add-header.sh
@@ -169,8 +179,12 @@ all: ${PROG_mdsort}
 ${PROG_mdsort}: ${OBJS_mdsort}
 	${CC} ${DEBUG} -o ${PROG_mdsort} ${OBJS_mdsort} ${LDFLAGS}
 
+${PROG_test}: ${OBJS_test}
+	${CC} ${DEBUG} -o ${PROG_test} ${OBJS_test} ${LDFLAGS}
+
 clean:
-	rm -f ${DEPS_mdsort} ${OBJS_mdsort} ${PROG_mdsort} parse.c y.tab.h
+	rm -f ${DEPS_mdsort} ${OBJS_mdsort} ${PROG_mdsort} parse.c y.tab.h \
+		${DEPS_testg} ${OBJS_mdsort} ${PROG_mdsort}
 .PHONY: clean
 
 cleandir: clean
@@ -220,11 +234,14 @@ lint-cppcheck:
 		${CPPCHECK}
 .PHONY: lint-cppcheck
 
-test: all
+test: ${PROG_mdsort} test-${PROG_test}
 	${MAKE} -C ${.CURDIR}/tests \
 		"COREDUMP=${.CURDIR}" \
 		"MDSORT=${.OBJDIR}/${PROG_mdsort}" \
 		"TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
+
+test-${PROG_test}: ${PROG_test}
+	${EXEC} ./${PROG_test}
 
 -include ${DEPS_mdsort}
