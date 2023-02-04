@@ -47,6 +47,7 @@ quoted_printable_decode(const char *str)
 	if (bf == NULL)
 		err(1, NULL);
 	quoted_printable_decode_buffer(bf, str, len, 0);
+	buffer_putc(bf, '\0');
 	dec = buffer_release(bf);
 	buffer_free(bf);
 	return dec;
@@ -59,82 +60,93 @@ quoted_printable_decode(const char *str)
 char *
 rfc2047_decode(const char *str)
 {
-	struct buffer *bf = NULL;
-	const char *qs;
+	struct buffer *bf;
+	const char *es = str;
 	char *dec;
 
-	qs = str;
-	for (;;) {
-		const char *p, *qe;
-		size_t len;
-		char enc;
+	bf = buffer_alloc(strlen(str));
+	if (bf == NULL)
+		err(1, NULL);
 
-		p = qs;
-		while (isspace((unsigned char)p[0]))
-			p++;
-		if (strncmp(p, "=?", 2) != 0)
-			break;
-		qs = &p[2];	/* consume "=?" */
-		qs = strchr(qs, '?');
-		if (qs == NULL)
-			goto out;
-		qs += 1;
-		enc = *qs;
-		qs += 1;
-		if (*qs != '?')
-			goto out;
-		qs += 1;
+	while (*es != '\0') {
+		if (strncmp(es, "=?", 2) == 0) {
+			const char *ee;
+			size_t len;
+			char enc;
 
-		qe = strstr(qs, "?=");
-		if (qe == NULL)
-			goto out;
+			es = &es[2];	/* consume "=?" */
+			es = strchr(es, '?');
+			if (es == NULL)
+				goto err;
+			es += 1;
+			enc = *es;
+			es += 1;
+			if (*es != '?')
+				goto err;
+			es += 1;
 
-		if (bf == NULL) {
-			bf = buffer_alloc(128);
-			if (bf == NULL)
-				err(1, NULL);
+			ee = strstr(es, "?=");
+			if (ee == NULL)
+				goto err;
+
+			if (bf == NULL) {
+				bf = buffer_alloc(128);
+				if (bf == NULL)
+					err(1, NULL);
+			}
+			len = (size_t)(ee - es);
+			switch (toupper((unsigned char)enc)) {
+			case 'B': {
+				char *dst, *src;
+
+				/* b64decode() requires a NUL-terminator. */
+				src = strndup(es, len);
+				if (src == NULL)
+					err(1, NULL);
+				dst = base64_decode(src);
+				free(src);
+				if (dst == NULL)
+					goto err;
+				buffer_printf(bf, "%s", dst);
+				free(dst);
+				break;
+			}
+
+			case 'Q':
+				quoted_printable_decode_buffer(bf, es, len, 1);
+				break;
+
+			default:
+				goto err;
+			}
+
+			es = &ee[2];	/* consume "?=" */
+
+			/* Spaces between encoded words must be ignored. */
+			ee = strstr(es, "=?");
+			if (ee != NULL) {
+				const char *p = es;
+
+				while (isspace((unsigned char)p[0]))
+					p++;
+				if (p == ee)
+					es = p;
+			}
+		} else {
+			buffer_putc(bf, *es++);
 		}
-		len = (size_t)(qe - qs);
-		switch (toupper((unsigned char)enc)) {
-		case 'B': {
-			char *dst, *src;
-
-			/* b64decode() requires a NUL-terminator. */
-			src = strndup(qs, len);
-			if (src == NULL)
-				goto out;
-			dst = base64_decode(src);
-			free(src);
-			if (dst == NULL)
-				goto out;
-			buffer_printf(bf, "%s", dst);
-			free(dst);
-			break;
-		}
-
-		case 'Q':
-			quoted_printable_decode_buffer(bf, qs, len, 1);
-			break;
-
-		default:
-			goto out;
-		}
-
-		qs = &qe[2];	/* consume "?=" */
 	}
 
-out:
-	if (bf == NULL) {
-		dec = strdup(str);
-		if (dec == NULL)
-			err(1, NULL);
-		return dec;
-	}
-
-	buffer_printf(bf, "%s", qs);
 	buffer_putc(bf, '\0');
 	dec = buffer_release(bf);
 	buffer_free(bf);
+	return dec;
+
+err:
+	buffer_free(bf);
+	dec = strdup(str);
+	if (dec == NULL)
+		err(1, NULL);
 	return dec;
 }
 
@@ -185,7 +197,6 @@ quoted_printable_decode_buffer(struct buffer *bf, const char *str, size_t len,
 		buffer_putc(bf, (hi << 4) | lo);
 		i += 2;
 	}
-	buffer_putc(bf, '\0');
 }
 
 int

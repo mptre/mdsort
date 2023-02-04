@@ -34,12 +34,12 @@ if testcase "multiple lines"; then
 	refute_empty "dst/new"
 fi
 
-if testcase "followed by ascii"; then
+if testcase "ascii intertwined"; then
 	mkmd "src" "dst"
-	mkmsg "src/new" -- "Subject" "$(subject) ascii"
+	mkmsg "src/new" -- "Subject" "ascii $(subject) ascii"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match header "Subject" / ascii/ move "dst"
+		match header "Subject" /Έκδοση/ move "dst"
 	}
 	EOF
 	mdsort
