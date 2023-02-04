@@ -46,6 +46,7 @@ main(int argc, char *argv[])
 	struct config *conf;
 	struct maildir *md;
 	struct message *msg;
+	int dousage = 0;
 	int error = 0;
 	int reject = 0;
 	int c, w;
@@ -91,19 +92,24 @@ main(int argc, char *argv[])
 			log_level++;
 			break;
 		default:
-			usage();
+			dousage = 1;
+			goto out;
 		}
 	argc -= optind;
 	argv += optind;
 	if (argc > 0) {
-		if (strcmp(*argv, "-") != 0)
-			usage();
+		if (strcmp(*argv, "-") != 0) {
+			dousage = 1;
+			goto out;
+		}
 		argc--;
 		argv++;
 		env.ev_options |= OPTION_STDIN;
 	}
-	if (argc > 0)
-		usage();
+	if (argc > 0) {
+		dousage = 1;
+		goto out;
+	}
 	if ((env.ev_options & OPTION_DRYRUN) && log_level < 1)
 		log_level = 1;
 
@@ -195,8 +201,10 @@ loop:
 
 out:
 	config_free(&config);
-
 	FAULT_SHUTDOWN();
+
+	if (dousage)
+		usage();
 
 	if (env.ev_options & OPTION_STDIN) {
 		if (error)
