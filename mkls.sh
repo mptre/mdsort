@@ -8,11 +8,11 @@ KNFMT \
 	compat-?(arc4random|pledge|utimensat).c \
 	-- \
 CLANGTIDY \
-	!(buffer|compat-*).c !(buffer|config|compat-queue).h \
+	!(buffer|compat-*|vector).c !(buffer|config|compat-queue|vector).h \
 	compat-?(arc4random|pledge|utimensat).c \
 	-- \
 CPPCHECK \
-	!(buffer|compat-*).c compat-?(arc4random|pledge|utimensat).c \
+	!(buffer|compat-*|vector).c compat-?(arc4random|pledge|utimensat).c \
 	-- \
 DISTFILES \
 	*.1 *.5 *.c !(config).h *.md \

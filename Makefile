@@ -79,8 +79,6 @@ CLANGTIDY+=	message.h
 CLANGTIDY+=	t.c
 CLANGTIDY+=	time.c
 CLANGTIDY+=	util.c
-CLANGTIDY+=	vector.c
-CLANGTIDY+=	vector.h
 
 CPPCHECK+=	compat-arc4random.c
 CPPCHECK+=	compat-pledge.c
@@ -96,7 +94,6 @@ CPPCHECK+=	message.c
 CPPCHECK+=	t.c
 CPPCHECK+=	time.c
 CPPCHECK+=	util.c
-CPPCHECK+=	vector.c
 
 DISTFILES+=	CHANGELOG.md
 DISTFILES+=	GNUmakefile
