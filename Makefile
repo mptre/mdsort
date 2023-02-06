@@ -181,7 +181,7 @@ ${PROG_test}: ${OBJS_test}
 
 clean:
 	rm -f ${DEPS_mdsort} ${OBJS_mdsort} ${PROG_mdsort} parse.c y.tab.h \
-		${DEPS_testg} ${OBJS_mdsort} ${PROG_mdsort}
+		${DEPS_test} ${OBJS_test} ${PROG_test}
 .PHONY: clean
 
 cleandir: clean
