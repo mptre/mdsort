@@ -11,7 +11,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, macos-latest]
         compiler: [gcc, clang]
-        mode: [asan, ubsan, musl, valgrind, bison]
+        mode: [asan, ubsan, musl, valgrind, bison, fuzz]
         exclude:
           - os: macos-latest
             compiler: gcc
@@ -37,6 +37,13 @@ jobs:
             os: ubuntu-22.04
             compiler: clang
 
+          - mode: fuzz
+            os: ubuntu-22.04
+            compiler: clang
+
+          - mode: fuzz
+            os: macos-latest
+
         include:
           - os: ubuntu-22.04
             nproc: nproc
@@ -61,12 +68,12 @@ jobs:
 
           - mode: musl
             cc: musl-gcc
-            dependenices: musl-tools
+            deps_mode: musl-tools
             musl: 1
             testflags: -Ttilde
 
           - mode: valgrind
-            dependenices: valgrind
+            deps_mode: valgrind
             exec: valgrind
             testflags: -Tmemleak
             valgrind: --quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all
@@ -75,12 +82,16 @@ jobs:
             yacc: bison
             yflags: -y -Werror
 
+          - mode: fuzz
+            cc: afl-gcc
+            deps_mode: afl
+
     steps:
       - uses: actions/checkout@v2
 
       - name: dependenices
-        if: ${{matrix.dependenices}}
-        run: sudo apt-get update && sudo apt-get install ${{matrix.dependenices}}
+        if: ${{matrix.deps_os || matrix.deps_mode}}
+        run: sudo apt-get update && sudo apt-get install ${{matrix.deps_os}} ${{matrix.deps_mode}}
 
       - name: test
         env:
@@ -90,6 +101,7 @@ jobs:
           CPPFLAGS: ${{matrix.cppflags}}
           DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
           EXEC: ${{matrix.exec}}
+          MODE: ${{matrix.mode}}
           MUSL: ${{matrix.musl}}
           TESTFLAGS: -Tfdleak ${{matrix.testflags}}
           VALGRIND_OPTS: ${{matrix.valgrind}}
@@ -101,6 +113,10 @@ jobs:
           MAKE="make -j `${{matrix.nproc}}`"
           env CPPFLAGS="${CPPFLAGS} -DDIAGNOSTIC" ./configure || :
           cat config.log
+          if [ "${MODE}" == "fuzz" ]; then
+            ${MAKE} fuzz
+            exit 0
+          fi
           ${MAKE} test
           # Ensure faults and assertions are free from side effects.
           env CPPFLAGS="${CPPFLAGS} -DNDEBUG" ./configure || :
