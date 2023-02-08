@@ -24,9 +24,9 @@ static void	matches_merge(struct match_list *, struct match *);
 static const char	*match_backref(const struct match *,
     const struct backref *);
 
-static int	interpolate(const struct match *, const struct macro_list *,
-    const char *, char **);
-static ssize_t	isbackref(const char *, struct backref *);
+static char	*interpolate(const struct match *, const struct macro_list *,
+    const char *);
+static ssize_t	 isbackref(const char *, struct backref *);
 
 /*
  * Append the given match to the list and construct the maildir destination path
@@ -359,10 +359,11 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 	switch (mh->mh_expr->ex_type) {
 	case EXPR_TYPE_STAT:
 	case EXPR_TYPE_MOVE: {
-		char *path = NULL;
+		char *path;
 		size_t n, siz;
 
-		if (interpolate(mh, macros, mh->mh_path, &path))
+		path = interpolate(mh, macros, mh->mh_path);
+		if (path == NULL)
 			return 1;
 		siz = sizeof(mh->mh_path);
 		n = strlcpy(mh->mh_path, path, siz);
@@ -380,7 +381,6 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		const struct string *str;
 		char *label = NULL;
 		char *buf;
-		int error;
 
 		bf = buffer_alloc(128);
 		if (bf == NULL)
@@ -404,9 +404,9 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		buffer_putc(bf, '\0');
 		buf = buffer_release(bf);
 		buffer_free(bf);
-		error = interpolate(mh, macros, buf, &label);
+		label = interpolate(mh, macros, buf);
 		free(buf);
-		if (error)
+		if (label == NULL)
 			return 1;
 		message_set_header(msg, "X-Label", label);
 		break;
@@ -426,9 +426,10 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		memset(mh->mh_exec, 0, len * sizeof(*mh->mh_exec));
 		mh->mh_nexec = len;
 		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
-			char *arg = NULL;
+			char *arg;
 
-			if (interpolate(mh, macros, str->val, &arg))
+			arg = interpolate(mh, macros, str->val);
+			if (arg == NULL)
 				return 1;
 			mh->mh_exec[nargs++] = arg;
 		}
@@ -437,9 +438,10 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 
 	case EXPR_TYPE_ADD_HEADER: {
 		const struct expr *ex = mh->mh_expr;
-		char *val = NULL;
+		char *val;
 
-		if (interpolate(mh, macros, ex->ex_add_header.val, &val))
+		val = interpolate(mh, macros, ex->ex_add_header.val);
+		if (val == NULL)
 			return 1;
 		message_set_header(msg, ex->ex_add_header.key, val);
 		break;
@@ -576,16 +578,17 @@ isbackref(const char *str, struct backref *br)
 	return end - str;
 }
 
-/*
- * Interpolate the given string, storing it in buf.
- */
-static int
+static char *
 interpolate(const struct match *mh, const struct macro_list *macros,
-    const char *str, char **buf)
+    const char *str)
 {
-	size_t buflen = 0;
-	size_t bufsiz = 0;
+	struct buffer *bf;
+	char *buf;
 	size_t i = 0;
+
+	bf = buffer_alloc(64);
+	if (bf == NULL)
+		err(1, NULL);
 
 	while (str[i] != '\0') {
 		struct backref br;
@@ -601,7 +604,7 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 			if (sub == NULL)
 				goto brerr;
 
-			append(buf, &bufsiz, &buflen, sub);
+			buffer_printf(bf, "%s", sub);
 			i += (size_t)n;
 			continue;
 		}
@@ -617,25 +620,25 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 			if (mc == NULL)
 				goto mcerr;
 
-			append(buf, &bufsiz, &buflen, macro_get_value(mc));
+			buffer_printf(bf, "%s", macro_get_value(mc));
 			i += (size_t)n;
 			continue;
 		}
 
-		appendc(buf, &bufsiz, &buflen, str[i]);
-		i++;
+		buffer_putc(bf, str[i++]);
 	}
 
-	return 0;
+	buffer_putc(bf, '\0');
+	buf = buffer_release(bf);
+	buffer_free(bf);
+	return buf;
 
 brerr:
 	warnx("%s: invalid back-reference", str);
-	free(*buf);
-	*buf = NULL;
-	return 1;
+	buffer_free(bf);
+	return NULL;
 mcerr:
 	warnx("%s: invalid macro", str);
-	free(*buf);
-	*buf = NULL;
-	return 1;
+	buffer_free(bf);
+	return NULL;
 }
