@@ -232,6 +232,7 @@ matches_inspect(const struct match_list *ml, const struct environment *env)
 		if (!dryrun)
 			continue;
 
+		/* Handle all matchers leading up to this action. */
 		rhs = lhs;
 		for (;;) {
 			if (rhs == mh)
