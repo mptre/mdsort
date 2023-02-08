@@ -1,6 +1,6 @@
 mkls "$@" \
 SRCS \
-	!(mdsort|t).c \
+	!(fuzz-*|mdsort|t).c \
 	parse.c \
 	-- \
 KNFMT \

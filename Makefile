@@ -34,6 +34,18 @@ OBJS_test=	${SRCS_test:.c=.o}
 DEPS_test=	${SRCS_test:.c=.d}
 PROG_test=	t
 
+SRCS_fuzz-config+=	${SRCS}
+SRCS_fuzz-config+=	fuzz-config.c
+OBJS_fuzz-config=	${SRCS_fuzz-config:.c=.o}
+DEPS_fuzz-config=	${SRCS_fuzz-config:.c=.d}
+PROG_fuzz-config=	fuzz-config
+
+SRCS_fuzz-message+=	${SRCS}
+SRCS_fuzz-message+=	fuzz-message.c
+OBJS_fuzz-message=	${SRCS_fuzz-message:.c=.o}
+DEPS_fuzz-message=	${SRCS_fuzz-message:.c=.d}
+PROG_fuzz-message=	fuzz-message
+
 KNFMT+=	buffer.c
 KNFMT+=	buffer.h
 KNFMT+=	cdefs.h
@@ -46,6 +58,8 @@ KNFMT+=	expr.c
 KNFMT+=	extern.h
 KNFMT+=	fault.c
 KNFMT+=	fault.h
+KNFMT+=	fuzz-config.c
+KNFMT+=	fuzz-message.c
 KNFMT+=	macro.c
 KNFMT+=	macro.h
 KNFMT+=	maildir.c
@@ -69,6 +83,8 @@ CLANGTIDY+=	expr.c
 CLANGTIDY+=	extern.h
 CLANGTIDY+=	fault.c
 CLANGTIDY+=	fault.h
+CLANGTIDY+=	fuzz-config.c
+CLANGTIDY+=	fuzz-message.c
 CLANGTIDY+=	macro.c
 CLANGTIDY+=	macro.h
 CLANGTIDY+=	maildir.c
@@ -86,6 +102,8 @@ CPPCHECK+=	compat-utimensat.c
 CPPCHECK+=	decode.c
 CPPCHECK+=	expr.c
 CPPCHECK+=	fault.c
+CPPCHECK+=	fuzz-config.c
+CPPCHECK+=	fuzz-message.c
 CPPCHECK+=	macro.c
 CPPCHECK+=	maildir.c
 CPPCHECK+=	match.c
@@ -118,6 +136,8 @@ DISTFILES+=	expr.c
 DISTFILES+=	extern.h
 DISTFILES+=	fault.c
 DISTFILES+=	fault.h
+DISTFILES+=	fuzz-config.c
+DISTFILES+=	fuzz-message.c
 DISTFILES+=	macro.c
 DISTFILES+=	macro.h
 DISTFILES+=	maildir.c
@@ -179,9 +199,19 @@ ${PROG_mdsort}: ${OBJS_mdsort}
 ${PROG_test}: ${OBJS_test}
 	${CC} ${DEBUG} -o ${PROG_test} ${OBJS_test} ${LDFLAGS}
 
+${PROG_fuzz-config}: ${OBJS_fuzz-config}
+	${CC} ${DEBUG} -o ${PROG_fuzz-config} ${OBJS_fuzz-config} ${LDFLAGS}
+
+${PROG_fuzz-message}: ${OBJS_fuzz-message}
+	${CC} ${DEBUG} -o ${PROG_fuzz-message} ${OBJS_fuzz-message} ${LDFLAGS}
+
+fuzz: ${PROG_fuzz-config} ${PROG_fuzz-message}
+
 clean:
 	rm -f ${DEPS_mdsort} ${OBJS_mdsort} ${PROG_mdsort} parse.c y.tab.h \
-		${DEPS_test} ${OBJS_test} ${PROG_test}
+		${DEPS_test} ${OBJS_test} ${PROG_test} \
+		${DEPS_fuzz-config} ${OBJS_fuzz-config} ${PROG_fuzz-config} \
+		${DEPS_fuzz-message} ${OBJS_fuzz-message} ${PROG_fuzz-message}
 .PHONY: clean
 
 cleandir: clean
