@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "buffer.h"
 #include "extern.h"
 #include "macro.h"
 #include "vector.h"
@@ -947,10 +948,12 @@ expand(char *str, unsigned int curctx)
 static char *
 expandmacros(char *str, struct macro_list *macros, unsigned int curctx)
 {
-	char *buf = NULL;
+	struct buffer *bf;
 	size_t i = 0;
-	size_t buflen = 0;
-	size_t bufsiz = 0;
+
+	bf = buffer_alloc(64);
+	if (bf == NULL)
+		err(1, NULL);
 
 	while (str[i] != '\0') {
 		struct macro *mc;
@@ -1001,7 +1004,7 @@ expandmacros(char *str, struct macro_list *macros, unsigned int curctx)
 			mc = macros_find(macros, macro);
 			if (mc != NULL) {
 				macro_ref(mc);
-				append(&buf, &bufsiz, &buflen, macro_get_value(mc));
+				buffer_printf(bf, "%s", macro_get_value(mc));
 			} else {
 				yyerror("unknown macro used in string: %s",
 				    macro);
@@ -1011,19 +1014,15 @@ expandmacros(char *str, struct macro_list *macros, unsigned int curctx)
 			i += (size_t)n;
 		} else {
 fallback:
-			appendc(&buf, &bufsiz, &buflen, str[i]);
-			i++;
+			buffer_putc(bf, str[i++]);
 		}
 	}
+	buffer_putc(bf, '\0');
 
-	/*
-	 * If the string only contains unknown macros, the buffer will not be
-	 * allocated.
-	 */
-	if (buf == NULL)
-		return str;
 	free(str);
-	return buf;
+	str = buffer_release(bf);
+	buffer_free(bf);
+	return str;
 }
 
 static struct string_list *
