@@ -13,6 +13,7 @@
 #include "extern.h"
 #include "macro.h"
 #include "message.h"
+#include "vector.h"
 
 /*
  * When reading messages from stdin and an error occurred, always exit with
@@ -43,9 +44,9 @@ main(int argc, char *argv[])
 	struct environment env;
 	struct match_list matches;
 	struct maildir_entry me;
-	struct config *conf;
 	struct maildir *md;
 	struct message *msg;
+	size_t i;
 	int dousage = 0;
 	int error = 0;
 	int reject = 0;
@@ -133,7 +134,8 @@ main(int argc, char *argv[])
 	if (env.ev_options & OPTION_SYNTAX)
 		goto out;
 
-	TAILQ_FOREACH(conf, &config.cl_list, entry) {
+	for (i = 0; i < VECTOR_LENGTH(config.cl_list); i++) {
+		struct config *conf = &config.cl_list[i];
 		const struct string *str;
 
 		TAILQ_FOREACH(str, conf->paths, entry) {
@@ -231,10 +233,11 @@ usage(void)
 static int
 config_has_exec(const struct config_list *config, const struct environment *env)
 {
-	const struct config *conf;
+	size_t i;
 	int nexec = 0;
 
-	TAILQ_FOREACH(conf, &config->cl_list, entry) {
+	for (i = 0; i < VECTOR_LENGTH(config->cl_list); i++) {
+		const struct config *conf = &config->cl_list[i];
 		const struct string *str;
 
 		TAILQ_FOREACH(str, conf->paths, entry) {

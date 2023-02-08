@@ -295,14 +295,11 @@ size_t	strings_len(const struct string_list *);
 struct config {
 	struct string_list	*paths;
 	struct expr		*expr;
-
-	TAILQ_ENTRY(config)	 entry;
 };
 
 struct config_list {
 	struct macro_list	*cl_macros;
-
-	TAILQ_HEAD(, config)	 cl_list;
+	struct config		*cl_list;	/* VECTOR(struct config) */
 };
 
 void	config_init(struct config_list *);

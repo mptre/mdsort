@@ -167,12 +167,11 @@ maildir		: maildir_paths exprblock {
 				break;
 			}
 
-			conf = malloc(sizeof(*conf));
+			conf = VECTOR_CALLOC(yyconfig->cl_list);
 			if (conf == NULL)
 				err(1, NULL);
 			conf->paths = $1;
 			conf->expr = $2;
-			TAILQ_INSERT_TAIL(&yyconfig->cl_list, conf, entry);
 		}
 		;
 
@@ -185,10 +184,11 @@ maildir_paths	: MAILDIR strings {
 			}
 		}
 		| STDIN {
-			const struct config *conf;
 			char *path;
+			size_t i;
 
-			TAILQ_FOREACH(conf, &yyconfig->cl_list, entry) {
+			for (i = 0; i < VECTOR_LENGTH(yyconfig->cl_list); i++) {
+				const struct config *conf = &yyconfig->cl_list[i];
 				const struct string *str;
 
 				TAILQ_FOREACH(str, conf->paths, entry) {
@@ -488,7 +488,8 @@ void
 config_init(struct config_list *config)
 {
 	config->cl_macros = macros_alloc(MACRO_CTX_DEFAULT);
-	TAILQ_INIT(&config->cl_list);
+	if (VECTOR_INIT(config->cl_list) == NULL)
+		err(1, NULL);
 }
 
 int
@@ -514,19 +515,19 @@ config_parse(struct config_list *config, const char *path, const struct environm
 void
 config_free(struct config_list *config)
 {
-	struct config *conf;
-
 	if (config == NULL)
 		return;
 
 	macros_free(config->cl_macros);
 
-	while ((conf = TAILQ_FIRST(&config->cl_list)) != NULL) {
-		TAILQ_REMOVE(&config->cl_list, conf, entry);
+	while (!VECTOR_EMPTY(config->cl_list)) {
+		struct config *conf;
+
+		conf = VECTOR_POP(config->cl_list);
 		strings_free(conf->paths);
 		expr_free(conf->expr);
-		free(conf);
 	}
+	VECTOR_FREE(config->cl_list);
 }
 
 static void
