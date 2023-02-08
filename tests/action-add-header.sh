@@ -1,14 +1,14 @@
 if testcase "add header"; then
 	mkmd "src"
-	mkmsg "src/new"
+	mkmsg "src/new" -- "Subject" "Hello"
 	cat <<-EOF >"$CONF"
 	maildir "src" {
-		match all add-header "Subject" "Hello"
+		match all add-header "Subject" "Bye"
 	}
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_header "Subject" "Hello" "$(findmsg "src/new")"
+	assert_header "Subject" "Bye" "$(findmsg "src/new")"
 fi
 
 if testcase "interpolation"; then

@@ -506,8 +506,10 @@ message_set_header(struct message *msg, const char *header, char *val)
 		else
 			hdr->flags |= HEADER_FLAG_DIRTY;
 		hdr->val = val;
-		while (!VECTOR_EMPTY(hdr->values))
-			free(*VECTOR_POP(hdr->values));
+		if (hdr->values != NULL) {
+			while (!VECTOR_EMPTY(hdr->values))
+				free(*VECTOR_POP(hdr->values));
+		}
 		VECTOR_FREE(hdr->values);
 	}
 }
