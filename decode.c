@@ -79,6 +79,8 @@ rfc2047_decode(const char *str)
 			if (es == NULL)
 				goto err;
 			es += 1;
+			if (*es == '\0')
+				goto err;
 			enc = *es;
 			es += 1;
 			if (*es != '?')

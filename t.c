@@ -63,6 +63,8 @@ main(int argc, char *argv[])
 	test_rfc2047_decode("(=?UTF-8?Q?a?= \n =?UTF-8?Q?b?=)", "(ab)");
 	test_rfc2047_decode("(=?UTF-8?Q?a_b?=)", "(a b)");
 	test_rfc2047_decode("(=?UTF-8?Q?a?= =?ISO-8859-2?Q?_b?=)", "(a b)");
+	test_rfc2047_decode("=?UTF-8?", "=?UTF-8?");
+	test_rfc2047_decode("=?UTF-8?Q", "=?UTF-8?Q");
 
 out:
 	return error;
