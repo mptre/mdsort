@@ -318,9 +318,6 @@ char	*pathslice(const char *, char *, size_t, int, int);
 
 size_t	nspaces(const char *);
 
-size_t	append(char **, size_t *, size_t *, const char *);
-size_t	appendc(char **, size_t *, size_t *, char);
-
 int	isstdin(const char *);
 
 extern int	log_level;

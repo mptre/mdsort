@@ -223,47 +223,6 @@ nspaces(const char *str)
 	return strspn(str, " \t");
 }
 
-/*
- * Append str, including the NUL-terminator, to buf. Both bufsiz and buflen are
- * updated accordingly. Returns the number of appended bytes, excluding the
- * NUL-terminator.
- */
-size_t
-append(char **buf, size_t *bufsiz, size_t *buflen, const char *str)
-{
-	size_t len;
-
-	len = strlen(str);
-	if (*buflen + len + 1 >= *bufsiz) {
-		size_t newsiz;
-
-		newsiz = *bufsiz > 0 ? 2 * *bufsiz : 64;
-		while (*buflen + len + 1 >= newsiz)
-			newsiz *= 2;
-		*buf = reallocarray(*buf, 1, newsiz);
-		if (*buf == NULL)
-			err(1, NULL);
-		*bufsiz = newsiz;
-	}
-
-	memcpy(*buf + *buflen, str, len + 1);
-	*buflen += len;
-	return len;
-}
-
-/*
- * Append ch to buf using the same semantics as append().
- */
-size_t
-appendc(char **buf, size_t *bufsiz, size_t *buflen, char ch)
-{
-	char str[2];
-
-	str[0] = ch;
-	str[1] = '\0';
-	return append(buf, bufsiz, buflen, str);
-}
-
 int
 isstdin(const char *str)
 {
