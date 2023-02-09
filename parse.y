@@ -486,22 +486,22 @@ optneg		: /* empty */ {
 %%
 
 void
-config_init(struct config_list *config)
+config_init(struct config_list *cl)
 {
-	config->cl_macros = macros_alloc(MACRO_CTX_DEFAULT);
-	if (VECTOR_INIT(config->cl_list) == NULL)
+	cl->cl_macros = macros_alloc(MACRO_CTX_DEFAULT);
+	if (VECTOR_INIT(cl->cl_list) == NULL)
 		err(1, NULL);
 }
 
 int
-config_parse(struct config_list *config, const char *path, const struct environment *env)
+config_parse(struct config_list *cl, const char *path, const struct environment *env)
 {
 	yyfh = fopen(path, "r");
 	if (yyfh == NULL) {
 		warn("%s", path);
 		return 1;
 	}
-	yyconfig = config;
+	yyconfig = cl;
 	yypath = path;
 	yyenv = env;
 
@@ -514,21 +514,21 @@ config_parse(struct config_list *config, const char *path, const struct environm
 }
 
 void
-config_free(struct config_list *config)
+config_free(struct config_list *cl)
 {
-	if (config == NULL)
+	if (cl == NULL)
 		return;
 
-	macros_free(config->cl_macros);
+	macros_free(cl->cl_macros);
 
-	while (!VECTOR_EMPTY(config->cl_list)) {
+	while (!VECTOR_EMPTY(cl->cl_list)) {
 		struct config *conf;
 
-		conf = VECTOR_POP(config->cl_list);
+		conf = VECTOR_POP(cl->cl_list);
 		strings_free(conf->paths);
 		expr_free(conf->expr);
 	}
-	VECTOR_FREE(config->cl_list);
+	VECTOR_FREE(cl->cl_list);
 }
 
 static void

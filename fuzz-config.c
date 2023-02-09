@@ -7,13 +7,13 @@
 int
 main(void)
 {
-	struct config_list config;
+	struct config_list cl;
 	struct environment env;
 	int error;
 
 	memset(&env, 0, sizeof(env));
-	config_init(&config);
-	error = config_parse(&config, "/dev/stdin", &env);
-	config_free(&config);
+	config_init(&cl);
+	error = config_parse(&cl, "/dev/stdin", &env);
+	config_free(&cl);
 	return error;
 }

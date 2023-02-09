@@ -40,7 +40,7 @@ static __dead void	 usage(void);
 int
 main(int argc, char *argv[])
 {
-	struct config_list config;
+	struct config_list cl;
 	struct environment env;
 	struct match_list matches;
 	struct maildir_entry me;
@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
-	config_init(&config);
+	config_init(&cl);
 	memset(&env, 0, sizeof(env));
 	TAILQ_INIT(&matches);
 
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 				goto out;
 			}
 			*eq = '\0';
-			if (macros_insert(config.cl_macros, optarg, &eq[1],
+			if (macros_insert(cl.cl_macros, optarg, &eq[1],
 			    MACRO_FLAG_CONST | MACRO_FLAG_STICKY, 0)) {
 				warnx("invalid macro: %s", optarg);
 				error = 1;
@@ -121,21 +121,21 @@ main(int argc, char *argv[])
 
 	if (env.ev_confpath == NULL)
 		env.ev_confpath = defaultconf(env.ev_home);
-	if (config_parse(&config, env.ev_confpath, &env)) {
+	if (config_parse(&cl, env.ev_confpath, &env)) {
 		error = 1;
 		goto out;
 	}
 
 	/* Drop exec privilegies unless needed. */
-	if (!config_has_exec(&config, &env))
+	if (!config_has_exec(&cl, &env))
 		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 			err(1, "pledge");
 
 	if (env.ev_options & OPTION_SYNTAX)
 		goto out;
 
-	for (i = 0; i < VECTOR_LENGTH(config.cl_list); i++) {
-		struct config *conf = &config.cl_list[i];
+	for (i = 0; i < VECTOR_LENGTH(cl.cl_list); i++) {
+		struct config *conf = &cl.cl_list[i];
 		const struct string *str;
 
 		TAILQ_FOREACH(str, conf->paths, entry) {
@@ -202,7 +202,7 @@ loop:
 	}
 
 out:
-	config_free(&config);
+	config_free(&cl);
 	FAULT_SHUTDOWN();
 
 	if (dousage)
@@ -231,13 +231,13 @@ usage(void)
  * configuration requires execution of external commands.
  */
 static int
-config_has_exec(const struct config_list *config, const struct environment *env)
+config_has_exec(const struct config_list *cl, const struct environment *env)
 {
 	size_t i;
 	int nexec = 0;
 
-	for (i = 0; i < VECTOR_LENGTH(config->cl_list); i++) {
-		const struct config *conf = &config->cl_list[i];
+	for (i = 0; i < VECTOR_LENGTH(cl->cl_list); i++) {
+		const struct config *conf = &cl->cl_list[i];
 		const struct string *str;
 
 		TAILQ_FOREACH(str, conf->paths, entry) {
