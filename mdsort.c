@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "conf.h"
 #include "extern.h"
 #include "macro.h"
 #include "message.h"
