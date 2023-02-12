@@ -2,7 +2,6 @@
 
 #include "config.h"
 
-#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -157,10 +156,9 @@ message_flags_set(struct message_flags *mf, char flag)
 struct message *
 message_parse(const char *dir, int dirfd, const char *path)
 {
+	struct buffer *bf;
 	struct message *msg;
-	ssize_t n;
-	size_t msglen = 0;
-	size_t msgsize = 8192;
+	char *buf;
 	size_t siz;
 	int fd;
 
@@ -169,14 +167,20 @@ message_parse(const char *dir, int dirfd, const char *path)
 		warn("open: %s/%s", dir, path);
 		return NULL;
 	}
+	bf = buffer_read_fd(fd);
+	if (bf == NULL) {
+		warn("%s", path);
+		close(fd);
+		return NULL;
+	}
+	buf = buffer_str(bf);
+	buffer_free(bf);
 
 	msg = calloc(1, sizeof(*msg));
 	if (msg == NULL)
 		err(1, NULL);
 	msg->me_fd = fd;
-	msg->me_buf = malloc(msgsize);
-	if (msg->me_buf == NULL)
-		err(1, NULL);
+	msg->me_buf = buf;
 	if (VECTOR_INIT(msg->me_headers) == NULL)
 		err(1, NULL);
 
@@ -189,27 +193,6 @@ message_parse(const char *dir, int dirfd, const char *path)
 		warnc(ENAMETOOLONG, "%s", __func__);
 		goto err;
 	}
-
-	for (;;) {
-		if (msglen >= msgsize - 1) {
-			msg->me_buf = reallocarray(msg->me_buf, 2, msgsize);
-			if (msg->me_buf == NULL)
-				err(1, NULL);
-			msgsize *= 2;
-		}
-
-		n = read(msg->me_fd, msg->me_buf + msglen,
-		    msgsize - msglen - 1);
-		if (n == -1) {
-			warn("read: %s", path);
-			goto err;
-		} else if (n == 0) {
-			break;
-		}
-		msglen += (size_t)n;
-	}
-	assert(msglen < msgsize);
-	msg->me_buf[msglen] = '\0';
 
 	msg->me_body = message_parse_headers(msg);
 
