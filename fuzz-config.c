@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "conf.h"
 #include "extern.h"
 
 int
