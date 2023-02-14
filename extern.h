@@ -4,6 +4,8 @@
 #  include "compat-queue.h"
 #endif
 
+#include <sys/types.h>	/* pid_t */
+
 #include <limits.h>
 #include <regex.h>
 #include <time.h>
