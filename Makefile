@@ -47,8 +47,6 @@ OBJS_fuzz-message=	${SRCS_fuzz-message:.c=.o}
 DEPS_fuzz-message=	${SRCS_fuzz-message:.c=.d}
 PROG_fuzz-message=	fuzz-message
 
-KNFMT+=	buffer.c
-KNFMT+=	buffer.h
 KNFMT+=	cdefs.h
 KNFMT+=	compat-arc4random.c
 KNFMT+=	compat-pledge.c
@@ -73,8 +71,6 @@ KNFMT+=	message.h
 KNFMT+=	t.c
 KNFMT+=	time.c
 KNFMT+=	util.c
-KNFMT+=	vector.c
-KNFMT+=	vector.h
 
 CLANGTIDY+=	cdefs.h
 CLANGTIDY+=	compat-arc4random.c
@@ -124,8 +120,6 @@ DISTFILES+=	GNUmakefile
 DISTFILES+=	LICENSE
 DISTFILES+=	Makefile
 DISTFILES+=	README.md
-DISTFILES+=	buffer.c
-DISTFILES+=	buffer.h
 DISTFILES+=	cdefs.h
 DISTFILES+=	compat-arc4random.c
 DISTFILES+=	compat-errc.c
@@ -146,6 +140,10 @@ DISTFILES+=	fault.c
 DISTFILES+=	fault.h
 DISTFILES+=	fuzz-config.c
 DISTFILES+=	fuzz-message.c
+DISTFILES+=	libks/buffer.c
+DISTFILES+=	libks/buffer.h
+DISTFILES+=	libks/vector.c
+DISTFILES+=	libks/vector.h
 DISTFILES+=	macro.c
 DISTFILES+=	macro.h
 DISTFILES+=	maildir.c
@@ -194,8 +192,6 @@ DISTFILES+=	tests/t.sh
 DISTFILES+=	tests/util.sh
 DISTFILES+=	time.c
 DISTFILES+=	util.c
-DISTFILES+=	vector.c
-DISTFILES+=	vector.h
 
 TESTFLAGS?=	-Tfault
 
@@ -260,7 +256,7 @@ lint:
 .PHONY: lint
 
 lint-clang-tidy:
-	cd ${.CURDIR} && clang-tidy --quiet ${CLANGTIDY}
+	cd ${.CURDIR} && clang-tidy --quiet ${CLANGTIDY} -- ${CPPFLAGS}
 .PHONY: lint-clang-tidy
 
 lint-cppcheck:
