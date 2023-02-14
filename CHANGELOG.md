@@ -1,3 +1,16 @@
+# 11.5.1 - 2023-02-14
+
+## Bug fixes
+
+- Headers encoded using quoted printable can be both preceded and followed by
+  plain text.
+  (d8662c4)
+  (Anton Lindqvist)
+
+- Prevent out of bounds read by add missing NUL check.
+  (d4d1f9b)
+  (Anton Lindqvist)
+
 # 11.5.0 - 2022-10-19
 
 ## News
