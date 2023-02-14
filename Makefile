@@ -140,6 +140,7 @@ DISTFILES+=	fault.c
 DISTFILES+=	fault.h
 DISTFILES+=	fuzz-config.c
 DISTFILES+=	fuzz-message.c
+DISTFILES+=	libks/arithmetic.h
 DISTFILES+=	libks/buffer.c
 DISTFILES+=	libks/buffer.h
 DISTFILES+=	libks/vector.c

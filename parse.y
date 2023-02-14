@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "arithmetic.h"
 #include "buffer.h"
 #include "conf.h"
 #include "extern.h"
@@ -432,11 +433,13 @@ date_cmp	: '<' {
 		;
 
 date_age	: INT scalar {
-			if ($1 > UINT_MAX / $2) {
+			unsigned int age;
+
+			if (u32_mul_overflow($1, $2, &age)) {
 				yyerror("integer too large");
 				$$ = 0;
 			} else {
-				$$ = $1 * $2;
+				$$ = age;
 			}
 		}
 		;
@@ -711,29 +714,22 @@ again:
 	}
 
 	if (isdigit((unsigned char)c)) {
+		unsigned int number = 0;
 		int overflow = 0;
 
-		yylval.number = 0;
 		for (; isdigit((unsigned char)c); c = yygetc()) {
 			unsigned char u = (unsigned char)c;
 
 			if (overflow)
 				continue;
 
-			if (yylval.number > UINT_MAX / 10) {
+			if (u32_mul_overflow(number, 10, &number) ||
+			    u32_add_overflow(number, u - '0', &number)) {
 				yyerror("integer too large");
 				overflow = 1;
-				continue;
 			}
-			yylval.number *= 10;
-
-			if (yylval.number > UINT_MAX - (u - '0')) {
-				yyerror("integer too large");
-				overflow = 1;
-				continue;
-			}
-			yylval.number += u - '0';
 		}
+		yylval.number = number;
 		yyungetc(c);
 		return INT;
 	}
