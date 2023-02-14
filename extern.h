@@ -16,8 +16,8 @@
 
 struct environment {
 	char		 ev_home[PATH_MAX];
-	char		 ev_hostname[HOST_NAME_MAX + 1];
 	char		 ev_tmpdir[PATH_MAX];
+	char		 ev_hostname[256];
 	const char	*ev_confpath;
 
 	struct {
