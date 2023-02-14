@@ -1,6 +1,6 @@
 include ${.CURDIR}/config.mk
 
-VERSION=	11.5.0
+VERSION=	11.5.1
 
 SRCS+=	buffer.c
 SRCS+=	compat-arc4random.c
