@@ -291,15 +291,6 @@ struct string	*strings_append(struct string_list *, char *);
 size_t	strings_len(const struct string_list *);
 
 /*
- * config ----------------------------------------------------------------------
- */
-
-struct config_list;
-
-int	config_parse(struct config_list *, const char *,
-    const struct environment *);
-
-/*
  * util ------------------------------------------------------------------------
  */
 
