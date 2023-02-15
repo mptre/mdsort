@@ -7,7 +7,7 @@
   (d8662c4)
   (Anton Lindqvist)
 
-- Prevent out of bounds read by add missing NUL check.
+- Prevent out of bounds read caused by missing NUL check.
   (d4d1f9b)
   (Anton Lindqvist)
 
