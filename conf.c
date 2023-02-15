@@ -1,5 +1,7 @@
 #include "conf.h"
 
+#include "config.h"
+
 #include <err.h>
 
 #include "extern.h"
