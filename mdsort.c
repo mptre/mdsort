@@ -13,6 +13,7 @@
 #include "conf.h"
 #include "environment.h"
 #include "extern.h"
+#include "fault.h"
 #include "macro.h"
 #include "message.h"
 #include "vector.h"

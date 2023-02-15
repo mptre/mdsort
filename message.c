@@ -18,6 +18,7 @@
 #include "decode.h"
 #include "environment.h"
 #include "extern.h"
+#include "fault.h"
 #include "vector.h"
 
 struct message {

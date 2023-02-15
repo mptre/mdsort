@@ -8,8 +8,6 @@
 #include <regex.h>
 #include <time.h>
 
-#include "fault.h"
-
 /*
  * maildir ---------------------------------------------------------------------
  */

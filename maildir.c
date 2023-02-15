@@ -14,6 +14,7 @@
 
 #include "environment.h"
 #include "extern.h"
+#include "fault.h"
 #include "message.h"
 
 #define FLAGS_MAX	64
