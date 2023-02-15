@@ -1,9 +1,7 @@
 #include "config.h"
 
-#include <string.h>
-
 #include "conf.h"
-#include "extern.h"
+#include "environment.h"
 
 int
 main(void)
@@ -12,7 +10,7 @@ main(void)
 	struct environment env;
 	int error;
 
-	memset(&env, 0, sizeof(env));
+	environment_init(&env);
 	config_init(&cl);
 	error = config_parse(&cl, "/dev/stdin", &env);
 	config_free(&cl);

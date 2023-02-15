@@ -12,6 +12,7 @@
 #include <wchar.h>
 
 #include "cdefs.h"
+#include "environment.h"
 #include "extern.h"
 #include "message.h"
 #include "vector.h"

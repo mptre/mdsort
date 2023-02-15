@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include "conf.h"
+#include "environment.h"
 #include "extern.h"
 #include "macro.h"
 #include "message.h"
@@ -59,7 +60,7 @@ main(int argc, char *argv[])
 	setlocale(LC_CTYPE, "");
 
 	config_init(&cl);
-	memset(&env, 0, sizeof(env));
+	environment_init(&env);
 	TAILQ_INIT(&matches);
 
 	while ((c = getopt(argc, argv, "D:df:nv")) != -1)
@@ -328,7 +329,7 @@ readenv(struct environment *env)
 	}
 
 	env->ev_now = time(NULL);
-	tm = localtime(&env->ev_now);
+	tm = localtime((const time_t *)&env->ev_now);
 	if (tm == NULL)
 		err(1, "localtime");
 	env->ev_tz.t_offset = tm->tm_gmtoff;

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "environment.h"
 #include "extern.h"
 
 static const char	*timeparse(const char *, struct tm *);
@@ -112,7 +113,7 @@ tzabbr(const char *str, time_t *tz, const struct environment *env)
 		return 1;
 	}
 	tzset();
-	tm = localtime(&env->ev_now);
+	tm = localtime((const time_t *)&env->ev_now);
 	if (tm == NULL) {
 		warn("localtime");
 		error = 1;

@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include "buffer.h"
+#include "environment.h"
 #include "extern.h"
 #include "macro.h"
 #include "message.h"

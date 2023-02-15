@@ -12,6 +12,7 @@
 #include "arithmetic.h"
 #include "buffer.h"
 #include "conf.h"
+#include "environment.h"
 #include "extern.h"
 #include "macro.h"
 #include "vector.h"

@@ -16,6 +16,7 @@
 
 #include "buffer.h"
 #include "decode.h"
+#include "environment.h"
 #include "extern.h"
 #include "vector.h"
 
