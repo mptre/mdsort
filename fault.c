@@ -1,3 +1,5 @@
+#include "fault.h"
+
 #include "config.h"
 
 #include <err.h>
