@@ -2,6 +2,9 @@
 
 #include "config.h"
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -1063,6 +1066,7 @@ static int
 writefd(const char *dir)
 {
 	char path[PATH_MAX];
+	mode_t old_umask;
 	int fd;
 
 	if (pathjoin(path, sizeof(path), dir, "mdsort-XXXXXXXX") == NULL) {
@@ -1070,7 +1074,9 @@ writefd(const char *dir)
 		return -1;
 	}
 
+	old_umask = umask(0777);
 	fd = mkstemp(path);
+	umask(old_umask);
 	if (fd == -1) {
 		warn("mkstemp");
 		return -1;
