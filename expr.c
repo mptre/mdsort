@@ -950,7 +950,7 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 static size_t
 strnwidth(const char *str, size_t len)
 {
-	size_t max = MB_CUR_MAX;
+	size_t max = (size_t)MB_CUR_MAX;
 	size_t width = 0;
 	size_t i;
 
