@@ -5,140 +5,149 @@ on:
   - pull_request
 
 jobs:
-  test:
-    runs-on: ${{matrix.os}}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, macos-latest]
-        compiler: [gcc, clang]
-        mode: [asan, ubsan, musl, valgrind, bison, fuzz]
-        exclude:
-          - os: macos-latest
-            compiler: gcc
-
-          - mode: musl
-            os: macos-latest
-
-          - mode: musl
-            os: ubuntu-22.04
-            compiler: clang
-
-          - mode: valgrind
-            os: macos-latest
-
-          - mode: valgrind
-            os: ubuntu-22.04
-            compiler: clang
-
-          - mode: bison
-            os: macos-latest
-
-          - mode: bison
-            os: ubuntu-22.04
-            compiler: clang
-
-          - mode: fuzz
-            os: ubuntu-22.04
-            compiler: clang
-
-          - mode: fuzz
-            os: macos-latest
-
-        include:
-          - os: ubuntu-22.04
-            nproc: nproc
-
-          - os: macos-latest
-            nproc: sysctl -n hw.logicalcpu
-            cflags: -Wno-sign-conversion
-
-          - compiler: gcc
-            cflags: -Wformat-signedness
-
-          - mode: asan
-            debug1: -fsanitize=address
-            testflags: -Tmemleak
-
-          - mode: ubsan
-            debug1: -fsanitize=undefined -fno-sanitize-recover=all
-
-          - mode: ubsan
-            compiler: clang
-            debug2: -fsanitize=unsigned-integer-overflow
-
-          - mode: musl
-            cc: musl-gcc
-            deps_mode: musl-tools
-            musl: 1
-            testflags: -Ttilde
-
-          - mode: valgrind
-            deps_mode: valgrind
-            exec: valgrind
-            testflags: -Tmemleak
-            valgrind: --quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all
-
-          - mode: bison
-            yacc: bison
-            yflags: -y -Werror
-
-          - mode: fuzz
-            cc: afl-gcc
-            deps_mode: afl
-
+  linux-gcc-sanitize:
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
-
-      - name: dependenices
-        if: ${{matrix.deps_os || matrix.deps_mode}}
-        run: sudo apt-get update && sudo apt-get install ${{matrix.deps_os}} ${{matrix.deps_mode}}
-
+      - name: checkout
+        uses: actions/checkout@v2
       - name: test
         env:
-          ASAN_OPTIONS: exitcode=66
-          CC: ${{matrix.cc || matrix.compiler}}
-          CFLAGS: -Werror -Wmissing-prototypes -Wpedantic -Wsign-conversion -Wshadow -Wwrite-strings ${{matrix.cflags}}
-          CPPFLAGS: ${{matrix.cppflags}}
-          DEBUG: -g -O2 ${{matrix.debug1}} ${{matrix.debug2}}
-          EXEC: ${{matrix.exec}}
-          MODE: ${{matrix.mode}}
-          MUSL: ${{matrix.musl}}
-          TESTFLAGS: -Tfdleak ${{matrix.testflags}}
-          VALGRIND_OPTS: ${{matrix.valgrind}}
-          YACC: ${{matrix.yacc || 'yacc'}}
-          YFLAGS: ${{matrix.yflags}}
+          CC: gcc
+          CPPFLAGS: -DDIAGNOSTIC
+          DEBUG: -fsanitize=address,undefined -fno-sanitize-recover=all
+          TESTFLAGS: -Tfdleak -Tmemleak
         run: |
-          set -ex
-          ${CC} -v
-          MAKE="make -j `${{matrix.nproc}}`"
-          env CPPFLAGS="${CPPFLAGS} -DDIAGNOSTIC" ./configure || :
-          cat config.log
-          if [ "${MODE}" == "fuzz" ]; then
-            ${MAKE} fuzz
-            exit 0
-          fi
-          ${MAKE} test
-          # Ensure faults and assertions are free from side effects.
-          env CPPFLAGS="${CPPFLAGS} -DNDEBUG" ./configure || :
-          cat config.log
-          ${MAKE} test "TESTFLAGS=${TESTFLAGS} -Tfault"
+          ./configure --pedantic
+          make -j`nproc` test
+
+  linux-clang-sanitize:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: test
+        env:
+          CC: clang
+          CPPFLAGS: -DDIAGNOSTIC
+          DEBUG: -fsanitize=address,undefined,unsigned-integer-overflow -fno-sanitize-recover=all
+          TESTFLAGS: -Tfdleak -Tmemleak
+        run: |
+          ./configure --pedantic
+          make -j`nproc` test
+
+  macos-clang-sanitize:
+    runs-on: macos-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: test
+        env:
+          CC: clang
+          CPPFLAGS: -DDIAGNOSTIC
+          DEBUG: -fsanitize=address,undefined,unsigned-integer-overflow -fno-sanitize-recover=all
+          TESTFLAGS: -Tfdleak -Tmemleak
+        run: |
+          # yacc does not emit sign-conversion conformant code.
+          ./configure
+          make -j`sysctl -n hw.logicalcpu` test
+
+  valgrind:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: dependenices
+        run: sudo apt-get update && sudo apt-get install valgrind
+      - name: test
+        env:
+          CC: gcc
+          CPPFLAGS: -DDIAGNOSTIC
+          EXEC: valgrind
+          TESTFLAGS: -Tfdleak -Tmemleak
+          VALGRIND_OPTS: --quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all
+        run: |
+          ./configure --pedantic
+          make -j`nproc` test
+
+  musl:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: dependenices
+        run: sudo apt-get update && sudo apt-get install musl-tools
+      - name: test
+        env:
+          CC: musl-gcc
+          CPPFLAGS: -DDIAGNOSTIC
+          MUSL: 1
+          TESTFLAGS: -Tfdleak -Ttilde
+        run: |
+          ./configure --pedantic
+          make -j`nproc` test
+
+  bison:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: test
+        env:
+          CC: gcc
+          CPPFLAGS: -DDIAGNOSTIC
+          TESTFLAGS: -Tfdleak -Ttilde
+          YACC: bison
+          YFLAGS: -y -Werror
+        run: |
+          ./configure --pedantic
+          make -j`nproc` test
+
+  ndebug:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: test
+        env:
+          CC: gcc
+          CPPFLAGS: -DDIAGNOSTIC -DNDEBUG
+          TESTFLAGS: -Tfdleak
+        run: |
+          ./configure --pedantic
+          make -j`nproc` test
+
+  fuzz:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: dependenices
+        run: sudo apt-get update && sudo apt-get install afl
+      - name: test
+        env:
+          CC: afl-gcc
+        run: |
+          ./configure --pedantic
+          make -j`nproc` fuzz
 
   clang-tidy:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - name: checkout
+        uses: actions/checkout@v2
       - name: clang-tidy
         run: |
-          ./configure
+          ./configure --pedantic
           make lint-clang-tidy
 
   cppcheck:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - name: checkout
+        uses: actions/checkout@v2
       - name: dependenices
         run: sudo apt-get update && sudo apt-get install cppcheck
       - name: cppcheck
         run: |
-          ./configure
+          ./configure --pedantic
           make lint-cppcheck
