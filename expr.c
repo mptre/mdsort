@@ -530,7 +530,8 @@ expr_eval_body(struct expr *ex, struct expr_eval_arg *ea)
 	body = message_get_body(ea->ea_msg);
 	if (body == NULL)
 		return EXPR_ERROR;
-	return expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env, "Body", body);
+	return expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env, "Body",
+	    body);
 }
 
 static int
@@ -635,7 +636,8 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 	}
 
 	/* Populate matches, only used during dry run. */
-	return expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env, "Date", date);
+	return expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env, "Date",
+	    date);
 }
 
 static int
