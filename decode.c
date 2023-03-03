@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "buffer.h"
+#include "cdefs.h"
 
 static int	b64_pton(const char *, unsigned char *, size_t);
 static void	quoted_printable_decode_buffer(struct buffer *, const char *,
@@ -297,7 +298,7 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 				return -1;
 			ch = (unsigned char)*src++;		/* Skip the = */
 			/* Fall through to "single trailing =" case. */
-			/* FALLTHROUGH */
+			FALLTHROUGH;
 
 		case 3:		/* Valid, means two bytes of info */
 			/*

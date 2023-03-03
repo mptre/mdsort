@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "arithmetic.h"
+#include "cdefs.h"
 #include "buffer.h"
 #include "conf.h"
 #include "environment.h"
@@ -141,7 +142,7 @@ macro		: MACRO '=' STRING {
 			case MACRO_ERR_CTX:
 			case MACRO_ERR_EXIST:
 				yyerror("macro already defined: %s", $1);
-				/* FALLTHROUGH */
+				FALLTHROUGH;
 			case MACRO_ERR_STICKY:
 				free($1);
 				free($3);
@@ -959,7 +960,7 @@ expandmacros(char *str, struct macro_list *macros, unsigned int curctx)
 				 */
 				if ((ctx & MACRO_CTX_DEFAULT))
 					break;
-				/* FALLTHROUGH */
+				FALLTHROUGH;
 			case MACRO_CTX_DEFAULT:
 				/*
 				 * Presence of a non-default macro in a default

@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "cdefs.h"
 #include "conf.h"
 #include "environment.h"
 #include "extern.h"
@@ -179,7 +180,7 @@ main(int argc, char *argv[])
 				switch (expr_eval(conf->expr, &ea)) {
 				case EXPR_ERROR:
 					error = 1;
-					/* FALLTHROUGH */
+					FALLTHROUGH;
 				case EXPR_NOMATCH:
 					goto loop;
 				}
