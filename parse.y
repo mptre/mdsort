@@ -906,6 +906,7 @@ macros_validate(const struct macro_list *macros)
 		yyerror("unused macro: %s", macro_get_name(mc));
 		yypopl();
 	}
+	/* coverity[leaked_storage: FALSE] */
 	VECTOR_FREE(unused);
 }
 
