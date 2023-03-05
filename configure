@@ -48,6 +48,31 @@ makevar() {
 	fi
 }
 
+# pedantic
+#
+# Pedantic flags supported by most compilers.
+pedantic() {
+	cat <<-EOF | xargs
+	-O2
+	-Werror
+	-Wmissing-prototypes
+	-Wpedantic
+	-Wshadow
+	-Wsign-conversion
+	-Wwrite-strings
+	EOF
+}
+
+# rmdup arg ...
+#
+# Remove duplicates from the given arguments while preserving the order.
+rmdup() {
+	echo "$@" |
+	xargs printf '%s\n' |
+	awk '!x[$1]++' |
+	xargs
+}
+
 check_arc4random() {
 	compile <<-EOF
 	#include <stdlib.h>
@@ -95,17 +120,6 @@ check_gnu_source() {
 	compile <"$TMP1" && return 1
 
 	{ echo "#define _GNU_SOURCE"; cat "$TMP1"; } | compile
-}
-
-check_host_name_max() {
-	compile <<-EOF
-	#include <limits.h>
-
-	int main(void) {
-		static char hostname[HOST_NAME_MAX + 1];
-		return !(hostname[0] == '\0');
-	}
-	EOF
 }
 
 check_pledge() {
@@ -228,21 +242,6 @@ check_yystype() {
 	! compile <"$TMP2"
 }
 
-# pedantic
-#
-# Pedantic flags supported by most compilers.
-pedantic() {
-	cat <<-EOF | xargs
-	-O2
-	-Werror
-	-Wmissing-prototypes
-	-Wpedantic
-	-Wshadow
-	-Wsign-conversion
-	-Wwrite-strings
-	EOF
-}
-
 _pedantic=0
 
 while [ $# -gt 0 ]; do
@@ -269,7 +268,6 @@ HAVE_ARC4RANDOM=0
 HAVE_DEAD=0
 HAVE_ERRC=0
 HAVE_GNU_SOURCE=0
-HAVE_HOST_NAME_MAX=0
 HAVE_PLEDGE=0
 HAVE_QUEUE=0
 HAVE_REALLOCARRAY=0
@@ -308,7 +306,6 @@ check_arc4random && HAVE_ARC4RANDOM=1
 check_dead && HAVE_DEAD=1
 check_errc && HAVE_ERRC=1
 check_gnu_source && HAVE_GNU_SOURCE=1
-check_host_name_max && HAVE_HOST_NAME_MAX=1
 check_pledge && HAVE_PLEDGE=1
 check_queue && HAVE_QUEUE=1
 check_reallocarray && HAVE_REALLOCARRAY=1
@@ -344,8 +341,6 @@ exec 1>config.h
 
 [ $HAVE_DEAD -eq 0 ] && printf '#define __dead\t__attribute__((__noreturn__))\n'
 
-[ $HAVE_HOST_NAME_MAX -eq 0 ] && printf '#define HOST_NAME_MAX\t255\n'
-
 if [ $HAVE_STAT_TIM -eq 0 ]; then
 	printf '#define st_atim\tst_atimespec\n'
 	printf '#define st_ctim\tst_ctimespec\n'
@@ -361,7 +356,7 @@ fi
 [ $HAVE_ARC4RANDOM -eq 0 ] &&
 	printf 'uint32_t arc4random(void);\n'
 [ $HAVE_ERRC -eq 0 ] && {
-	printf 'void errc(int eval, int code, const char *fmt, ...)\n';
+	printf 'void errc(int, int, const char *, ...)\n';
 	printf '\t__attribute__((__noreturn__, __format__ (printf, 3, 4)));\n'; }
 [ $HAVE_PLEDGE -eq 0 ] &&
 	printf 'int pledge(const char *, const char *);\n'
@@ -372,7 +367,7 @@ fi
 [ $HAVE_UTIMENSAT -eq 0 ] &&
 	printf 'int utimensat(int, const char *, const struct timespec [2], int);\n'
 [ $HAVE_WARNC -eq 0 ] && {
-	printf 'void warnc(int code, const char *fmt, ...)\n'
+	printf 'void warnc(int, const char *, ...)\n'
 	printf '\t__attribute__((__format__ (printf, 2, 3)));\n'; }
 
 # Redirect stdout to config.mk.
@@ -381,12 +376,12 @@ exec 1>config.mk
 # Use echo to normalize whitespace.
 cat <<EOF
 CC=		$(echo $CC)
-CFLAGS=		$(echo $CFLAGS)
-CPPFLAGS=	$(echo $CPPFLAGS -I\${.CURDIR} -I\${.CURDIR}/libks)
-DEBUG=		$(echo $DEBUG)
-LDFLAGS=	$(echo $LDFLAGS)
+CFLAGS=		$(rmdup $CFLAGS)
+CPPFLAGS=	$(rmdup $CPPFLAGS -I\${.CURDIR} -I\${.CURDIR}/libks)
+DEBUG=		$(rmdup $DEBUG)
+LDFLAGS=	$(rmdup $LDFLAGS)
 YACC=		$(echo $YACC)
-YFLAGS=		$(echo $YFLAGS)
+YFLAGS=		$(rmdup $YFLAGS)
 
 BINDIR?=	$(echo $BINDIR)
 MANDIR?=	$(echo $MANDIR)
