@@ -19,7 +19,8 @@ static int	test_base64_decode0(const char *, const char *, const char *,
 static int	test_rfc2047_decode0(const char *, const char *, const char *,
     int);
 
-static __dead void	usage(void);
+static void	usage(void)
+	__attribute__((__noreturn__));
 
 int
 main(int argc, char *argv[])
@@ -70,7 +71,7 @@ out:
 	return error;
 }
 
-static __dead void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: t [-x]\n");

@@ -39,7 +39,8 @@ static int		 config_has_exec(const struct config_list *,
 static const char	*defaultconf(const char *);
 static int		 maildir_skip(const char *, const struct environment *);
 static void		 readenv(struct environment *);
-static __dead void	 usage(void);
+static void		 usage(void)
+	__attribute__((__noreturn__));
 
 int
 main(int argc, char *argv[])
@@ -223,7 +224,7 @@ out:
 	return error;
 }
 
-static __dead void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: mdsort [-dnv] [-D macro=value] [-f file] "
