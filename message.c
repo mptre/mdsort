@@ -318,11 +318,12 @@ out:
  * The caller is responsible for closing the returned file descriptor.
  */
 int
-message_get_fd(struct message *msg, const struct environment *env, int dobody)
+message_get_fd(struct message *msg, const struct environment *env,
+    int skipheaders)
 {
 	int fd;
 
-	if (dobody) {
+	if (skipheaders) {
 		const char *body;
 		size_t len;
 
