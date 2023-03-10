@@ -10,7 +10,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <stdint.h>	/* SIZE_MAX */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
