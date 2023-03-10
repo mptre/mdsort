@@ -48,8 +48,7 @@ quoted_printable_decode(const char *str)
 	if (bf == NULL)
 		err(1, NULL);
 	quoted_printable_decode_buffer(bf, str, len, 0);
-	buffer_putc(bf, '\0');
-	dec = buffer_release(bf);
+	dec = buffer_str(bf);
 	buffer_free(bf);
 	return dec;
 }
@@ -140,8 +139,7 @@ rfc2047_decode(const char *str)
 		}
 	}
 
-	buffer_putc(bf, '\0');
-	dec = buffer_release(bf);
+	dec = buffer_str(bf);
 	buffer_free(bf);
 	return dec;
 
