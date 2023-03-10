@@ -413,9 +413,7 @@ message_get_body(struct message *msg)
 	if (found == NULL)
 		return msg->me_body;
 
-	(void)message_decode_body(msg, found);
-
-	return msg->me_buf_dec;
+	return message_decode_body(msg, found);
 }
 
 char *const *
