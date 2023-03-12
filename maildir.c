@@ -1,3 +1,5 @@
+#include "maildir.h"
+
 #include "config.h"
 
 #include <sys/stat.h>

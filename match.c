@@ -12,6 +12,7 @@
 #include "environment.h"
 #include "extern.h"
 #include "macro.h"
+#include "maildir.h"
 #include "message.h"
 #include "vector.h"
 

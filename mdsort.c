@@ -16,6 +16,7 @@
 #include "extern.h"
 #include "fault.h"
 #include "macro.h"
+#include "maildir.h"
 #include "message.h"
 #include "vector.h"
 
