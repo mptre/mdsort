@@ -73,6 +73,20 @@ rmdup() {
 	xargs
 }
 
+check_attribute_fallthrough() {
+	compile <<-EOF
+	int main(void) {
+		switch (0) {
+		case 0:
+			__attribute__((__fallthrough__));
+		case 1:
+			return 1;
+		}
+		return 0;
+	}
+	EOF
+}
+
 check_arc4random() {
 	compile <<-EOF
 	#include <stdlib.h>
@@ -252,6 +266,7 @@ set -u
 # Enable tracing, will end up in config.log.
 set -x
 
+HAVE_ATTRIBUTE_FALLTHROUGH=0
 HAVE_ARC4RANDOM=0
 HAVE_ERRC=0
 HAVE_GNU_SOURCE=0
@@ -289,6 +304,7 @@ if [ "$_pedantic" = 1 ]; then
 	DEBUG="-g ${DEBUG}"
 fi
 
+check_attribute_fallthrough && HAVE_ATTRIBUTE_FALLTHROUGH=1
 check_arc4random && HAVE_ARC4RANDOM=1
 check_errc && HAVE_ERRC=1
 check_gnu_source && HAVE_GNU_SOURCE=1
@@ -324,6 +340,12 @@ exec 1>config.h
 [ $HAVE_STRLCPY -eq 1 ] && printf '#define HAVE_STRLCPY\t1\n'
 [ $HAVE_UTIMENSAT -eq 1 ] && printf '#define HAVE_UTIMENSAT\t1\n'
 [ $HAVE_WARNC -eq 1 ] && printf '#define HAVE_WARNC\t1\n'
+
+if [ $HAVE_ATTRIBUTE_FALLTHROUGH -eq 1 ]; then
+	printf '#define FALLTHROUGH __attribute__((__fallthrough__))\n'
+else
+	printf '#define FALLTHROUGH do {} while (0) /* FALLTHROUGH */\n'
+fi
 
 if [ $HAVE_STAT_TIM -eq 0 ]; then
 	printf '#define st_atim\tst_atimespec\n'
