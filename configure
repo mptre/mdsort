@@ -275,19 +275,19 @@ LDFLAGS="$(DEBUG= makevar LDFLAGS || :)"
 YACC=$(makevar YACC || fatal "YACC: not defined")
 YFLAGS="$(makevar YFLAGS || :)"
 
-# Must happen after CC is defined.
+PREFIX="$(makevar PREFIX || echo /usr/local)"
+BINDIR="$(makevar BINDIR || echo "${PREFIX}/bin")"
+MANDIR="$(makevar MANDIR || echo "${PREFIX}/man")"
+INSTALL="$(makevar INSTALL || echo install)"
+INSTALL_MAN="$(makevar INSTALL_MAN || echo install)"
+
+# Following chunks must happen after CC is defined.
 if [ "$_pedantic" = 1 ]; then
 	CFLAGS="$(cc_has_option -Wformat-signedness) ${CFLAGS}"
 	CFLAGS="$(cc_has_option -Wimplicit-fallthrough) ${CFLAGS}"
 	CFLAGS="-g $(pedantic) ${CFLAGS}"
 	DEBUG="-g ${DEBUG}"
 fi
-
-PREFIX="$(makevar PREFIX || echo /usr/local)"
-BINDIR="$(makevar BINDIR || echo "${PREFIX}/bin")"
-MANDIR="$(makevar MANDIR || echo "${PREFIX}/man")"
-INSTALL="$(makevar INSTALL || echo install)"
-INSTALL_MAN="$(makevar INSTALL_MAN || echo install)"
 
 check_arc4random && HAVE_ARC4RANDOM=1
 check_errc && HAVE_ERRC=1
