@@ -2,6 +2,7 @@ include ${.CURDIR}/config.mk
 
 VERSION=	11.5.1
 
+SRCS+=	arithmetic.c
 SRCS+=	buffer.c
 SRCS+=	compat-arc4random.c
 SRCS+=	compat-errc.c
@@ -150,6 +151,7 @@ DISTFILES+=	fault.c
 DISTFILES+=	fault.h
 DISTFILES+=	fuzz-config.c
 DISTFILES+=	fuzz-message.c
+DISTFILES+=	libks/arithmetic.c
 DISTFILES+=	libks/arithmetic.h
 DISTFILES+=	libks/buffer.c
 DISTFILES+=	libks/buffer.h
