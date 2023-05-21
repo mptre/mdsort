@@ -152,7 +152,6 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			} else {
 				maildir_close(dst);
 			}
-			dst = NULL;
 			break;
 
 		case EXPR_TYPE_DISCARD:
