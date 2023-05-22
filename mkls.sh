@@ -17,6 +17,9 @@ CLANGTIDY \
 CPPCHECK \
 	!(compat-*|parse).c compat-?(arc4random|pledge|utimensat).c \
 	-- \
+SHLINT \
+	configure \
+	-- \
 DISTFILES \
 	*.1 *.5 !(parse).c !(config).h libks/*.[ch] *.md \
 	GNUmakefile LICENSE Makefile configure parse.y \

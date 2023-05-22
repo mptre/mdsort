@@ -33,12 +33,6 @@ TESTS+=	stdin.sh
 SHLINT+=	${TESTS}
 SHLINT+=	util.sh
 
-SHELLCHECKFLAGS+=	-f gcc
-SHELLCHECKFLAGS+=	-s ksh
-SHELLCHECKFLAGS+=	-o add-default-case
-SHELLCHECKFLAGS+=	-o avoid-nullary-conditions
-SHELLCHECKFLAGS+=	-o quote-safe-variables
-
 .SUFFIXES: .sh .fake
 
 .sh.fake:

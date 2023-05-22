@@ -124,6 +124,8 @@ CPPCHECK+=	t.c
 CPPCHECK+=	time.c
 CPPCHECK+=	util.c
 
+SHLINT+=	configure
+
 DISTFILES+=	CHANGELOG.md
 DISTFILES+=	GNUmakefile
 DISTFILES+=	LICENSE
@@ -207,6 +209,12 @@ DISTFILES+=	tests/util.sh
 DISTFILES+=	time.c
 DISTFILES+=	util.c
 
+SHELLCHECKFLAGS+=	-f gcc
+SHELLCHECKFLAGS+=	-s ksh
+SHELLCHECKFLAGS+=	-o add-default-case
+SHELLCHECKFLAGS+=	-o avoid-nullary-conditions
+SHELLCHECKFLAGS+=	-o quote-safe-variables
+
 TESTFLAGS?=	-Tfault
 
 all: ${PROG_mdsort}
@@ -266,7 +274,7 @@ install: all
 lint:
 	cd ${.CURDIR} && knfmt -ds ${KNFMT}
 	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
-	${MAKE} -C ${.CURDIR}/tests lint
+	${MAKE} -C ${.CURDIR}/tests "SHELLCHECKFLAGS=${SHELLCHECKFLAGS}" lint
 .PHONY: lint
 
 lint-clang-tidy:
@@ -278,6 +286,10 @@ lint-cppcheck:
 		--max-configs=2 --suppress-xml=cppcheck-suppressions.xml \
 		${CPPCHECK}
 .PHONY: lint-cppcheck
+
+lint-shellcheck:
+	cd ${.CURDIR} && shellcheck ${SHELLCHECKFLAGS} ${SHLINT}
+.PHONY: lint-shellcheck
 
 test: ${PROG_mdsort} test-${PROG_test}
 	${MAKE} -C ${.CURDIR}/tests \
