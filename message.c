@@ -235,8 +235,12 @@ message_free(struct message *msg)
 
 		hdr = VECTOR_POP(msg->me_headers);
 		if (hdr->values != NULL) {
-			while (!VECTOR_EMPTY(hdr->values))
-				free(*VECTOR_POP(hdr->values));
+			while (!VECTOR_EMPTY(hdr->values)) {
+				char **tail;
+
+				tail = VECTOR_POP(hdr->values);
+				free(*tail);
+			}
 			VECTOR_FREE(hdr->values);
 		}
 		if (hdr->flags & HEADER_FLAG_DIRTY)
@@ -441,8 +445,14 @@ message_get_header(const struct message *msg, const char *header)
 			err(1, NULL);
 		if (VECTOR_RESERVE(hdr->values, nfound))
 			err(1, NULL);
-		for (i = 0, tmp = hdr; i < nfound; i++, tmp++)
-			*VECTOR_ALLOC(hdr->values) = decodeheader(tmp->val);
+		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
+			char **dst;
+
+			dst = VECTOR_ALLOC(hdr->values);
+			if (dst == NULL)
+				err(1, NULL);
+			*dst = decodeheader(tmp->val);
+		}
 	}
 	return hdr->values;
 }
@@ -497,8 +507,12 @@ message_set_header(struct message *msg, const char *header, char *val)
 			hdr->flags |= HEADER_FLAG_DIRTY;
 		hdr->val = val;
 		if (hdr->values != NULL) {
-			while (!VECTOR_EMPTY(hdr->values))
-				free(*VECTOR_POP(hdr->values));
+			while (!VECTOR_EMPTY(hdr->values)) {
+				char **tail;
+
+				tail = VECTOR_POP(hdr->values);
+				free(*tail);
+			}
 		}
 		VECTOR_FREE(hdr->values);
 	}
@@ -577,8 +591,14 @@ message_get_attachments(struct message *msg)
 		err(1, NULL);
 	if (VECTOR_RESERVE(attachments, n))
 		err(1, NULL);
-	for (i = 0; i < n; i++)
-		*VECTOR_ALLOC(attachments) = &msg->me_attachments[i];
+	for (i = 0; i < n; i++) {
+		struct message **dst;
+
+		dst = VECTOR_ALLOC(attachments);
+		if (dst == NULL)
+			err(1, NULL);
+		*dst = &msg->me_attachments[i];
+	}
 	return attachments;
 }
 
