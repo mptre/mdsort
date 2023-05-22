@@ -14,10 +14,9 @@ jobs:
         env:
           CC: gcc
           CPPFLAGS: -DDIAGNOSTIC
-          DEBUG: -fsanitize=address,undefined -fno-sanitize-recover=all
           TESTFLAGS: -Tfdleak -Tmemleak
         run: |
-          ./configure --pedantic
+          ./configure --pedantic --sanitize
           make -j`nproc` test
 
   linux-clang-sanitize:
@@ -29,10 +28,9 @@ jobs:
         env:
           CC: clang
           CPPFLAGS: -DDIAGNOSTIC
-          DEBUG: -fsanitize=address,undefined,unsigned-integer-overflow -fno-sanitize-recover=all
           TESTFLAGS: -Tfdleak -Tmemleak
         run: |
-          ./configure --pedantic
+          ./configure --pedantic --sanitize
           make -j`nproc` test
 
   macos-clang-sanitize:
@@ -44,11 +42,10 @@ jobs:
         env:
           CC: clang
           CPPFLAGS: -DDIAGNOSTIC
-          DEBUG: -fsanitize=address,undefined,unsigned-integer-overflow -fno-sanitize-recover=all
           TESTFLAGS: -Tfdleak -Tmemleak
         run: |
           # yacc does not emit sign-conversion conformant code.
-          ./configure
+          ./configure --sanitize
           make -j`sysctl -n hw.logicalcpu` test
 
   valgrind:
