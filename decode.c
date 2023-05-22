@@ -49,6 +49,8 @@ quoted_printable_decode(const char *str)
 		err(1, NULL);
 	quoted_printable_decode_buffer(bf, str, len, 0);
 	dec = buffer_str(bf);
+	if (dec == NULL)
+		err(1, NULL);
 	buffer_free(bf);
 	return dec;
 }
@@ -140,6 +142,8 @@ rfc2047_decode(const char *str)
 	}
 
 	dec = buffer_str(bf);
+	if (dec == NULL)
+		err(1, NULL);
 	buffer_free(bf);
 	return dec;
 

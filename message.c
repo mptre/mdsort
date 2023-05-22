@@ -179,6 +179,10 @@ message_parse(const char *dir, int dirfd, const char *path)
 	}
 	buf = buffer_str(bf);
 	buffer_free(bf);
+	if (buf == NULL) {
+		warn(NULL);
+		return NULL;
+	}
 
 	msg = calloc(1, sizeof(*msg));
 	if (msg == NULL)
