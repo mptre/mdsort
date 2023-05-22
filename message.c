@@ -189,7 +189,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 		err(1, NULL);
 	msg->me_fd = fd;
 	msg->me_buf = buf;
-	if (VECTOR_INIT(msg->me_headers) == NULL)
+	if (VECTOR_INIT(msg->me_headers))
 		err(1, NULL);
 
 	if (pathjoin(msg->me_path, sizeof(msg->me_path), dir, path) == NULL) {
@@ -437,9 +437,9 @@ message_get_header(const struct message *msg, const char *header)
 		struct header *tmp;
 		size_t i;
 
-		if (VECTOR_INIT(hdr->values) == NULL)
+		if (VECTOR_INIT(hdr->values))
 			err(1, NULL);
-		if (VECTOR_RESERVE(hdr->values, nfound) == NULL)
+		if (VECTOR_RESERVE(hdr->values, nfound))
 			err(1, NULL);
 		for (i = 0, tmp = hdr; i < nfound; i++, tmp++)
 			*VECTOR_ALLOC(hdr->values) = decodeheader(tmp->val);
@@ -566,16 +566,16 @@ message_get_attachments(struct message *msg)
 	size_t i, n;
 
 	if (msg->me_attachments == NULL) {
-		if (VECTOR_INIT(msg->me_attachments) == NULL)
+		if (VECTOR_INIT(msg->me_attachments))
 			err(1, NULL);
 		if (parseattachments(msg, msg, 0))
 			return NULL;
 	}
 
 	n = VECTOR_LENGTH(msg->me_attachments);
-	if (VECTOR_INIT(attachments) == NULL)
+	if (VECTOR_INIT(attachments))
 		err(1, NULL);
-	if (VECTOR_RESERVE(attachments, n) == NULL)
+	if (VECTOR_RESERVE(attachments, n))
 		err(1, NULL);
 	for (i = 0; i < n; i++)
 		*VECTOR_ALLOC(attachments) = &msg->me_attachments[i];
@@ -914,7 +914,7 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 		attach->me_buf = strndup(beg, len);
 		if (attach->me_buf == NULL)
 			err(1, NULL);
-		if (VECTOR_INIT(attach->me_headers) == NULL)
+		if (VECTOR_INIT(attach->me_headers))
 			err(1, NULL);
 		(void)strlcpy(attach->me_path, msg->me_path,
 		    sizeof(attach->me_path));

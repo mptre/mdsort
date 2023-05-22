@@ -12,7 +12,7 @@ void
 config_init(struct config_list *cl)
 {
 	cl->cl_macros = macros_alloc(MACRO_CTX_DEFAULT);
-	if (VECTOR_INIT(cl->cl_list) == NULL)
+	if (VECTOR_INIT(cl->cl_list))
 		err(1, NULL);
 }
 

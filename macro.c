@@ -31,7 +31,7 @@ macros_alloc(unsigned int ctx)
 	if (macros == NULL)
 		err(1, NULL);
 	macros->ml_ctx = ctx;
-	if (VECTOR_INIT(macros->ml_list) == NULL)
+	if (VECTOR_INIT(macros->ml_list))
 		err(1, NULL);
 	return macros;
 }
@@ -122,7 +122,7 @@ macros_unused(const struct macro_list *macros)
 	VECTOR(struct macro *) unused;
 	size_t i;
 
-	if (VECTOR_INIT(unused) == NULL)
+	if (VECTOR_INIT(unused))
 		err(1, NULL);
 
 	for (i = 0; i < VECTOR_LENGTH(macros->ml_list); i++) {
