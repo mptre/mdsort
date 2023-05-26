@@ -2,7 +2,16 @@
 <suppressions>
   <!-- nofile -->
   <suppress>
+    <id>constParameterCallback</id>
+  </suppress>
+  <suppress>
+    <id>constParameterPointer</id>
+  </suppress>
+  <suppress>
     <id>missingIncludeSystem</id>
+  </suppress>
+  <suppress>
+    <id>redundantContinue</id>
   </suppress>
   <suppress>
     <id>toomanyconfigs</id>
