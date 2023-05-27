@@ -15,7 +15,6 @@
 #define ARGS_MAX	1024
 
 struct fault {
-	char			fu_args[ARGS_MAX];
 	char			fu_name[32];
 	int			fu_errno;
 	unsigned int		fu_hits;
