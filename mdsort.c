@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 	environment_init(&env);
 	TAILQ_INIT(&matches);
 
-	while ((c = getopt(argc, argv, "D:df:nv")) != -1)
+	while ((c = getopt(argc, argv, "D:df:nv")) != -1) {
 		switch (c) {
 		case 'D': {
 			char *eq;
@@ -102,6 +102,7 @@ main(int argc, char *argv[])
 			dousage = 1;
 			goto out;
 		}
+	}
 	argc -= optind;
 	argv += optind;
 	if (argc > 0) {
