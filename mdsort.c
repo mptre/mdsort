@@ -2,15 +2,16 @@
 
 #include <err.h>
 #include <errno.h>
+#include <limits.h>	/* PATH_MAX */
 #include <locale.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
-#include "cdefs.h"
 #include "conf.h"
 #include "environment.h"
 #include "extern.h"

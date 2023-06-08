@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>	/* NAME_MAX */
+#include <regex.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>

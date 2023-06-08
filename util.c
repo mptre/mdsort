@@ -2,7 +2,6 @@
 
 #include <sys/wait.h>
 
-#include <assert.h>
 #include <err.h>
 #include <fcntl.h>
 #include <stdarg.h>

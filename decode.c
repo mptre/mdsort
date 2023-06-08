@@ -8,7 +8,6 @@
 #include <string.h>
 
 #include "buffer.h"
-#include "cdefs.h"
 
 static int	b64_pton(const char *, unsigned char *, size_t);
 static void	quoted_printable_decode_buffer(struct buffer *, const char *,

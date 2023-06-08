@@ -9,6 +9,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>	/* NAME_MAX, PATH_MAX */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
