@@ -163,3 +163,16 @@ jobs:
         run: |
           ./configure --pedantic
           make lint-cppcheck
+
+  include-what-you-use:
+    runs-on: ubuntu-22.04
+    container: ghcr.io/mptre/include-what-you-use:latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: include-what-you-use
+        env:
+          CPPFLAGS: -DDIAGNOSTIC
+        run: |
+          ./configure --pedantic
+          make lint-include-what-you-use
