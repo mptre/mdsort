@@ -125,6 +125,7 @@ CPPCHECK+=	time.c
 CPPCHECK+=	util.c
 
 CPPCHECKFLAGS+=	--quiet
+CPPCHECKFLAGS+=	--check-level=exhaustive
 CPPCHECKFLAGS+=	--enable=all
 CPPCHECKFLAGS+=	--error-exitcode=1
 CPPCHECKFLAGS+=	--max-configs=2
