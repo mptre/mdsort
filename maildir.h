@@ -16,7 +16,7 @@ struct maildir	*maildir_open(const char *, unsigned int,
 void		 maildir_close(struct maildir *);
 
 int	maildir_walk(struct maildir *, struct maildir_entry *);
-int	maildir_move(struct maildir *, const struct maildir *,
+int	maildir_move(const struct maildir *, const struct maildir *,
     struct message *, const struct environment *);
 int	maildir_unlink(const struct maildir *, const char *);
 int	maildir_write(struct maildir *, struct message *,

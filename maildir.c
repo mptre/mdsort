@@ -167,7 +167,7 @@ maildir_walk(struct maildir *md, struct maildir_entry *me)
  * accordingly. Returns zero on success, non-zero otherwise.
  */
 int
-maildir_move(struct maildir *src, const struct maildir *dst,
+maildir_move(const struct maildir *src, const struct maildir *dst,
     struct message *msg, const struct environment *env)
 {
 	char dstname[NAME_MAX + 1], flags[FLAGS_MAX];
