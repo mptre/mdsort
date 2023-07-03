@@ -134,89 +134,6 @@ CPPCHECKFLAGS+=	${CPPFLAGS}
 
 SHLINT+=	configure
 
-DISTFILES+=	CHANGELOG.md
-DISTFILES+=	GNUmakefile
-DISTFILES+=	LICENSE
-DISTFILES+=	Makefile
-DISTFILES+=	README.md
-DISTFILES+=	cdefs.h
-DISTFILES+=	compat-arc4random.c
-DISTFILES+=	compat-errc.c
-DISTFILES+=	compat-pledge.c
-DISTFILES+=	compat-queue.h
-DISTFILES+=	compat-reallocarray.c
-DISTFILES+=	compat-strlcpy.c
-DISTFILES+=	compat-utimensat.c
-DISTFILES+=	compat-warnc.c
-DISTFILES+=	conf.c
-DISTFILES+=	conf.h
-DISTFILES+=	configure
-DISTFILES+=	decode.c
-DISTFILES+=	decode.h
-DISTFILES+=	environment.c
-DISTFILES+=	environment.h
-DISTFILES+=	expr.c
-DISTFILES+=	extern.h
-DISTFILES+=	fault.c
-DISTFILES+=	fault.h
-DISTFILES+=	fuzz-config.c
-DISTFILES+=	fuzz-message.c
-DISTFILES+=	libks/arithmetic.c
-DISTFILES+=	libks/arithmetic.h
-DISTFILES+=	libks/buffer.c
-DISTFILES+=	libks/buffer.h
-DISTFILES+=	libks/vector.c
-DISTFILES+=	libks/vector.h
-DISTFILES+=	macro.c
-DISTFILES+=	macro.h
-DISTFILES+=	maildir.c
-DISTFILES+=	maildir.h
-DISTFILES+=	match.c
-DISTFILES+=	mdsort.1
-DISTFILES+=	mdsort.c
-DISTFILES+=	mdsort.conf.5
-DISTFILES+=	message.c
-DISTFILES+=	message.h
-DISTFILES+=	parse.y
-DISTFILES+=	t.c
-DISTFILES+=	tests/GNUmakefile
-DISTFILES+=	tests/Makefile
-DISTFILES+=	tests/action-add-header.sh
-DISTFILES+=	tests/action-attachment.sh
-DISTFILES+=	tests/action-break.sh
-DISTFILES+=	tests/action-discard.sh
-DISTFILES+=	tests/action-exec.sh
-DISTFILES+=	tests/action-flag.sh
-DISTFILES+=	tests/action-flags.sh
-DISTFILES+=	tests/action-label.sh
-DISTFILES+=	tests/action-move.sh
-DISTFILES+=	tests/action-pass.sh
-DISTFILES+=	tests/action-reject.sh
-DISTFILES+=	tests/basic.sh
-DISTFILES+=	tests/conf.sh
-DISTFILES+=	tests/dry.sh
-DISTFILES+=	tests/macros.sh
-DISTFILES+=	tests/maildir.sh
-DISTFILES+=	tests/match-all.sh
-DISTFILES+=	tests/match-attachment.sh
-DISTFILES+=	tests/match-body-b64.sh
-DISTFILES+=	tests/match-body-qp.sh
-DISTFILES+=	tests/match-body.sh
-DISTFILES+=	tests/match-command.sh
-DISTFILES+=	tests/match-date.sh
-DISTFILES+=	tests/match-header-b64.sh
-DISTFILES+=	tests/match-header-qp.sh
-DISTFILES+=	tests/match-header.sh
-DISTFILES+=	tests/match-isdirectory.sh
-DISTFILES+=	tests/match-logical.sh
-DISTFILES+=	tests/match-new.sh
-DISTFILES+=	tests/match-old.sh
-DISTFILES+=	tests/stdin.sh
-DISTFILES+=	tests/t.sh
-DISTFILES+=	tests/util.sh
-DISTFILES+=	time.c
-DISTFILES+=	util.c
-
 SHELLCHECKFLAGS+=	-f gcc
 SHELLCHECKFLAGS+=	-s ksh
 SHELLCHECKFLAGS+=	-o add-default-case
@@ -253,17 +170,9 @@ cleandir: clean
 .PHONY: cleandir
 
 dist:
-	set -e; \
-	d=mdsort-${VERSION}; \
-	mkdir $$d; \
-	for f in ${DISTFILES}; do \
-		mkdir -p $$d/`dirname $$f`; \
-		cp -p ${.CURDIR}/$$f $$d/$$f; \
-	done; \
-	find $$d -type d -exec touch -r ${.CURDIR}/Makefile {} \;; \
-	tar czvf ${.CURDIR}/$$d.tar.gz $$d; \
-	(cd ${.CURDIR}; sha256 $$d.tar.gz >$$d.sha256); \
-	rm -r $$d
+	set -e; p=knfmt-${VERSION}; cd ${.CURDIR}; \
+	git archive --output $$p.tar.gz --prefix $$p/ v${VERSION}; \
+	sha256 $$p.tar.gz >$$p.sha256
 .PHONY: dist
 
 format:

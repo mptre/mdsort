@@ -5,12 +5,7 @@ KNFMT		!(compat-*|parse).c !(config|compat-queue).h \
 CLANGTIDY	!(compat-*|parse).c !(config|compat-queue).h \
 		compat-?(arc4random|pledge|utimensat).c -- \
 CPPCHECK	!(compat-*|parse).c compat-?(arc4random|pledge|utimensat).c -- \
-SHLINT		configure -- \
-DISTFILES \
-	*.1 *.5 !(parse).c !(config).h libks/*.[ch] *.md \
-	GNUmakefile LICENSE Makefile configure parse.y \
-	tests/*.sh \
-	tests/GNUmakefile tests/Makefile
+SHLINT		configure
 
 cd tests
 mkls -s "$@" -- \
