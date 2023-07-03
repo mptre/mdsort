@@ -254,5 +254,5 @@ extern int	log_level;
 		logit((fmt), __VA_ARGS__);				\
 } while (0)
 
-void	logit(const char *fmt, ...)
+void	logit(const char *, ...)
 	__attribute__((__format__(printf, 1, 2)));
