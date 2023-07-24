@@ -173,7 +173,7 @@ parse_attr(struct fault *fu, const char *str, const char *end)
 out:
 	if (p == end)
 		return NULL;
-	return p + 1;
+	return str;
 }
 
 #endif	/* DIAGNOSTIC */
