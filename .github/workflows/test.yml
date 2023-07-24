@@ -149,6 +149,8 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: clang-tidy
+        env:
+          CPPFLAGS: -DDIAGNOSTIC
         run: |
           ./configure --pedantic
           make lint-clang-tidy
@@ -160,6 +162,8 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: cppcheck
+        env:
+          CPPFLAGS: -DDIAGNOSTIC
         run: |
           ./configure --pedantic
           make lint-cppcheck
