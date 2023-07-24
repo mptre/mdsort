@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			while ((w = maildir_walk(md, &me))) {
+			while ((w = maildir_walk(md, &me)) != 0) {
 				struct expr_eval_arg ea = {
 					.ea_ml	= &matches,
 					.ea_env	= &env,

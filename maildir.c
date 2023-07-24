@@ -151,7 +151,8 @@ maildir_walk(struct maildir *md, struct maildir_entry *me)
 		const char *path;
 		int r;
 
-		if ((r = maildir_read(md, me)))
+		r = maildir_read(md, me);
+		if (r != 0)
 			return r;
 
 		path = maildir_next(md);
