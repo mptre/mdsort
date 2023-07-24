@@ -109,7 +109,7 @@ fault_match(const char *name)
 	struct fault *fu;
 
 	TAILQ_FOREACH(fu, &faults, fu_entry) {
-		if (strcmp(fu->fu_name, name))
+		if (strcmp(fu->fu_name, name) != 0)
 			continue;
 		if (fu->fu_hits > 0)
 			continue;
