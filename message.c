@@ -40,7 +40,7 @@ struct message {
 };
 
 struct header {
-	unsigned int	 id;
+	unsigned long	 id;
 
 	unsigned int	 flags;
 #define HEADER_FLAG_DIRTY	0x00000001u	/* val must be freed */
@@ -811,7 +811,7 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 	/* Find the end of the value, with respect to line continuations. */
 	for (;;) {
 		const char *p;
-		int n;
+		size_t n;
 
 		p = strchr(&str[i], '\n');
 		if (p == NULL)
@@ -822,7 +822,7 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 		n = nspaces(&str[i + 1]);
 		if (n == 0)
 			break;
-		i += (size_t)(n + 1);
+		i += n + 1;
 	}
 	vs->s_end = str + i;
 	*vs->s_end = '\0';
@@ -1065,7 +1065,7 @@ static ssize_t
 strflags(unsigned int flags, unsigned char offset, char *buf, size_t bufsiz)
 {
 	size_t i = 0;
-	unsigned int bit = 0;
+	unsigned char bit = 0;
 
 	for (; flags > 0; flags >>= 1, bit++) {
 		if ((flags & 0x1) == 0)
@@ -1073,7 +1073,7 @@ strflags(unsigned int flags, unsigned char offset, char *buf, size_t bufsiz)
 
 		if (i >= bufsiz - 1)
 			return -1;
-		buf[i++] = offset + bit;
+		buf[i++] = (char)(offset + bit);
 	}
 
 	return (ssize_t)i;
