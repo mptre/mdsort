@@ -133,6 +133,38 @@ CPPCHECKFLAGS+=	--suppress-xml=cppcheck-suppressions.xml
 CPPCHECKFLAGS+=	${CPPFLAGS}
 
 SHLINT+=	configure
+SHLINT+=	tests/action-add-header.sh
+SHLINT+=	tests/action-attachment.sh
+SHLINT+=	tests/action-break.sh
+SHLINT+=	tests/action-discard.sh
+SHLINT+=	tests/action-exec.sh
+SHLINT+=	tests/action-flag.sh
+SHLINT+=	tests/action-flags.sh
+SHLINT+=	tests/action-label.sh
+SHLINT+=	tests/action-move.sh
+SHLINT+=	tests/action-pass.sh
+SHLINT+=	tests/action-reject.sh
+SHLINT+=	tests/basic.sh
+SHLINT+=	tests/conf.sh
+SHLINT+=	tests/dry.sh
+SHLINT+=	tests/macros.sh
+SHLINT+=	tests/maildir.sh
+SHLINT+=	tests/match-all.sh
+SHLINT+=	tests/match-attachment.sh
+SHLINT+=	tests/match-body-b64.sh
+SHLINT+=	tests/match-body-qp.sh
+SHLINT+=	tests/match-body.sh
+SHLINT+=	tests/match-command.sh
+SHLINT+=	tests/match-date.sh
+SHLINT+=	tests/match-header-b64.sh
+SHLINT+=	tests/match-header-qp.sh
+SHLINT+=	tests/match-header.sh
+SHLINT+=	tests/match-isdirectory.sh
+SHLINT+=	tests/match-logical.sh
+SHLINT+=	tests/match-new.sh
+SHLINT+=	tests/match-old.sh
+SHLINT+=	tests/stdin.sh
+SHLINT+=	tests/util.sh
 
 SHELLCHECKFLAGS+=	-f gcc
 SHELLCHECKFLAGS+=	-s ksh
@@ -191,7 +223,6 @@ install: all
 lint:
 	cd ${.CURDIR} && knfmt -ds ${KNFMT}
 	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
-	${MAKE} -C ${.CURDIR}/tests "SHELLCHECKFLAGS=${SHELLCHECKFLAGS}" lint
 .PHONY: lint
 
 lint-clang-tidy:

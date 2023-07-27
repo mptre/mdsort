@@ -5,7 +5,7 @@ KNFMT		!(compat-*|parse).c !(config|compat-queue).h \
 CLANGTIDY	!(compat-*|parse).c !(config|compat-queue).h \
 		compat-?(arc4random|pledge|utimensat).c -- \
 CPPCHECK	!(compat-*|parse).c compat-?(arc4random|pledge|utimensat).c -- \
-SHLINT		configure
+SHLINT		configure tests/!(t).sh
 
 cd tests
 mkls -s "$@" -- \

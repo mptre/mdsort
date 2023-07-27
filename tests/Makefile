@@ -30,16 +30,11 @@ TESTS+=	match-new.sh
 TESTS+=	match-old.sh
 TESTS+=	stdin.sh
 
-SHLINT+=	${TESTS}
-SHLINT+=	util.sh
+all: test
+
+test: ${TESTS:.sh=.fake}
 
 .SUFFIXES: .sh .fake
 
 .sh.fake:
 	sh ${.CURDIR}/t.sh ${TESTFLAGS} ${.CURDIR}/util.sh ${.CURDIR}/$<
-
-all: ${TESTS:.sh=.fake}
-
-lint:
-	cd ${.CURDIR} && shellcheck ${SHELLCHECKFLAGS} ${SHLINT}
-.PHONY: lint
