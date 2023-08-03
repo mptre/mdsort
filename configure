@@ -309,7 +309,7 @@ CC=$(makevar CC || fatal "CC: not defined")
 CFLAGS="$(unset CFLAGS DEBUG; makevar CFLAGS || :) ${CFLAGS:-} ${DEBUG}"
 CFLAGS="${CFLAGS} -MD -MP"
 CPPFLAGS="$(makevar CPPFLAGS || :)"
-LDFLAGS="$(DEBUG='' makevar LDFLAGS || :)"
+LDFLAGS="$(unset DEBUG; makevar LDFLAGS || :)"
 YACC=$(makevar YACC || fatal "YACC: not defined")
 YFLAGS="$(makevar YFLAGS || :)"
 
@@ -320,7 +320,7 @@ INSTALL="$(makevar INSTALL || echo install)"
 INSTALL_MAN="$(makevar INSTALL_MAN || echo "$INSTALL")"
 
 # Following chunks must happen after CC is defined.
-if [ "$_pedantic" = 1 ]; then
+if [ "$_pedantic" -eq 1 ]; then
 	CFLAGS="$(cc_has_option -Wformat-signedness) ${CFLAGS}"
 	CFLAGS="$(cc_has_option -Wimplicit-fallthrough) ${CFLAGS}"
 	CFLAGS="-g $(pedantic) ${CFLAGS}"
@@ -363,9 +363,8 @@ exec 1>config.h
 # Headers needed for function prototypes.
 {
 [ "$HAVE_ARC4RANDOM" -eq 0 ] && echo stdint.h
-[ "$HAVE_PLEDGE" -eq 0 ] && echo stdlib.h
-[ "$HAVE_REALLOCARRAY" -eq 0 ] && echo stdlib.h
-[ "$HAVE_STRLCPY" -eq 0 ] && echo stdlib.h
+[ "$HAVE_REALLOCARRAY" -eq 0 ] && echo stddef.h
+[ "$HAVE_STRLCPY" -eq 0 ] && echo stddef.h
 [ "$HAVE_UTIMENSAT" -eq 0 ] && echo sys/time.h
 } | sort | uniq | headers
 
