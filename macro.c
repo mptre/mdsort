@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "vector.h"
+#include "libks/vector.h"
 
 struct macro {
 	char		*mc_name;

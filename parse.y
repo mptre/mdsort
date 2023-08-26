@@ -9,14 +9,15 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "arithmetic.h"
-#include "cdefs.h"
-#include "buffer.h"
+#include "libks/arithmetic.h"
+#include "libks/buffer.h"
+#include "libks/vector.h"
+#include "libks/compiler.h"
+
 #include "conf.h"
 #include "environment.h"
 #include "extern.h"
 #include "macro.h"
-#include "vector.h"
 
 static void expr_validate(const struct expr *);
 static void expr_validate_attachment_block(const struct expr *);

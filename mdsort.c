@@ -12,6 +12,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "libks/vector.h"
+
 #include "conf.h"
 #include "environment.h"
 #include "extern.h"
@@ -19,7 +21,6 @@
 #include "macro.h"
 #include "maildir.h"
 #include "message.h"
-#include "vector.h"
 
 /*
  * When reading messages from stdin and an error occurred, always exit with

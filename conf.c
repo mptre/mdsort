@@ -4,9 +4,10 @@
 
 #include <err.h>
 
+#include "libks/vector.h"
+
 #include "extern.h"
 #include "macro.h"
-#include "vector.h"
 
 void
 config_init(struct config_list *cl)

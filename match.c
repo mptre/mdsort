@@ -9,13 +9,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "buffer.h"
+#include "libks/buffer.h"
+#include "libks/vector.h"
+
 #include "environment.h"
 #include "extern.h"
 #include "macro.h"
 #include "maildir.h"
 #include "message.h"
-#include "vector.h"
 
 struct backref {
 	unsigned int br_mi;	/* match index */

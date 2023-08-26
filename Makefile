@@ -49,7 +49,6 @@ OBJS_fuzz-message=	${SRCS_fuzz-message:.c=.o}
 DEPS_fuzz-message=	${SRCS_fuzz-message:.c=.d}
 PROG_fuzz-message=	fuzz-message
 
-KNFMT+=	cdefs.h
 KNFMT+=	compat-arc4random.c
 KNFMT+=	compat-pledge.c
 KNFMT+=	compat-utimensat.c
@@ -77,7 +76,6 @@ KNFMT+=	t.c
 KNFMT+=	time.c
 KNFMT+=	util.c
 
-CLANGTIDY+=	cdefs.h
 CLANGTIDY+=	compat-arc4random.c
 CLANGTIDY+=	compat-pledge.c
 CLANGTIDY+=	compat-utimensat.c

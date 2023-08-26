@@ -16,12 +16,13 @@
 #include <strings.h>
 #include <unistd.h>
 
-#include "buffer.h"
+#include "libks/buffer.h"
+#include "libks/vector.h"
+
 #include "decode.h"
 #include "environment.h"
 #include "extern.h"
 #include "fault.h"
-#include "vector.h"
 
 struct message {
 	char			 me_path[PATH_MAX];	/* full path */

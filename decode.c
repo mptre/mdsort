@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "buffer.h"
+#include "libks/buffer.h"
 
 static int	b64_pton(const char *, unsigned char *, size_t);
 static void	quoted_printable_decode_buffer(struct buffer *, const char *,

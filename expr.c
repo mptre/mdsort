@@ -13,11 +13,12 @@
 #include <string.h>
 #include <wchar.h>
 
-#include "cdefs.h"
+#include "libks/compiler.h"
+#include "libks/vector.h"
+
 #include "environment.h"
 #include "extern.h"
 #include "message.h"
-#include "vector.h"
 
 static int	expr_eval_add_header(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_all(struct expr *, struct expr_eval_arg *);
