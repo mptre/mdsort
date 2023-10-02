@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>	/* NAME_MAX */
@@ -53,6 +54,7 @@ static int	expr_match(struct expr *, struct match_list *,
     struct message *);
 static int	expr_regexec(struct expr *, struct match_list *,
     struct message *, const struct environment *, const char *, const char *);
+static void	expr_regcopy(const struct expr *, struct match *, const char *);
 
 static size_t	strnwidth(const char *, size_t);
 
@@ -934,9 +936,9 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 		return EXPR_ERROR;
 
 	mh = match_alloc(ex, msg);
-	match_copy(mh, val, ex->ex_re.matches, ex->ex_re.nmatches);
 	if (matches_append(ml, mh))
 		return EXPR_ERROR;
+	expr_regcopy(ex, mh, val);
 
 	if (env->ev_options & OPTION_DRYRUN) {
 		mh->mh_key = strdup(key);
@@ -948,6 +950,41 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 	}
 
 	return EXPR_MATCH;
+}
+
+static void
+expr_regcopy(const struct expr *ex, struct match *mh, const char *str)
+{
+	const regmatch_t *off = ex->ex_re.matches;
+	size_t nmemb = ex->ex_re.nmatches;
+	size_t i;
+
+	mh->mh_matches = reallocarray(NULL, nmemb, sizeof(*mh->mh_matches));
+	if (mh->mh_matches == NULL)
+		err(1, NULL);
+	mh->mh_nmatches = nmemb;
+	for (i = 0; i < nmemb; i++) {
+		char *cpy;
+		size_t eo, j, len, so;
+
+		so = (size_t)off[i].rm_so;
+		eo = (size_t)off[i].rm_eo;
+		len = eo - so;
+		cpy = strndup(str + off[i].rm_so, len);
+		if (cpy == NULL)
+			err(1, NULL);
+		if (ex->ex_re.flags & EXPR_PATTERN_LCASE) {
+			for (j = 0; cpy[j] != '\0'; j++)
+				cpy[j] = tolower((unsigned char)cpy[j]);
+		}
+		if (ex->ex_re.flags & EXPR_PATTERN_UCASE) {
+			for (j = 0; cpy[j] != '\0'; j++)
+				cpy[j] = toupper((unsigned char)cpy[j]);
+		}
+		mh->mh_matches[i].m_str = cpy;
+		mh->mh_matches[i].m_beg = so;
+		mh->mh_matches[i].m_end = eo;
+	}
 }
 
 static size_t

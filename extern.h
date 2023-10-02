@@ -198,8 +198,6 @@ int	matches_inspect(const struct match_list *, const struct environment *);
 struct match	*match_alloc(struct expr *, struct message *);
 void		 match_free(struct match *);
 
-void		 match_copy(struct match *, const char *, const regmatch_t *,
-    size_t);
 int		 match_interpolate(struct match *, const struct macro_list *);
 struct match	*matches_find(struct match_list *, enum expr_type);
 int		 matches_remove(struct match_list *, enum expr_type);

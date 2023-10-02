@@ -320,40 +320,6 @@ match_free(struct match *mh)
 	free(mh);
 }
 
-void
-match_copy(struct match *mh, const char *str, const regmatch_t *off,
-    size_t nmemb)
-{
-	char *cpy;
-	size_t i;
-
-	mh->mh_matches = reallocarray(NULL, nmemb, sizeof(*mh->mh_matches));
-	if (mh->mh_matches == NULL)
-		err(1, NULL);
-	mh->mh_nmatches = nmemb;
-	for (i = 0; i < nmemb; i++) {
-		size_t eo, j, len, so;
-
-		so = (size_t)off[i].rm_so;
-		eo = (size_t)off[i].rm_eo;
-		len = eo - so;
-		cpy = strndup(str + off[i].rm_so, len);
-		if (cpy == NULL)
-			err(1, NULL);
-		if (mh->mh_expr->ex_re.flags & EXPR_PATTERN_LCASE) {
-			for (j = 0; cpy[j] != '\0'; j++)
-				cpy[j] = tolower((unsigned char)cpy[j]);
-		}
-		if (mh->mh_expr->ex_re.flags & EXPR_PATTERN_UCASE) {
-			for (j = 0; cpy[j] != '\0'; j++)
-				cpy[j] = toupper((unsigned char)cpy[j]);
-		}
-		mh->mh_matches[i].m_str = cpy;
-		mh->mh_matches[i].m_beg = so;
-		mh->mh_matches[i].m_end = eo;
-	}
-}
-
 int
 match_interpolate(struct match *mh, const struct macro_list *macros)
 {
