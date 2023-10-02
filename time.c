@@ -27,11 +27,11 @@ static const char	*formats[] = {
  * Format the given timestamp into a human readable representation.
  */
 char *
-time_format(time_t tim, char *buf, size_t bufsiz)
+time_format(long long int tim, char *buf, size_t bufsiz)
 {
 	struct tm *tm;
 
-	tm = localtime(&tim);
+	tm = localtime((time_t *)&tim);
 	if (strftime(buf, bufsiz, formats[0], tm) == 0) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		return NULL;
@@ -45,7 +45,7 @@ time_format(time_t tim, char *buf, size_t bufsiz)
  * Returns zero on success, non-zero otherwise.
  */
 int
-time_parse(const char *str, time_t *res, const struct environment *env)
+time_parse(const char *str, long long int *res, const struct environment *env)
 {
 	struct tm tm;
 	const char *end;

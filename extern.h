@@ -5,7 +5,7 @@
 #endif
 
 #include <limits.h>
-#include <time.h>
+#include <stddef.h> /* size_t */
 
 /*
  * match ---------------------------------------------------------------------
@@ -59,8 +59,8 @@ int		 matches_remove(struct match_list *, int);
  * time ------------------------------------------------------------------------
  */
 
-char	*time_format(time_t, char *, size_t);
-int	 time_parse(const char *, time_t *, const struct environment *);
+char	*time_format(long long int, char *, size_t);
+int	 time_parse(const char *, long long int *, const struct environment *);
 
 /*
  * string ----------------------------------------------------------------------

@@ -1,5 +1,3 @@
-#include <time.h>
-
 struct match;
 
 /* Return values for expr_eval(). */
@@ -95,7 +93,7 @@ struct expr {
 		struct {
 			enum expr_date_cmp	cmp;
 			enum expr_date_field	field;
-			time_t			age;
+			long long int		age;
 		} ex_date;
 
 		struct {
@@ -124,7 +122,7 @@ void		 expr_free(struct expr *);
 
 void	expr_set_add_header(struct expr *, char *, char *);
 void	expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
-    time_t);
+    long long int);
 int	expr_set_exec(struct expr *, struct string_list *, unsigned int);
 void	expr_set_stat(struct expr *, char *, enum expr_stat);
 void	expr_set_strings(struct expr *, struct string_list *);

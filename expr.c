@@ -216,7 +216,7 @@ expr_set_add_header(struct expr *ex, char *key, char *val)
 
 void
 expr_set_date(struct expr *ex, enum expr_date_field field,
-    enum expr_date_cmp cmp, time_t age)
+    enum expr_date_cmp cmp, long long int age)
 {
 	assert(ex->ex_type == EXPR_TYPE_DATE);
 
@@ -603,7 +603,7 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 {
 	char buf[32];
 	const char *date;
-	time_t delta, tim;
+	long long int delta, tim;
 
 	if (ex->ex_date.field == EXPR_DATE_FIELD_HEADER) {
 		date = message_get_header1(ea->ea_msg, "Date");
