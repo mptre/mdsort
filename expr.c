@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <limits.h>	/* NAME_MAX */
 #include <regex.h>
+#include <regex.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,6 +21,13 @@
 #include "environment.h"
 #include "extern.h"
 #include "message.h"
+
+struct expr_regex {
+	regex_t		 pattern;
+	regmatch_t	*matches;
+	size_t		 nmatches;
+	unsigned int	 flags;
+};
 
 static int	expr_eval_add_header(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_all(struct expr *, struct expr_eval_arg *);
@@ -186,8 +194,10 @@ expr_free(struct expr *ex)
 	expr_free(ex->ex_lhs);
 	expr_free(ex->ex_rhs);
 	strings_free(ex->ex_strings);
-	regfree(&ex->ex_re.pattern);
-	free(ex->ex_re.matches);
+	if (ex->ex_re != NULL) {
+		regfree(&ex->ex_re->pattern);
+		free(ex->ex_re->matches);
+	}
 	if (ex->ex_type == EXPR_TYPE_ADD_HEADER) {
 		free(ex->ex_add_header.key);
 		free(ex->ex_add_header.val);
@@ -281,33 +291,37 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 	int rflags = REG_EXTENDED | REG_NEWLINE;
 	int error, i;
 
-	assert(ex->ex_re.nmatches == 0);
+	assert(ex->ex_re == NULL);
+
+	ex->ex_re = calloc(1, sizeof(*ex->ex_re));
+	if (ex->ex_re == NULL)
+		err(1, NULL);
 
 	for (i = 0; fflags[i].eflag != 0; i++) {
 		if ((flags & fflags[i].eflag) == 0)
 			continue;
 
 		if (fflags[i].pflag)
-			ex->ex_re.flags |= fflags[i].eflag;
+			ex->ex_re->flags |= fflags[i].eflag;
 		if (fflags[i].rflag)
 			rflags |= fflags[i].rflag;
 		flags &= ~fflags[i].eflag;
 	}
 	assert(flags == 0);
 
-	if ((error = regcomp(&ex->ex_re.pattern, pattern, rflags)) != 0) {
+	if ((error = regcomp(&ex->ex_re->pattern, pattern, rflags)) != 0) {
 		if (errstr != NULL) {
 			static char buf[1024];
 
-			regerror(error, &ex->ex_re.pattern, buf, sizeof(buf));
+			regerror(error, &ex->ex_re->pattern, buf, sizeof(buf));
 			*errstr = buf;
 		}
 		return 1;
 	}
-	ex->ex_re.nmatches = ex->ex_re.pattern.re_nsub + 1;
-	ex->ex_re.matches = reallocarray(NULL, ex->ex_re.nmatches,
-	    sizeof(*ex->ex_re.matches));
-	if (ex->ex_re.matches == NULL)
+	ex->ex_re->nmatches = ex->ex_re->pattern.re_nsub + 1;
+	ex->ex_re->matches = reallocarray(NULL, ex->ex_re->nmatches,
+	    sizeof(*ex->ex_re->matches));
+	if (ex->ex_re->matches == NULL)
 		err(1, NULL);
 
 	return 0;
@@ -928,8 +942,8 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 	struct match *mh;
 	int error;
 
-	error = regexec(&ex->ex_re.pattern, val, ex->ex_re.nmatches,
-	    ex->ex_re.matches, 0);
+	error = regexec(&ex->ex_re->pattern, val, ex->ex_re->nmatches,
+	    ex->ex_re->matches, 0);
 	if (error == REG_NOMATCH)
 		return EXPR_NOMATCH;
 	if (error != 0)
@@ -955,8 +969,8 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 static void
 expr_regcopy(const struct expr *ex, struct match *mh, const char *str)
 {
-	const regmatch_t *off = ex->ex_re.matches;
-	size_t nmemb = ex->ex_re.nmatches;
+	const regmatch_t *off = ex->ex_re->matches;
+	size_t nmemb = ex->ex_re->nmatches;
 	size_t i;
 
 	mh->mh_matches = reallocarray(NULL, nmemb, sizeof(*mh->mh_matches));
@@ -973,11 +987,11 @@ expr_regcopy(const struct expr *ex, struct match *mh, const char *str)
 		cpy = strndup(str + off[i].rm_so, len);
 		if (cpy == NULL)
 			err(1, NULL);
-		if (ex->ex_re.flags & EXPR_PATTERN_LCASE) {
+		if (ex->ex_re->flags & EXPR_PATTERN_LCASE) {
 			for (j = 0; cpy[j] != '\0'; j++)
 				cpy[j] = tolower((unsigned char)cpy[j]);
 		}
-		if (ex->ex_re.flags & EXPR_PATTERN_UCASE) {
+		if (ex->ex_re->flags & EXPR_PATTERN_UCASE) {
 			for (j = 0; cpy[j] != '\0'; j++)
 				cpy[j] = toupper((unsigned char)cpy[j]);
 		}

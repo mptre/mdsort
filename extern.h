@@ -5,7 +5,6 @@
 #endif
 
 #include <limits.h>
-#include <regex.h>
 #include <time.h>
 
 /*
@@ -14,6 +13,10 @@
 
 struct match;
 struct match_list;
+
+#define EXPR_PATTERN_ICASE	0x00000001u
+#define EXPR_PATTERN_LCASE	0x00000002u
+#define EXPR_PATTERN_UCASE	0x00000004u
 
 enum expr_type {
 	/* blocks */
@@ -92,15 +95,7 @@ struct expr {
 
 	struct string_list	*ex_strings;
 
-	struct {
-		regex_t		 pattern;
-		regmatch_t	*matches;
-		size_t		 nmatches;
-		unsigned int	 flags;
-#define EXPR_PATTERN_ICASE	0x00000001u
-#define EXPR_PATTERN_LCASE	0x00000002u
-#define EXPR_PATTERN_UCASE	0x00000004u
-	} ex_re;
+	struct expr_regex	*ex_re;
 
 	union {
 		struct {
