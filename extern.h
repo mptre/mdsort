@@ -194,8 +194,8 @@ struct match	*match_alloc(struct expr *, struct message *);
 void		 match_free(struct match *);
 
 int		 match_interpolate(struct match *, const struct macro_list *);
-struct match	*matches_find(struct match_list *, enum expr_type);
-int		 matches_remove(struct match_list *, enum expr_type);
+struct match	*matches_find(struct match_list *, int);
+int		 matches_remove(struct match_list *, int);
 
 /*
  * time ------------------------------------------------------------------------

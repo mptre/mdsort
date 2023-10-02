@@ -250,12 +250,13 @@ matches_inspect(const struct match_list *ml, const struct environment *env)
 }
 
 struct match *
-matches_find(struct match_list *ml, enum expr_type type)
+matches_find(struct match_list *ml, int type)
 {
 	struct match *mh;
+	enum expr_type expr_type = (enum expr_type)type;
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
-		if (mh->mh_expr->ex_type == type)
+		if (mh->mh_expr->ex_type == expr_type)
 			return mh;
 	}
 
@@ -267,15 +268,16 @@ matches_find(struct match_list *ml, enum expr_type type)
  * Returns the number of actions left in the match list.
  */
 int
-matches_remove(struct match_list *ml, enum expr_type type)
+matches_remove(struct match_list *ml, int type)
 {
 	struct match *mh, *tmp;
+	enum expr_type expr_type = (enum expr_type)type;
 	int n = 0;
 
 	TAILQ_FOREACH_SAFE(mh, ml, mh_entry, tmp) {
 		const struct expr *ex = mh->mh_expr;
 
-		if (ex->ex_type == type) {
+		if (ex->ex_type == expr_type) {
 			TAILQ_REMOVE(ml, mh, mh_entry);
 			match_free(mh);
 		} else if (ex->ex_flags & EXPR_FLAG_ACTION) {
