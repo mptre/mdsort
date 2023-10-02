@@ -13,6 +13,7 @@
 #include "libks/vector.h"
 
 #include "environment.h"
+#include "expr.h"
 #include "extern.h"
 #include "macro.h"
 #include "maildir.h"

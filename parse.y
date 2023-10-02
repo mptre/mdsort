@@ -17,6 +17,7 @@
 
 #include "conf.h"
 #include "environment.h"
+#include "expr.h"
 #include "extern.h"
 #include "macro.h"
 
