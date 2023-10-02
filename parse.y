@@ -516,32 +516,13 @@ config_parse(struct config_list *cl, const char *path, const struct environment 
 static void
 yyerror(const char *fmt, ...)
 {
-	char buf[BUFSIZ];
-	char *cp = buf;
-	size_t bufsiz = sizeof(buf);
 	va_list ap;
-	int n;
 
-	n = snprintf(cp, bufsiz, "%s:%u: ", yypath, yylval.lineno);
-	if (n > 0 && (size_t)n < bufsiz) {
-		cp += n;
-		bufsiz -= (size_t)n;
-	}
-
+	fprintf(stderr, "%s:%u: ", yypath, yylval.lineno);
 	va_start(ap, fmt);
-	n = vsnprintf(cp, bufsiz, fmt, ap);
+	vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	if (n > 0 && (size_t)n < bufsiz) {
-		cp += n;
-		bufsiz -= (size_t)n;
-	}
-
-	/* Play it safe if any of the above failed. */
-	if (bufsiz > 0)
-		*cp = '\0';
-
-	fprintf(stderr, "%s\n", buf);
-
+	fprintf(stderr, "\n");
 	parse_errors++;
 }
 
