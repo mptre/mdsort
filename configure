@@ -358,6 +358,8 @@ check_yystype && HAVE_YYSTYPE=1
 # Redirect stdout to config.h.
 exec 1>config.h
 
+printf '#ifndef CONFIG_H\n#define CONFIG_H\n'
+
 # Order is important, must be present before any includes.
 [ "$HAVE_GNU_SOURCE" -eq 1 ] && printf '#define _GNU_SOURCE\n'
 
@@ -412,6 +414,8 @@ fi
 [ "$HAVE_WARNC" -eq 0 ] && {
 	printf 'void warnc(int, const char *, ...)\n'
 	printf '\t__attribute__((__format__ (printf, 2, 3)));\n'; }
+
+printf '#endif\n'
 
 # Redirect stdout to config.mk.
 exec 1>config.mk
