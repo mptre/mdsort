@@ -21,6 +21,7 @@
 #include "fault.h"
 #include "macro.h"
 #include "maildir.h"
+#include "match.h"
 #include "message.h"
 
 /*

@@ -1,3 +1,5 @@
+#include "match.h"
+
 #include "config.h"
 
 #include <ctype.h>
