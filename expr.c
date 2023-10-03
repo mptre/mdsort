@@ -10,7 +10,6 @@
 #include <errno.h>
 #include <limits.h>	/* NAME_MAX */
 #include <regex.h>
-#include <regex.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
