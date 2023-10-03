@@ -198,6 +198,7 @@ expr_free(struct expr *ex)
 	if (ex->ex_re != NULL) {
 		regfree(&ex->ex_re->pattern);
 		free(ex->ex_re->matches);
+		free(ex->ex_re);
 	}
 	if (ex->ex_type == EXPR_TYPE_ADD_HEADER) {
 		free(ex->ex_add_header.key);
