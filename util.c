@@ -4,7 +4,6 @@
 
 #include <err.h>
 #include <fcntl.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -226,15 +225,4 @@ int
 isstdin(const char *str)
 {
 	return strcmp(str, "/dev/stdin") == 0;
-}
-
-void
-logit(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stdout, fmt, ap);
-	va_end(ap);
-	fflush(stdout);
 }

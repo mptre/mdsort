@@ -23,6 +23,7 @@
 #include "environment.h"
 #include "extern.h"
 #include "fault.h"
+#include "log.h"
 
 struct message {
 	char			 me_path[PATH_MAX];	/* full path */
