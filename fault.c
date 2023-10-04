@@ -8,7 +8,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "extern.h"
+#ifdef HAVE_QUEUE
+#  include <sys/queue.h>
+#else
+#  include "compat-queue.h"
+#endif
+
+#include "log.h"
 
 #ifdef DIAGNOSTIC
 

@@ -21,7 +21,6 @@
 
 #include "decode.h"
 #include "environment.h"
-#include "extern.h"
 #include "fault.h"
 #include "log.h"
 #include "util.h"
