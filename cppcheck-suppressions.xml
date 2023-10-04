@@ -14,11 +14,6 @@
   <!-- expr.c -->
   <suppress>
     <fileName>expr.c</fileName>
-    <id>variableScope</id>
-    <symbolName>buf</symbolName>
-  </suppress>
-  <suppress>
-    <fileName>expr.c</fileName>
     <id>unusedFunction</id>
     <symbolName>expr_alloc</symbolName>
   </suppress>
