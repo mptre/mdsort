@@ -32,16 +32,3 @@ void			 strings_free(struct string_list *);
 struct string	*strings_append(struct string_list *, char *);
 
 size_t	strings_len(const struct string_list *);
-
-/*
- * util ------------------------------------------------------------------------
- */
-
-int	exec(char *const *, int);
-
-char	*pathjoin(char *, size_t, const char *, const char *);
-char	*pathslice(const char *, char *, size_t, int, int);
-
-size_t	nspaces(const char *);
-
-int	isstdin(const char *);

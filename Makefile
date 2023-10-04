@@ -80,6 +80,7 @@ KNFMT+=	message.h
 KNFMT+=	t.c
 KNFMT+=	time.c
 KNFMT+=	util.c
+KNFMT+=	util.h
 
 CLANGTIDY+=	compat-arc4random.c
 CLANGTIDY+=	compat-pledge.c
@@ -111,6 +112,7 @@ CLANGTIDY+=	message.h
 CLANGTIDY+=	t.c
 CLANGTIDY+=	time.c
 CLANGTIDY+=	util.c
+CLANGTIDY+=	util.h
 
 CPPCHECK+=	compat-arc4random.c
 CPPCHECK+=	compat-pledge.c

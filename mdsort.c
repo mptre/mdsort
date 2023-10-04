@@ -24,6 +24,7 @@
 #include "maildir.h"
 #include "match.h"
 #include "message.h"
+#include "util.h"
 
 /*
  * When reading messages from stdin and an error occurred, always exit with

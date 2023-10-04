@@ -23,6 +23,7 @@
 #include "extern.h"
 #include "match.h"
 #include "message.h"
+#include "util.h"
 
 struct expr_regex {
 	regex_t		 pattern;

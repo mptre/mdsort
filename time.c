@@ -8,6 +8,7 @@
 
 #include "environment.h"
 #include "extern.h"
+#include "util.h"
 
 static const char	*timeparse(const char *, struct tm *);
 static int		 tzparse(const char *, time_t *,

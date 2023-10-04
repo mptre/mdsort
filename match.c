@@ -20,6 +20,7 @@
 #include "macro.h"
 #include "maildir.h"
 #include "message.h"
+#include "util.h"
 
 struct backref {
 	unsigned int br_mi;	/* match index */

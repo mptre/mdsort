@@ -20,6 +20,7 @@
 #include "fault.h"
 #include "log.h"
 #include "message.h"
+#include "util.h"
 
 #define FLAGS_MAX	64
 
