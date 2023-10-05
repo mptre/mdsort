@@ -19,6 +19,7 @@
 #include "libks/compiler.h"
 #include "libks/vector.h"
 
+#include "date-time.h"
 #include "environment.h"
 #include "extern.h"
 #include "match.h"

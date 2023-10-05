@@ -1,3 +1,5 @@
+#include "date-time.h"
+
 #include "config.h"
 
 #include <err.h>
@@ -7,7 +9,6 @@
 #include <time.h>
 
 #include "environment.h"
-#include "extern.h"
 #include "util.h"
 
 static const char	*timeparse(const char *, struct tm *);
