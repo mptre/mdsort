@@ -207,19 +207,6 @@ check_strlcpy() {
 	EOF
 }
 
-check_utimensat() {
-	compile <<-EOF
-	#include <sys/time.h>
-	#include <sys/stat.h>
-	#include <fcntl.h>
-
-	int main(void) {
-		struct timespec times[2] = { { 0, 0 }, { 0, 0 } };
-		return !(utimensat(0, "/var/empty", times, 0) != -1);
-	}
-	EOF
-}
-
 check_warnc() {
 	compile <<-EOF
 	#include <err.h>
@@ -298,7 +285,6 @@ HAVE_QUEUE=0
 HAVE_REALLOCARRAY=0
 HAVE_STAT_TIM=0
 HAVE_STRLCPY=0
-HAVE_UTIMENSAT=0
 HAVE_WARNC=0
 HAVE_YYSTYPE=0
 
@@ -351,7 +337,6 @@ check_queue && HAVE_QUEUE=1
 check_reallocarray && HAVE_REALLOCARRAY=1
 check_stat_tim && HAVE_STAT_TIM=1
 check_strlcpy && HAVE_STRLCPY=1
-check_utimensat && HAVE_UTIMENSAT=1
 check_warnc && HAVE_WARNC=1
 check_yystype && HAVE_YYSTYPE=1
 
@@ -368,7 +353,6 @@ printf '#ifndef CONFIG_H\n#define CONFIG_H\n'
 [ "$HAVE_ARC4RANDOM" -eq 0 ] && echo stdint.h
 [ "$HAVE_REALLOCARRAY" -eq 0 ] && echo stddef.h
 [ "$HAVE_STRLCPY" -eq 0 ] && echo stddef.h
-[ "$HAVE_UTIMENSAT" -eq 0 ] && echo sys/time.h
 } | sort | uniq | headers
 
 [ "$HAVE_ARC4RANDOM" -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
@@ -377,7 +361,6 @@ printf '#ifndef CONFIG_H\n#define CONFIG_H\n'
 [ "$HAVE_QUEUE" -eq 1 ] && printf '#define HAVE_QUEUE\t1\n'
 [ "$HAVE_REALLOCARRAY" -eq 1 ] && printf '#define HAVE_REALLOCARRAY\t1\n'
 [ "$HAVE_STRLCPY" -eq 1 ] && printf '#define HAVE_STRLCPY\t1\n'
-[ "$HAVE_UTIMENSAT" -eq 1 ] && printf '#define HAVE_UTIMENSAT\t1\n'
 [ "$HAVE_WARNC" -eq 1 ] && printf '#define HAVE_WARNC\t1\n'
 
 if [ "$HAVE_ATTRIBUTE_FALLTHROUGH" -eq 1 ]; then
@@ -391,8 +374,6 @@ if [ "$HAVE_STAT_TIM" -eq 0 ]; then
 	printf '#define st_ctim\tst_ctimespec\n'
 	printf '#define st_mtim\tst_mtimespec\n'
 fi
-
-[ "$HAVE_UTIMENSAT" -eq 0 ] && printf '#define UTIME_OMIT\t-1L\n'
 
 if [ "$HAVE_YYSTYPE" -eq 1 ]; then
 	printf '#define YYSTYPE_IS_DECLARED\t1\n'
@@ -409,8 +390,6 @@ fi
 	printf 'void *reallocarray(void *, size_t, size_t);\n'
 [ "$HAVE_STRLCPY" -eq 0 ] &&
 	printf 'size_t strlcpy(char *, const char *, size_t);\n'
-[ "$HAVE_UTIMENSAT" -eq 0 ] &&
-	printf 'int utimensat(int, const char *, const struct timespec [2], int);\n'
 [ "$HAVE_WARNC" -eq 0 ] && {
 	printf 'void warnc(int, const char *, ...)\n'
 	printf '\t__attribute__((__format__ (printf, 2, 3)));\n'; }

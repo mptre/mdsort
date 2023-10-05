@@ -9,7 +9,6 @@ SRCS+=	compat-errc.c
 SRCS+=	compat-pledge.c
 SRCS+=	compat-reallocarray.c
 SRCS+=	compat-strlcpy.c
-SRCS+=	compat-utimensat.c
 SRCS+=	compat-warnc.c
 SRCS+=	conf.c
 SRCS+=	date-time.c
@@ -52,7 +51,6 @@ PROG_fuzz-message=	fuzz-message
 
 KNFMT+=	compat-arc4random.c
 KNFMT+=	compat-pledge.c
-KNFMT+=	compat-utimensat.c
 KNFMT+=	conf.c
 KNFMT+=	conf.h
 KNFMT+=	date-time.c
@@ -85,7 +83,6 @@ KNFMT+=	util.h
 
 CLANGTIDY+=	compat-arc4random.c
 CLANGTIDY+=	compat-pledge.c
-CLANGTIDY+=	compat-utimensat.c
 CLANGTIDY+=	conf.c
 CLANGTIDY+=	conf.h
 CLANGTIDY+=	date-time.c
@@ -118,7 +115,6 @@ CLANGTIDY+=	util.h
 
 CPPCHECK+=	compat-arc4random.c
 CPPCHECK+=	compat-pledge.c
-CPPCHECK+=	compat-utimensat.c
 CPPCHECK+=	conf.c
 CPPCHECK+=	date-time.c
 CPPCHECK+=	decode.c
