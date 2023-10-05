@@ -15,11 +15,11 @@
 
 #include "environment.h"
 #include "expr.h"
-#include "extern.h"
 #include "log.h"
 #include "macro.h"
 #include "maildir.h"
 #include "message.h"
+#include "string-list.h"
 #include "util.h"
 
 struct backref {

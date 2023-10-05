@@ -17,13 +17,13 @@
 #include "conf.h"
 #include "environment.h"
 #include "expr.h"
-#include "extern.h"
 #include "fault.h"
 #include "log.h"
 #include "macro.h"
 #include "maildir.h"
 #include "match.h"
 #include "message.h"
+#include "string-list.h"
 #include "util.h"
 
 /*

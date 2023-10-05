@@ -18,8 +18,8 @@
 #include "conf.h"
 #include "environment.h"
 #include "expr.h"
-#include "extern.h"
 #include "macro.h"
+#include "string-list.h"
 #include "util.h"
 
 static void expr_validate(const struct expr *);

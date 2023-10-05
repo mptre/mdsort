@@ -21,9 +21,9 @@
 
 #include "date-time.h"
 #include "environment.h"
-#include "extern.h"
 #include "match.h"
 #include "message.h"
+#include "string-list.h"
 #include "util.h"
 
 struct expr_regex {

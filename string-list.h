@@ -1,14 +1,12 @@
+#include "config.h"	/* HAVE_QUEUE */
+
 #ifdef HAVE_QUEUE
 #  include <sys/queue.h>
 #else
 #  include "compat-queue.h"
 #endif
 
-#include <stddef.h> /* size_t */
-
-/*
- * string ----------------------------------------------------------------------
- */
+#include <stddef.h>	/* size_t */
 
 struct string {
 	char			*val;

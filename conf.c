@@ -7,8 +7,8 @@
 #include "libks/vector.h"
 
 #include "expr.h"
-#include "extern.h"
 #include "macro.h"
+#include "string-list.h"
 
 void
 config_init(struct config_list *cl)
