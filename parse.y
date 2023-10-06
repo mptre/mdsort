@@ -43,12 +43,18 @@ static char *expandmacros(char *, struct macro_list *, unsigned int);
 static struct string_list *expandstrings(struct string_list *, unsigned int);
 static char *expandtilde(char *, const char *);
 
-static struct config_list *yyconfig;
-static const struct environment *yyenv;
-static FILE *yyfh;
-static const char *yypath;
-static unsigned int lineno, lineno_save;
-static int sflag, parse_errors, pflag;
+/* yacc parser global state */
+static struct {
+	const char			*path;
+	const struct environment	*env;
+	struct config_list		*config;
+	FILE				*fh;
+	unsigned int			 lineno;
+	unsigned int			 lineno_save;
+	int				 error;
+	int				 sflag;
+	int				 pflag;
+} parser_state;
 
 typedef struct {
 	union {
@@ -137,10 +143,10 @@ grammar		: /* empty */
 		;
 
 macro		: MACRO '=' STRING {
-			struct macro_list *macros = yyconfig->cl_macros;
+			struct macro_list *macros = parser_state.config->cl_macros;
 
 			$3 = expand($3, MACRO_CTX_DEFAULT);
-			switch (macros_insert(macros, $1, $3, 0, lineno)) {
+			switch (macros_insert(macros, $1, $3, 0, parser_state.lineno)) {
 			case MACRO_ERR_NONE:
 				break;
 			case MACRO_ERR_CTX:
@@ -160,7 +166,8 @@ maildir		: maildir_paths exprblock {
 			struct string *str;
 
 			/* Favor more specific error messages. */
-			if (parse_errors == 0 && expr_count_actions($2) == 0)
+			if (parser_state.error == 0 &&
+			    expr_count_actions($2) == 0)
 				yyerror("empty match block");
 
 			TAILQ_FOREACH(str, $1, entry) {
@@ -176,7 +183,7 @@ maildir		: maildir_paths exprblock {
 				break;
 			}
 
-			conf = VECTOR_CALLOC(yyconfig->cl_list);
+			conf = VECTOR_CALLOC(parser_state.config->cl_list);
 			if (conf == NULL)
 				err(1, NULL);
 			conf->paths = $1;
@@ -196,8 +203,8 @@ maildir_paths	: MAILDIR strings {
 			char *path;
 			size_t i;
 
-			for (i = 0; i < VECTOR_LENGTH(yyconfig->cl_list); i++) {
-				const struct config *conf = &yyconfig->cl_list[i];
+			for (i = 0; i < VECTOR_LENGTH(parser_state.config->cl_list); i++) {
+				const struct config *conf = &parser_state.config->cl_list[i];
 				const struct string *str;
 
 				TAILQ_FOREACH(str, conf->paths, entry) {
@@ -215,7 +222,8 @@ maildir_paths	: MAILDIR strings {
 		;
 
 exprblock	: '{' exprs '}' {
-			$$ = expr_alloc(EXPR_TYPE_BLOCK, lineno, $2, NULL);
+			$$ = expr_alloc(EXPR_TYPE_BLOCK, parser_state.lineno,
+			    $2, NULL);
 		}
 		;
 
@@ -223,10 +231,12 @@ exprs		: /* empty */ {
 			$$ = NULL;
 		}
 		| exprs expr {
-			if ($1 == NULL)
+			if ($1 == NULL) {
 				$$ = $2;
-			else
-				$$ = expr_alloc(EXPR_TYPE_OR, lineno, $1, $2);
+			} else {
+				$$ = expr_alloc(EXPR_TYPE_OR,
+				    parser_state.lineno, $1, $2);
+			}
 		}
 		| error {
 			yyrecover();
@@ -235,21 +245,26 @@ exprs		: /* empty */ {
 		;
 
 expr		: MATCH expr1 expr2 {
-			$$ = expr_alloc(EXPR_TYPE_MATCH, lineno, $2, $3);
+			$$ = expr_alloc(EXPR_TYPE_MATCH,
+			    parser_state.lineno, $2, $3);
 		}
 		;
 
 expr1		: expr1 AND expr1 {
-			$$ = expr_alloc(EXPR_TYPE_AND, lineno, $1, $3);
+			$$ = expr_alloc(EXPR_TYPE_AND,
+			    parser_state.lineno, $1, $3);
 		}
 		| expr1 OR expr1 {
-			$$ = expr_alloc(EXPR_TYPE_OR, lineno, $1, $3);
+			$$ = expr_alloc(EXPR_TYPE_OR,
+			    parser_state.lineno, $1, $3);
 		}
 		| ATTACHMENT expr1 {
-			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT, lineno, $2, NULL);
+			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT,
+			    parser_state.lineno, $2, NULL);
 		}
 		| NEG expr1 {
-			$$ = expr_alloc(EXPR_TYPE_NEG, lineno, $2, NULL);
+			$$ = expr_alloc(EXPR_TYPE_NEG,
+			    parser_state.lineno, $2, NULL);
 		}
 		| expr3
 		;
@@ -267,41 +282,49 @@ expr2		: expractions {
 expr3		: BODY pattern {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_BODY, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_BODY,
+			    parser_state.lineno, NULL, NULL);
 			if (expr_set_pattern($$, $2.string, $2.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
 		| HEADER strings pattern {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_HEADER, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_HEADER,
+			    parser_state.lineno, NULL, NULL);
 			if (expr_set_pattern($$, $3.string, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 			$2 = expandstrings($2, MACRO_CTX_DEFAULT);
 			expr_set_strings($$, $2);
 		}
 		| DATE date_field date_cmp date_age {
-			$$ = expr_alloc(EXPR_TYPE_DATE, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_DATE,
+			    parser_state.lineno, NULL, NULL);
 			expr_set_date($$, $2, $3, $4);
 		}
 		| NEW {
-			$$ = expr_alloc(EXPR_TYPE_NEW, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_NEW,
+			    parser_state.lineno, NULL, NULL);
 		}
 		| OLD {
-			$$ = expr_alloc(EXPR_TYPE_OLD, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_OLD,
+			    parser_state.lineno, NULL, NULL);
 		}
 		| ALL {
-			$$ = expr_alloc(EXPR_TYPE_ALL, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_ALL,
+			    parser_state.lineno, NULL, NULL);
 		}
 		| ISDIRECTORY STRING {
 			char *path;
 
-			$$ = expr_alloc(EXPR_TYPE_STAT, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_STAT,
+			    parser_state.lineno, NULL, NULL);
 			path = expand($2, MACRO_CTX_DEFAULT);
 			expr_set_stat($$, path, EXPR_STAT_DIR);
 		}
 		| COMMAND strings {
-			$$ = expr_alloc(EXPR_TYPE_COMMAND, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_COMMAND,
+			    parser_state.lineno, NULL, NULL);
 			$2 = expandstrings($2, MACRO_CTX_DEFAULT);
 			if (expr_set_exec($$, $2, 0))
 				yyerror("invalid command options");
@@ -318,19 +341,22 @@ expractions	: /* empty */ {
 			if ($1 == NULL) {
 				$$ = $2;
 			} else {
-				$$ = expr_alloc(EXPR_TYPE_AND, lineno, $1, $2);
+				$$ = expr_alloc(EXPR_TYPE_AND,
+				    parser_state.lineno, $1, $2);
 			}
 		}
 		;
 
 expraction	: BREAK {
-			$$ = expr_alloc(EXPR_TYPE_BREAK, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_BREAK,
+			    parser_state.lineno, NULL, NULL);
 		}
 		| MOVE STRING {
 			struct string_list *strings;
 			char *path;
 
-			$$ = expr_alloc(EXPR_TYPE_MOVE, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_MOVE,
+			    parser_state.lineno, NULL, NULL);
 			path = expand($2, MACRO_CTX_ACTION);
 			strings = strings_alloc();
 			strings_append(strings, path);
@@ -339,7 +365,8 @@ expraction	: BREAK {
 		| FLAG flag {
 			struct string_list *strings;
 
-			$$ = expr_alloc(EXPR_TYPE_FLAG, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_FLAG,
+			    parser_state.lineno, NULL, NULL);
 			strings = strings_alloc();
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
@@ -347,39 +374,45 @@ expraction	: BREAK {
 		| FLAGS STRING {
 			struct string_list *strings;
 
-			$$ = expr_alloc(EXPR_TYPE_FLAGS, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_FLAGS,
+			    parser_state.lineno, NULL, NULL);
 			strings = strings_alloc();
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
 		}
 		| DISCARD {
-			$$ = expr_alloc(EXPR_TYPE_DISCARD, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_DISCARD,
+			    parser_state.lineno, NULL, NULL);
 		}
 		| LABEL strings {
-			$$ = expr_alloc(EXPR_TYPE_LABEL, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_LABEL,
+			    parser_state.lineno, NULL, NULL);
 			$2 = expandstrings($2, MACRO_CTX_ACTION);
 			expr_set_strings($$, $2);
 		}
 		| PASS {
-			$$ = expr_alloc(EXPR_TYPE_PASS, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_PASS,
+			    parser_state.lineno, NULL, NULL);
 		}
 		| REJECT {
-			$$ = expr_alloc(EXPR_TYPE_REJECT, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_REJECT,
+			    parser_state.lineno, NULL, NULL);
 		}
 		| EXEC exec_flags strings {
-			$$ = expr_alloc(EXPR_TYPE_EXEC, lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_EXEC,
+			    parser_state.lineno, NULL, NULL);
 			$3 = expandstrings($3, MACRO_CTX_ACTION);
 			if (expr_set_exec($$, $3, $2))
 				yyerror("invalid exec options");
 		}
 		| ATTACHMENT exprblock {
 			expr_validate_attachment_block($2);
-			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT_BLOCK, lineno, $2,
-			    NULL);
+			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT_BLOCK,
+			    parser_state.lineno, $2, NULL);
 		}
 		| ADDHEADER STRING STRING {
-			$$ = expr_alloc(EXPR_TYPE_ADD_HEADER, lineno, NULL,
-			    NULL);
+			$$ = expr_alloc(EXPR_TYPE_ADD_HEADER,
+			    parser_state.lineno, NULL, NULL);
 			expr_set_add_header($$, $2, $3);
 		}
 		;
@@ -451,9 +484,9 @@ date_age	: INT scalar {
 		;
 
 scalar		: /* backdoor */ {
-			sflag = 1;
+			parser_state.sflag = 1;
 		} SCALAR {
-			sflag = 0;
+			parser_state.sflag = 0;
 			$$ = $2;
 		}
 		;
@@ -478,9 +511,9 @@ exec_flag	: STDIN {
 
 
 pattern		: /* backdoor */ {
-			pflag = 1;
+			parser_state.pflag = 1;
 		} PATTERN {
-			pflag = 0;
+			parser_state.pflag = 0;
 			$$ = $2;
 		}
 		;
@@ -496,23 +529,25 @@ optneg		: /* empty */ {
 %%
 
 int
-config_parse(struct config_list *cl, const char *path, const struct environment *env)
+config_parse(struct config_list *cl, const char *path,
+    const struct environment *env)
 {
-	yyfh = fopen(path, "r");
-	if (yyfh == NULL) {
+	memset(&parser_state, 0, sizeof(parser_state));
+	parser_state.path = path;
+	parser_state.env = env;
+	parser_state.config = cl;
+	parser_state.lineno = 1;
+
+	parser_state.fh = fopen(path, "r");
+	if (parser_state.fh == NULL) {
 		warn("%s", path);
 		return 1;
 	}
-	yyconfig = cl;
-	yypath = path;
-	yyenv = env;
 
-	lineno = 1;
-	lineno_save = 0;
 	yyparse();
-	fclose(yyfh);
-	macros_validate(yyconfig->cl_macros);
-	return parse_errors;
+	fclose(parser_state.fh);
+	macros_validate(parser_state.config->cl_macros);
+	return parser_state.error;
 }
 
 static void
@@ -520,12 +555,12 @@ yyerror(const char *fmt, ...)
 {
 	va_list ap;
 
-	fprintf(stderr, "%s:%u: ", yypath, yylval.lineno);
+	fprintf(stderr, "%s:%u: ", parser_state.path, yylval.lineno);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fprintf(stderr, "\n");
-	parse_errors++;
+	parser_state.error++;
 }
 
 static int
@@ -594,7 +629,7 @@ yylex1(int last_token)
 	int c, i;
 
 	buf = lexeme;
-	lno = lineno;
+	lno = parser_state.lineno;
 
 again:
 	for (c = yygetc(); isspace((unsigned char)c); c = yygetc())
@@ -610,7 +645,7 @@ again:
 		yypopl();
 	}
 
-	yylval.lineno = lineno;
+	yylval.lineno = parser_state.lineno;
 	yylval.number = (unsigned char)c;
 	if (c == EOF)
 		return 0;
@@ -655,7 +690,7 @@ again:
 		return STRING;
 	}
 
-	if (pflag) {
+	if (parser_state.pflag) {
 		unsigned char delim = c;
 
 		for (;;) {
@@ -736,7 +771,7 @@ again:
 			if (strcmp(lexeme, keywords[i].str) == 0)
 				return keywords[i].type;
 
-		if (sflag) {
+		if (parser_state.sflag) {
 			size_t len;
 			int ambiguous = 0;
 			int match = -1;
@@ -809,9 +844,9 @@ yygetc(void)
 {
 	int c;
 
-	c = fgetc(yyfh);
+	c = fgetc(parser_state.fh);
 	if (c == '\n')
-		lineno++;
+		parser_state.lineno++;
 	return c;
 }
 
@@ -837,8 +872,8 @@ static void
 yyungetc(int c)
 {
 	if (c == '\n')
-		lineno--;
-	ungetc(c, yyfh);
+		parser_state.lineno--;
+	ungetc(c, parser_state.fh);
 }
 
 /*
@@ -863,8 +898,8 @@ yyrecover(void)
 static void
 yypushl(unsigned int lno)
 {
-	assert(lineno_save == 0);
-	lineno_save = yylval.lineno;
+	assert(parser_state.lineno_save == 0);
+	parser_state.lineno_save = yylval.lineno;
 	yylval.lineno = lno;
 }
 
@@ -874,8 +909,8 @@ yypushl(unsigned int lno)
 static void
 yypopl(void)
 {
-	yylval.lineno = lineno_save;
-	lineno_save = 0;
+	yylval.lineno = parser_state.lineno_save;
+	parser_state.lineno_save = 0;
 }
 
 static void
@@ -899,8 +934,8 @@ macros_validate(const struct macro_list *macros)
 static char *
 expand(char *str, unsigned int curctx)
 {
-	str = expandtilde(str, yyenv->ev_home);
-	str = expandmacros(str, yyconfig->cl_macros, curctx);
+	str = expandtilde(str, parser_state.env->ev_home);
+	str = expandmacros(str, parser_state.config->cl_macros, curctx);
 	return str;
 }
 
