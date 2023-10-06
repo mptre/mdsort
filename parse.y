@@ -26,15 +26,15 @@ static void expr_validate(const struct expr *);
 static void expr_validate_attachment_block(const struct expr *);
 static void yyerror(const char *, ...)
 	__attribute__((__format__ (printf, 1, 2)));
+static void yyerror_at_line(unsigned int, const char *, ...)
+	__attribute__((__format__ (printf, 2, 3)));
+static void yyverror(const char *, va_list, unsigned int);
 static int yygetc(void);
 static int yylex(void);
 static int yylex1(int);
 static int yypeek(int);
 static void yyungetc(int);
 static void yyrecover(void);
-
-static void yypushl(unsigned int);
-static void yypopl(void);
 
 static void macros_validate(const struct macro_list *);
 
@@ -50,7 +50,6 @@ static struct {
 	struct config_list		*config;
 	FILE				*fh;
 	unsigned int			 lineno;
-	unsigned int			 lineno_save;
 	int				 error;
 	int				 sflag;
 	int				 pflag;
@@ -555,10 +554,26 @@ yyerror(const char *fmt, ...)
 {
 	va_list ap;
 
-	fprintf(stderr, "%s:%u: ", parser_state.path, yylval.lineno);
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	yyverror(fmt, ap, yylval.lineno);
 	va_end(ap);
+}
+
+static void
+yyerror_at_line(unsigned int lineno, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	yyverror(fmt, ap, lineno);
+	va_end(ap);
+}
+
+static void
+yyverror(const char *fmt, va_list ap, unsigned lineno)
+{
+	fprintf(stderr, "%s:%u: ", parser_state.path, lineno);
+	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 	parser_state.error++;
 }
@@ -639,11 +654,8 @@ again:
 	 * Macros must always be followed by `=', otherwise treat it as an
 	 * unknown keyword.
 	 */
-	if (last_token == MACRO && c != '=') {
-		yypushl(lno);
-		yyerror("unknown keyword: %s", lexeme);
-		yypopl();
-	}
+	if (last_token == MACRO && c != '=')
+		yyerror_at_line(lno, "unknown keyword: %s", lexeme);
 
 	yylval.lineno = parser_state.lineno;
 	yylval.number = (unsigned char)c;
@@ -817,19 +829,15 @@ expr_validate(const struct expr *ex)
 		return;
 	}
 
-	yypushl(ex->ex_lno);
-
 	nactions = expr_count_actions(ex);
 	if (nactions > 1) {
 		if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
-			yyerror("discard cannot be combined with another "
-			    "action");
+			yyerror_at_line(ex->ex_lno,
+			    "discard cannot be combined with another action");
 		if (expr_count(ex, EXPR_TYPE_REJECT) > 0)
-			yyerror("reject cannot be combined with another "
-			    "action");
+			yyerror_at_line(ex->ex_lno,
+			    "reject cannot be combined with another action");
 	}
-
-	yypopl();
 }
 
 static void
@@ -891,28 +899,6 @@ yyrecover(void)
 	}
 }
 
-/*
- * Use the given line number in subsequent calls to yyerror(). Must be followed
- * by a call to yypopl() in order to restore the previous line number.
- */
-static void
-yypushl(unsigned int lno)
-{
-	assert(parser_state.lineno_save == 0);
-	parser_state.lineno_save = yylval.lineno;
-	yylval.lineno = lno;
-}
-
-/*
- * Restore previous line number.
- */
-static void
-yypopl(void)
-{
-	yylval.lineno = parser_state.lineno_save;
-	parser_state.lineno_save = 0;
-}
-
 static void
 macros_validate(const struct macro_list *macros)
 {
@@ -923,9 +909,8 @@ macros_validate(const struct macro_list *macros)
 	for (i = 0; i < VECTOR_LENGTH(unused); i++) {
 		const struct macro *mc = unused[i];
 
-		yypushl(macro_get_lno(mc));
-		yyerror("unused macro: %s", macro_get_name(mc));
-		yypopl();
+		yyerror_at_line(macro_get_lno(mc),
+		    "unused macro: %s", macro_get_name(mc));
 	}
 	/* coverity[leaked_storage: FALSE] */
 	VECTOR_FREE(unused);
