@@ -1,16 +1,18 @@
 #include "config.h"
 
+#include "libks/compiler.h"
+#include "libks/fuzzer.h"
+
 #include "message.h"
 
-int
-main(void)
+static void
+target(const char *path, void *UNUSED(userdata))
 {
 	struct message *msg;
-	const char *body = NULL;
 
-	msg = message_parse("/dev", -1, "/dev/stdin");
+	msg = message_parse("/dev", -1, path);
 	if (msg != NULL)
-		body = message_get_body(msg);
+		message_get_body(msg);
 	message_free(msg);
-	return body != NULL ? 0 : 1;
 }
+FUZZER_TARGET_FILE(target);

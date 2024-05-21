@@ -253,11 +253,13 @@ check_yystype() {
 	! compile <"$_yacc"
 }
 
+_fuzz=''
 _pedantic=0
 _sanitize=0
 
 while [ $# -gt 0 ]; do
 	case "$1" in
+	--fuzz)		shift; _fuzz="$1"; _sanitize=1;;
 	--pedantic)	_pedantic=1;;
 	--sanitize)	_sanitize=1;;
 	*)		;;
@@ -318,6 +320,7 @@ if [ "$_sanitize" -eq 1 ]; then
 		cc_has_sanitizer address
 		cc_has_sanitizer undefined
 		cc_has_sanitizer unsigned-integer-overflow
+		[ "$_fuzz" = "llvm" ] && echo fuzzer
 	} >"${WRKDIR}/sanitize"
 	if ! cmp -s /dev/null "${WRKDIR}/sanitize"; then
 		_sanitize="-fsanitize=$(paste -sd , "${WRKDIR}/sanitize")"
@@ -367,6 +370,11 @@ if [ "$HAVE_ATTRIBUTE_FALLTHROUGH" -eq 1 ]; then
 	printf '#define FALLTHROUGH __attribute__((__fallthrough__))\n'
 else
 	printf '#define FALLTHROUGH do {} while (0) /* FALLTHROUGH */\n'
+fi
+
+if [ -n "$_fuzz" ]; then
+	printf '#define FUZZER_%s\t1\n' \
+		"$(echo "$_fuzz" | tr '[:lower:]' '[:upper:]')"
 fi
 
 if [ "$HAVE_STAT_TIM" -eq 0 ]; then
