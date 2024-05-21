@@ -1,3 +1,12 @@
+# 11.6.0 - YYYY-MM-DD
+
+## News
+
+- Improve dry run output for actions.
+  (292194a34b02 d0171059cc9b, b0b2f1d95cb5, c2076e6e8e42, a083cc54e8d0,
+   fdfe13eaf646, 7ccb82d7b0c7)
+  (Anton Lindqvist)
+
 # 11.5.1 - 2023-02-14
 
 ## Bug fixes
