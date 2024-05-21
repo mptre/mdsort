@@ -116,13 +116,14 @@ matches_interpolate(struct match_list *ml)
 }
 
 int
-matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
+matches_exec(const struct match_list *ml, struct maildir *src,
     const struct environment *env)
 {
 	struct maildir *dst = NULL;
 	struct match *mh;
 	int chsrc = 0;
 	int error = 0;
+	int rv = MATCH_EXEC_SUCCESS;
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		struct message *msg = mh->mh_msg;
@@ -172,7 +173,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 			break;
 
 		case EXPR_TYPE_REJECT:
-			*reject = 1;
+			rv = MATCH_EXEC_REJECTED;
 			break;
 
 		case EXPR_TYPE_EXEC: {
@@ -210,7 +211,7 @@ matches_exec(const struct match_list *ml, struct maildir *src, int *reject,
 	if (chsrc)
 		maildir_close(src);
 
-	return error;
+	return error ? MATCH_EXEC_ERROR : rv;
 }
 
 int

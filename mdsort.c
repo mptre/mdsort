@@ -365,9 +365,15 @@ handle_message(struct config *conf, struct match_list *matches,
 		/* Dry run, we're done. */
 		goto out;
 	}
-	if (matches_exec(matches, md, reject, env)) {
+	switch (matches_exec(matches, md, env)) {
+	case MATCH_EXEC_SUCCESS:
+		break;
+	case MATCH_EXEC_REJECTED:
+		*reject = 1;
+		break;
+	case MATCH_EXEC_ERROR:
 		error = 1;
-		goto out;
+		break;
 	}
 
 out:

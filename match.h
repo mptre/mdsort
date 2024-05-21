@@ -13,6 +13,13 @@ struct environment;
 struct macro_list;
 struct maildir;
 
+/* Return values for matches_exec(). */
+enum {
+	MATCH_EXEC_SUCCESS,
+	MATCH_EXEC_REJECTED,
+	MATCH_EXEC_ERROR,
+};
+
 struct match {
 	char			  mh_path[PATH_MAX];
 	char			  mh_maildir[PATH_MAX];
@@ -42,7 +49,7 @@ TAILQ_HEAD(match_list, match);
 int	matches_append(struct match_list *, struct match *);
 void	matches_clear(struct match_list *);
 int	matches_interpolate(struct match_list *);
-int	matches_exec(const struct match_list *, struct maildir *, int *,
+int	matches_exec(const struct match_list *, struct maildir *,
     const struct environment *);
 int	matches_inspect(const struct match_list *, const struct environment *);
 
