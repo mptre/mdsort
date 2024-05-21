@@ -475,7 +475,7 @@ date_age	: INT scalar {
 				yyerror("integer too large");
 				$$ = 0;
 			} else {
-				$$ = age;
+				$$ = (time_t)age;
 			}
 		}
 		;
