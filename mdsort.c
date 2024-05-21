@@ -49,7 +49,7 @@ static void		 readenv(struct environment *);
 static void		 usage(void)
 	__attribute__((__noreturn__));
 
-static int	handle_message(struct config *, struct match_list *,
+static int	handle_message(struct expr *, struct match_list *,
     struct maildir *, const struct maildir_entry *, int *,
     const struct environment *);
 
@@ -182,8 +182,8 @@ main(int argc, char *argv[])
 					break;
 				}
 
-				if (handle_message(conf, &matches, md, &me,
-				    &reject, &env))
+				if (handle_message(conf->expr, &matches, md,
+				    &me, &reject, &env))
 					error = 1;
 
 				matches_clear(&matches);
@@ -331,7 +331,7 @@ readenv(struct environment *env)
 }
 
 static int
-handle_message(struct config *conf, struct match_list *matches,
+handle_message(struct expr *expr, struct match_list *matches,
     struct maildir *md, const struct maildir_entry *me, int *reject,
     const struct environment *env)
 {
@@ -347,7 +347,7 @@ handle_message(struct config *conf, struct match_list *matches,
 		.ea_msg	= msg,
 		.ea_env	= env,
 	};
-	switch (expr_eval(conf->expr, &ea)) {
+	switch (expr_eval(expr, &ea)) {
 	case EXPR_MATCH:
 		break;
 	case EXPR_NOMATCH:
