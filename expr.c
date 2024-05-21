@@ -380,7 +380,7 @@ expr_count_actions(const struct expr *ex)
  * Writes a human readable representation of the latest match to fh.
  */
 void
-expr_inspect(const struct expr *ex, const struct match *mh,
+expr_inspect_matches(const struct expr *ex, const struct match *mh,
     const struct environment *env)
 {
 	const char *lbeg, *lend, *p;

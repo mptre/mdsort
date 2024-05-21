@@ -134,5 +134,5 @@ int	expr_count_actions(const struct expr *);
 
 int	expr_eval(struct expr *, struct expr_eval_arg *);
 
-void	expr_inspect(const struct expr *, const struct match *,
+void	expr_inspect_matches(const struct expr *, const struct match *,
     const struct environment *);
