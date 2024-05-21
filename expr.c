@@ -63,6 +63,8 @@ static int	expr_eval_stat(struct expr *, struct expr_eval_arg *);
 
 static const char	*expr_inspect_add_header(const struct expr *,
     const struct message *, struct arena_scope *);
+static const char	*expr_inspect_discard(const struct expr *,
+    const struct message *, struct arena_scope *);
 static const char	*expr_inspect_label(const struct expr *,
     const struct message *, struct arena_scope *);
 
@@ -155,8 +157,8 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_DISCARD:
 		ex->ex_eval = &expr_eval_discard;
+		ex->ex_inspect = &expr_inspect_discard;
 		ex->ex_flags = EXPR_FLAG_ACTION;
-		ex->ex_label = "<discard>";
 		break;
 	case EXPR_TYPE_BREAK:
 		ex->ex_eval = &expr_eval_break;
@@ -931,6 +933,13 @@ expr_inspect_add_header(const struct expr *ex, const struct message *msg,
 	return arena_sprintf(s, "<add-header \"%s\" \"%s\">",
 	    ex->ex_add_header.key,
 	    message_get_header1(msg, ex->ex_add_header.key));
+}
+
+static const char *
+expr_inspect_discard(const struct expr *UNUSED(ex),
+    const struct message *UNUSED(msg), struct arena_scope *UNUSED(s))
+{
+	return "<discard>";
 }
 
 static const char *
