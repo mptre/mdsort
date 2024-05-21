@@ -338,7 +338,7 @@ handle_message(struct config *conf, struct match_list *matches,
 	struct message *msg;
 	int error = 0;
 
-	msg = message_parse(me->e_dir, me->e_dirfd, me->e_path);
+	msg = message_parse(me->dir, me->dirfd, me->path);
 	if (msg == NULL)
 		return 1;
 

@@ -124,7 +124,7 @@ maildir_close(struct maildir *md)
 		/* Best effort removal of the temporary maildir. */
 		rewinddir(md->md_dir);
 		while (maildir_walk(md, &me) == 1)
-			(void)unlinkat(me.e_dirfd, me.e_path, 0);
+			(void)unlinkat(me.dirfd, me.path, 0);
 		(void)rmdir(md->md_path);
 		(void)rmdir(md->md_root);
 	}
@@ -531,9 +531,9 @@ unknown:
 		}
 
 		log_debug("%s: %s/%s\n", __func__, md->md_path, ent->d_name);
-		me->e_dir = md->md_path;
-		me->e_dirfd = maildir_fd(md);
-		me->e_path = ent->d_name;
+		me->dir = md->md_path;
+		me->dirfd = maildir_fd(md);
+		me->path = ent->d_name;
 		return 1;
 	}
 }

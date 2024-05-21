@@ -6,9 +6,9 @@ struct message;
 #define MAILDIR_STDIN	0x00000002u
 
 struct maildir_entry {
-	const char	*e_dir;
-	const char	*e_path;
-	int		 e_dirfd;
+	const char	*dir;
+	const char	*path;
+	int		 dirfd;
 };
 
 struct maildir	*maildir_open(const char *, unsigned int,
