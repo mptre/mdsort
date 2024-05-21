@@ -231,16 +231,15 @@ matches_inspect(const struct match_list *ml, const struct environment *env,
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		const struct expr *ex = mh->mh_expr;
 		const struct match *rhs;
-		const char *action, *path;
+		const char *path;
 
 		if ((ex->ex_flags & EXPR_FLAG_ACTION) == 0)
 			continue;
 
 		path = message_get_path(msg);
-		action = expr_inspect(ex, mh, msg, &s);
 		log_info("%s -> %s\n",
 		    env->ev_options & OPTION_STDIN ? "<stdin>" : path,
-		    action != NULL ? action : mh->mh_path);
+		    expr_inspect(ex, mh, msg, &s));
 
 		if (!dryrun)
 			continue;

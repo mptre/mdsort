@@ -132,10 +132,10 @@ if testcase "dry run"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> <exec>
+$(findmsg "src/new") -> <exec "cat">
 mdsort.conf:3: Content-Type: text/plain
                              ^        $
-$(findmsg "src/new") -> <exec>
+$(findmsg "src/new") -> <exec "cat">
 mdsort.conf:3: Content-Type: text/calendar
                              ^           $
 EOF

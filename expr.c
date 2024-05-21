@@ -20,6 +20,7 @@
 #include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/compiler.h"
+#include "libks/consistency.h"
 #include "libks/vector.h"
 
 #include "date-time.h"
@@ -213,6 +214,8 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
 		break;
 	}
+
+	ASSERT_CONSISTENCY(ex->ex_flags & EXPR_FLAG_ACTION, ex->ex_inspect);
 
 	return ex;
 }
@@ -408,9 +411,7 @@ const char *
 expr_inspect(const struct expr *ex, const struct match *mh,
     const struct message *msg, struct arena_scope *s)
 {
-	if (ex->ex_inspect != NULL)
-		return ex->ex_inspect(ex, mh, msg, s);
-	return NULL;
+	return ex->ex_inspect(ex, mh, msg, s);
 }
 
 /*
