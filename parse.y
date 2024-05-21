@@ -182,9 +182,7 @@ maildir		: maildir_paths exprblock {
 				break;
 			}
 
-			conf = VECTOR_CALLOC(parser_state.config->cl_list);
-			if (conf == NULL)
-				err(1, NULL);
+			conf = config_list_append(parser_state.config);
 			conf->paths = $1;
 			conf->expr = $2;
 		}

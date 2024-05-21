@@ -35,3 +35,14 @@ config_list_free(struct config_list *cl)
 	}
 	VECTOR_FREE(cl->cl_list);
 }
+
+struct config *
+config_list_append(struct config_list *cl)
+{
+	struct config *conf;
+
+	conf = VECTOR_ALLOC(cl->cl_list);
+	if (conf == NULL)
+		err(1, NULL);
+	return conf;
+}
