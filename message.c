@@ -52,9 +52,11 @@ struct header {
 	VECTOR(char *)	 values;	/* all values for key */
 };
 
-struct slice {
-	char	*s_beg;
-	char	*s_end;
+struct header_slice {
+	struct {
+		char	*beg;
+		char	*end;
+	} key, val;
 };
 
 static int		 message_flags_parse(struct message_flags *,
@@ -70,7 +72,7 @@ static const char	*message_decode_body(struct message *,
 
 static int	 cmpheaderid(const struct header *, const struct header *);
 static int	 cmpheaderkey(const struct header *, const struct header *);
-static int	 findheader(char *, struct slice *, struct slice *);
+static int	 findheader(char *, struct header_slice *);
 static ssize_t	 searchheader(const struct header *, size_t, const char *,
     size_t *);
 static char	*decodeheader(const char *);
@@ -684,18 +686,19 @@ message_is_content_type(const struct message *msg, const char *needle)
 static const char *
 message_parse_headers(struct message *msg)
 {
+	struct header_slice slice;
 	char *buf;
-	struct slice ks, vs;
 
 	buf = skipseparator(msg->me_buf);
 
-	while (findheader(buf, &ks, &vs)) {
-		struct header *hdr = message_headers_alloc(msg);
+	while (findheader(buf, &slice)) {
+		struct header *hdr;
 
-		hdr->key = ks.s_beg;
-		hdr->val = vs.s_beg;
+		hdr = message_headers_alloc(msg);
+		hdr->key = slice.key.beg;
+		hdr->val = slice.val.beg;
 
-		buf = vs.s_end + 1;
+		buf = &slice.val.end[1];
 	}
 	VECTOR_SORT(msg->me_headers, cmpheaderkey);
 
@@ -793,7 +796,7 @@ unfoldheader(const char *str)
 }
 
 static int
-findheader(char *str, struct slice *ks, struct slice *vs)
+findheader(char *str, struct header_slice *slice)
 {
 	size_t i;
 
@@ -801,14 +804,14 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 		if (str[i] == '\0' || isspace((unsigned char)str[i]))
 			return 0;
 	}
-	ks->s_beg = str;
-	ks->s_end = str + i;
-	*ks->s_end = '\0';
+	slice->key.beg = str;
+	slice->key.end = str + i;
+	*slice->key.end = '\0';
 
 	/* Consume ':' and skip leading spaces in value. */
 	i++;
 	i += nspaces(&str[i]);
-	vs->s_beg = str + i;
+	slice->val.beg = str + i;
 
 	/* Find the end of the value, with respect to line continuations. */
 	for (;;) {
@@ -826,8 +829,8 @@ findheader(char *str, struct slice *ks, struct slice *vs)
 			break;
 		i += n + 1;
 	}
-	vs->s_end = str + i;
-	*vs->s_end = '\0';
+	slice->val.end = str + i;
+	*slice->val.end = '\0';
 
 	return 1;
 }
