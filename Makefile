@@ -43,14 +43,12 @@ DEPS_test=	${SRCS_test:.c=.d}
 PROG_test=	t
 
 SRCS_fuzz-config+=	${SRCS}
-SRCS_fuzz-config+=	tmp.c
 SRCS_fuzz-config+=	fuzz-config.c
 OBJS_fuzz-config=	${SRCS_fuzz-config:.c=.o}
 DEPS_fuzz-config=	${SRCS_fuzz-config:.c=.d}
 PROG_fuzz-config=	fuzz-config
 
 SRCS_fuzz-message+=	${SRCS}
-SRCS_fuzz-message+=	tmp.c
 SRCS_fuzz-message+=	fuzz-message.c
 OBJS_fuzz-message=	${SRCS_fuzz-message:.c=.o}
 DEPS_fuzz-message=	${SRCS_fuzz-message:.c=.d}
