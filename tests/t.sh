@@ -140,7 +140,7 @@ _report() {
 		printf '%s: %s: %s' "$_prefix" "$NAME" "$TCDESC"
 		[ $# -gt 0 ] && printf ': %s' "$*"
 		echo
-		[ $_stdin -eq 1 ] && cat
+		[ "$_stdin" -eq 1 ] && cat
 	} >"$_tmp"
 	cat <"$_tmp" 1>&2
 }
@@ -157,11 +157,13 @@ _runnable() {
 		case "$FILTER" in
 		f)	echo "$_desc";;
 		t)	echo "$_tags";;
+		*)	;;
 		esac | grep -q -f "$INCLUDE" && return 0
 	elif [ -s "$EXCLUDE" ]; then
 		case "$FILTER" in
 		F)	echo "$_desc";;
 		T)	echo "$_tags";;
+		*)	;;
 		esac | grep -q -f "$EXCLUDE" || return 0
 	else
 		return 0
