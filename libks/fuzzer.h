@@ -20,6 +20,10 @@
 #include "libks/compiler.h"
 #include "libks/tmp.h"
 
+#if !defined(FUZZER_AFL) && !defined(FUZZER_LLVM)
+#  define FUZZER_AFL
+#endif
+
 /* Work around what seems to be a GCC UBSan bug. */
 #if defined(__GNUC__) && __has_attribute(no_sanitize)
 #  define NO_SANITIZE_UNDEFINED no_sanitize("undefined")
