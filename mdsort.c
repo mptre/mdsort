@@ -69,7 +69,7 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
-	config_init(&cl);
+	config_list_init(&cl);
 	environment_init(&env);
 	TAILQ_INIT(&matches);
 
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 
 	if (env.ev_confpath == NULL)
 		env.ev_confpath = defaultconf(env.ev_home);
-	if (config_parse(&cl, env.ev_confpath, &env)) {
+	if (config_list_parse(&cl, env.ev_confpath, &env)) {
 		error = 1;
 		goto out;
 	}
@@ -216,7 +216,7 @@ loop:
 	}
 
 out:
-	config_free(&cl);
+	config_list_free(&cl);
 	FAULT_SHUTDOWN();
 
 	if (dousage)

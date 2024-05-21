@@ -528,7 +528,7 @@ optneg		: /* empty */ {
 %%
 
 int
-config_parse(struct config_list *cl, const char *path,
+config_list_parse(struct config_list *cl, const char *path,
     const struct environment *env)
 {
 	memset(&parser_state, 0, sizeof(parser_state));

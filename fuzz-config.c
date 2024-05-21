@@ -11,8 +11,8 @@ main(void)
 	int error;
 
 	environment_init(&env);
-	config_init(&cl);
-	error = config_parse(&cl, "/dev/stdin", &env);
-	config_free(&cl);
+	config_list_init(&cl);
+	error = config_list_parse(&cl, "/dev/stdin", &env);
+	config_list_free(&cl);
 	return error;
 }

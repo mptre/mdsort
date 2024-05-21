@@ -11,7 +11,7 @@
 #include "string-list.h"
 
 void
-config_init(struct config_list *cl)
+config_list_init(struct config_list *cl)
 {
 	cl->cl_macros = macros_alloc(MACRO_CTX_DEFAULT);
 	if (VECTOR_INIT(cl->cl_list))
@@ -19,7 +19,7 @@ config_init(struct config_list *cl)
 }
 
 void
-config_free(struct config_list *cl)
+config_list_free(struct config_list *cl)
 {
 	if (cl == NULL)
 		return;
