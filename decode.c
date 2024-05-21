@@ -2,6 +2,8 @@
 
 #include "config.h"
 
+#include <sys/types.h> /* ssize_t */
+
 #include <ctype.h>
 #include <err.h>
 #include <stdlib.h>
