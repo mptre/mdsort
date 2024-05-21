@@ -9,7 +9,7 @@
 
 #include "libks/buffer.h"
 
-static int	b64_pton(const char *, unsigned char *, size_t);
+static ssize_t	b64_pton(const char *, unsigned char *, size_t);
 static void	quoted_printable_decode_buffer(struct buffer *, const char *,
     size_t, int);
 
@@ -203,7 +203,7 @@ quoted_printable_decode_buffer(struct buffer *bf, const char *str, size_t len,
 	}
 }
 
-int
+static ssize_t
 b64_pton(const char *src, unsigned char *target, size_t targsize)
 {
 	static const char Base64[] =
@@ -329,7 +329,7 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 			return -1;
 	}
 
-	return tarindex;
+	return (ssize_t)tarindex;
 }
 
 /*
