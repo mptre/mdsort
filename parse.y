@@ -471,7 +471,7 @@ date_cmp	: '<' {
 date_age	: INT scalar {
 			unsigned int age;
 
-			if (u32_mul_overflow($1, $2, &age)) {
+			if (KS_u32_mul_overflow($1, $2, &age)) {
 				yyerror("integer too large");
 				$$ = 0;
 			} else {
@@ -755,8 +755,8 @@ again:
 			if (overflow)
 				continue;
 
-			if (u32_mul_overflow(number, 10, &number) ||
-			    u32_add_overflow(number, u - '0', &number)) {
+			if (KS_u32_mul_overflow(number, 10, &number) ||
+			    KS_u32_add_overflow(number, u - '0', &number)) {
 				yyerror("integer too large");
 				overflow = 1;
 			}

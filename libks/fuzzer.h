@@ -14,6 +14,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef LIBKS_FUZZER_H
+#define LIBKS_FUZZER_H
+
 #include <stdint.h>
 
 #include "libks/buffer.h"
@@ -150,8 +153,8 @@ main(void)
 #include <limits.h>
 #include <unistd.h>
 
-int	LLVMFuzzerTestOneInput(const uint8_t *, size_t);
-int	LLVMFuzzerInitialize(int *, char ***);
+extern int	LLVMFuzzerTestOneInput(const uint8_t *, size_t);
+extern int	LLVMFuzzerInitialize(int *, char ***);
 
 static void *fuzzer_llvm_userdata;
 
@@ -176,6 +179,8 @@ LLVMFuzzerTestOneInput(const uint8_t *buf, size_t buflen)
 			__builtin_trap();
 		fuzzer_target.file_cb(path, fuzzer_llvm_userdata);
 		close(fd);
+	} else {
+		__builtin_trap();
 	}
 
 	return 0;
@@ -192,3 +197,5 @@ LLVMFuzzerInitialize(int *UNUSED(argc), char ***UNUSED(argv))
 #else
 #error "unknown fuzzer"
 #endif
+
+#endif /* !LIBKS_FUZZER_H */

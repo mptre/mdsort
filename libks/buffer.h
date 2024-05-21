@@ -14,14 +14,34 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef LIBKS_BUFFER_H
+#define LIBKS_BUFFER_H
+
 #include <stdarg.h>	/* va_list */
 #include <stddef.h>	/* size_t */
 
+struct buffer;
+
+struct buffer_callbacks {
+	void	*(*alloc)(size_t, void *);
+	void	*(*realloc)(void *, size_t, size_t, void *);
+	void	 (*free)(void *, size_t, void *);
+	void	*arg;
+};
+
+struct buffer_getline {
+	struct buffer	*bf;
+	size_t		 off;
+};
+
 struct buffer	*buffer_alloc(size_t);
+struct buffer	*buffer_alloc_impl(size_t, struct buffer_callbacks *);
 void		 buffer_free(struct buffer *);
 
 struct buffer	*buffer_read(const char *);
+int		 buffer_read_impl(struct buffer *, const char *);
 struct buffer	*buffer_read_fd(int);
+int		 buffer_read_fd_impl(struct buffer *, int);
 
 char	*buffer_release(struct buffer *);
 char	*buffer_str(struct buffer *);
@@ -37,6 +57,14 @@ int	buffer_printf(struct buffer *, const char *, ...)
 	__attribute__((__format__(printf, 2, 3)));
 int	buffer_vprintf(struct buffer *, const char *, va_list);
 
+const char	*buffer_getline(const struct buffer *,
+    struct buffer_getline *);
+const char	*buffer_getline_impl(const struct buffer *,
+    struct buffer_getline *);
+void		 buffer_getline_free(struct buffer_getline *);
+
 const char	*buffer_get_ptr(const struct buffer *);
 size_t		 buffer_get_len(const struct buffer *);
 size_t		 buffer_get_size(const struct buffer *);
+
+#endif /* !LIBKS_BUFFER_H */
