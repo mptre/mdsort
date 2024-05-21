@@ -23,6 +23,7 @@ SRCS+=	match.c
 SRCS+=	message.c
 SRCS+=	parse.c
 SRCS+=	string-list.c
+SRCS+=	tmp.c
 SRCS+=	util.c
 SRCS+=	vector.c
 
