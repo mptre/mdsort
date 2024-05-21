@@ -63,6 +63,8 @@ static int	expr_eval_stat(struct expr *, struct expr_eval_arg *);
 
 static const char	*expr_inspect_add_header(const struct expr *,
     const struct message *, struct arena_scope *);
+static const char	*expr_inspect_label(const struct expr *,
+    const struct message *, struct arena_scope *);
 
 static size_t	expr_inspect_prefix(const struct expr *,
     const struct environment *);
@@ -162,8 +164,8 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_LABEL:
 		ex->ex_eval = &expr_eval_label;
+		ex->ex_inspect = &expr_inspect_label;
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
-		ex->ex_label = "<label>";
 		break;
 	case EXPR_TYPE_PASS:
 		ex->ex_eval = &expr_eval_pass;
@@ -929,6 +931,14 @@ expr_inspect_add_header(const struct expr *ex, const struct message *msg,
 	return arena_sprintf(s, "<add-header \"%s\" \"%s\">",
 	    ex->ex_add_header.key,
 	    message_get_header1(msg, ex->ex_add_header.key));
+}
+
+static const char *
+expr_inspect_label(const struct expr *UNUSED(ex), const struct message *msg,
+    struct arena_scope *s)
+{
+	return arena_sprintf(s, "<label \"%s\">",
+	    message_get_header1(msg, "X-Label"));
 }
 
 static size_t
