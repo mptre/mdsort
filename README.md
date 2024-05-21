@@ -84,6 +84,7 @@ The installation prefix defaults to `/usr/local` and can be altered using the
 
 ```
 $ ./configure
+$ make
 $ make install
 ```
 
