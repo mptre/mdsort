@@ -100,6 +100,6 @@ if testcase "dry run"; then
 	EOF
 	mdsort -- -d - </dev/null >"$TMP1"
 	assert_file - "$TMP1" <<-EOF
-	<stdin> -> dst/new
+	<stdin> -> <move "dst/new">
 	EOF
 fi

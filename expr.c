@@ -62,13 +62,15 @@ static int	expr_eval_reject(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_stat(struct expr *, struct expr_eval_arg *);
 
 static const char	*expr_inspect_add_header(const struct expr *,
-    const struct message *, struct arena_scope *);
+    const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_discard(const struct expr *,
-    const struct message *, struct arena_scope *);
+    const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_label(const struct expr *,
-    const struct message *, struct arena_scope *);
+    const struct match *, const struct message *, struct arena_scope *);
+static const char	*expr_inspect_move(const struct expr *,
+    const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_reject(const struct expr *,
-    const struct message *, struct arena_scope *);
+    const struct match *, const struct message *, struct arena_scope *);
 
 static size_t	expr_inspect_prefix(const struct expr *,
     const struct environment *);
@@ -147,14 +149,17 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_MOVE:
 		ex->ex_eval = &expr_eval_move;
+		ex->ex_inspect = &expr_inspect_move;
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_FLAG:
 		ex->ex_eval = &expr_eval_flag;
+		ex->ex_inspect = &expr_inspect_move;
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_FLAGS:
 		ex->ex_eval = &expr_eval_flags;
+		ex->ex_inspect = &expr_inspect_move;
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
 		break;
 	case EXPR_TYPE_DISCARD:
@@ -387,11 +392,11 @@ expr_count_actions(const struct expr *ex)
 }
 
 const char *
-expr_inspect(const struct expr *ex, const struct message *msg,
-    struct arena_scope *s)
+expr_inspect(const struct expr *ex, const struct match *mh,
+    const struct message *msg, struct arena_scope *s)
 {
 	if (ex->ex_inspect != NULL)
-		return ex->ex_inspect(ex, msg, s);
+		return ex->ex_inspect(ex, mh, msg, s);
 	if (ex->ex_label != NULL)
 		return ex->ex_label;
 	return NULL;
@@ -929,8 +934,8 @@ out:
 }
 
 static const char *
-expr_inspect_add_header(const struct expr *ex, const struct message *msg,
-    struct arena_scope *s)
+expr_inspect_add_header(const struct expr *ex, const struct match *UNUSED(mh),
+    const struct message *msg, struct arena_scope *s)
 {
 	return arena_sprintf(s, "<add-header \"%s\" \"%s\">",
 	    ex->ex_add_header.key,
@@ -939,13 +944,15 @@ expr_inspect_add_header(const struct expr *ex, const struct message *msg,
 
 static const char *
 expr_inspect_discard(const struct expr *UNUSED(ex),
-    const struct message *UNUSED(msg), struct arena_scope *UNUSED(s))
+    const struct match *UNUSED(mh), const struct message *UNUSED(msg),
+    struct arena_scope *UNUSED(s))
 {
 	return "<discard>";
 }
 
 static const char *
-expr_inspect_label(const struct expr *UNUSED(ex), const struct message *msg,
+expr_inspect_label(const struct expr *UNUSED(ex),
+    const struct match *UNUSED(mh), const struct message *msg,
     struct arena_scope *s)
 {
 	return arena_sprintf(s, "<label \"%s\">",
@@ -953,8 +960,16 @@ expr_inspect_label(const struct expr *UNUSED(ex), const struct message *msg,
 }
 
 static const char *
+expr_inspect_move(const struct expr *UNUSED(ex), const struct match *mh,
+    const struct message *UNUSED(mh), struct arena_scope *s)
+{
+	return arena_sprintf(s, "<move \"%s\">", mh->mh_path);
+}
+
+static const char *
 expr_inspect_reject(const struct expr *UNUSED(ex),
-    const struct message *UNUSED(msg), struct arena_scope *UNUSED(s))
+    const struct match *UNUSED(mh), const struct message *UNUSED(msg),
+    struct arena_scope *UNUSED(s))
 {
 	return "<reject>";
 }

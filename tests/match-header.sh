@@ -113,7 +113,7 @@ if testcase "dry run first line"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: To: user@example.com
                         ^         $
 EOF
@@ -129,7 +129,7 @@ if testcase "dry run middle line"; then
 	}
 	cat <<EOF >"$TMP1"
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: To: admin@a.com, user@a.com, no-reply@a.com
                                 ^  $
 EOF
@@ -145,7 +145,7 @@ if testcase "dry run last line"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: To: admin@example.com,user@example.com
                                      ^  $
 EOF
@@ -160,7 +160,7 @@ if testcase "dry run negate"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 EOF
 fi
 
@@ -173,7 +173,7 @@ if testcase "dry run many subexpressions"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: To: user@example.com
                         ^         $
                    user@example.com

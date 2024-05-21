@@ -133,7 +133,7 @@ if testcase "dry run"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: Date: ${_d}
                      ^                             $
 EOF

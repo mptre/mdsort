@@ -237,7 +237,7 @@ matches_inspect(const struct match_list *ml, const struct environment *env,
 			continue;
 
 		path = message_get_path(msg);
-		action = expr_inspect(ex, msg, &s);
+		action = expr_inspect(ex, mh, msg, &s);
 		log_info("%s -> %s\n",
 		    env->ev_options & OPTION_STDIN ? "<stdin>" : path,
 		    action != NULL ? action : mh->mh_path);

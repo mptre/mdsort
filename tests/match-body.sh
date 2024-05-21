@@ -85,7 +85,7 @@ if testcase "dry run first line"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: Body: Hello
                      ^   $
 EOF
@@ -100,7 +100,7 @@ if testcase "dry run first line no newline"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: Body: Hello
                      ^   $
 EOF
@@ -121,7 +121,7 @@ if testcase "dry run middle line"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: Body: Hello hello
                            ^   $
 EOF

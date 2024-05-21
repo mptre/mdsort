@@ -9,7 +9,7 @@ if testcase "match body many subexpressions"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: Body: foo bar
                      ^     $
                      foo bar
@@ -28,7 +28,7 @@ if testcase "match many headers and body"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: Cc: admin@example.com
                    ^   $
 mdsort.conf:2: To: user@example.com
@@ -49,7 +49,7 @@ if testcase "matches from previous evaluations are discarded"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg -g Hello "src/new") -> dst/new
+$(findmsg -g Hello "src/new") -> <move "dst/new">
 mdsort.conf:2: Cc: admin@example.com
                    ^   $
 mdsort.conf:2: Body: Hello!
@@ -68,7 +68,7 @@ if testcase "matches from previous evaluations are discarded, inverted"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg -g Hello "src/new") -> dst/new
+$(findmsg -g Hello "src/new") -> <move "dst/new">
 mdsort.conf:2: To: user@example.com
                    ^  $
 mdsort.conf:2: Body: Hello!
@@ -90,7 +90,7 @@ if testcase "match nested rules"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg -g Hello "src/new") -> dst/new
+$(findmsg -g Hello "src/new") -> <move "dst/new">
 mdsort.conf:2: To: user@example.com
                         ^     $
 mdsort.conf:3: Body: Hello!
@@ -107,7 +107,7 @@ if testcase "single character"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: To: user@example.com
                    ^$
 EOF
@@ -122,7 +122,7 @@ if testcase "empty subexpression"; then
 	}
 	EOF
 	mdsort - -- -d <<EOF
-$(findmsg "src/new") -> dst/new
+$(findmsg "src/new") -> <move "dst/new">
 mdsort.conf:2: To: user@example.com
                    ^   $
 EOF
