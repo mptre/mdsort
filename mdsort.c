@@ -12,6 +12,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "libks/arena.h"
 #include "libks/vector.h"
 
 #include "conf.h"
@@ -51,11 +52,12 @@ static void		 usage(void)
 
 static int	handle_message(struct expr *, struct match_list *,
     struct maildir *, const struct maildir_entry *, int *,
-    const struct environment *);
+    const struct environment *, struct arena *);
 
 int
 main(int argc, char *argv[])
 {
+	struct arena *scratch = NULL;
 	struct config_list cl;
 	struct environment env;
 	struct match_list matches;
@@ -151,6 +153,8 @@ main(int argc, char *argv[])
 	if (env.ev_options & OPTION_SYNTAX)
 		goto out;
 
+	scratch = arena_alloc();
+
 	for (i = 0; i < VECTOR_LENGTH(cl.cl_list); i++) {
 		struct config *conf = &cl.cl_list[i];
 		const struct string *str;
@@ -183,7 +187,7 @@ main(int argc, char *argv[])
 				}
 
 				if (handle_message(conf->expr, &matches, md,
-				    &me, &reject, &env))
+				    &me, &reject, &env, scratch))
 					error = 1;
 
 				matches_clear(&matches);
@@ -193,6 +197,7 @@ main(int argc, char *argv[])
 	}
 
 out:
+	arena_free(scratch);
 	config_list_free(&cl);
 	FAULT_SHUTDOWN();
 
@@ -333,7 +338,7 @@ readenv(struct environment *env)
 static int
 handle_message(struct expr *expr, struct match_list *matches,
     struct maildir *md, const struct maildir_entry *me, int *reject,
-    const struct environment *env)
+    const struct environment *env, struct arena *scratch)
 {
 	struct message *msg;
 	int error = 0;
@@ -361,7 +366,7 @@ handle_message(struct expr *expr, struct match_list *matches,
 		error = 1;
 		goto out;
 	}
-	if (matches_inspect(matches, env)) {
+	if (matches_inspect(matches, env, scratch)) {
 		/* Dry run, we're done. */
 		goto out;
 	}

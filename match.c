@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/vector.h"
 
@@ -215,11 +216,14 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 }
 
 int
-matches_inspect(const struct match_list *ml, const struct environment *env)
+matches_inspect(const struct match_list *ml, const struct environment *env,
+    struct arena *scratch)
 {
 	const struct match *lhs, *mh;
 	const struct message *msg;
 	int dryrun = env->ev_options & OPTION_DRYRUN;
+
+	arena_scope(scratch, s);
 
 	lhs = TAILQ_FIRST(ml);
 	msg = TAILQ_FIRST(ml)->mh_msg;
@@ -227,15 +231,16 @@ matches_inspect(const struct match_list *ml, const struct environment *env)
 	TAILQ_FOREACH(mh, ml, mh_entry) {
 		const struct expr *ex = mh->mh_expr;
 		const struct match *rhs;
-		const char *path;
+		const char *action, *path;
 
 		if ((ex->ex_flags & EXPR_FLAG_ACTION) == 0)
 			continue;
 
 		path = message_get_path(msg);
+		action = expr_inspect(ex, msg, &s);
 		log_info("%s -> %s\n",
 		    env->ev_options & OPTION_STDIN ? "<stdin>" : path,
-		    ex->ex_label ? ex->ex_label : mh->mh_path);
+		    action != NULL ? action : mh->mh_path);
 
 		if (!dryrun)
 			continue;

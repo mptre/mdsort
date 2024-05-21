@@ -24,3 +24,16 @@ if testcase "interpolation"; then
 	refute_empty "src/new"
 	assert_header "Subject" "Fix bug" "$(findmsg "src/new")"
 fi
+
+if testcase "dry run"; then
+	mkmd "src"
+	mkmsg "src/new"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match all add-header "Subject" "Hello"
+	}
+	EOF
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> <add-header "Subject" "Hello">
+EOF
+fi

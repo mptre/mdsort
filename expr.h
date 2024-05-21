@@ -1,3 +1,4 @@
+struct arena_scope;
 struct match;
 
 /* Return values for expr_eval(). */
@@ -82,6 +83,8 @@ struct expr {
 
 	int			 (*ex_eval)(struct expr *,
 	    struct expr_eval_arg *);
+	const char		*(*ex_inspect)(const struct expr *,
+	    const struct message *, struct arena_scope *);
 
 	const char		*ex_label;
 
@@ -134,5 +137,7 @@ int	expr_count_actions(const struct expr *);
 
 int	expr_eval(struct expr *, struct expr_eval_arg *);
 
-void	expr_inspect_matches(const struct expr *, const struct match *,
+const char	*expr_inspect(const struct expr *, const struct message *,
+    struct arena_scope *);
+void		 expr_inspect_matches(const struct expr *, const struct match *,
     const struct environment *);

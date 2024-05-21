@@ -16,6 +16,7 @@
 #include <string.h>
 #include <wchar.h>
 
+#include "libks/arena.h"
 #include "libks/compiler.h"
 #include "libks/vector.h"
 
@@ -59,6 +60,9 @@ static int	expr_eval_or(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_pass(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_reject(struct expr *, struct expr_eval_arg *);
 static int	expr_eval_stat(struct expr *, struct expr_eval_arg *);
+
+static const char	*expr_inspect_add_header(const struct expr *,
+    const struct message *, struct arena_scope *);
 
 static size_t	expr_inspect_prefix(const struct expr *,
     const struct environment *);
@@ -181,8 +185,8 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_ADD_HEADER:
 		ex->ex_eval = &expr_eval_add_header;
+		ex->ex_inspect = &expr_inspect_add_header;
 		ex->ex_flags = EXPR_FLAG_ACTION | EXPR_FLAG_PATH;
-		ex->ex_label = "<add-header>";
 		break;
 	}
 
@@ -374,6 +378,17 @@ expr_count_actions(const struct expr *ex)
 		n = 1;
 	return n + expr_count_actions(ex->ex_lhs) +
 	    expr_count_actions(ex->ex_rhs);
+}
+
+const char *
+expr_inspect(const struct expr *ex, const struct message *msg,
+    struct arena_scope *s)
+{
+	if (ex->ex_inspect != NULL)
+		return ex->ex_inspect(ex, msg, s);
+	if (ex->ex_label != NULL)
+		return ex->ex_label;
+	return NULL;
 }
 
 /*
@@ -905,6 +920,15 @@ out:
 	match_free(mh);
 
 	return ev;
+}
+
+static const char *
+expr_inspect_add_header(const struct expr *ex, const struct message *msg,
+    struct arena_scope *s)
+{
+	return arena_sprintf(s, "<add-header \"%s\" \"%s\">",
+	    ex->ex_add_header.key,
+	    message_get_header1(msg, ex->ex_add_header.key));
 }
 
 static size_t
