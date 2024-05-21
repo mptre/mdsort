@@ -19,6 +19,21 @@ jobs:
           ./configure --pedantic --sanitize
           make -j`nproc` test
 
+  linux-gcc-i386:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: test
+        env:
+          CC: gcc
+          CPPFLAGS: -DDIAGNOSTIC
+          DEBUG: -m32
+          TESTFLAGS: -Tfdleak
+        run: |
+          ./configure --pedantic
+          make -j`nproc` test
+
   linux-gcc-4:
     runs-on: ubuntu-22.04
     container: ghcr.io/mptre/gcc:4
