@@ -65,6 +65,10 @@ static int	expr_eval_stat(struct expr *, struct expr_eval_arg *);
 
 static const char	*expr_inspect_add_header(const struct expr *,
     const struct match *, const struct message *, struct arena_scope *);
+static const char	*expr_inspect_attachment_block(const struct expr *,
+    const struct match *, const struct message *, struct arena_scope *);
+static const char	*expr_inspect_break(const struct expr *,
+    const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_discard(const struct expr *,
     const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_exec(const struct expr *,
@@ -72,6 +76,8 @@ static const char	*expr_inspect_exec(const struct expr *,
 static const char	*expr_inspect_label(const struct expr *,
     const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_move(const struct expr *,
+    const struct match *, const struct message *, struct arena_scope *);
+static const char	*expr_inspect_pass(const struct expr *,
     const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_reject(const struct expr *,
     const struct match *, const struct message *, struct arena_scope *);
@@ -173,6 +179,7 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_BREAK:
 		ex->ex_eval = &expr_eval_break;
+		ex->ex_inspect = &expr_inspect_break;
 		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
 	case EXPR_TYPE_LABEL:
@@ -182,6 +189,7 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_PASS:
 		ex->ex_eval = &expr_eval_pass;
+		ex->ex_inspect = &expr_inspect_pass;
 		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
 	case EXPR_TYPE_REJECT:
@@ -196,6 +204,7 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_ATTACHMENT_BLOCK:
 		ex->ex_eval = &expr_eval_attachment_block;
+		ex->ex_inspect = &expr_inspect_attachment_block;
 		ex->ex_flags = EXPR_FLAG_ACTION;
 		break;
 	case EXPR_TYPE_ADD_HEADER:
@@ -945,6 +954,22 @@ expr_inspect_add_header(const struct expr *ex, const struct match *UNUSED(mh),
 }
 
 static const char *
+expr_inspect_attachment_block(const struct expr *UNUSED(ex),
+    const struct match *UNUSED(mh), const struct message *UNUSED(msg),
+    struct arena_scope *UNUSED(s))
+{
+	return "<attachment>";
+}
+
+static const char *
+expr_inspect_break(const struct expr *UNUSED(ex),
+    const struct match *UNUSED(mh), const struct message *UNUSED(msg),
+    struct arena_scope *UNUSED(s))
+{
+	return "<break>";
+}
+
+static const char *
 expr_inspect_discard(const struct expr *UNUSED(ex),
     const struct match *UNUSED(mh), const struct message *UNUSED(msg),
     struct arena_scope *UNUSED(s))
@@ -982,6 +1007,14 @@ expr_inspect_move(const struct expr *UNUSED(ex), const struct match *mh,
     const struct message *UNUSED(mh), struct arena_scope *s)
 {
 	return arena_sprintf(s, "<move \"%s\">", mh->mh_path);
+}
+
+static const char *
+expr_inspect_pass(const struct expr *UNUSED(ex),
+    const struct match *UNUSED(mh), const struct message *UNUSED(msg),
+    struct arena_scope *UNUSED(s))
+{
+	return "<pass>";
 }
 
 static const char *
