@@ -188,3 +188,18 @@ if testcase "label and exec"; then
 
 	EOF
 fi
+
+if testcase "dry run"; then
+	mkmd "src"
+	mkmsg "src/new" -- "Subject" "Hello"
+	cat <<-EOF >"$CONF"
+	maildir "src" {
+		match header "Subject" /.*/ exec { "echo" "\0" }
+	}
+	EOF
+	mdsort - -- -d <<EOF
+$(findmsg "src/new") -> <exec "echo" "Hello">
+mdsort.conf:2: Subject: Hello
+                        ^   $
+EOF
+fi

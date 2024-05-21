@@ -16,7 +16,9 @@
 #include <string.h>
 #include <wchar.h>
 
+#include "libks/arena-buffer.h"
 #include "libks/arena.h"
+#include "libks/buffer.h"
 #include "libks/compiler.h"
 #include "libks/vector.h"
 
@@ -64,6 +66,8 @@ static int	expr_eval_stat(struct expr *, struct expr_eval_arg *);
 static const char	*expr_inspect_add_header(const struct expr *,
     const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_discard(const struct expr *,
+    const struct match *, const struct message *, struct arena_scope *);
+static const char	*expr_inspect_exec(const struct expr *,
     const struct match *, const struct message *, struct arena_scope *);
 static const char	*expr_inspect_label(const struct expr *,
     const struct match *, const struct message *, struct arena_scope *);
@@ -187,8 +191,8 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_EXEC:
 		ex->ex_eval = &expr_eval_exec;
+		ex->ex_inspect = &expr_inspect_exec;
 		ex->ex_flags = EXPR_FLAG_ACTION;
-		ex->ex_label = "<exec>";
 		break;
 	case EXPR_TYPE_ATTACHMENT_BLOCK:
 		ex->ex_eval = &expr_eval_attachment_block;
@@ -948,6 +952,22 @@ expr_inspect_discard(const struct expr *UNUSED(ex),
     struct arena_scope *UNUSED(s))
 {
 	return "<discard>";
+}
+
+static const char *
+expr_inspect_exec(const struct expr *UNUSED(ex), const struct match *mh,
+    const struct message *UNUSED(msg), struct arena_scope *s)
+{
+	struct buffer *bf;
+	size_t i;
+
+	bf = arena_buffer_alloc(s, 1 << 8);
+	buffer_printf(bf, "<exec");
+	/* Exclude NULL-terminator. */
+	for (i = 0; i < mh->mh_nexec - 1; i++)
+		buffer_printf(bf, " \"%s\"", mh->mh_exec[i]);
+	buffer_printf(bf, ">");
+	return buffer_str(bf);
 }
 
 static const char *
