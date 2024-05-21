@@ -67,6 +67,8 @@ static const char	*expr_inspect_discard(const struct expr *,
     const struct message *, struct arena_scope *);
 static const char	*expr_inspect_label(const struct expr *,
     const struct message *, struct arena_scope *);
+static const char	*expr_inspect_reject(const struct expr *,
+    const struct message *, struct arena_scope *);
 
 static size_t	expr_inspect_prefix(const struct expr *,
     const struct environment *);
@@ -175,8 +177,8 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 		break;
 	case EXPR_TYPE_REJECT:
 		ex->ex_eval = &expr_eval_reject;
+		ex->ex_inspect = &expr_inspect_reject;
 		ex->ex_flags = EXPR_FLAG_ACTION;
-		ex->ex_label = "<reject>";
 		break;
 	case EXPR_TYPE_EXEC:
 		ex->ex_eval = &expr_eval_exec;
@@ -948,6 +950,13 @@ expr_inspect_label(const struct expr *UNUSED(ex), const struct message *msg,
 {
 	return arena_sprintf(s, "<label \"%s\">",
 	    message_get_header1(msg, "X-Label"));
+}
+
+static const char *
+expr_inspect_reject(const struct expr *UNUSED(ex),
+    const struct message *UNUSED(msg), struct arena_scope *UNUSED(s))
+{
+	return "<reject>";
 }
 
 static size_t
