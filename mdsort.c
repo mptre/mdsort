@@ -49,6 +49,10 @@ static void		 readenv(struct environment *);
 static void		 usage(void)
 	__attribute__((__noreturn__));
 
+static int	handle_message(struct config *, struct match_list *,
+    struct maildir *, const struct maildir_entry *, int *,
+    const struct environment *);
+
 int
 main(int argc, char *argv[])
 {
@@ -57,12 +61,11 @@ main(int argc, char *argv[])
 	struct match_list matches;
 	struct maildir_entry me;
 	struct maildir *md;
-	struct message *msg;
 	size_t i;
 	int dousage = 0;
 	int error = 0;
 	int reject = 0;
-	int c, w;
+	int c;
 
 	if (pledge("stdio rpath wpath cpath fattr getpw proc exec", NULL) == -1)
 		err(1, "pledge");
@@ -168,47 +171,21 @@ main(int argc, char *argv[])
 				continue;
 			}
 
-			while ((w = maildir_walk(md, &me)) != 0) {
-				struct expr_eval_arg ea = {
-					.ea_ml	= &matches,
-					.ea_env	= &env,
-				};
+			for (;;) {
+				int w;
 
+				w = maildir_walk(md, &me);
+				if (w == 0)
+					break;
 				if (w == -1) {
 					error = 1;
 					break;
 				}
 
-				msg = message_parse(me.e_dir, me.e_dirfd,
-				    me.e_path);
-				if (msg == NULL) {
+				if (handle_message(conf, &matches, md, &me,
+				    &reject, &env))
 					error = 1;
-					goto loop;
-				}
-				ea.ea_msg = msg;
 
-				switch (expr_eval(conf->expr, &ea)) {
-				case EXPR_ERROR:
-					error = 1;
-					FALLTHROUGH;
-				case EXPR_NOMATCH:
-					goto loop;
-				}
-
-				if (matches_interpolate(&matches)) {
-					error = 1;
-					goto loop;
-				}
-
-				if (matches_inspect(&matches, &env)) {
-					/* Dry run, we're done. */
-					goto loop;
-				}
-
-				if (matches_exec(&matches, md, &reject, &env))
-					error = 1;
-loop:
-				message_free(msg);
 				matches_clear(&matches);
 			}
 			maildir_close(md);
@@ -351,4 +328,49 @@ readenv(struct environment *env)
 	log_debug("%s: home=\"%s\", hostname=\"%s\", tmpdir=\"%s\", now=%lld, "
 	    "tz_offset=%ld\n", __func__, env->ev_home, env->ev_hostname,
 	    env->ev_tmpdir, (long long)env->ev_now, env->ev_tz.t_offset);
+}
+
+static int
+handle_message(struct config *conf, struct match_list *matches,
+    struct maildir *md, const struct maildir_entry *me, int *reject,
+    const struct environment *env)
+{
+	struct message *msg;
+	int error = 0;
+
+	msg = message_parse(me->e_dir, me->e_dirfd, me->e_path);
+	if (msg == NULL)
+		return 1;
+
+	struct expr_eval_arg ea = {
+		.ea_ml	= matches,
+		.ea_msg	= msg,
+		.ea_env	= env,
+	};
+	switch (expr_eval(conf->expr, &ea)) {
+	case EXPR_MATCH:
+		break;
+	case EXPR_NOMATCH:
+		goto out;
+	case EXPR_ERROR:
+		error = 1;
+		goto out;
+	}
+
+	if (matches_interpolate(matches)) {
+		error = 1;
+		goto out;
+	}
+	if (matches_inspect(matches, env)) {
+		/* Dry run, we're done. */
+		goto out;
+	}
+	if (matches_exec(matches, md, reject, env)) {
+		error = 1;
+		goto out;
+	}
+
+out:
+	message_free(msg);
+	return error;
 }
