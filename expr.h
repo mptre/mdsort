@@ -86,8 +86,6 @@ struct expr {
 	const char		*(*ex_inspect)(const struct expr *,
 	    const struct match *, const struct message *, struct arena_scope *);
 
-	const char		*ex_label;
-
 	struct string_list	*ex_strings;
 
 	struct expr_regex	*ex_re;

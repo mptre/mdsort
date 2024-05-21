@@ -401,8 +401,6 @@ expr_inspect(const struct expr *ex, const struct match *mh,
 {
 	if (ex->ex_inspect != NULL)
 		return ex->ex_inspect(ex, mh, msg, s);
-	if (ex->ex_label != NULL)
-		return ex->ex_label;
 	return NULL;
 }
 
