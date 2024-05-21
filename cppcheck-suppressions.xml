@@ -10,6 +10,16 @@
   <suppress>
     <id>redundantContinue</id>
   </suppress>
+  <suppress>
+    <id>toomanyconfigs</id>
+  </suppress>
+
+  <!-- conf.c -->
+  <suppress>
+    <fileName>conf.c</fileName>
+    <id>unusedFunction</id>
+    <symbolName>config_list_append</symbolName>
+  </suppress>
 
   <!-- expr.c -->
   <suppress>
