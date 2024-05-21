@@ -2,6 +2,8 @@ include ${.CURDIR}/config.mk
 
 VERSION=	11.5.1
 
+SRCS+=	arena-buffer.c
+SRCS+=	arena.c
 SRCS+=	arithmetic.c
 SRCS+=	buffer.c
 SRCS+=	compat-arc4random.c
@@ -11,6 +13,7 @@ SRCS+=	compat-reallocarray.c
 SRCS+=	compat-strlcpy.c
 SRCS+=	compat-warnc.c
 SRCS+=	conf.c
+SRCS+=	consistency.c
 SRCS+=	date-time.c
 SRCS+=	decode.c
 SRCS+=	environment.c

@@ -14,18 +14,27 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef LIBKS_COMPILER_H
-#define LIBKS_COMPILER_H
-
-#define UNUSED(x)	_##x __attribute__((__unused__))
+#include "libks/consistency.h"
 
 #ifndef NDEBUG
-#define NDEBUG_UNUSED(x) x
+
+#include <stdio.h>
+
+int
+assert_consistency(int consistent, const char *a, const char *b,
+    const char *fun, int lno)
+{
+	if (consistent)
+		return 0;
+
+	fprintf(stderr,
+	    "consistency \"(%s) == (%s)\" failed: function \"%s\", line %d\n",
+	    a, b, fun, lno);
+	return 1;
+}
+
 #else
-#define NDEBUG_UNUSED(x) UNUSED(x)
+
+extern int unused;
+
 #endif
-
-#define likely(x)	__builtin_expect((x), 1)
-#define unlikely(x)	__builtin_expect((x), 0)
-
-#endif /* !LIBKS_COMPILER_H */

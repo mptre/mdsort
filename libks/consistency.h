@@ -14,18 +14,23 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef LIBKS_COMPILER_H
-#define LIBKS_COMPILER_H
-
-#define UNUSED(x)	_##x __attribute__((__unused__))
+#ifndef LIBKS_CONSISTENCY_H
+#define LIBKS_CONSISTENCY_H
 
 #ifndef NDEBUG
-#define NDEBUG_UNUSED(x) x
+
+#define ASSERT_CONSISTENCY(a, b) do {					\
+	if (assert_consistency(!!(a) == !!(b), #a, #b,			\
+	    __func__, __LINE__))					\
+		__builtin_trap();					\
+} while (0)
+
+int	assert_consistency(int, const char *, const char *, const char *, int);
+
 #else
-#define NDEBUG_UNUSED(x) UNUSED(x)
+
+#define ASSERT_CONSISTENCY(a, b) ((void)0)
+
 #endif
 
-#define likely(x)	__builtin_expect((x), 1)
-#define unlikely(x)	__builtin_expect((x), 0)
-
-#endif /* !LIBKS_COMPILER_H */
+#endif /* !LIBKS_CONSISTENCY_H */
