@@ -31,7 +31,7 @@ static const char	*formats[] = {
 char *
 time_format(long long int tim, char *buf, size_t bufsiz)
 {
-	struct tm *tm;
+	const struct tm *tm;
 
 	tm = localtime((time_t *)&tim);
 	if (strftime(buf, bufsiz, formats[0], tm) == 0) {
@@ -103,7 +103,7 @@ tzparse(const char *str, time_t *tz, const struct environment *env)
 static int
 tzabbr(const char *str, time_t *tz, const struct environment *env)
 {
-	struct tm *tm;
+	const struct tm *tm;
 	int error = 0;
 
 	if (strlen(str) == 0)

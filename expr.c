@@ -620,7 +620,7 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 		 * Initial value might look redundant but otherwise GCC will
 		 * complain about it might being used uninitialized.
 		 */
-		struct timespec *ts = NULL;
+		const struct timespec *ts = NULL;
 		const char *path;
 
 		switch (ex->ex_date.field) {

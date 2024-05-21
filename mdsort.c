@@ -274,8 +274,8 @@ maildir_skip(const char *path, const struct environment *env)
 static void
 readenv(struct environment *env)
 {
-	struct passwd *pw;
-	struct tm *tm;
+	const struct passwd *pw;
+	const struct tm *tm;
 	const char *p;
 	char *dot;
 	size_t siz;
