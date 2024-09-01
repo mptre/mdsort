@@ -50,9 +50,9 @@ static void		 readenv(struct environment *);
 static void		 usage(void)
 	__attribute__((__noreturn__));
 
-static int	handle_message(struct expr *, struct match_list *,
-    struct maildir *, const struct maildir_entry *, int *,
-    const struct environment *, struct arena *);
+static int	handle_message(struct expr *, struct maildir *,
+    const struct maildir_entry *, int *, const struct environment *,
+    struct arena *);
 
 int
 main(int argc, char *argv[])
@@ -60,7 +60,6 @@ main(int argc, char *argv[])
 	struct arena *scratch = NULL;
 	struct config_list cl;
 	struct environment env;
-	struct match_list matches;
 	struct maildir_entry me;
 	struct maildir *md;
 	size_t i;
@@ -76,7 +75,6 @@ main(int argc, char *argv[])
 
 	config_list_init(&cl);
 	environment_init(&env);
-	TAILQ_INIT(&matches);
 
 	while ((c = getopt(argc, argv, "D:df:nv")) != -1) {
 		switch (c) {
@@ -186,11 +184,9 @@ main(int argc, char *argv[])
 					break;
 				}
 
-				if (handle_message(conf->expr, &matches, md,
+				if (handle_message(conf->expr, md,
 				    &me, &reject, &env, scratch))
 					error = 1;
-
-				matches_clear(&matches);
 			}
 			maildir_close(md);
 		}
@@ -336,10 +332,11 @@ readenv(struct environment *env)
 }
 
 static int
-handle_message(struct expr *expr, struct match_list *matches,
-    struct maildir *md, const struct maildir_entry *me, int *reject,
-    const struct environment *env, struct arena *scratch)
+handle_message(struct expr *expr, struct maildir *md,
+    const struct maildir_entry *me, int *reject, const struct environment *env,
+    struct arena *scratch)
 {
+	struct match_list matches;
 	struct message *msg;
 	int error = 0;
 
@@ -347,8 +344,10 @@ handle_message(struct expr *expr, struct match_list *matches,
 	if (msg == NULL)
 		return 1;
 
+	TAILQ_INIT(&matches);
+
 	struct expr_eval_arg ea = {
-		.ea_ml	= matches,
+		.ea_ml	= &matches,
 		.ea_msg	= msg,
 		.ea_env	= env,
 	};
@@ -362,15 +361,15 @@ handle_message(struct expr *expr, struct match_list *matches,
 		goto out;
 	}
 
-	if (matches_interpolate(matches)) {
+	if (matches_interpolate(&matches)) {
 		error = 1;
 		goto out;
 	}
-	if (matches_inspect(matches, env, scratch)) {
+	if (matches_inspect(&matches, env, scratch)) {
 		/* Dry run, we're done. */
 		goto out;
 	}
-	switch (matches_exec(matches, md, env)) {
+	switch (matches_exec(&matches, md, env)) {
 	case MATCH_EXEC_SUCCESS:
 		break;
 	case MATCH_EXEC_REJECTED:
@@ -382,6 +381,7 @@ handle_message(struct expr *expr, struct match_list *matches,
 	}
 
 out:
+	matches_clear(&matches);
 	message_free(msg);
 	return error;
 }
