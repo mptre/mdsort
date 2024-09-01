@@ -223,7 +223,7 @@ cleandir: clean
 .PHONY: cleandir
 
 dist:
-	set -e; p=knfmt-${VERSION}; cd ${.CURDIR}; \
+	set -e; p=mdsort-${VERSION}; cd ${.CURDIR}; \
 	git archive --output $$p.tar.gz --prefix $$p/ v${VERSION}; \
 	sha256 $$p.tar.gz >$$p.sha256
 .PHONY: dist
