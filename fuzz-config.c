@@ -1,17 +1,24 @@
 #include "config.h"
 
+#include "libks/arena.h"
 #include "libks/fuzzer.h"
 
 #include "conf.h"
 #include "environment.h"
 
+struct test_context {
+	struct environment       env;
+	struct arena            *scratch;
+};
+
 static void *
 init(void)
 {
-	static struct environment env;
+	static struct test_context c;
 
-	environment_init(&env);
-	return &env;
+	environment_init(&c.env);
+	c.scratch = arena_alloc();
+	return &c;
 }
 FUZZER_INIT(init);
 
@@ -19,10 +26,21 @@ static void
 target(const char *path, void *userdata)
 {
 	struct config_list cl;
-	const struct environment *env = userdata;
+	struct test_context *c = userdata;
+
+	arena_scope(c->scratch, s);
 
 	config_list_init(&cl);
-	config_list_parse(&cl, path, env);
+	config_list_parse(&cl, path, &c->env, &s);
 	config_list_free(&cl);
 }
 FUZZER_TARGET_FILE(target);
+
+static void
+teardown(void *userdata)
+{
+	struct test_context *c = userdata;
+
+	arena_free(c->scratch);
+}
+FUZZER_TEARDOWN(teardown);
