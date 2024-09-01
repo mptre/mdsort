@@ -298,13 +298,11 @@ matches_remove(struct match_list *ml, int type)
 }
 
 struct match *
-match_alloc(struct expr *ex, struct message *msg)
+match_alloc(struct expr *ex, struct message *msg, struct arena_scope *s)
 {
 	struct match *mh;
 
-	mh = calloc(1, sizeof(*mh));
-	if (mh == NULL)
-		err(1, NULL);
+	mh = arena_calloc(s, 1, sizeof(*mh));
 	mh->mh_expr = ex;
 	mh->mh_msg = msg;
 	return mh;
@@ -328,7 +326,8 @@ match_free(struct match *mh)
 
 	free(mh->mh_key);
 	free(mh->mh_val);
-	free(mh);
+
+	arena_poison(mh, sizeof(*mh));
 }
 
 int

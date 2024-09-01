@@ -10,6 +10,7 @@
 #include <stddef.h>	/* size_t */
 
 struct arena;
+struct arena_scope;
 struct environment;
 struct macro_list;
 struct maildir;
@@ -55,7 +56,8 @@ int	matches_exec(const struct match_list *, struct maildir *,
 int	matches_inspect(const struct match_list *, const struct environment *,
     struct arena *);
 
-struct match	*match_alloc(struct expr *, struct message *);
+struct match	*match_alloc(struct expr *, struct message *,
+    struct arena_scope *);
 void		 match_free(struct match *);
 
 int		 match_interpolate(struct match *, const struct macro_list *);

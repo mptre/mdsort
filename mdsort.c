@@ -344,12 +344,15 @@ handle_message(struct expr *expr, struct maildir *md,
 	if (msg == NULL)
 		return 1;
 
+	arena_scope(scratch, s);
+
 	TAILQ_INIT(&matches);
 
 	struct expr_eval_arg ea = {
-		.ea_ml	= &matches,
-		.ea_msg	= msg,
-		.ea_env	= env,
+		.ea_ml		= &matches,
+		.ea_msg		= msg,
+		.ea_scope	= &s,
+		.ea_env		= env,
 	};
 	switch (expr_eval(expr, &ea)) {
 	case EXPR_MATCH:

@@ -85,10 +85,9 @@ static const char	*expr_inspect_reject(const struct expr *,
 
 static size_t	expr_inspect_prefix(const struct expr *,
     const struct environment *);
-static int	expr_match(struct expr *, struct match_list *,
-    struct message *);
-static int	expr_regexec(struct expr *, struct match_list *,
-    struct message *, const struct environment *, const char *, const char *);
+static int	expr_match(struct expr *, struct expr_eval_arg *);
+static int	expr_regexec(struct expr *, struct expr_eval_arg *,
+    const char *, const char *);
 static void	expr_regcopy(const struct expr *, struct match *, const char *);
 
 static size_t	strnwidth(const char *, size_t);
@@ -477,7 +476,7 @@ expr_eval_add_header(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, ea->ea_msg);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
@@ -592,8 +591,7 @@ expr_eval_body(struct expr *ex, struct expr_eval_arg *ea)
 	body = message_get_body(ea->ea_msg);
 	if (body == NULL)
 		return EXPR_ERROR;
-	return expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env, "Body",
-	    body);
+	return expr_regexec(ex, ea, "Body", body);
 }
 
 static int
@@ -601,7 +599,7 @@ expr_eval_break(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, ea->ea_msg);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
@@ -619,7 +617,7 @@ expr_eval_command(struct expr *ex, struct expr_eval_arg *ea)
 	int ev = EXPR_NOMATCH;
 	int error;
 
-	mh = match_alloc(ex, ea->ea_msg);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
@@ -698,20 +696,19 @@ expr_eval_date(struct expr *ex, struct expr_eval_arg *ea)
 	}
 
 	/* Populate matches, only used during dry run. */
-	return expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env, "Date",
-	    date);
+	return expr_regexec(ex, ea, "Date", date);
 }
 
 static int
 expr_eval_exec(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return expr_match(ex, ea->ea_ml, ea->ea_msg);
+	return expr_match(ex, ea);
 }
 
 static int
 expr_eval_discard(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return expr_match(ex, ea->ea_ml, ea->ea_msg);
+	return expr_match(ex, ea);
 }
 
 static int
@@ -721,7 +718,7 @@ expr_eval_flag(struct expr *ex, struct expr_eval_arg *ea)
 	const char *subdir;
 	size_t siz;
 
-	mh = match_alloc(ex, ea->ea_msg);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	subdir = TAILQ_FIRST(ex->ex_strings)->val;
 	siz = sizeof(mh->mh_subdir);
 	if (strlcpy(mh->mh_subdir, subdir, siz) >= siz) {
@@ -751,7 +748,7 @@ expr_eval_flags(struct expr *ex, struct expr_eval_arg *ea)
 	if (error)
 		return EXPR_ERROR;
 
-	mh = match_alloc(ex, msg);
+	mh = match_alloc(ex, msg, ea->ea_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
@@ -773,8 +770,7 @@ expr_eval_header(struct expr *ex, struct expr_eval_arg *ea)
 		for (j = 0; j < VECTOR_LENGTH(values); j++) {
 			int ev;
 
-			ev = expr_regexec(ex, ea->ea_ml, ea->ea_msg, ea->ea_env,
-			    key->val, values[j]);
+			ev = expr_regexec(ex, ea, key->val, values[j]);
 			if (ev == EXPR_NOMATCH)
 				continue;
 			return ev;	/* match or error, return */
@@ -786,7 +782,7 @@ expr_eval_header(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_label(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return expr_match(ex, ea->ea_ml, ea->ea_msg);
+	return expr_match(ex, ea);
 }
 
 static int
@@ -799,7 +795,7 @@ expr_eval_match(struct expr *ex, struct expr_eval_arg *ea)
 	 * match list. Such match is used as a sentinel when finding matches
 	 * eligble for interpolation.
 	 */
-	mh = match_alloc(ex, ea->ea_msg);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
@@ -814,7 +810,7 @@ expr_eval_move(struct expr *ex, struct expr_eval_arg *ea)
 	size_t siz;
 
 	maildir = TAILQ_FIRST(ex->ex_strings)->val;
-	mh = match_alloc(ex, ea->ea_msg);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	siz = sizeof(mh->mh_maildir);
 	if (strlcpy(mh->mh_maildir, maildir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
@@ -888,7 +884,7 @@ expr_eval_pass(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, ea->ea_msg);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
@@ -904,7 +900,7 @@ expr_eval_pass(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_reject(struct expr *ex, struct expr_eval_arg *ea)
 {
-	return expr_match(ex, ea->ea_ml, ea->ea_msg);
+	return expr_match(ex, ea);
 }
 
 static int
@@ -916,7 +912,7 @@ expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 	size_t siz;
 	int ev = EXPR_NOMATCH;
 
-	mh = match_alloc(ex, ea->ea_msg);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	if (matches_append(ea->ea_ml, mh)) {
 		ev = EXPR_ERROR;
 		goto out;
@@ -1049,19 +1045,19 @@ expr_inspect_prefix(const struct expr *ex, const struct environment *env)
 }
 
 static int
-expr_match(struct expr *ex, struct match_list *ml, struct message *msg)
+expr_match(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, msg);
-	if (matches_append(ml, mh))
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
 }
 
 static int
-expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
-    const struct environment *env, const char *key, const char *val)
+expr_regexec(struct expr *ex, struct expr_eval_arg *ea, const char *key,
+    const char *val)
 {
 	struct match *mh;
 	int error;
@@ -1073,12 +1069,12 @@ expr_regexec(struct expr *ex, struct match_list *ml, struct message *msg,
 	if (error != 0)
 		return EXPR_ERROR;
 
-	mh = match_alloc(ex, msg);
-	if (matches_append(ml, mh))
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	expr_regcopy(ex, mh, val);
 
-	if (env->ev_options & OPTION_DRYRUN) {
+	if (ea->ea_env->ev_options & OPTION_DRYRUN) {
 		mh->mh_key = strdup(key);
 		if (mh->mh_key == NULL)
 			err(1, NULL);
