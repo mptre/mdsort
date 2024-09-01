@@ -2,6 +2,12 @@
 
 #include "config.h"
 
+#ifdef HAVE_QUEUE
+#  include <sys/queue.h>
+#else
+#  include "compat-queue.h"
+#endif
+
 #include <sys/stat.h>
 
 #include <assert.h>

@@ -1,5 +1,11 @@
 #include "config.h"
 
+#ifdef HAVE_QUEUE
+#  include <sys/queue.h>
+#else
+#  include "compat-queue.h"
+#endif
+
 #include <err.h>
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
