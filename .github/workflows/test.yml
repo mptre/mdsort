@@ -30,7 +30,8 @@ jobs:
         env:
           CC: gcc
           CPPFLAGS: -DDIAGNOSTIC
-          DEBUG: -m32
+          CFLAGS: -m32
+          LDFLAGS: -m32
           TESTFLAGS: -Tfdleak
         run: |
           ./configure --pedantic
