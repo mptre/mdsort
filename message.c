@@ -865,13 +865,15 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 			size_t beg, end;
 
 			/* Find the first matching header. */
-			for (beg = mi; beg > 0; beg--)
+			for (beg = mi; beg > 0; beg--) {
 				if (cmpheaderkey(&needle, headers + beg - 1))
 					break;
+			}
 			/* Find the header after the last matching one. */
-			for (end = mi + 1; end < nmemb; end++)
+			for (end = mi + 1; end < nmemb; end++) {
 				if (cmpheaderkey(&needle, headers + end))
 					break;
+			}
 			*nfound = end - beg;
 			return (ssize_t)beg;
 		}

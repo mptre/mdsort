@@ -293,9 +293,10 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 
 		case 2:		/* Valid, means one byte of info */
 			/* Skip any number of spaces. */
-			for (; ch != '\0'; ch = (unsigned char)*src++)
+			for (; ch != '\0'; ch = (unsigned char)*src++) {
 				if (!isspace(ch))
 					break;
+			}
 			/* Make sure there is another trailing = sign. */
 			if (ch != Pad64)
 				return -1;
@@ -308,9 +309,10 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 			 * We know this char is an =.  Is there anything but
 			 * whitespace after it?
 			 */
-			for (; ch != '\0'; ch = (unsigned char)*src++)
+			for (; ch != '\0'; ch = (unsigned char)*src++) {
 				if (!isspace(ch))
 					return -1;
+			}
 
 			/*
 			 * Now make sure for cases 2 and 3 that the "extra"
