@@ -14,8 +14,6 @@
 
 #ifdef DIAGNOSTIC
 
-#define ARGS_MAX	1024
-
 LIST(fault_list, fault);
 
 struct fault {
