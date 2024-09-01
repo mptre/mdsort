@@ -1076,12 +1076,8 @@ expr_regexec(struct expr *ex, struct expr_eval_arg *ea, const char *key,
 	expr_regcopy(ex, mh, val, ea->ea_scope);
 
 	if (ea->ea_env->ev_options & OPTION_DRYRUN) {
-		mh->mh_key = strdup(key);
-		if (mh->mh_key == NULL)
-			err(1, NULL);
-		mh->mh_val = strdup(val);
-		if (mh->mh_val == NULL)
-			err(1, NULL);
+		mh->mh_key = arena_strdup(ea->ea_scope, key);
+		mh->mh_val = arena_strdup(ea->ea_scope, val);
 	}
 
 	return EXPR_MATCH;

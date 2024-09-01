@@ -320,9 +320,6 @@ match_free(struct match *mh)
 		free(mh->mh_exec[i]);
 	free(mh->mh_exec);
 
-	free(mh->mh_key);
-	free(mh->mh_val);
-
 	arena_poison(mh, sizeof(*mh));
 }
 
