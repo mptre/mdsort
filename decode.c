@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "libks/buffer.h"
+#include "libks/compiler.h"
 
 static ssize_t	b64_pton(const char *, unsigned char *, size_t);
 static void	quoted_printable_decode_buffer(struct buffer *, const char *,
