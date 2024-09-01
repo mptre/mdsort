@@ -33,6 +33,11 @@
   <suppress>
     <fileName>expr.c</fileName>
     <id>unusedFunction</id>
+    <symbolName>expr_count_actions</symbolName>
+  </suppress>
+  <suppress>
+    <fileName>expr.c</fileName>
+    <id>unusedFunction</id>
     <symbolName>expr_set_add_header</symbolName>
   </suppress>
   <suppress>
