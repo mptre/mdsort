@@ -94,13 +94,15 @@ matches_clear(struct match_list *ml)
 }
 
 int
-matches_interpolate(struct match_list *ml)
+matches_interpolate(struct match_list *ml, struct arena *scratch)
 {
 	struct macro_list *macros;
 	struct match *mh;
 	int error = 0;
 
-	macros = macros_alloc(MACRO_CTX_ACTION);
+	arena_scope(scratch, s);
+
+	macros = macros_alloc(MACRO_CTX_ACTION, &s);
 	/* Construct action macro context. */
 	macros_insertc(macros, "path",
 	    message_get_path(TAILQ_FIRST(ml)->mh_msg));
@@ -112,7 +114,6 @@ matches_interpolate(struct match_list *ml)
 		}
 	}
 
-	macros_free(macros);
 	return error;
 }
 

@@ -11,9 +11,9 @@
 #include "string-list.h"
 
 void
-config_list_init(struct config_list *cl)
+config_list_init(struct config_list *cl, struct arena_scope *s)
 {
-	cl->cl_macros = macros_alloc(MACRO_CTX_DEFAULT);
+	cl->cl_macros = macros_alloc(MACRO_CTX_DEFAULT, s);
 	if (VECTOR_INIT(cl->cl_list))
 		err(1, NULL);
 }
@@ -23,8 +23,6 @@ config_list_free(struct config_list *cl)
 {
 	if (cl == NULL)
 		return;
-
-	macros_free(cl->cl_macros);
 
 	while (!VECTOR_EMPTY(cl->cl_list)) {
 		struct config *conf;

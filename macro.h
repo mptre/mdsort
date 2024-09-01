@@ -5,6 +5,8 @@
 
 #define MACRO_FLAG_STICKY	0x00000001u	/* may not be overwritten */
 
+struct arena_scope;
+
 enum macro_error {
 	MACRO_ERR_NONE,
 	MACRO_ERR_CTX,
@@ -12,8 +14,7 @@ enum macro_error {
 	MACRO_ERR_STICKY,
 };
 
-struct macro_list	 *macros_alloc(unsigned int);
-void			  macros_free(struct macro_list *);
+struct macro_list	 *macros_alloc(unsigned int, struct arena_scope *);
 enum macro_error	  macros_insert(struct macro_list *, const char *,
     const char *, unsigned int, unsigned int);
 void			  macros_insertc(struct macro_list *, const char *,

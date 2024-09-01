@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "libks/arena.h"
 #include "libks/vector.h"
 
 struct macro {
@@ -22,28 +23,25 @@ struct macro_list {
 	VECTOR(struct macro)	ml_list;
 };
 
+static void
+macros_free(void *arg)
+{
+	struct macro_list *macros = arg;
+
+	VECTOR_FREE(macros->ml_list);
+}
+
 struct macro_list *
-macros_alloc(unsigned int ctx)
+macros_alloc(unsigned int ctx, struct arena_scope *s)
 {
 	struct macro_list *macros;
 
-	macros = calloc(1, sizeof(*macros));
-	if (macros == NULL)
-		err(1, NULL);
+	macros = arena_calloc(s, 1, sizeof(*macros));
 	macros->ml_ctx = ctx;
 	if (VECTOR_INIT(macros->ml_list))
 		err(1, NULL);
+	arena_cleanup(s, macros_free, macros);
 	return macros;
-}
-
-void
-macros_free(struct macro_list *macros)
-{
-	if (macros == NULL)
-		return;
-
-	VECTOR_FREE(macros->ml_list);
-	free(macros);
 }
 
 enum macro_error

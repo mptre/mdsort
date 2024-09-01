@@ -73,11 +73,11 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
-	config_list_init(&cl);
-	environment_init(&env);
-
 	scratch = arena_alloc();
 	arena_scope(scratch, s);
+
+	config_list_init(&cl, &s);
+	environment_init(&env);
 
 	while ((c = getopt(argc, argv, "D:df:nv")) != -1) {
 		switch (c) {
@@ -365,7 +365,7 @@ handle_message(struct expr *expr, struct maildir *md,
 		goto out;
 	}
 
-	if (matches_interpolate(&matches)) {
+	if (matches_interpolate(&matches, scratch)) {
 		error = 1;
 		goto out;
 	}

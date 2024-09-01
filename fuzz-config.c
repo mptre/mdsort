@@ -30,7 +30,7 @@ target(const char *path, void *userdata)
 
 	arena_scope(c->scratch, s);
 
-	config_list_init(&cl);
+	config_list_init(&cl, &s);
 	config_list_parse(&cl, path, &c->env, &s);
 	config_list_free(&cl);
 }
