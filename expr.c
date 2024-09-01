@@ -88,7 +88,8 @@ static size_t	expr_inspect_prefix(const struct expr *,
 static int	expr_match(struct expr *, struct expr_eval_arg *);
 static int	expr_regexec(struct expr *, struct expr_eval_arg *,
     const char *, const char *);
-static void	expr_regcopy(const struct expr *, struct match *, const char *);
+static void	expr_regcopy(const struct expr *, struct match *, const char *,
+    struct arena_scope *);
 
 static size_t	strnwidth(const char *, size_t);
 
@@ -1072,7 +1073,7 @@ expr_regexec(struct expr *ex, struct expr_eval_arg *ea, const char *key,
 	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
-	expr_regcopy(ex, mh, val);
+	expr_regcopy(ex, mh, val, ea->ea_scope);
 
 	if (ea->ea_env->ev_options & OPTION_DRYRUN) {
 		mh->mh_key = strdup(key);
@@ -1087,15 +1088,14 @@ expr_regexec(struct expr *ex, struct expr_eval_arg *ea, const char *key,
 }
 
 static void
-expr_regcopy(const struct expr *ex, struct match *mh, const char *str)
+expr_regcopy(const struct expr *ex, struct match *mh, const char *str,
+    struct arena_scope *s)
 {
 	const regmatch_t *off = ex->ex_re->matches;
 	size_t nmemb = ex->ex_re->nmatches;
 	size_t i;
 
-	mh->mh_matches = reallocarray(NULL, nmemb, sizeof(*mh->mh_matches));
-	if (mh->mh_matches == NULL)
-		err(1, NULL);
+	mh->mh_matches = arena_calloc(s, nmemb, sizeof(*mh->mh_matches));
 	mh->mh_nmatches = nmemb;
 	for (i = 0; i < nmemb; i++) {
 		char *cpy;
@@ -1104,9 +1104,7 @@ expr_regcopy(const struct expr *ex, struct match *mh, const char *str)
 		so = (size_t)off[i].rm_so;
 		eo = (size_t)off[i].rm_eo;
 		len = eo - so;
-		cpy = strndup(str + off[i].rm_so, len);
-		if (cpy == NULL)
-			err(1, NULL);
+		cpy = arena_strndup(s, str + off[i].rm_so, len);
 		if (ex->ex_re->flags & EXPR_PATTERN_LCASE) {
 			for (j = 0; cpy[j] != '\0'; j++)
 				cpy[j] = tolower((unsigned char)cpy[j]);

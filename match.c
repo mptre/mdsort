@@ -316,10 +316,6 @@ match_free(struct match *mh)
 	if (mh == NULL)
 		return;
 
-	for (i = 0; i < mh->mh_nmatches; i++)
-		free(mh->mh_matches[i].m_str);
-	free(mh->mh_matches);
-
 	for (i = 0; i < mh->mh_nexec; i++)
 		free(mh->mh_exec[i]);
 	free(mh->mh_exec);
