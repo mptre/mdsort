@@ -1,5 +1,8 @@
 config.h
 config.log
 config.mk
+fuzz-config
+fuzz-message
 mdsort
 parse.c
+t
