@@ -124,12 +124,12 @@ void		 expr_free(struct expr *);
 
 void	expr_set_add_header(struct expr *, char *, char *);
 void	expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
-    long long int);
+    long long int, struct arena_scope *);
 int	expr_set_exec(struct expr *, struct string_list *, unsigned int);
 void	expr_set_stat(struct expr *, char *, enum expr_stat);
 void	expr_set_strings(struct expr *, struct string_list *);
 int	expr_set_pattern(struct expr *, const char *, unsigned int,
-    const char **);
+    const char **, struct arena_scope *);
 
 int	expr_count(const struct expr *, enum expr_type);
 int	expr_count_actions(const struct expr *);

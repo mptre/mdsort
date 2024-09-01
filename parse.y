@@ -283,7 +283,8 @@ expr3		: BODY pattern {
 
 			$$ = expr_alloc(EXPR_TYPE_BODY, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
-			if (expr_set_pattern($$, $2.string, $2.flags, &errstr))
+			if (expr_set_pattern($$, $2.string, $2.flags, &errstr,
+			    parser_state.scope))
 				yyerror("invalid pattern: %s", errstr);
 		}
 		| HEADER strings pattern {
@@ -291,7 +292,8 @@ expr3		: BODY pattern {
 
 			$$ = expr_alloc(EXPR_TYPE_HEADER, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
-			if (expr_set_pattern($$, $3.string, $3.flags, &errstr))
+			if (expr_set_pattern($$, $3.string, $3.flags, &errstr,
+			    parser_state.scope))
 				yyerror("invalid pattern: %s", errstr);
 			$2 = expandstrings($2, MACRO_CTX_DEFAULT);
 			expr_set_strings($$, $2);
@@ -299,7 +301,7 @@ expr3		: BODY pattern {
 		| DATE date_field date_cmp date_age {
 			$$ = expr_alloc(EXPR_TYPE_DATE, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
-			expr_set_date($$, $2, $3, $4);
+			expr_set_date($$, $2, $3, $4, parser_state.scope);
 		}
 		| NEW {
 			$$ = expr_alloc(EXPR_TYPE_NEW, parser_state.lineno,

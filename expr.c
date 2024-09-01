@@ -227,11 +227,8 @@ expr_free(struct expr *ex)
 	expr_free(ex->ex_lhs);
 	expr_free(ex->ex_rhs);
 	strings_free(ex->ex_strings);
-	if (ex->ex_re != NULL) {
+	if (ex->ex_re != NULL)
 		regfree(&ex->ex_re->pattern);
-		free(ex->ex_re->matches);
-		free(ex->ex_re);
-	}
 	if (ex->ex_type == EXPR_TYPE_ADD_HEADER) {
 		free(ex->ex_add_header.key);
 		free(ex->ex_add_header.val);
@@ -247,7 +244,7 @@ expr_set_add_header(struct expr *ex, char *key, char *val)
 
 void
 expr_set_date(struct expr *ex, enum expr_date_field field,
-    enum expr_date_cmp cmp, long long int age)
+    enum expr_date_cmp cmp, long long int age, struct arena_scope *s)
 {
 	assert(ex->ex_type == EXPR_TYPE_DATE);
 
@@ -256,7 +253,7 @@ expr_set_date(struct expr *ex, enum expr_date_field field,
 	ex->ex_date.age = age;
 
 	/* Cheat a bit by adding a match all pattern used during dry run. */
-	(void)expr_set_pattern(ex, ".*", 0, NULL);
+	(void)expr_set_pattern(ex, ".*", 0, NULL, s);
 }
 
 void
@@ -308,7 +305,7 @@ expr_set_strings(struct expr *ex, struct string_list *strings)
  */
 int
 expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
-    const char **errstr)
+    const char **errstr, struct arena_scope *s)
 {
 	struct {
 		unsigned int	eflag;	/* expr pattern flag */
@@ -326,9 +323,7 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 
 	assert(ex->ex_re == NULL);
 
-	ex->ex_re = calloc(1, sizeof(*ex->ex_re));
-	if (ex->ex_re == NULL)
-		err(1, NULL);
+	ex->ex_re = arena_calloc(s, 1, sizeof(*ex->ex_re));
 
 	for (i = 0; fflags[i].eflag != 0; i++) {
 		if ((flags & fflags[i].eflag) == 0)
@@ -352,10 +347,8 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 		return 1;
 	}
 	ex->ex_re->nmatches = ex->ex_re->pattern.re_nsub + 1;
-	ex->ex_re->matches = reallocarray(NULL, ex->ex_re->nmatches,
+	ex->ex_re->matches = arena_calloc(s, ex->ex_re->nmatches,
 	    sizeof(*ex->ex_re->matches));
-	if (ex->ex_re->matches == NULL)
-		err(1, NULL);
 
 	return 0;
 }
