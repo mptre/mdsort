@@ -111,7 +111,7 @@ jobs:
           CC: musl-gcc
           CPPFLAGS: -DDIAGNOSTIC
           MUSL: 1
-          TESTFLAGS: -Tfdleak -Ttilde
+          TESTFLAGS: -Tfdleak
         run: |
           ./configure --pedantic
           make -j`nproc` test
@@ -125,7 +125,7 @@ jobs:
         env:
           CC: gcc
           CPPFLAGS: -DDIAGNOSTIC
-          TESTFLAGS: -Tfdleak -Ttilde
+          TESTFLAGS: -Tfdleak
           YACC: bison
           YFLAGS: -y -Werror
         run: |
