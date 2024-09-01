@@ -2,7 +2,7 @@ if testcase "root level"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/new" -- "To" "admin@example.com"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "To" /user@example.com/ break
 
@@ -20,7 +20,7 @@ if testcase "nested level"; then
 	mkmd "src" "d0" "d3"
 	mkmsg "src/new" -- "To" "user@example.com"
 	mkmsg "src/new" -- "To" "admin@example.com"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match new {
 			match new {
@@ -46,7 +46,7 @@ fi
 if testcase "move, break and move"; then
 	mkmd "src" "dst1" "dst2"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all {
 			match all move "dst1" break
@@ -63,7 +63,7 @@ fi
 if testcase "label, pass and break"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all label "pass" pass
 		match all {
@@ -79,7 +79,7 @@ fi
 if testcase "label, pass, label, break and move"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all label "one" pass
 		match all {

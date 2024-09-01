@@ -3,7 +3,7 @@ if testcase "basic"; then
 	mkmsg "src1/new"
 	mkmsg "src2/new"
 	mkmsg "src3/new"
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	one = "dst1"
 	maildir "src1" {
 		match all move "${one}"
@@ -31,7 +31,7 @@ fi
 if testcase "nested macro"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	head = "d"
 	tail = "t"
 	dst = "${head}s${tail}"
@@ -46,7 +46,7 @@ if testcase "nested macro"; then
 fi
 
 if testcase "empty macro"; then
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	empty = ""
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -56,7 +56,7 @@ if testcase "empty macro"; then
 fi
 
 if testcase "collision with keyword"; then
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir = "maildir"
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -65,7 +65,7 @@ if testcase "collision with keyword"; then
 fi
 
 if testcase "collision with date scalar"; then
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	s = "src"
 	seconds = "dst"
 
@@ -77,22 +77,22 @@ if testcase "collision with date scalar"; then
 fi
 
 if testcase -t memleak "macro not on root level"; then
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		dst = "dst"
 	}
 	EOF
-	mdsort -e -- -n >"$TMP1"
+	mdsort -e -- -n >"${TMP1}"
 	# Remove unstable output, some yacc implementations invokes yylex() more
 	# than once in case of an error.
-	sed -i -e '/unknown keyword: dst/d' "$TMP1"
-	assert_file - "$TMP1" <<-EOF
+	sed -i -e '/unknown keyword: dst/d' "${TMP1}"
+	assert_file - "${TMP1}" <<-EOF
 	mdsort.conf:2: syntax error
 	EOF
 fi
 
 if testcase "unknown macro"; then
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "src" {
 		match all move "${dst}"
 	}
@@ -103,7 +103,7 @@ if testcase "unknown macro"; then
 fi
 
 if testcase "unused macro"; then
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	dst = "dst"
 	trash = "trash"
 
@@ -117,7 +117,7 @@ if testcase "unused macro"; then
 fi
 
 if testcase "unterminated macro"; then
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "src" {
 		match all move "${dst"
 	}
@@ -128,7 +128,7 @@ if testcase "unterminated macro"; then
 fi
 
 if testcase "pre defined macros cannot be redefined"; then
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	path = "path"
 	EOF
 	mdsort -e - -- -n <<-EOF
@@ -137,7 +137,7 @@ if testcase "pre defined macros cannot be redefined"; then
 fi
 
 if testcase "macro used in wrong context"; then
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "src" {
 		match header "${path}" /./ move "dst"
 	}
@@ -150,7 +150,7 @@ fi
 if testcase "sticky basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "${m}" {
 		match all move "dst"
 	}
@@ -163,7 +163,7 @@ fi
 if testcase "sticky precedence"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	m = "nein"
 	maildir "${m}" {
 		match all move "dst"
@@ -187,7 +187,7 @@ if testcase "sticky redefined"; then
 fi
 
 if testcase "sticky redefined config" ; then
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	m = "one"
 	m = "two"
 	maildir "${m}" {
@@ -200,7 +200,7 @@ if testcase "sticky redefined config" ; then
 fi
 
 if testcase "sticky unused"; then
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "src" {
 		match all move "dst"
 	}
@@ -211,7 +211,7 @@ if testcase "sticky unused"; then
 fi
 
 if testcase "sticky invalid"; then
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "src" {
 		match all move "dst"
 	}
@@ -225,20 +225,20 @@ if testcase "action label with pre defined macros"; then
 	mkmd "src"
 	mkmsg "src/new"
 	_label="$(findmsg "src/new")"
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "src" {
 		match all label "${path}"
 	}
 	EOF
 	mdsort
 	refute_empty "src/new"
-	assert_label "$_label" "$(findmsg "src/new")"
+	assert_label "${_label}" "$(findmsg "src/new")"
 fi
 
 if testcase "action exec with pre defined macros"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "src" {
 		match all exec { "sh" "-c" "echo ${path}" }
 	}
@@ -255,7 +255,7 @@ fi
 if testcase "action attachment with pre defined macros"; then
 	mkmd "src"
 	mkmsg -A "src/new"
-	cat <<-'EOF' >"$CONF"
+	cat <<-'EOF' >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match all exec { "echo" "${path}" }

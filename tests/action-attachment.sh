@@ -1,6 +1,6 @@
 if testcase "unsupported actions"; then
 	mkmd "src"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match all move "dst"
@@ -15,7 +15,7 @@ fi
 if testcase "multiple actions"; then
 	mkmd "src" "dst"
 	mkmsg -A "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match all exec "true"
@@ -30,7 +30,7 @@ fi
 if testcase "action exec"; then
 	mkmd "src"
 	mkmsg -A "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match body /.*/ exec { "echo" "\\0" }
@@ -46,7 +46,7 @@ fi
 if testcase "action exec stdin"; then
 	mkmd "src"
 	mkmsg -A "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match body /.*/ exec stdin "cat"
@@ -66,7 +66,7 @@ fi
 if testcase "action exec stdin body"; then
 	mkmd "src"
 	mkmsg -A "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match all exec stdin body "cat"
@@ -82,7 +82,7 @@ fi
 if testcase "interpolation"; then
 	mkmd "src"
 	mkmsg -A "src/new" -- "To" "user@example.com"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "To" /.*/ attachment {
 			match header "Content-Type" /.*/ exec { "echo" "\\0" }
@@ -98,7 +98,7 @@ fi
 if testcase "no attachments"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match all exec "true"
@@ -111,7 +111,7 @@ fi
 if testcase "no matching attachments"; then
 	mkmd "src"
 	mkmsg -A "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match body /nein/ exec "true"
@@ -124,7 +124,7 @@ fi
 if testcase "dry run"; then
 	mkmd "src"
 	mkmsg -A "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all attachment {
 			match header "Content-Type" /.*/ exec "cat"

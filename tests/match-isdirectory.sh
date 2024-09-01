@@ -1,7 +1,7 @@
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match isdirectory "src" move "dst"
 	}
@@ -14,7 +14,7 @@ fi
 if testcase "not a directory"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match isdirectory "$(findmsg "src/new")" move "dst"
 	}
@@ -27,9 +27,9 @@ if testcase "directory not found"; then
 	_dir="/$(genstr 16)"
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
-		match isdirectory "$_dir" move "dst"
+		match isdirectory "${_dir}" move "dst"
 	}
 	EOF
 	mdsort
@@ -39,7 +39,7 @@ fi
 if testcase "interpolation"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "dst"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "To" /.*/ and isdirectory "\\0" move "\\0"
 	}
@@ -52,7 +52,7 @@ fi
 if testcase "interpolation out of bounds"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "To" "dst"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match isdirectory "\\0" move "\\0"
 	}

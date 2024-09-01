@@ -17,7 +17,7 @@ _assert_empty() {
 	local _dir="$1"
 
 	# Append TSHDIR if relative.
-	if [ "$_dir" = "${_dir#/}" ]; then
+	if [ "${_dir}" = "${_dir#/}" ]; then
 		_dir="${TSHDIR}/${_dir}"
 	fi
 
@@ -53,7 +53,7 @@ assert_header() {
 	local _got
 
 	_got="$(sed -n -e "/^${1}/s/^[^:]*: //p" "${TSHDIR}/${3}")"
-	assert_eq "${2}" "$_got"
+	assert_eq "${2}" "${_got}"
 }
 
 # b64 string ...
@@ -72,14 +72,14 @@ b64() {
 cppvar() {
 	local _tmp="${TSHDIR}/cppvar"
 
-	cpp - <<-EOF >"$_tmp" 2>/dev/null
+	cpp - <<-EOF >"${_tmp}" 2>/dev/null
 	#include <limits.h>
 	#include <stdio.h>
 
 	${1}
 	EOF
 
-	grep -v -e '^#' -e '^$' <"$_tmp" | tail -1
+	grep -v -e '^#' -e '^$' <"${_tmp}" | tail -1
 }
 
 # errno num
@@ -89,7 +89,7 @@ errno() {
 	local _num
 
 	_num="$1"; : "${_num:?}"
-	case "$_num" in
+	case "${_num}" in
 	ENAMETOOLONG)
 		if [ "${MUSL:-0}" -eq 1 ]; then
 			echo "Filename too long"
@@ -117,14 +117,14 @@ findmsg() {
 		shift
 	done
 
-	grep -Rl "$_pattern" "${TSHDIR}/${1}" |
-	$_cmd >"$_tmp"
+	grep -Rl "${_pattern}" "${TSHDIR}/${1}" |
+	${_cmd} >"${_tmp}"
 
-	if [ "$(wc -l "$_tmp" | awk '{print $1}')" -ne 1 ]; then
-		fail - "expected to find only one message" <"$_tmp"
+	if [ "$(wc -l "${_tmp}" | awk '{print $1}')" -ne 1 ]; then
+		fail - "expected to find only one message" <"${_tmp}"
 	fi
 
-	cat "$_tmp"
+	cat "${_tmp}"
 }
 
 # genstr length
@@ -148,7 +148,7 @@ mdsort() {
 	while [ $# -gt 0 ]; do
 		case "$1" in
 		-)	_input="${TSHDIR}/input"
-			cat >"$_input"
+			cat >"${_input}"
 			;;
 		-D)	_args=""
 			;;
@@ -169,37 +169,37 @@ mdsort() {
 	done
 
 	_tmpdir="${TSHDIR}/_tmpdir"
-	mkdir "$_tmpdir"
+	mkdir "${_tmpdir}"
 
 	# shellcheck disable=SC2086
-	(cd "$TSHDIR" && env LC_ALL=en_US.UTF-8 "TMPDIR=${_tmpdir}" \
-		${_fault} ${EXEC:-} "$MDSORT" $_args "$@") \
-		>"$_tmp" 2>&1 || _exit2="$?"
+	(cd "${TSHDIR}" && env LC_ALL=en_US.UTF-8 "TMPDIR=${_tmpdir}" \
+		${_fault} ${EXEC:-} "${MDSORT}" ${_args} "$@") \
+		>"${_tmp}" 2>&1 || _exit2="$?"
 
 	# Find coredump(s) and optionally preserve them.
-	find "$TSHDIR" -name '*core*' >"$_core"
-	if ! cmp -s "$_core" /dev/null; then
-		if [ -n "$COREDUMP" ]; then
-			cp "$(cat "$_core")" "${COREDUMP}/mdsort.core"
+	find "${TSHDIR}" -name '*core*' >"${_core}"
+	if ! cmp -s "${_core}" /dev/null; then
+		if [ -n "${COREDUMP}" ]; then
+			cp "$(cat "${_core}")" "${COREDUMP}/mdsort.core"
 		fi
-		fail - "found coredump" <"$_tmp"
+		fail - "found coredump" <"${_tmp}"
 	fi
 
-	if [ "$_exit1" -ne "$_exit2" ]; then
-		if [ "$_exit2" -gt 128 ]; then
+	if [ "${_exit1}" -ne "${_exit2}" ]; then
+		if [ "${_exit2}" -gt 128 ]; then
 			_sig=" (signal $((_exit2 - 128)))"
 		fi
-		fail - "want exit ${_exit1}, got ${_exit2}${_sig}" <"$_tmp"
+		fail - "want exit ${_exit1}, got ${_exit2}${_sig}" <"${_tmp}"
 		# Output already displayed, prevent from doing it twice.
 		_output=0
 	fi
 
-	assert_empty "$_tmpdir" "temporary directory not empty"
+	assert_empty "${_tmpdir}" "temporary directory not empty"
 
-	if [ -n "$_input" ]; then
-		assert_file "$_input" "$_tmp"
-	elif [ "$_output" -eq 1 ]; then
-		cat "$_tmp"
+	if [ -n "${_input}" ]; then
+		assert_file "${_input}" "${_tmp}"
+	elif [ "${_output}" -eq 1 ]; then
+		cat "${_tmp}"
 	fi
 }
 
@@ -224,14 +224,14 @@ mkattach() {
 		_enc="$1"; : "${_enc:?}"; shift
 		_body="$1"; : "${_body:?}"; shift
 
-		printf -- '--boundary\nContent-Type: %s\n' "$_type"
-		if [ "$_enc" != "identity" ]; then
-			printf 'Content-Transfer-Encoding: %s\n' "$_enc"
+		printf -- '--boundary\nContent-Type: %s\n' "${_type}"
+		if [ "${_enc}" != "identity" ]; then
+			printf 'Content-Transfer-Encoding: %s\n' "${_enc}"
 		fi
-		printf '\n%s\n' "$_body"
+		printf '\n%s\n' "${_body}"
 
 		[ $# -eq 0 ] && printf -- '--boundary--\n'
-	done | mkmsg -H -b "$_dir" -- \
+	done | mkmsg -H -b "${_dir}" -- \
 		"Content-Type" "multipart/${_mp}; boundary=\"boundary\""
 }
 
@@ -275,9 +275,9 @@ mkmsg() {
 
 	while :; do
 		_name=$(printf '1553633333.%d_%d.hostname%s' \
-			"$$" "$NMSG" "$_suffix")
+			"$$" "${NMSG}" "${_suffix}")
 		_path="${_dir}/${_name}"
-		[ -e "$_path" ] || break
+		[ -e "${_path}" ] || break
 
 		NMSG=$((NMSG + 1))
 	done
@@ -293,9 +293,9 @@ mkmsg() {
 		fi
 
 		# Default headers.
-		if [ "$_attachments" -eq 1 ]; then
+		if [ "${_attachments}" -eq 1 ]; then
 			printf 'Content-Type: multipart/alternative;boundary="deadbeef"\n'
-		elif [ "$_headers" -eq 1 ]; then
+		elif [ "${_headers}" -eq 1 ]; then
 			printf 'Content-Type: text/plain\n'
 		fi
 
@@ -303,7 +303,7 @@ mkmsg() {
 		printf '\n'
 
 		# Optional body.
-		if [ "$_attachments" -eq 1 ]; then
+		if [ "${_attachments}" -eq 1 ]; then
 			cat <<-EOF
 			--deadbeef
 			Content-Type: text/plain
@@ -315,13 +315,13 @@ mkmsg() {
 			Second attachment.
 			--deadbeef--
 			EOF
-		elif [ "$_body" -eq 1 ]; then
+		elif [ "${_body}" -eq 1 ]; then
 			cat
 		fi
-	} >"$_path"
+	} >"${_path}"
 
-	if [ -n "$_tim" ]; then
-		touch -m -t "$_tim" "$_path"
+	if [ -n "${_tim}" ]; then
+		touch -m -t "${_tim}" "${_path}"
 	fi
 }
 

@@ -1,7 +1,7 @@
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?B?aGFjay1sw7ZyZGFnYXI=?="
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /hack-lördagar/ move "dst"
 	}
@@ -14,7 +14,7 @@ fi
 if testcase "invalid"; then
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?B?aGFjay1sw7ZyZGFnYXI==?="
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /hack-lördagar/ move "dst"
 	}
@@ -26,7 +26,7 @@ fi
 if testcase "dry run"; then
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?B?aGFjay1sw7ZyZGFnYXI=?="
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /hack-lördagar/ move "dst"
 	}

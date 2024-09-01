@@ -1,7 +1,7 @@
 if testcase "flags"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all flags "ABC"
 	}
@@ -14,7 +14,7 @@ fi
 if testcase "invalid flags"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match all flags "0A1"
 	}

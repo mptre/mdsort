@@ -2,7 +2,7 @@ if testcase "many maildirs"; then
 	mkmd "src1" "src2" "dst"
 	mkmsg "src1/new"
 	mkmsg "src2/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir { "src1" "src2" } {
 		match all move "dst"
 	}

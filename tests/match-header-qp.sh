@@ -11,7 +11,7 @@ if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?Q?ny_fr=C3=A5ga_r=C3=B6rande?="
 	mkmsg "src/new" -- "Subject" "=?UTF-8?q?ny_fr=C3=A5ga_r=C3=B6rande?="
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /ny fråga/ move "dst"
 	}
@@ -24,7 +24,7 @@ fi
 if testcase "multiple lines"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "$(subject)"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /Έκδοση e-λογαριασμού/ move "dst"
 	}
@@ -37,7 +37,7 @@ fi
 if testcase "ascii intertwined"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "ascii $(subject) ascii"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /Έκδοση/ move "dst"
 	}
@@ -50,7 +50,7 @@ fi
 if testcase "invalid encoding"; then
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?A?ny_fr=C3=A5ga_r=C3=B6rande?="
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /ny fråga/ move "dst"
 	}
@@ -62,7 +62,7 @@ fi
 if testcase "invalid charset delimiter"; then
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /ny fråga/ move "dst"
 	}
@@ -74,7 +74,7 @@ fi
 if testcase "invalid encoding delimiter"; then
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?Q"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /ny fråga/ move "dst"
 	}
@@ -86,7 +86,7 @@ fi
 if testcase "invalid missing trailing delimiter"; then
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?Q?ny_fr=C3=A5ga_r=C3=B6rande"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /ny fråga/ move "dst"
 	}
@@ -98,7 +98,7 @@ fi
 if testcase "dry run"; then
 	mkmd "src"
 	mkmsg "src/new" -- "Subject" "=?UTF-8?Q?ny_fr=C3=A5ga_r=C3=B6rande?="
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /ny fråga/ move "dst"
 	}
@@ -113,7 +113,7 @@ fi
 if testcase "dry run multiple lines"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "$(subject)"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match header "Subject" /e-λογαριασμού/ move "dst"
 	}

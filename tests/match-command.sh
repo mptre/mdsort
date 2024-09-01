@@ -1,7 +1,7 @@
 if testcase "basic"; then
 	mkmd "src" "dst"
 	mkmsg "src/new" -- "Subject" "subject"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match	header "Subject" /.*/ and
 			command { "echo" "\0" }
@@ -18,7 +18,7 @@ fi
 if testcase "exit non-zero"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match command "false" move "dst"
 	}
@@ -30,7 +30,7 @@ fi
 if testcase -t memleak "command not found"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match command "command-not-found" move "dst"
 	}
@@ -44,7 +44,7 @@ fi
 if testcase "dry run"; then
 	mkmd "src"
 	mkmsg "src/new"
-	cat <<-EOF >"$CONF"
+	cat <<-EOF >"${CONF}"
 	maildir "src" {
 		match command "true" move "dst"
 	}

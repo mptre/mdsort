@@ -11,13 +11,13 @@ atexit() {
 	[ -e config.h ] && cat config.h
 	[ -e config.mk ] && cat config.mk
 	rm -rf "$@" || :
-	[ "$_err" -ne 0 ] && fatal
+	[ "${_err}" -ne 0 ] && fatal
 	exit 0
 }
 
 compile() {
 	# shellcheck disable=SC2086
-	"$CC" $CPPFLAGS -Werror -o /dev/null -x c - "$@"
+	"${CC}" ${CPPFLAGS} -Werror -o /dev/null -x c - "$@"
 }
 
 cc_has_option() {
@@ -47,17 +47,17 @@ fatal() {
 headers() {
 	local _tmp="${WRKDIR}/headers"
 
-	cat >"$_tmp"
-	[ -s "$_tmp" ] || return 0
+	cat >"${_tmp}"
+	[ -s "${_tmp}" ] || return 0
 
-	xargs printf '#include <%s>\n' <"$_tmp"
+	xargs printf '#include <%s>\n' <"${_tmp}"
 }
 
 makevar() {
 	# shellcheck disable=SC2016
 	var="$(printf 'all:\n\t@echo ${%s}\n' "$1" | make -sf -)"
-	if [ -n "$var" ]; then
-		echo "$var"
+	if [ -n "${var}" ]; then
+		echo "${var}"
 	else
 		return 1
 	fi
@@ -129,7 +129,7 @@ check_errc() {
 check_gnu_source() {
 	local _tmp="${WRKDIR}/gnu"
 
-	cat <<-EOF >"$_tmp"
+	cat <<-EOF >"${_tmp}"
 	#include <time.h>
 
 	int main(void) {
@@ -138,9 +138,9 @@ check_gnu_source() {
 	}
 	EOF
 
-	compile <"$_tmp" && return 1
+	compile <"${_tmp}" && return 1
 
-	{ echo "#define _GNU_SOURCE"; cat "$_tmp"; } | compile
+	{ echo "#define _GNU_SOURCE"; cat "${_tmp}"; } | compile
 }
 
 check_pledge() {
@@ -224,7 +224,7 @@ check_yystype() {
 	local _c="${WRKDIR}/c"
 	local _yacc="${WRKDIR}/yacc"
 
-	cat <<-EOF >"$_c"
+	cat <<-EOF >"${_c}"
 	%{
 	void yyerror(const char *, ...);
 	int yylex(void);
@@ -249,8 +249,8 @@ check_yystype() {
 	}
 	EOF
 
-	$YACC -o "$_yacc" "$_c" || fatal "${YACC}: fatal error"
-	! compile <"$_yacc"
+	${YACC} -o "${_yacc}" "${_c}" || fatal "${YACC}: fatal error"
+	! compile <"${_yacc}"
 }
 
 _fuzz=''
@@ -268,7 +268,7 @@ while [ $# -gt 0 ]; do
 done
 
 WRKDIR=$(mktemp -dt configure.XXXXXX)
-trap 'atexit $WRKDIR' EXIT
+trap 'atexit ${WRKDIR}' EXIT
 
 exec 3>&1 4>&2
 exec 1>config.log 2>&1
@@ -305,10 +305,10 @@ PREFIX="$(makevar PREFIX || echo /usr/local)"
 BINDIR="$(makevar BINDIR || echo "${PREFIX}/bin")"
 MANDIR="$(makevar MANDIR || echo "${PREFIX}/man")"
 INSTALL="$(makevar INSTALL || echo install)"
-INSTALL_MAN="$(makevar INSTALL_MAN || echo "$INSTALL")"
+INSTALL_MAN="$(makevar INSTALL_MAN || echo "${INSTALL}")"
 
 # Following chunks must happen after CC is defined.
-if [ "$_pedantic" -eq 1 ]; then
+if [ "${_pedantic}" -eq 1 ]; then
 	CFLAGS="$(cc_has_option -Wformat-signedness) ${CFLAGS}"
 	CFLAGS="$(cc_has_option -Wimplicit-fallthrough) ${CFLAGS}"
 	CFLAGS="$(cc_has_option -Wunreachable-code-aggressive) ${CFLAGS}"
@@ -316,12 +316,12 @@ if [ "$_pedantic" -eq 1 ]; then
 	CFLAGS="-g $(pedantic) ${CFLAGS}"
 	DEBUG="-g ${DEBUG}"
 fi
-if [ "$_sanitize" -eq 1 ]; then
+if [ "${_sanitize}" -eq 1 ]; then
 	{
 		cc_has_sanitizer address
 		cc_has_sanitizer undefined
 		cc_has_sanitizer unsigned-integer-overflow
-		[ "$_fuzz" = "llvm" ] && echo fuzzer
+		[ "${_fuzz}" = "llvm" ] && echo fuzzer
 	} >"${WRKDIR}/sanitize"
 	if ! cmp -s /dev/null "${WRKDIR}/sanitize"; then
 		_sanitize="-fsanitize=$(paste -sd , "${WRKDIR}/sanitize")"
@@ -350,56 +350,56 @@ exec 1>config.h
 printf '#ifndef CONFIG_H\n#define CONFIG_H\n'
 
 # Order is important, must be present before any includes.
-[ "$HAVE_GNU_SOURCE" -eq 1 ] && printf '#define _GNU_SOURCE\n'
+[ "${HAVE_GNU_SOURCE}" -eq 1 ] && printf '#define _GNU_SOURCE\n'
 
 # Headers needed for function prototypes.
 {
-[ "$HAVE_ARC4RANDOM" -eq 0 ] && echo stdint.h
-[ "$HAVE_REALLOCARRAY" -eq 0 ] && echo stddef.h
-[ "$HAVE_STRLCPY" -eq 0 ] && echo stddef.h
+[ "${HAVE_ARC4RANDOM}" -eq 0 ] && echo stdint.h
+[ "${HAVE_REALLOCARRAY}" -eq 0 ] && echo stddef.h
+[ "${HAVE_STRLCPY}" -eq 0 ] && echo stddef.h
 } | sort | uniq | headers
 
-[ "$HAVE_ARC4RANDOM" -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
-[ "$HAVE_ERRC" -eq 1 ] && printf '#define HAVE_ERRC\t1\n'
-[ "$HAVE_PLEDGE" -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
-[ "$HAVE_QUEUE" -eq 1 ] && printf '#define HAVE_QUEUE\t1\n'
-[ "$HAVE_REALLOCARRAY" -eq 1 ] && printf '#define HAVE_REALLOCARRAY\t1\n'
-[ "$HAVE_STRLCPY" -eq 1 ] && printf '#define HAVE_STRLCPY\t1\n'
-[ "$HAVE_WARNC" -eq 1 ] && printf '#define HAVE_WARNC\t1\n'
+[ "${HAVE_ARC4RANDOM}" -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
+[ "${HAVE_ERRC}" -eq 1 ] && printf '#define HAVE_ERRC\t1\n'
+[ "${HAVE_PLEDGE}" -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
+[ "${HAVE_QUEUE}" -eq 1 ] && printf '#define HAVE_QUEUE\t1\n'
+[ "${HAVE_REALLOCARRAY}" -eq 1 ] && printf '#define HAVE_REALLOCARRAY\t1\n'
+[ "${HAVE_STRLCPY}" -eq 1 ] && printf '#define HAVE_STRLCPY\t1\n'
+[ "${HAVE_WARNC}" -eq 1 ] && printf '#define HAVE_WARNC\t1\n'
 
-if [ "$HAVE_ATTRIBUTE_FALLTHROUGH" -eq 1 ]; then
+if [ "${HAVE_ATTRIBUTE_FALLTHROUGH}" -eq 1 ]; then
 	printf '#define FALLTHROUGH __attribute__((__fallthrough__))\n'
 else
 	printf '#define FALLTHROUGH do {} while (0) /* FALLTHROUGH */\n'
 fi
 
-if [ -n "$_fuzz" ]; then
+if [ -n "${_fuzz}" ]; then
 	printf '#define FUZZER_%s\t1\n' \
-		"$(echo "$_fuzz" | tr '[:lower:]' '[:upper:]')"
+		"$(echo "${_fuzz}" | tr '[:lower:]' '[:upper:]')"
 fi
 
-if [ "$HAVE_STAT_TIM" -eq 0 ]; then
+if [ "${HAVE_STAT_TIM}" -eq 0 ]; then
 	printf '#define st_atim\tst_atimespec\n'
 	printf '#define st_ctim\tst_ctimespec\n'
 	printf '#define st_mtim\tst_mtimespec\n'
 fi
 
-if [ "$HAVE_YYSTYPE" -eq 1 ]; then
+if [ "${HAVE_YYSTYPE}" -eq 1 ]; then
 	printf '#define YYSTYPE_IS_DECLARED\t1\n'
 fi
 
-[ "$HAVE_ARC4RANDOM" -eq 0 ] &&
+[ "${HAVE_ARC4RANDOM}" -eq 0 ] &&
 	printf 'uint32_t arc4random(void);\n'
-[ "$HAVE_ERRC" -eq 0 ] && {
+[ "${HAVE_ERRC}" -eq 0 ] && {
 	printf 'void errc(int, int, const char *, ...)\n';
 	printf '\t__attribute__((__noreturn__, __format__ (printf, 3, 4)));\n'; }
-[ "$HAVE_PLEDGE" -eq 0 ] &&
+[ "${HAVE_PLEDGE}" -eq 0 ] &&
 	printf 'int pledge(const char *, const char *);\n'
-[ "$HAVE_REALLOCARRAY" -eq 0 ] &&
+[ "${HAVE_REALLOCARRAY}" -eq 0 ] &&
 	printf 'void *reallocarray(void *, size_t, size_t);\n'
-[ "$HAVE_STRLCPY" -eq 0 ] &&
+[ "${HAVE_STRLCPY}" -eq 0 ] &&
 	printf 'size_t strlcpy(char *, const char *, size_t);\n'
-[ "$HAVE_WARNC" -eq 0 ] && {
+[ "${HAVE_WARNC}" -eq 0 ] && {
 	printf 'void warnc(int, const char *, ...)\n'
 	printf '\t__attribute__((__format__ (printf, 2, 3)));\n'; }
 
@@ -409,20 +409,20 @@ printf '#endif\n'
 exec 1>config.mk
 
 # Use echo to normalize whitespace.
-# shellcheck disable=all
+# shellcheck disable=SC1083,SC2086,SC2116
 cat <<EOF
-CC=		$(echo $CC)
-CFLAGS=		$(rmdup $CFLAGS)
-CPPFLAGS=	$(rmdup $CPPFLAGS -I\${.CURDIR})
-DEBUG=		$(rmdup $DEBUG)
-LDFLAGS=	$(rmdup $LDFLAGS)
-YACC=		$(echo $YACC)
-YFLAGS=		$(rmdup $YFLAGS)
+CC=		$(echo ${CC})
+CFLAGS=		$(rmdup ${CFLAGS})
+CPPFLAGS=	$(rmdup ${CPPFLAGS} -I\${.CURDIR})
+DEBUG=		$(rmdup ${DEBUG})
+LDFLAGS=	$(rmdup ${LDFLAGS})
+YACC=		$(echo ${YACC})
+YFLAGS=		$(rmdup ${YFLAGS})
 
-BINDIR?=	$(echo $BINDIR)
-MANDIR?=	$(echo $MANDIR)
-INSTALL?=	$(echo $INSTALL)
-INSTALL_MAN?=	$(echo $INSTALL_MAN)
+BINDIR?=	$(echo ${BINDIR})
+MANDIR?=	$(echo ${MANDIR})
+INSTALL?=	$(echo ${INSTALL})
+INSTALL_MAN?=	$(echo ${INSTALL_MAN})
 
 .PATH:	\${.CURDIR}/libks
 VPATH=	\${.CURDIR}/libks
