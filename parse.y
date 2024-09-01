@@ -6,16 +6,16 @@
 #include <ctype.h>
 #include <err.h>
 #include <stdarg.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "libks/arena.h"
 #include "libks/arena-buffer.h"
+#include "libks/arena.h"
 #include "libks/arithmetic.h"
 #include "libks/buffer.h"
-#include "libks/vector.h"
 #include "libks/compiler.h"
+#include "libks/vector.h"
 
 #include "conf.h"
 #include "environment.h"
@@ -27,9 +27,9 @@
 static void expr_validate(const struct expr *);
 static void expr_validate_attachment_block(const struct expr *);
 static void yyerror(const char *, ...)
-	__attribute__((__format__ (printf, 1, 2)));
+	__attribute__((__format__(printf, 1, 2)));
 static void yyerror_at_line(unsigned int, const char *, ...)
-	__attribute__((__format__ (printf, 2, 3)));
+	__attribute__((__format__(printf, 2, 3)));
 static void yyverror(const char *, va_list, unsigned int);
 static int yygetc(void);
 static int yylex(void);
@@ -44,7 +44,8 @@ static const char *expand(const char *, unsigned int);
 static const char *expandmacros(const char *, struct macro_list *,
     unsigned int, struct arena_scope *);
 static struct string_list *expandstrings(struct string_list *, unsigned int);
-static const char *expandtilde(const char *, const char *, struct arena_scope *);
+static const char *expandtilde(const char *, const char *,
+    struct arena_scope *);
 
 /* yacc parser global state */
 static struct {
@@ -569,7 +570,7 @@ yyerror_at_line(unsigned int lineno, const char *fmt, ...)
 }
 
 static void
-yyverror(const char *fmt, va_list ap, unsigned lineno)
+yyverror(const char *fmt, va_list ap, unsigned int lineno)
 {
 	fprintf(stderr, "%s:%u: ", parser_state.path, lineno);
 	vfprintf(stderr, fmt, ap);
@@ -729,12 +730,14 @@ again:
 				break;
 			case 'l':
 				if (yylval.pattern.flags & EXPR_PATTERN_UCASE)
-					yyerror("`l' and `u' flags cannot be combined");
+					yyerror(
+					    "`l' and `u' flags cannot be combined");
 				yylval.pattern.flags |= EXPR_PATTERN_LCASE;
 				break;
 			case 'u':
 				if (yylval.pattern.flags & EXPR_PATTERN_LCASE)
-					yyerror("`l' and `u' flags cannot be combined");
+					yyerror(
+					    "`l' and `u' flags cannot be combined");
 				yylval.pattern.flags |= EXPR_PATTERN_UCASE;
 				break;
 			default:
@@ -826,12 +829,14 @@ expr_validate(const struct expr *ex)
 
 	nactions = expr_count_actions(ex);
 	if (nactions > 1) {
-		if (expr_count(ex, EXPR_TYPE_DISCARD) > 0)
+		if (expr_count(ex, EXPR_TYPE_DISCARD) > 0) {
 			yyerror_at_line(ex->ex_lno,
 			    "discard cannot be combined with another action");
-		if (expr_count(ex, EXPR_TYPE_REJECT) > 0)
+		}
+		if (expr_count(ex, EXPR_TYPE_REJECT) > 0) {
 			yyerror_at_line(ex->ex_lno,
 			    "reject cannot be combined with another action");
+		}
 	}
 }
 
@@ -949,15 +954,14 @@ expandmacros(const char *str, struct macro_list *macros, unsigned int curctx,
 				 * Delay expansion of a non-default macro in a
 				 * non-default context.
 				 */
-				if ((ctx & curctx) == curctx) {
+				if ((ctx & curctx) == curctx)
 					goto fallback;
-				}
 				/*
 				 * If the macro is a default one, expand it now.
 				 * Otherwise, it's being used in the wrong
 				 * context.
 				 */
-				if ((ctx & MACRO_CTX_DEFAULT))
+				if (ctx & MACRO_CTX_DEFAULT)
 					break;
 				FALLTHROUGH;
 			case MACRO_CTX_DEFAULT:
@@ -997,9 +1001,8 @@ expandstrings(struct string_list *strings, unsigned int curctx)
 {
 	struct string *str;
 
-	TAILQ_FOREACH(str, strings, entry) {
+	TAILQ_FOREACH(str, strings, entry)
 		str->val = expand(str->val, curctx);
-	}
 	return strings;
 }
 
