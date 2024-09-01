@@ -40,7 +40,7 @@ if testcase "multiple x-label headers"; then
 	mdsort
 	refute_empty "src/new"
 	assert_label "one two label" "$(findmsg "src/new")"
-	assert_file "$(findmsg -p "src/new")" "${TMP1}" 
+	assert_file "$(findmsg -p "src/new")" "${TMP1}"
 fi
 
 if testcase "multiple labels and x-label present"; then
