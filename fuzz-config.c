@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include "libks/arena.h"
+#include "libks/compiler.h"
 #include "libks/fuzzer.h"
 
 #include "conf.h"
@@ -12,7 +13,7 @@ struct test_context {
 };
 
 static void *
-init(void)
+init(int UNUSED(argc), char **UNUSED(argv))
 {
 	static struct test_context c;
 
