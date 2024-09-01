@@ -8,11 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_QUEUE
-#  include <sys/queue.h>
-#else
-#  include "compat-queue.h"
-#endif
+#include "libks/list.h"
 
 #include "log.h"
 
@@ -20,22 +16,23 @@
 
 #define ARGS_MAX	1024
 
+LIST(fault_list, fault);
+
 struct fault {
 	char			fu_name[32];
 	int			fu_errno;
 	unsigned int		fu_hits;
 
-	TAILQ_ENTRY(fault)	fu_entry;
+	LIST_ENTRY(fault_list, fault);
 };
-
-TAILQ_HEAD(, fault)	faults = TAILQ_HEAD_INITIALIZER(faults);
 
 static void	fault_init(void);
 static int	fault_match(const char *);
 
 static const char	*parse_attr(struct fault *, const char *, const char *);
 
-static int	cold = 1;
+static struct fault_list	faults;
+static int			cold = 1;
 
 int
 fault(const char *name)
@@ -56,8 +53,8 @@ fault_shutdown(void)
 
 	fault_init();
 
-	while ((fu = TAILQ_FIRST(&faults)) != NULL) {
-		TAILQ_REMOVE(&faults, fu, fu_entry);
+	while ((fu = LIST_FIRST(&faults)) != NULL) {
+		LIST_REMOVE(&faults, fu);
 		if (fu->fu_hits == 0) {
 			warnx("%s: %s: fault never hit", __func__, fu->fu_name);
 			error = 1;
@@ -76,6 +73,8 @@ fault_init(void)
 
 	if (!cold)
 		return;
+
+	LIST_INIT(&faults);
 
 	str = getenv("FAULT");
 	if (str == NULL || str[0] == '\0')
@@ -99,7 +98,7 @@ fault_init(void)
 			if (str == NULL)
 				break;
 		}
-		TAILQ_INSERT_TAIL(&faults, fu, fu_entry);
+		LIST_INSERT_TAIL(&faults, fu);
 
 		if (p == NULL)
 			break;
@@ -114,7 +113,7 @@ fault_match(const char *name)
 {
 	struct fault *fu;
 
-	TAILQ_FOREACH(fu, &faults, fu_entry) {
+	LIST_FOREACH(fu, &faults) {
 		if (strcmp(fu->fu_name, name) != 0)
 			continue;
 		if (fu->fu_hits > 0)

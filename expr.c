@@ -2,12 +2,6 @@
 
 #include "config.h"
 
-#ifdef HAVE_QUEUE
-#  include <sys/queue.h>
-#else
-#  include "compat-queue.h"
-#endif
-
 #include <sys/stat.h>
 
 #include <assert.h>
@@ -27,6 +21,7 @@
 #include "libks/buffer.h"
 #include "libks/compiler.h"
 #include "libks/consistency.h"
+#include "libks/list.h"
 #include "libks/vector.h"
 
 #include "date-time.h"
@@ -624,7 +619,7 @@ expr_eval_command(struct expr *ex, struct expr_eval_arg *ea)
 		ev = EXPR_MATCH;
 	}
 
-	TAILQ_REMOVE(ea->ea_ml, mh, mh_entry);
+	LIST_REMOVE(ea->ea_ml, mh);
 	match_free(mh);
 
 	return ev;
@@ -712,7 +707,7 @@ expr_eval_flag(struct expr *ex, struct expr_eval_arg *ea)
 	size_t siz;
 
 	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
-	subdir = TAILQ_FIRST(ex->ex_strings)->val;
+	subdir = LIST_FIRST(ex->ex_strings)->val;
 	siz = sizeof(mh->mh_subdir);
 	if (strlcpy(mh->mh_subdir, subdir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
@@ -733,7 +728,7 @@ expr_eval_flags(struct expr *ex, struct expr_eval_arg *ea)
 	const char *flags;
 	int error = 0;
 
-	flags = TAILQ_FIRST(ex->ex_strings)->val;
+	flags = LIST_FIRST(ex->ex_strings)->val;
 	for (; *flags != '\0'; flags++) {
 		if (message_flags_set(message_get_flags(msg), *flags))
 			error = 1;
@@ -752,7 +747,7 @@ expr_eval_header(struct expr *ex, struct expr_eval_arg *ea)
 {
 	const struct string *key;
 
-	TAILQ_FOREACH(key, ex->ex_strings, entry) {
+	LIST_FOREACH(key, ex->ex_strings) {
 		VECTOR(char *const) values;
 		size_t j;
 
@@ -802,7 +797,7 @@ expr_eval_move(struct expr *ex, struct expr_eval_arg *ea)
 	const char *maildir;
 	size_t siz;
 
-	maildir = TAILQ_FIRST(ex->ex_strings)->val;
+	maildir = LIST_FIRST(ex->ex_strings)->val;
 	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
 	siz = sizeof(mh->mh_maildir);
 	if (strlcpy(mh->mh_maildir, maildir, siz) >= siz) {
@@ -911,7 +906,7 @@ expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 		goto out;
 	}
 
-	str = TAILQ_FIRST(ex->ex_strings)->val;
+	str = LIST_FIRST(ex->ex_strings)->val;
 	siz = sizeof(mh->mh_path);
 	if (strlcpy(mh->mh_path, str, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
@@ -928,7 +923,7 @@ expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 	}
 
 out:
-	TAILQ_REMOVE(ea->ea_ml, mh, mh_entry);
+	LIST_REMOVE(ea->ea_ml, mh);
 	match_free(mh);
 
 	return ev;

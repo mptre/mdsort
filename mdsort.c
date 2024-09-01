@@ -1,11 +1,5 @@
 #include "config.h"
 
-#ifdef HAVE_QUEUE
-#  include <sys/queue.h>
-#else
-#  include "compat-queue.h"
-#endif
-
 #include <err.h>
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
@@ -19,6 +13,7 @@
 #include <unistd.h>
 
 #include "libks/arena.h"
+#include "libks/list.h"
 #include "libks/vector.h"
 
 #include "conf.h"
@@ -164,7 +159,7 @@ main(int argc, char *argv[])
 		struct config *conf = &cl.cl_list[i];
 		const struct string *str;
 
-		TAILQ_FOREACH(str, conf->paths, entry) {
+		LIST_FOREACH(str, conf->paths) {
 			const char *path = str->val;
 			unsigned int flags;
 
@@ -239,7 +234,7 @@ config_has_exec(const struct config_list *cl, const struct environment *env)
 		const struct config *conf = &cl->cl_list[i];
 		const struct string *str;
 
-		TAILQ_FOREACH(str, conf->paths, entry) {
+		LIST_FOREACH(str, conf->paths) {
 			if (maildir_skip(str->val, env))
 				continue;
 			if (expr_count(conf->expr, EXPR_TYPE_COMMAND) > 0)
@@ -353,7 +348,7 @@ handle_message(struct expr *expr, struct maildir *md,
 
 	arena_scope(scratch, s);
 
-	TAILQ_INIT(&matches);
+	LIST_INIT(&matches);
 
 	struct expr_eval_arg ea = {
 		.ea_ml		= &matches,

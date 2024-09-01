@@ -16,6 +16,7 @@
 #include "libks/buffer.h"
 #include "libks/compiler.h"
 #include "libks/vector.h"
+#include "libks/list.h"
 
 #include "conf.h"
 #include "environment.h"
@@ -172,7 +173,7 @@ maildir		: maildir_paths exprblock {
 			    expr_count_actions($2) == 0)
 				yyerror("empty match block");
 
-			TAILQ_FOREACH(str, $1, entry) {
+			LIST_FOREACH(str, $1) {
 				if (isstdin(str->val) ||
 				    expr_count($2, EXPR_TYPE_REJECT) == 0)
 					continue;
@@ -195,7 +196,7 @@ maildir_paths	: MAILDIR strings {
 			struct string *str;
 
 			$$ = $2;
-			TAILQ_FOREACH(str, $$, entry) {
+			LIST_FOREACH(str, $$) {
 				str->val = expand(str->val, MACRO_CTX_DEFAULT);
 			}
 		}
@@ -206,7 +207,7 @@ maildir_paths	: MAILDIR strings {
 				const struct config *conf = &parser_state.config->cl_list[i];
 				const struct string *str;
 
-				TAILQ_FOREACH(str, conf->paths, entry) {
+				LIST_FOREACH(str, conf->paths) {
 					if (isstdin(str->val))
 						yyerror("stdin already defined");
 				}
@@ -1001,7 +1002,7 @@ expandstrings(struct string_list *strings, unsigned int curctx)
 {
 	struct string *str;
 
-	TAILQ_FOREACH(str, strings, entry)
+	LIST_FOREACH(str, strings)
 		str->val = expand(str->val, curctx);
 	return strings;
 }

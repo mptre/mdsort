@@ -12,6 +12,7 @@
 
 #include "libks/arena.h"
 #include "libks/buffer.h"
+#include "libks/list.h"
 #include "libks/vector.h"
 
 #include "environment.h"
@@ -48,7 +49,7 @@ matches_append(struct match_list *ml, struct match *mh)
 	size_t siz;
 
 	matches_merge(ml, mh);
-	TAILQ_INSERT_TAIL(ml, mh, mh_entry);
+	LIST_INSERT_TAIL(ml, mh);
 
 	if ((mh->mh_expr->ex_flags & EXPR_FLAG_PATH) == 0)
 		return 0;
@@ -87,8 +88,8 @@ matches_clear(struct match_list *ml)
 {
 	struct match *mh;
 
-	while ((mh = TAILQ_FIRST(ml)) != NULL) {
-		TAILQ_REMOVE(ml, mh, mh_entry);
+	while ((mh = LIST_FIRST(ml)) != NULL) {
+		LIST_REMOVE(ml, mh);
 		match_free(mh);
 	}
 }
@@ -105,9 +106,9 @@ matches_interpolate(struct match_list *ml, struct arena *scratch)
 	macros = macros_alloc(MACRO_CTX_ACTION, &s);
 	/* Construct action macro context. */
 	macros_insertc(macros, "path",
-	    message_get_path(TAILQ_FIRST(ml)->mh_msg));
+	    message_get_path(LIST_FIRST(ml)->mh_msg));
 
-	TAILQ_FOREACH(mh, ml, mh_entry) {
+	LIST_FOREACH(mh, ml) {
 		if (match_interpolate(mh, macros, scratch)) {
 			error = 1;
 			break;
@@ -127,7 +128,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 	int error = 0;
 	int rv = MATCH_EXEC_SUCCESS;
 
-	TAILQ_FOREACH(mh, ml, mh_entry) {
+	LIST_FOREACH(mh, ml) {
 		struct message *msg = mh->mh_msg;
 
 		switch (mh->mh_expr->ex_type) {
@@ -226,10 +227,10 @@ matches_inspect(const struct match_list *ml, const struct environment *env,
 
 	arena_scope(scratch, s);
 
-	lhs = TAILQ_FIRST(ml);
-	msg = TAILQ_FIRST(ml)->mh_msg;
+	lhs = LIST_FIRST(ml);
+	msg = LIST_FIRST(ml)->mh_msg;
 
-	TAILQ_FOREACH(mh, ml, mh_entry) {
+	LIST_FOREACH(mh, ml) {
 		const struct expr *ex = mh->mh_expr;
 		const struct match *rhs;
 		const char *path;
@@ -251,7 +252,7 @@ matches_inspect(const struct match_list *ml, const struct environment *env,
 			if (rhs == mh)
 				break;
 			expr_inspect_matches(rhs->mh_expr, rhs, env);
-			rhs = TAILQ_NEXT(rhs, mh_entry);
+			rhs = LIST_NEXT(rhs);
 		}
 		lhs = rhs;
 	}
@@ -265,7 +266,7 @@ matches_find(struct match_list *ml, int type)
 	struct match *mh;
 	enum expr_type expr_type = (enum expr_type)type;
 
-	TAILQ_FOREACH(mh, ml, mh_entry) {
+	LIST_FOREACH(mh, ml) {
 		if (mh->mh_expr->ex_type == expr_type)
 			return mh;
 	}
@@ -284,11 +285,11 @@ matches_remove(struct match_list *ml, int type)
 	enum expr_type expr_type = (enum expr_type)type;
 	int n = 0;
 
-	TAILQ_FOREACH_SAFE(mh, ml, mh_entry, tmp) {
+	LIST_FOREACH_SAFE(mh, ml, tmp) {
 		const struct expr *ex = mh->mh_expr;
 
 		if (ex->ex_type == expr_type) {
-			TAILQ_REMOVE(ml, mh, mh_entry);
+			LIST_REMOVE(ml, mh);
 			match_free(mh);
 		} else if (ex->ex_flags & EXPR_FLAG_ACTION) {
 			n++;
@@ -370,7 +371,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 				buffer_printf(bf, "%s", labels[i]);
 			}
 		}
-		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
+		LIST_FOREACH(str, mh->mh_expr->ex_strings) {
 			if (buffer_get_len(bf) > 0)
 				buffer_putc(bf, ' ');
 			buffer_printf(bf, "%s", str->val);
@@ -399,7 +400,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 			err(1, NULL);
 		memset(mh->mh_exec, 0, len * sizeof(*mh->mh_exec));
 		mh->mh_nexec = len;
-		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
+		LIST_FOREACH(str, mh->mh_expr->ex_strings) {
 			char *arg;
 
 			arg = interpolate(mh, macros, scratch, str->val);
@@ -459,9 +460,9 @@ matches_merge(struct match_list *ml, struct match *mh)
 	 * Merge consecutive flag and move actions, the last action dictates the
 	 * destination maildir anyway.
 	 */
-	dup = TAILQ_LAST(ml, match_list);
+	dup = LIST_LAST(ml);
 	if (dup != NULL && dup->mh_expr->ex_type == ex->ex_type) {
-		TAILQ_REMOVE(ml, dup, mh_entry);
+		LIST_REMOVE(ml, dup);
 		match_free(dup);
 		return;
 	}
@@ -485,7 +486,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 		    sizeof(mh->mh_maildir));
 	}
 
-	TAILQ_REMOVE(ml, dup, mh_entry);
+	LIST_REMOVE(ml, dup);
 	match_free(dup);
 }
 
@@ -498,7 +499,7 @@ match_backref(const struct match *mh, const struct backref *br)
 
 	/* Go backwards to the start of the given match. */
 	for (;;) {
-		tmp = TAILQ_PREV(tmp, match_list, mh_entry);
+		tmp = LIST_PREV(tmp);
 		if (tmp == NULL)
 			return NULL;
 		if (tmp->mh_expr->ex_type == EXPR_TYPE_MATCH)
@@ -506,7 +507,7 @@ match_backref(const struct match *mh, const struct backref *br)
 	}
 
 	for (;;) {
-		tmp = TAILQ_NEXT(tmp, mh_entry);
+		tmp = LIST_NEXT(tmp);
 		if (tmp == NULL || tmp == mh)
 			return NULL;
 		if ((tmp->mh_expr->ex_flags & EXPR_FLAG_INTERPOLATE) &&

@@ -1,13 +1,7 @@
-#include "config.h"	/* HAVE_QUEUE */
-
-#ifdef HAVE_QUEUE
-#  include <sys/queue.h>
-#else
-#  include "compat-queue.h"
-#endif
-
 #include <limits.h>
 #include <stddef.h>	/* size_t */
+
+#include "libks/list.h"
 
 struct arena;
 struct arena_scope;
@@ -21,6 +15,8 @@ enum {
 	MATCH_EXEC_REJECTED,
 	MATCH_EXEC_ERROR,
 };
+
+LIST(match_list, match);
 
 struct match {
 	char			  mh_path[PATH_MAX];
@@ -43,10 +39,8 @@ struct match {
 	char			 *mh_key;
 	char			 *mh_val;
 
-	TAILQ_ENTRY(match)	  mh_entry;
+	LIST_ENTRY(match_list, match);
 };
-
-TAILQ_HEAD(match_list, match);
 
 int	matches_append(struct match_list *, struct match *);
 void	matches_clear(struct match_list *);

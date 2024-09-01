@@ -5,6 +5,8 @@
 #include <err.h>
 #include <stdlib.h>
 
+#include "libks/list.h"
+
 /*
  * Allocate a list of strings.
  *
@@ -19,7 +21,7 @@ strings_alloc(void)
 	strings = malloc(sizeof(*strings));
 	if (strings == NULL)
 		err(1, NULL);
-	TAILQ_INIT(strings);
+	LIST_INIT(strings);
 	return strings;
 }
 
@@ -31,8 +33,8 @@ strings_free(struct string_list *strings)
 	if (strings == NULL)
 		return;
 
-	while ((str = TAILQ_FIRST(strings)) != NULL) {
-		TAILQ_REMOVE(strings, str, entry);
+	while ((str = LIST_FIRST(strings)) != NULL) {
+		LIST_REMOVE(strings, str);
 		free(str);
 	}
 	free(strings);
@@ -44,7 +46,7 @@ strings_len(const struct string_list *strings)
 	const struct string *str;
 	size_t len = 0;
 
-	TAILQ_FOREACH(str, strings, entry)
+	LIST_FOREACH(str, strings)
 		len++;
 	return len;
 }
@@ -58,6 +60,6 @@ strings_append(struct string_list *strings, const char *val)
 	if (str == NULL)
 		err(1, NULL);
 	str->val = val;
-	TAILQ_INSERT_TAIL(strings, str, entry);
+	LIST_INSERT_TAIL(strings, str);
 	return str;
 }

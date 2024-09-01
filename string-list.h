@@ -1,19 +1,13 @@
-#include "config.h"	/* HAVE_QUEUE */
-
-#ifdef HAVE_QUEUE
-#  include <sys/queue.h>
-#else
-#  include "compat-queue.h"
-#endif
-
 #include <stddef.h>	/* size_t */
+
+#include "libks/list.h"
+
+LIST(string_list, string);
 
 struct string {
 	const char		*val;
-	TAILQ_ENTRY(string)	 entry;
+	LIST_ENTRY(string_list, string);
 };
-
-TAILQ_HEAD(string_list, string);
 
 struct string_list	*strings_alloc(void);
 void			 strings_free(struct string_list *);
