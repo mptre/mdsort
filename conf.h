@@ -1,3 +1,4 @@
+struct arena_scope;
 struct environment;
 
 struct config {
@@ -13,5 +14,5 @@ struct config_list {
 void		 config_list_init(struct config_list *);
 void		 config_list_free(struct config_list *);
 int		 config_list_parse(struct config_list *, const char *,
-    const struct environment *);
+    const struct environment *, struct arena_scope *);
 struct config	*config_list_append(struct config_list *);

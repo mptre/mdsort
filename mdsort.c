@@ -76,6 +76,9 @@ main(int argc, char *argv[])
 	config_list_init(&cl);
 	environment_init(&env);
 
+	scratch = arena_alloc();
+	arena_scope(scratch, s);
+
 	while ((c = getopt(argc, argv, "D:df:nv")) != -1) {
 		switch (c) {
 		case 'D': {
@@ -137,7 +140,7 @@ main(int argc, char *argv[])
 
 	if (env.ev_confpath == NULL)
 		env.ev_confpath = defaultconf(env.ev_home);
-	if (config_list_parse(&cl, env.ev_confpath, &env)) {
+	if (config_list_parse(&cl, env.ev_confpath, &env, &s)) {
 		error = 1;
 		goto out;
 	}
@@ -150,8 +153,6 @@ main(int argc, char *argv[])
 
 	if (env.ev_options & OPTION_SYNTAX)
 		goto out;
-
-	scratch = arena_alloc();
 
 	for (i = 0; i < VECTOR_LENGTH(cl.cl_list); i++) {
 		struct config *conf = &cl.cl_list[i];
@@ -193,8 +194,8 @@ main(int argc, char *argv[])
 	}
 
 out:
-	arena_free(scratch);
 	config_list_free(&cl);
+	arena_free(scratch);
 	FAULT_SHUTDOWN();
 
 	if (dousage)

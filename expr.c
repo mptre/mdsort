@@ -101,13 +101,11 @@ static size_t	strnwidth(const char *, size_t);
  */
 struct expr *
 expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
-    struct expr *rhs)
+    struct expr *rhs, struct arena_scope *s)
 {
 	struct expr *ex;
 
-	ex = calloc(1, sizeof(*ex));
-	if (ex == NULL)
-		err(1, NULL);
+	ex = arena_calloc(s, 1, sizeof(*ex));
 	ex->ex_type = type;
 	ex->ex_lno = lno;
 	ex->ex_lhs = lhs;
@@ -238,7 +236,6 @@ expr_free(struct expr *ex)
 		free(ex->ex_add_header.key);
 		free(ex->ex_add_header.val);
 	}
-	free(ex);
 }
 
 void

@@ -49,6 +49,7 @@ static struct {
 	const struct environment	*env;
 	struct config_list		*config;
 	FILE				*fh;
+	struct arena_scope		*scope;
 	unsigned int			 lineno;
 	int				 error;
 	int				 sflag;
@@ -220,7 +221,7 @@ maildir_paths	: MAILDIR strings {
 
 exprblock	: '{' exprs '}' {
 			$$ = expr_alloc(EXPR_TYPE_BLOCK, parser_state.lineno,
-			    $2, NULL);
+			    $2, NULL, parser_state.scope);
 		}
 		;
 
@@ -232,7 +233,8 @@ exprs		: /* empty */ {
 				$$ = $2;
 			} else {
 				$$ = expr_alloc(EXPR_TYPE_OR,
-				    parser_state.lineno, $1, $2);
+				    parser_state.lineno, $1, $2,
+				    parser_state.scope);
 			}
 		}
 		| error {
@@ -242,26 +244,26 @@ exprs		: /* empty */ {
 		;
 
 expr		: MATCH expr1 expr2 {
-			$$ = expr_alloc(EXPR_TYPE_MATCH,
-			    parser_state.lineno, $2, $3);
+			$$ = expr_alloc(EXPR_TYPE_MATCH, parser_state.lineno,
+			    $2, $3, parser_state.scope);
 		}
 		;
 
 expr1		: expr1 AND expr1 {
-			$$ = expr_alloc(EXPR_TYPE_AND,
-			    parser_state.lineno, $1, $3);
+			$$ = expr_alloc(EXPR_TYPE_AND, parser_state.lineno,
+			    $1, $3, parser_state.scope);
 		}
 		| expr1 OR expr1 {
-			$$ = expr_alloc(EXPR_TYPE_OR,
-			    parser_state.lineno, $1, $3);
+			$$ = expr_alloc(EXPR_TYPE_OR, parser_state.lineno,
+			    $1, $3, parser_state.scope);
 		}
 		| ATTACHMENT expr1 {
 			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT,
-			    parser_state.lineno, $2, NULL);
+			    parser_state.lineno, $2, NULL, parser_state.scope);
 		}
 		| NEG expr1 {
-			$$ = expr_alloc(EXPR_TYPE_NEG,
-			    parser_state.lineno, $2, NULL);
+			$$ = expr_alloc(EXPR_TYPE_NEG, parser_state.lineno,
+			    $2, NULL, parser_state.scope);
 		}
 		| expr3
 		;
@@ -279,49 +281,49 @@ expr2		: expractions {
 expr3		: BODY pattern {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_BODY,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_BODY, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			if (expr_set_pattern($$, $2.string, $2.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 		}
 		| HEADER strings pattern {
 			const char *errstr;
 
-			$$ = expr_alloc(EXPR_TYPE_HEADER,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_HEADER, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			if (expr_set_pattern($$, $3.string, $3.flags, &errstr))
 				yyerror("invalid pattern: %s", errstr);
 			$2 = expandstrings($2, MACRO_CTX_DEFAULT);
 			expr_set_strings($$, $2);
 		}
 		| DATE date_field date_cmp date_age {
-			$$ = expr_alloc(EXPR_TYPE_DATE,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_DATE, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			expr_set_date($$, $2, $3, $4);
 		}
 		| NEW {
-			$$ = expr_alloc(EXPR_TYPE_NEW,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_NEW, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 		}
 		| OLD {
-			$$ = expr_alloc(EXPR_TYPE_OLD,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_OLD, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 		}
 		| ALL {
-			$$ = expr_alloc(EXPR_TYPE_ALL,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_ALL, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 		}
 		| ISDIRECTORY STRING {
 			char *path;
 
-			$$ = expr_alloc(EXPR_TYPE_STAT,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_STAT, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			path = expand($2, MACRO_CTX_DEFAULT);
 			expr_set_stat($$, path, EXPR_STAT_DIR);
 		}
 		| COMMAND strings {
-			$$ = expr_alloc(EXPR_TYPE_COMMAND,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_COMMAND, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			$2 = expandstrings($2, MACRO_CTX_DEFAULT);
 			if (expr_set_exec($$, $2, 0))
 				yyerror("invalid command options");
@@ -339,21 +341,22 @@ expractions	: /* empty */ {
 				$$ = $2;
 			} else {
 				$$ = expr_alloc(EXPR_TYPE_AND,
-				    parser_state.lineno, $1, $2);
+				    parser_state.lineno, $1, $2,
+				    parser_state.scope);
 			}
 		}
 		;
 
 expraction	: BREAK {
-			$$ = expr_alloc(EXPR_TYPE_BREAK,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_BREAK, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 		}
 		| MOVE STRING {
 			struct string_list *strings;
 			char *path;
 
-			$$ = expr_alloc(EXPR_TYPE_MOVE,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_MOVE, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			path = expand($2, MACRO_CTX_ACTION);
 			strings = strings_alloc();
 			strings_append(strings, path);
@@ -362,8 +365,8 @@ expraction	: BREAK {
 		| FLAG flag {
 			struct string_list *strings;
 
-			$$ = expr_alloc(EXPR_TYPE_FLAG,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_FLAG, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			strings = strings_alloc();
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
@@ -371,33 +374,33 @@ expraction	: BREAK {
 		| FLAGS STRING {
 			struct string_list *strings;
 
-			$$ = expr_alloc(EXPR_TYPE_FLAGS,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_FLAGS, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			strings = strings_alloc();
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
 		}
 		| DISCARD {
-			$$ = expr_alloc(EXPR_TYPE_DISCARD,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_DISCARD, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 		}
 		| LABEL strings {
-			$$ = expr_alloc(EXPR_TYPE_LABEL,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_LABEL, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			$2 = expandstrings($2, MACRO_CTX_ACTION);
 			expr_set_strings($$, $2);
 		}
 		| PASS {
-			$$ = expr_alloc(EXPR_TYPE_PASS,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_PASS, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 		}
 		| REJECT {
-			$$ = expr_alloc(EXPR_TYPE_REJECT,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_REJECT, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 		}
 		| EXEC exec_flags strings {
-			$$ = expr_alloc(EXPR_TYPE_EXEC,
-			    parser_state.lineno, NULL, NULL);
+			$$ = expr_alloc(EXPR_TYPE_EXEC, parser_state.lineno,
+			    NULL, NULL, parser_state.scope);
 			$3 = expandstrings($3, MACRO_CTX_ACTION);
 			if (expr_set_exec($$, $3, $2))
 				yyerror("invalid exec options");
@@ -405,11 +408,11 @@ expraction	: BREAK {
 		| ATTACHMENT exprblock {
 			expr_validate_attachment_block($2);
 			$$ = expr_alloc(EXPR_TYPE_ATTACHMENT_BLOCK,
-			    parser_state.lineno, $2, NULL);
+			    parser_state.lineno, $2, NULL, parser_state.scope);
 		}
 		| ADDHEADER STRING STRING {
 			$$ = expr_alloc(EXPR_TYPE_ADD_HEADER,
-			    parser_state.lineno, NULL, NULL);
+			    parser_state.lineno, NULL, NULL, parser_state.scope);
 			expr_set_add_header($$, $2, $3);
 		}
 		;
@@ -527,12 +530,13 @@ optneg		: /* empty */ {
 
 int
 config_list_parse(struct config_list *cl, const char *path,
-    const struct environment *env)
+    const struct environment *env, struct arena_scope *s)
 {
 	memset(&parser_state, 0, sizeof(parser_state));
 	parser_state.path = path;
 	parser_state.env = env;
 	parser_state.config = cl;
+	parser_state.scope = s;
 	parser_state.lineno = 1;
 
 	parser_state.fh = fopen(path, "r");
