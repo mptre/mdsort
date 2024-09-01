@@ -13,6 +13,9 @@
   <suppress>
     <id>redundantContinue</id>
   </suppress>
+  <suppress>
+    <id>toomanyconfigs</id>
+  </suppress>
 
   <!-- conf.c -->
   <suppress>
