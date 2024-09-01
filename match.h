@@ -60,6 +60,7 @@ struct match	*match_alloc(struct expr *, struct message *,
     struct arena_scope *);
 void		 match_free(struct match *);
 
-int		 match_interpolate(struct match *, const struct macro_list *);
+int		 match_interpolate(struct match *, const struct macro_list *,
+    struct arena *);
 struct match	*matches_find(struct match_list *, int);
 int		 matches_remove(struct match_list *, int);

@@ -934,7 +934,7 @@ expandmacros(const char *str, struct macro_list *macros, unsigned int curctx,
 		char *macro;
 		ssize_t n;
 
-		n = ismacro(&str[i], &macro);
+		n = ismacro(&str[i], &macro, s);
 		if (n < 0) {
 			yyerror("unterminated macro");
 			break;
@@ -950,7 +950,6 @@ expandmacros(const char *str, struct macro_list *macros, unsigned int curctx,
 				 * non-default context.
 				 */
 				if ((ctx & curctx) == curctx) {
-					free(macro);
 					goto fallback;
 				}
 				/*
@@ -969,7 +968,6 @@ expandmacros(const char *str, struct macro_list *macros, unsigned int curctx,
 				if ((ctx & curctx) == 0) {
 					yyerror("macro used in wrong context: "
 					    "%s", macro);
-					free(macro);
 					goto fallback;
 				}
 				break;
@@ -984,7 +982,6 @@ expandmacros(const char *str, struct macro_list *macros, unsigned int curctx,
 				    macro);
 			}
 
-			free(macro);
 			i += (size_t)n;
 		} else {
 fallback:

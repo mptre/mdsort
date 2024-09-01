@@ -352,6 +352,7 @@ handle_message(struct expr *expr, struct maildir *md,
 	struct expr_eval_arg ea = {
 		.ea_ml		= &matches,
 		.ea_msg		= msg,
+		.ea_arena	= scratch,
 		.ea_scope	= &s,
 		.ea_env		= env,
 	};

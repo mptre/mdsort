@@ -34,7 +34,7 @@ static const char	*match_backref(const struct match *,
     const struct backref *);
 
 static char	*interpolate(const struct match *, const struct macro_list *,
-    const char *);
+    struct arena *, const char *);
 static ssize_t	 isbackref(const char *, struct backref *);
 
 /*
@@ -108,7 +108,7 @@ matches_interpolate(struct match_list *ml, struct arena *scratch)
 	    message_get_path(TAILQ_FIRST(ml)->mh_msg));
 
 	TAILQ_FOREACH(mh, ml, mh_entry) {
-		if (match_interpolate(mh, macros)) {
+		if (match_interpolate(mh, macros, scratch)) {
 			error = 1;
 			break;
 		}
@@ -325,7 +325,8 @@ match_free(struct match *mh)
 }
 
 int
-match_interpolate(struct match *mh, const struct macro_list *macros)
+match_interpolate(struct match *mh, const struct macro_list *macros,
+    struct arena *scratch)
 {
 	struct message *msg = mh->mh_msg;
 
@@ -335,7 +336,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		char *path;
 		size_t n, siz;
 
-		path = interpolate(mh, macros, mh->mh_path);
+		path = interpolate(mh, macros, scratch, mh->mh_path);
 		if (path == NULL)
 			return 1;
 		siz = sizeof(mh->mh_path);
@@ -377,7 +378,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		buffer_putc(bf, '\0');
 		buf = buffer_release(bf);
 		buffer_free(bf);
-		label = interpolate(mh, macros, buf);
+		label = interpolate(mh, macros, scratch, buf);
 		free(buf);
 		if (label == NULL)
 			return 1;
@@ -401,7 +402,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		TAILQ_FOREACH(str, mh->mh_expr->ex_strings, entry) {
 			char *arg;
 
-			arg = interpolate(mh, macros, str->val);
+			arg = interpolate(mh, macros, scratch, str->val);
 			if (arg == NULL)
 				return 1;
 			mh->mh_exec[nargs++] = arg;
@@ -413,7 +414,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros)
 		const struct expr *ex = mh->mh_expr;
 		char *val;
 
-		val = interpolate(mh, macros, ex->ex_add_header.val);
+		val = interpolate(mh, macros, scratch, ex->ex_add_header.val);
 		if (val == NULL)
 			return 1;
 		message_set_header(msg, ex->ex_add_header.key, val);
@@ -553,7 +554,7 @@ isbackref(const char *str, struct backref *br)
 
 static char *
 interpolate(const struct match *mh, const struct macro_list *macros,
-    const char *str)
+    struct arena *scratch, const char *str)
 {
 	struct buffer *bf;
 	char *buf;
@@ -562,6 +563,8 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 	bf = buffer_alloc(64);
 	if (bf == NULL)
 		err(1, NULL);
+
+	arena_scope(scratch, s);
 
 	while (str[i] != '\0') {
 		struct backref br;
@@ -582,14 +585,13 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 			continue;
 		}
 
-		n = ismacro(&str[i], &macro);
+		n = ismacro(&str[i], &macro, &s);
 		if (n < 0)
 			goto mcerr;
 		if (n > 0) {
 			const struct macro *mc;
 
 			mc = macros_find(macros, macro);
-			free(macro);
 			if (mc == NULL)
 				goto mcerr;
 

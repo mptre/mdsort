@@ -1,11 +1,11 @@
 #include <sys/types.h>	/* ssize_t */
 
+struct arena_scope;
+
 #define MACRO_CTX_DEFAULT	0x00000001u
 #define MACRO_CTX_ACTION	0x00000002u
 
 #define MACRO_FLAG_STICKY	0x00000001u	/* may not be overwritten */
-
-struct arena_scope;
 
 enum macro_error {
 	MACRO_ERR_NONE,
@@ -30,4 +30,4 @@ unsigned int	 macro_get_lno(const struct macro *);
 
 unsigned int	macro_context(const char *);
 
-ssize_t	ismacro(const char *, char **);
+ssize_t	ismacro(const char *, char **, struct arena_scope *);

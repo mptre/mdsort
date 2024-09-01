@@ -178,7 +178,7 @@ macro_context(const char *name)
  *     -1    Unterminated macro found.
  */
 ssize_t
-ismacro(const char *str, char **macro)
+ismacro(const char *str, char **macro, struct arena_scope *s)
 {
 	size_t i;
 
@@ -190,8 +190,6 @@ ismacro(const char *str, char **macro)
 			return -1;
 	}
 
-	*macro = strndup(&str[2], i - 2);
-	if (*macro == NULL)
-		err(1, NULL);
+	*macro = arena_strndup(s, &str[2], i - 2);
 	return (ssize_t)(i + 1);
 }
