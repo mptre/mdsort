@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "libks/arena.h"
+#include "libks/arena-buffer.h"
 #include "libks/arithmetic.h"
 #include "libks/buffer.h"
 #include "libks/vector.h"
@@ -38,10 +40,11 @@ static void yyrecover(void);
 
 static void macros_validate(const struct macro_list *);
 
-static char *expand(char *, unsigned int);
-static char *expandmacros(char *, struct macro_list *, unsigned int);
+static const char *expand(const char *, unsigned int);
+static const char *expandmacros(const char *, struct macro_list *,
+    unsigned int, struct arena_scope *);
 static struct string_list *expandstrings(struct string_list *, unsigned int);
-static char *expandtilde(char *, const char *);
+static const char *expandtilde(const char *, const char *, struct arena_scope *);
 
 /* yacc parser global state */
 static struct {
@@ -66,7 +69,7 @@ typedef struct {
 			char *string;
 			unsigned int flags;
 		} pattern;
-		char *string;
+		const char *string;
 		struct string_list *strings;
 		time_t time;
 	};
@@ -152,10 +155,8 @@ macro		: MACRO '=' STRING {
 			case MACRO_ERR_CTX:
 			case MACRO_ERR_EXIST:
 				yyerror("macro already defined: %s", $1);
-				FALLTHROUGH;
+				break;
 			case MACRO_ERR_STICKY:
-				free($1);
-				free($3);
 				break;
 			}
 		}
@@ -198,7 +199,6 @@ maildir_paths	: MAILDIR strings {
 			}
 		}
 		| STDIN {
-			char *path;
 			size_t i;
 
 			for (i = 0; i < VECTOR_LENGTH(parser_state.config->cl_list); i++) {
@@ -212,10 +212,7 @@ maildir_paths	: MAILDIR strings {
 			}
 
 			$$ = strings_alloc();
-			path = strdup("/dev/stdin");
-			if (path == NULL)
-				err(1, NULL);
-			strings_append($$, path);
+			strings_append($$, "/dev/stdin");
 		}
 		;
 
@@ -316,7 +313,7 @@ expr3		: BODY pattern {
 			    NULL, NULL, parser_state.scope);
 		}
 		| ISDIRECTORY STRING {
-			char *path;
+			const char *path;
 
 			$$ = expr_alloc(EXPR_TYPE_STAT, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
@@ -355,7 +352,7 @@ expraction	: BREAK {
 		}
 		| MOVE STRING {
 			struct string_list *strings;
-			char *path;
+			const char *path;
 
 			$$ = expr_alloc(EXPR_TYPE_MOVE, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
@@ -440,11 +437,9 @@ stringblock	: /* empty */ {
 
 flag		: optneg NEW {
 			if ($1)
-				$$ = strdup("cur");
+				$$ = "cur";
 			else
-				$$ = strdup("new");
-			if ($$ == NULL)
-				err(1, NULL);
+				$$ = "new";
 		}
 		;
 
@@ -700,9 +695,7 @@ again:
 		len = strlen(lexeme);
 		if (len == 0)
 			yyerror("empty string");
-		yylval.string = strdup(lexeme);
-		if (yylval.string == NULL)
-			err(1, NULL);
+		yylval.string = arena_strndup(parser_state.scope, lexeme, len);
 		return STRING;
 	}
 
@@ -809,9 +802,7 @@ again:
 			}
 		}
 
-		yylval.string = strdup(lexeme);
-		if (yylval.string == NULL)
-			err(1, NULL);
+		yylval.string = arena_strdup(parser_state.scope, lexeme);
 		/*
 		 * At this point, it's unknown if a macro is expected. An error
 		 * is emitted upon the next invocation of yylex() if the macro
@@ -920,23 +911,23 @@ macros_validate(const struct macro_list *macros)
 	VECTOR_FREE(unused);
 }
 
-static char *
-expand(char *str, unsigned int curctx)
+static const char *
+expand(const char *str, unsigned int curctx)
 {
-	str = expandtilde(str, parser_state.env->ev_home);
-	str = expandmacros(str, parser_state.config->cl_macros, curctx);
+	str = expandtilde(str, parser_state.env->ev_home, parser_state.scope);
+	str = expandmacros(str, parser_state.config->cl_macros, curctx,
+	    parser_state.scope);
 	return str;
 }
 
-static char *
-expandmacros(char *str, struct macro_list *macros, unsigned int curctx)
+static const char *
+expandmacros(const char *str, struct macro_list *macros, unsigned int curctx,
+    struct arena_scope *s)
 {
 	struct buffer *bf;
 	size_t i = 0;
 
-	bf = buffer_alloc(64);
-	if (bf == NULL)
-		err(1, NULL);
+	bf = arena_buffer_alloc(s, 64);
 
 	while (str[i] != '\0') {
 		struct macro *mc;
@@ -1000,12 +991,8 @@ fallback:
 			buffer_putc(bf, str[i++]);
 		}
 	}
-	buffer_putc(bf, '\0');
 
-	free(str);
-	str = buffer_release(bf);
-	buffer_free(bf);
-	return str;
+	return buffer_str(bf);
 }
 
 static struct string_list *
@@ -1019,22 +1006,10 @@ expandstrings(struct string_list *strings, unsigned int curctx)
 	return strings;
 }
 
-static char *
-expandtilde(char *str, const char *home)
+static const char *
+expandtilde(const char *str, const char *home, struct arena_scope *s)
 {
-	char *buf;
-	size_t siz = PATH_MAX;
-	int n;
-
 	if (*str != '~')
 		return str;
-
-	buf = malloc(siz);
-	if (buf == NULL)
-		err(1, NULL);
-	n = snprintf(buf, siz, "%s%s", home, str + 1);
-	if (n < 0 || (size_t)n >= siz)
-		yyerror("path too long");
-	free(str);
-	return buf;
+	return arena_sprintf(s, "%s%s", home, &str[1]);
 }

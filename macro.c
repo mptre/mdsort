@@ -9,8 +9,8 @@
 #include "libks/vector.h"
 
 struct macro {
-	char		*mc_name;
-	char		*mc_value;
+	const char	*mc_name;
+	const char	*mc_value;
 	unsigned int	 mc_refs;
 	unsigned int	 mc_defs;
 	unsigned int	 mc_lno;
@@ -42,21 +42,12 @@ macros_free(struct macro_list *macros)
 	if (macros == NULL)
 		return;
 
-	while (!VECTOR_EMPTY(macros->ml_list)) {
-		struct macro *mc;
-
-		mc = VECTOR_POP(macros->ml_list);
-		if ((mc->mc_flags & MACRO_FLAG_CONST) == 0) {
-			free(mc->mc_name);
-			free(mc->mc_value);
-		}
-	}
 	VECTOR_FREE(macros->ml_list);
 	free(macros);
 }
 
 enum macro_error
-macros_insert(struct macro_list *macros, char *name, char *value,
+macros_insert(struct macro_list *macros, const char *name, const char *value,
     unsigned int flags, unsigned int lno)
 {
 	struct macro *mc;
@@ -86,18 +77,13 @@ macros_insert(struct macro_list *macros, char *name, char *value,
 
 /*
  * Insert a constant macro, only used for non-default contexts.
- * Note, the macro list does not claim memory ownership of the given name and
- * value thus the caller must ensure that the lifetime of the two aforementioned
- * pointers supersedes the macro list.
  */
 void
 macros_insertc(struct macro_list *macros, const char *name, const char *value)
 {
 	enum macro_error error;
 
-	/* Dangerous casting ahead but a macro is never mutated. */
-	error = macros_insert(macros, (char *)name, (char *)value,
-	    MACRO_FLAG_CONST, 0);
+	error = macros_insert(macros, name, value, 0, 0);
 	if (error)
 		errx(1, "%s: error %u", __func__, error);
 }

@@ -226,27 +226,6 @@ if testcase -t memleak "pattern unterminated"; then
 	EOF
 fi
 
-if testcase -t tilde "maildir path too long after tilde expansion"; then
-	cat <<-EOF >"$CONF"
-	maildir "~/$(genstr "$((PATH_MAX - 10))")" {}
-	EOF
-	HOME=/home/user mdsort -e - -- -n <<-EOF
-	mdsort.conf:1: path too long
-	EOF
-fi
-
-if testcase -t tilde "destination path too long after tilde expansion"; then
-	cat <<-EOF >"$CONF"
-	maildir "~/Maildir/test1" {
-		match header "From" /./ \
-			move "~/$(genstr "$((PATH_MAX - 10))")"
-	}
-	EOF
-	HOME=/home/user mdsort -e - -- -n <<-EOF
-	mdsort.conf:2: path too long
-	EOF
-fi
-
 if testcase -t memleak "missing left-hand expr with and"; then
 	cat <<-EOF >"$CONF"
 	maildir "~/Maildir/INBOX" {

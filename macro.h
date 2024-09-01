@@ -3,8 +3,7 @@
 #define MACRO_CTX_DEFAULT	0x00000001u
 #define MACRO_CTX_ACTION	0x00000002u
 
-#define MACRO_FLAG_CONST	0x00000001u	/* may not be freed */
-#define MACRO_FLAG_STICKY	0x00000002u	/* may not be overwritten */
+#define MACRO_FLAG_STICKY	0x00000001u	/* may not be overwritten */
 
 enum macro_error {
 	MACRO_ERR_NONE,
@@ -15,8 +14,8 @@ enum macro_error {
 
 struct macro_list	 *macros_alloc(unsigned int);
 void			  macros_free(struct macro_list *);
-enum macro_error	  macros_insert(struct macro_list *, char *, char *,
-    unsigned int, unsigned int);
+enum macro_error	  macros_insert(struct macro_list *, const char *,
+    const char *, unsigned int, unsigned int);
 void			  macros_insertc(struct macro_list *, const char *,
     const char *);
 struct macro		 *macros_find(const struct macro_list *, const char *);

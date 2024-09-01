@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 			}
 			*eq = '\0';
 			if (macros_insert(cl.cl_macros, optarg, &eq[1],
-			    MACRO_FLAG_CONST | MACRO_FLAG_STICKY, 0)) {
+			    MACRO_FLAG_STICKY, 0)) {
 				warnx("invalid macro: %s", optarg);
 				error = 1;
 				goto out;

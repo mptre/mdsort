@@ -109,8 +109,8 @@ struct expr {
 		} ex_stat;
 
 		struct {
-			char *key;
-			char *val;
+			const char *key;
+			const char *val;
 		} ex_add_header;
 	};
 
@@ -122,11 +122,11 @@ struct expr	*expr_alloc(enum expr_type, unsigned int, struct expr *,
     struct expr *, struct arena_scope *);
 void		 expr_free(struct expr *);
 
-void	expr_set_add_header(struct expr *, char *, char *);
+void	expr_set_add_header(struct expr *, const char *, const char *);
 void	expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
     long long int, struct arena_scope *);
 int	expr_set_exec(struct expr *, struct string_list *, unsigned int);
-void	expr_set_stat(struct expr *, char *, enum expr_stat);
+void	expr_set_stat(struct expr *, const char *, enum expr_stat);
 void	expr_set_strings(struct expr *, struct string_list *);
 int	expr_set_pattern(struct expr *, const char *, unsigned int,
     const char **, struct arena_scope *);
