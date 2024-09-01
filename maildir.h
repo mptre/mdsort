@@ -1,3 +1,4 @@
+struct arena_scope;
 struct environment;
 struct message;
 
@@ -12,7 +13,7 @@ struct maildir_entry {
 };
 
 struct maildir	*maildir_open(const char *, unsigned int,
-    const struct environment *);
+    const struct environment *, struct arena_scope *);
 void		 maildir_close(struct maildir *);
 
 int	maildir_walk(struct maildir *, struct maildir_entry *);

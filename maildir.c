@@ -14,6 +14,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "libks/arena.h"
+
 #include "environment.h"
 #include "fault.h"
 #include "log.h"
@@ -68,14 +70,12 @@ static int	parsesubdir(const char *, enum subdir *);
  */
 struct maildir *
 maildir_open(const char *path, unsigned int flags,
-    const struct environment *env)
+    const struct environment *env, struct arena_scope *s)
 {
 	struct maildir *md;
 	size_t siz;
 
-	md = calloc(1, sizeof(*md));
-	if (md == NULL)
-		err(1, NULL);
+	md = arena_calloc(s, 1, sizeof(*md));
 	md->md_subdir = SUBDIR_NEW;
 	md->md_flags = flags;
 
@@ -130,7 +130,6 @@ maildir_close(struct maildir *md)
 
 	if (md->md_dir != NULL)
 		closedir(md->md_dir);
-	free(md);
 }
 
 /*

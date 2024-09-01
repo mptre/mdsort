@@ -46,7 +46,7 @@ int	matches_append(struct match_list *, struct match *);
 void	matches_clear(struct match_list *);
 int	matches_interpolate(struct match_list *, struct arena *);
 int	matches_exec(const struct match_list *, struct maildir *,
-    const struct environment *);
+    const struct environment *, struct arena *);
 int	matches_inspect(const struct match_list *, const struct environment *,
     struct arena *);
 

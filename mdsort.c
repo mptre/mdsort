@@ -75,9 +75,9 @@ main(int argc, char *argv[])
 	setlocale(LC_CTYPE, "");
 
 	scratch = arena_alloc();
-	arena_scope(scratch, s);
+	arena_scope(scratch, eternal_scope);
 
-	config_list_init(&cl, &s);
+	config_list_init(&cl, &eternal_scope);
 	environment_init(&env);
 
 	while ((c = getopt(argc, argv, "D:df:nv")) != -1) {
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 
 	if (env.ev_confpath == NULL)
 		env.ev_confpath = defaultconf(env.ev_home);
-	if (config_list_parse(&cl, env.ev_confpath, &env, &s)) {
+	if (config_list_parse(&cl, env.ev_confpath, &env, &eternal_scope)) {
 		error = 1;
 		goto out;
 	}
@@ -166,10 +166,12 @@ main(int argc, char *argv[])
 			if (maildir_skip(path, &env))
 				continue;
 
+			arena_scope(scratch, s);
+
 			flags = MAILDIR_WALK;
 			if (isstdin(path))
 				flags |= MAILDIR_STDIN;
-			md = maildir_open(path, flags, &env);
+			md = maildir_open(path, flags, &env, &s);
 			if (md == NULL) {
 				error = 1;
 				continue;
@@ -375,7 +377,7 @@ handle_message(struct expr *expr, struct maildir *md,
 		/* Dry run, we're done. */
 		goto out;
 	}
-	switch (matches_exec(&matches, md, env)) {
+	switch (matches_exec(&matches, md, env, scratch)) {
 	case MATCH_EXEC_SUCCESS:
 		break;
 	case MATCH_EXEC_REJECTED:

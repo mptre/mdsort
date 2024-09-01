@@ -120,13 +120,15 @@ matches_interpolate(struct match_list *ml, struct arena *scratch)
 
 int
 matches_exec(const struct match_list *ml, struct maildir *src,
-    const struct environment *env)
+    const struct environment *env, struct arena *scratch)
 {
 	struct maildir *dst = NULL;
 	struct match *mh;
 	int chsrc = 0;
 	int error = 0;
 	int rv = MATCH_EXEC_SUCCESS;
+
+	arena_scope(scratch, s);
 
 	LIST_FOREACH(mh, ml) {
 		struct message *msg = mh->mh_msg;
@@ -142,7 +144,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			 * importance if a following action requires a source
 			 * maildir.
 			 */
-			dst = maildir_open(mh->mh_path, 0, env);
+			dst = maildir_open(mh->mh_path, 0, env, &s);
 			if (dst == NULL) {
 				error = 1;
 				break;
