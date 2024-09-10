@@ -10,4 +10,4 @@
 
 extern int log_level;
 
-void	logit(const char *, ...) __attribute__((__format__(printf, 1, 2)));
+void	logit(const char *, ...) __attribute__((format(printf, 1, 2)));

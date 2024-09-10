@@ -48,8 +48,7 @@ static int		 config_has_exec(const struct config_list *,
 static const char	*defaultconf(const char *);
 static int		 maildir_skip(const char *, const struct environment *);
 static void		 readenv(struct environment *);
-static void		 usage(void)
-	__attribute__((__noreturn__));
+static void		 usage(void) __attribute__((noreturn));
 
 static int	handle_message(struct expr *, struct maildir *,
     const struct maildir_entry *, int *, const struct environment *,

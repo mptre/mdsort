@@ -19,8 +19,7 @@ static int	test_base64_decode0(const char *, const char *, const char *,
 static int	test_rfc2047_decode0(const char *, const char *, const char *,
     int);
 
-static void	usage(void)
-	__attribute__((__noreturn__));
+static void	usage(void) __attribute__((noreturn));
 
 int
 main(int argc, char *argv[])
