@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Anton Lindqvist <anton@basename.se>
+ * Copyright (c) 2024 Anton Lindqvist <anton@basename.se>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,28 +14,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef LIBKS_COMPILER_H
-#define LIBKS_COMPILER_H
+#ifndef LIBKS_ARENA_VECTOR_H
+#define LIBKS_ARENA_VECTOR_H
 
-#if !defined(__has_attribute)
-#  define __has_attribute(x) 0
-#endif
+#include <stddef.h>	/* size_t */
 
-#define UNUSED(x)	_##x __attribute__((unused))
+struct arena_scope;
 
-#ifndef NDEBUG
-#define NDEBUG_UNUSED(x) x
-#else
-#define NDEBUG_UNUSED(x) UNUSED(x)
-#endif
+#define ARENA_VECTOR_INIT(s, vc, n) arena_vector_init(s, (void **)&(vc), sizeof(*(vc)), n)
+void	arena_vector_init(struct arena_scope *, void **, size_t, size_t);
 
-#define likely(x)	__builtin_expect((x), 1)
-#define unlikely(x)	__builtin_expect((x), 0)
+#define ARENA_VECTOR_ALLOC(vc) __extension__ ({				\
+	size_t _i = arena_vector_alloc((void **)&(vc));			\
+	(vc) + _i;							\
+})
+size_t	arena_vector_alloc(void **);
 
-#if __has_attribute(fallthrough)
-#  define FALLTHROUGH	__attribute__((fallthrough))
-#else
-#  define FALLTHROUGH	do {} while (0) /* FALLTHROUGH */
-#endif
+#define ARENA_VECTOR_CALLOC(vc) __extension__ ({			\
+	size_t _i = arena_vector_calloc((void **)&(vc));		\
+	(vc) + _i;							\
+})
+size_t	arena_vector_calloc(void **);
 
-#endif /* !LIBKS_COMPILER_H */
+#endif /* !LIBKS_ARENA_VECTOR_H */
