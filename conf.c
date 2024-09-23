@@ -6,7 +6,6 @@
 
 #include "libks/vector.h"
 
-#include "expr.h"
 #include "macro.h"
 
 void
@@ -23,12 +22,6 @@ config_list_free(struct config_list *cl)
 	if (cl == NULL)
 		return;
 
-	while (!VECTOR_EMPTY(cl->cl_list)) {
-		struct config *conf;
-
-		conf = VECTOR_POP(cl->cl_list);
-		expr_free(conf->expr);
-	}
 	VECTOR_FREE(cl->cl_list);
 }
 

@@ -94,12 +94,6 @@ static void	expr_regcopy(const struct expr *, struct match *, const char *,
 
 static size_t	strnwidth(const char *, size_t);
 
-/*
- * Allocate a new expression with the given type.
- *
- * The caller is responsible for freeing the returned memory using
- * expr_free().
- */
 struct expr *
 expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
     struct expr *rhs, struct arena_scope *s)
@@ -220,18 +214,6 @@ expr_alloc(enum expr_type type, unsigned int lno, struct expr *lhs,
 }
 
 void
-expr_free(struct expr *ex)
-{
-	if (ex == NULL)
-		return;
-
-	expr_free(ex->ex_lhs);
-	expr_free(ex->ex_rhs);
-	if (ex->ex_re != NULL)
-		regfree(&ex->ex_re->pattern);
-}
-
-void
 expr_set_add_header(struct expr *ex, const char *key, const char *val)
 {
 	ex->ex_add_header.key = key;
@@ -283,6 +265,14 @@ expr_set_strings(struct expr *ex, struct string_list *strings)
 	ex->ex_strings = strings;
 }
 
+static void
+regex_free(void *arg)
+{
+	struct expr_regex *re = arg;
+
+	regfree(&re->pattern);
+}
+
 /*
  * Associate the given pattern with the expression.
  *
@@ -321,6 +311,7 @@ expr_set_pattern(struct expr *ex, const char *pattern, unsigned int flags,
 	assert(ex->ex_re == NULL);
 
 	ex->ex_re = arena_calloc(s, 1, sizeof(*ex->ex_re));
+	arena_cleanup(s, regex_free, ex->ex_re);
 
 	for (i = 0; fflags[i].eflag != 0; i++) {
 		if ((flags & fflags[i].eflag) == 0)

@@ -124,7 +124,6 @@ struct expr {
 
 struct expr	*expr_alloc(enum expr_type, unsigned int, struct expr *,
     struct expr *, struct arena_scope *);
-void		 expr_free(struct expr *);
 
 void	expr_set_add_header(struct expr *, const char *, const char *);
 void	expr_set_date(struct expr *, enum expr_date_field, enum expr_date_cmp,
