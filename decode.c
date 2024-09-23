@@ -5,10 +5,11 @@
 #include <sys/types.h> /* ssize_t */
 
 #include <ctype.h>
-#include <err.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "libks/arena-buffer.h"
+#include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/compiler.h"
 
@@ -18,59 +19,45 @@ static void	quoted_printable_decode_buffer(struct buffer *, const char *,
 
 static int	htoa(char, char *);
 
-char *
-base64_decode(const char *str)
+const char *
+base64_decode(const char *str, struct arena_scope *s)
 {
 	unsigned char *dec = NULL;
 	size_t len;
 	int n;
 
 	len = strlen(str);
-	dec = malloc(len + 1);
-	if (dec == NULL)
-		err(1, NULL);
+	dec = arena_malloc(s, len + 1);
 	n = b64_pton(str, dec, len + 1);
-	if (n == -1) {
-		free(dec);
+	if (n == -1)
 		return NULL;
-	}
 	dec[n] = '\0';
 	return (char *)dec;
 }
 
-char *
-quoted_printable_decode(const char *str)
+const char *
+quoted_printable_decode(const char *str, struct arena_scope *s)
 {
 	struct buffer *bf;
-	char *dec;
 	size_t len;
 
 	len = strlen(str);
-	bf = buffer_alloc(len);
-	if (bf == NULL)
-		err(1, NULL);
+	bf = arena_buffer_alloc(s, len);
 	quoted_printable_decode_buffer(bf, str, len, 0);
-	dec = buffer_str(bf);
-	if (dec == NULL)
-		err(1, NULL);
-	buffer_free(bf);
-	return dec;
+	return buffer_str(bf);
 }
 
 /*
  * Decode header which can either be encoded using quoted printable or base64,
  * see RFC 2047.
  */
-char *
-rfc2047_decode(const char *str)
+const char *
+rfc2047_decode(const char *str, struct arena_scope *s)
 {
 	struct buffer *bf;
 	const char *es = str;
-	char *dec;
 
-	bf = buffer_alloc(strlen(str));
-	if (bf == NULL)
-		err(1, NULL);
+	bf = arena_buffer_alloc(s, strlen(str));
 
 	while (*es != '\0') {
 		if (strncmp(es, "=?", 2) == 0) {
@@ -95,26 +82,17 @@ rfc2047_decode(const char *str)
 			if (ee == NULL)
 				goto err;
 
-			if (bf == NULL) {
-				bf = buffer_alloc(128);
-				if (bf == NULL)
-					err(1, NULL);
-			}
 			len = (size_t)(ee - es);
 			switch (toupper((unsigned char)enc)) {
 			case 'B': {
-				char *dst, *src;
+				const char *dst, *src;
 
 				/* b64decode() requires a NUL-terminator. */
-				src = strndup(es, len);
-				if (src == NULL)
-					err(1, NULL);
-				dst = base64_decode(src);
-				free(src);
+				src = arena_strndup(s, es, len);
+				dst = base64_decode(src, s);
 				if (dst == NULL)
 					goto err;
 				buffer_printf(bf, "%s", dst);
-				free(dst);
 				break;
 			}
 
@@ -143,18 +121,10 @@ rfc2047_decode(const char *str)
 		}
 	}
 
-	dec = buffer_str(bf);
-	if (dec == NULL)
-		err(1, NULL);
-	buffer_free(bf);
-	return dec;
+	return buffer_str(bf);
 
 err:
-	buffer_free(bf);
-	dec = strdup(str);
-	if (dec == NULL)
-		err(1, NULL);
-	return dec;
+	return str;
 }
 
 static void

@@ -5,18 +5,28 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "libks/arena.h"
+
 #include "decode.h"
 
-#define test_base64_decode(a, b)					\
-	error |= test_base64_decode0((a), (b), "base64_decode", __LINE__);\
+struct test_context {
+	struct {
+		struct arena	*scratch;
+	} arena;
+};
+
+#define test_base64_decode(str, exp)					\
+	error |= test_base64_decode0(&c, (str), (exp), "base64_decode", __LINE__);\
 	if (xflag && error) goto out;
-static int	test_base64_decode0(const char *, const char *, const char *,
+static int	test_base64_decode0(struct test_context *, const char *,
+    const char *, const char *,
     int);
 
-#define test_rfc2047_decode(a, b)					\
-	error |= test_rfc2047_decode0((a), (b), "rfc2047_decode", __LINE__);\
+#define test_rfc2047_decode(str, exp)					\
+	error |= test_rfc2047_decode0(&c, (str), (exp), "rfc2047_decode", __LINE__);\
 	if (xflag && error) goto out;
-static int	test_rfc2047_decode0(const char *, const char *, const char *,
+static int	test_rfc2047_decode0(struct test_context *, const char *,
+    const char *, const char *,
     int);
 
 static void	usage(void) __attribute__((noreturn));
@@ -24,6 +34,7 @@ static void	usage(void) __attribute__((noreturn));
 int
 main(int argc, char *argv[])
 {
+	struct test_context c = {0};
 	int error = 0;
 	int xflag = 0;
 	int ch;
@@ -37,6 +48,8 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
+
+	c.arena.scratch = arena_alloc();
 
 	test_base64_decode("", "");
 	test_base64_decode("Zg==", "f");
@@ -67,6 +80,7 @@ main(int argc, char *argv[])
 	test_rfc2047_decode("=?UTF-8?Q", "=?UTF-8?Q");
 
 out:
+	arena_free(c.arena.scratch);
 	return error;
 }
 
@@ -78,33 +92,37 @@ usage(void)
 }
 
 static int
-test_rfc2047_decode0(const char *str, const char *exp, const char *fun, int lno)
+test_rfc2047_decode0(struct test_context *c, const char *str, const char *exp,
+    const char *fun, int lno)
 {
-	char *act;
+	const char *act;
 	int error = 0;
 
-	act = rfc2047_decode(str);
+	arena_scope(c->arena.scratch, s);
+
+	act = rfc2047_decode(str, &s);
 	if (strcmp(exp, act) != 0) {
 		fprintf(stderr, "%s:%d:\n\texp %s\n\tgot %s\n",
 		    fun, lno, exp, act);
 		error = 1;
 	}
-	free(act);
 	return error;
 }
 
 static int
-test_base64_decode0(const char *str, const char *exp, const char *fun, int lno)
+test_base64_decode0(struct test_context *c, const char *str, const char *exp,
+    const char *fun, int lno)
 {
-	char *act;
+	const char *act;
 	int error = 0;
 
-	act = base64_decode(str);
+	arena_scope(c->arena.scratch, s);
+
+	act = base64_decode(str, &s);
 	if (strcmp(exp, act) != 0) {
 		fprintf(stderr, "%s:%d:\n\texp %s\n\tgot %s\n",
 		    fun, lno, exp, act);
 		error = 1;
 	}
-	free(act);
 	return error;
 }

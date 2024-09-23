@@ -15,6 +15,7 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/vector.h"
 
@@ -29,7 +30,7 @@ struct message {
 	char			 me_name[NAME_MAX + 1];	/* file name */
 	const char		*me_body;
 	char			*me_buf;
-	char			*me_buf_dec;		/* decoded body */
+	const char		*me_buf_dec;		/* decoded body */
 	int			 me_fd;
 	unsigned int		 me_flags;
 #define MESSAGE_FLAG_ATTACHMENT	0x00000001u
@@ -41,18 +42,19 @@ struct message {
 
 	struct {
 		struct arena_scope	*eternal_scope;
+		struct arena		*scratch;
 	} me_arena;
 };
 
 struct header {
-	unsigned long	 id;
+	unsigned long		 id;
 
-	unsigned int	 flags;
+	unsigned int		 flags;
 #define HEADER_FLAG_DIRTY	0x00000001u	/* val must be freed */
 
-	const char	*key;
-	char		*val;
-	VECTOR(char *)	 values;	/* all values for key */
+	const char		*key;
+	char			*val;
+	VECTOR(const char *)	 values;	/* all values for key */
 };
 
 struct header_slice {
@@ -73,13 +75,17 @@ static const char	*message_parse_headers(struct message *);
 static const char	*message_decode_body(struct message *,
     const struct message *);
 
-static int	 cmpheaderid(const struct header *, const struct header *);
-static int	 cmpheaderkey(const struct header *, const struct header *);
-static int	 findheader(char *, struct header_slice *);
-static ssize_t	 searchheader(const struct header *, size_t, const char *,
+static int		 cmpheaderid(const struct header *,
+    const struct header *);
+static int		 cmpheaderkey(const struct header *,
+    const struct header *);
+static int		 findheader(char *, struct header_slice *);
+static ssize_t		 searchheader(const struct header *, size_t,
+    const char *,
     size_t *);
-static char	*decodeheader(const char *);
-static char	*unfoldheader(const char *);
+static const char	*decodeheader(const char *, struct arena_scope *,
+    struct arena *);
+static const char	*unfoldheader(const char *, struct arena_scope *);
 
 static int		 parseattachments(struct message *, struct message *,
     int);
@@ -166,7 +172,7 @@ message_flags_set(struct message_flags *mf, char flag)
  */
 struct message *
 message_parse(const char *dir, int dirfd, const char *path,
-    struct arena_scope *eternal_scope)
+    struct arena_scope *eternal_scope, struct arena *scratch)
 {
 	struct buffer *bf;
 	struct message *msg;
@@ -196,6 +202,7 @@ message_parse(const char *dir, int dirfd, const char *path,
 	if (msg == NULL)
 		err(1, NULL);
 	msg->me_arena.eternal_scope = eternal_scope;
+	msg->me_arena.scratch = scratch;
 	msg->me_fd = fd;
 	msg->me_buf = buf;
 	if (VECTOR_INIT(msg->me_headers))
@@ -243,15 +250,7 @@ message_free(struct message *msg)
 		struct header *hdr;
 
 		hdr = VECTOR_POP(msg->me_headers);
-		if (hdr->values != NULL) {
-			while (!VECTOR_EMPTY(hdr->values)) {
-				char **tail;
-
-				tail = VECTOR_POP(hdr->values);
-				free(*tail);
-			}
-			VECTOR_FREE(hdr->values);
-		}
+		VECTOR_FREE(hdr->values);
 		if (hdr->flags & HEADER_FLAG_DIRTY)
 			free(hdr->val);
 	}
@@ -260,7 +259,6 @@ message_free(struct message *msg)
 	if (msg->me_fd != -1)
 		close(msg->me_fd);
 	free(msg->me_buf);
-	free(msg->me_buf_dec);
 	if ((msg->me_flags & MESSAGE_FLAG_ATTACHMENT) == 0)
 		free(msg);
 }
@@ -455,15 +453,16 @@ message_get_header(const struct message *msg, const char *header)
 		if (VECTOR_RESERVE(hdr->values, nfound))
 			err(1, NULL);
 		for (i = 0, tmp = hdr; i < nfound; i++, tmp++) {
-			char **dst;
+			const char **dst;
 
 			dst = VECTOR_ALLOC(hdr->values);
 			if (dst == NULL)
 				err(1, NULL);
-			*dst = decodeheader(tmp->val);
+			*dst = decodeheader(tmp->val,
+			    msg->me_arena.eternal_scope, msg->me_arena.scratch);
 		}
 	}
-	return hdr->values;
+	return (char *const *)hdr->values;
 }
 
 const char *
@@ -515,14 +514,6 @@ message_set_header(struct message *msg, const char *header, char *val)
 		else
 			hdr->flags |= HEADER_FLAG_DIRTY;
 		hdr->val = val;
-		if (hdr->values != NULL) {
-			while (!VECTOR_EMPTY(hdr->values)) {
-				char **tail;
-
-				tail = VECTOR_POP(hdr->values);
-				free(*tail);
-			}
-		}
 		VECTOR_FREE(hdr->values);
 	}
 }
@@ -719,17 +710,16 @@ message_decode_body(struct message *msg, const struct message *attachment)
 
 	enc = message_get_header1(attachment, "Content-Transfer-Encoding");
 	if (enc != NULL && strcmp(enc, "base64") == 0) {
-		msg->me_buf_dec = base64_decode(attachment->me_body);
+		msg->me_buf_dec = base64_decode(attachment->me_body,
+		    msg->me_arena.eternal_scope);
 		if (msg->me_buf_dec == NULL)
 			warnx("%s: failed to decode body", msg->me_path);
 	} else if (enc != NULL && strcmp(enc, "quoted-printable") == 0) {
-		msg->me_buf_dec = quoted_printable_decode(attachment->me_body);
+		msg->me_buf_dec = quoted_printable_decode(attachment->me_body,
+		    msg->me_arena.eternal_scope);
 	} else {
-		msg->me_buf_dec = strdup(attachment->me_body);
-		if (msg->me_buf_dec == NULL)
-			err(1, NULL);
+		msg->me_buf_dec = attachment->me_body;
 	}
-
 	return msg->me_buf_dec;
 }
 
@@ -749,30 +739,29 @@ cmpheaderkey(const struct header *a, const struct header *b)
 	return strcasecmp(a->key, b->key);
 }
 
-static char *
-decodeheader(const char *str)
+static const char *
+decodeheader(const char *str, struct arena_scope *eternal_scope,
+    struct arena *scratch)
 {
-	char *d, *u;
+	const char *u;
 
-	u = unfoldheader(str);
-	d = rfc2047_decode(u);
-	free(u);
-	return d;
+	arena_scope(scratch, scratch_scope);
+
+	u = unfoldheader(str, &scratch_scope);
+	return rfc2047_decode(u, eternal_scope);
 }
 
 /*
  * Unfold the given header value by concatenating multiple lines into a single
  * one.
  */
-static char *
-unfoldheader(const char *str)
+static const char *
+unfoldheader(const char *str, struct arena_scope *s)
 {
 	char *dec;
 	size_t i = 0;
 
-	dec = strdup(str);
-	if (dec == NULL)
-		err(1, NULL);
+	dec = arena_strdup(s, str);
 	/*
 	 * Optimize for the common case where a header does not span multiple
 	 * lines.
@@ -940,6 +929,7 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 		attach = VECTOR_CALLOC(parent->me_attachments);
 		if (attach == NULL)
 			err(1, NULL);
+		attach->me_arena = parent->me_arena;
 		attach->me_fd = -1;
 		attach->me_flags = MESSAGE_FLAG_ATTACHMENT;
 		len = (size_t)(end - beg);

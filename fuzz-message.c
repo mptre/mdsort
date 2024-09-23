@@ -9,6 +9,7 @@
 struct test_context {
 	struct {
 		struct arena	*eternal;
+		struct arena	*scratch;
 	} arena;
 };
 
@@ -18,6 +19,7 @@ init(int UNUSED(argc), char **UNUSED(argv))
 	static struct test_context c;
 
 	c.arena.eternal = arena_alloc();
+	c.arena.scratch = arena_alloc();
 	return &c;
 }
 FUZZER_INIT(init);
@@ -30,7 +32,7 @@ target(const char *path, void *userdata)
 
 	arena_scope(c->arena.eternal, eternal_scope);
 
-	msg = message_parse("/dev", -1, path, &eternal_scope);
+	msg = message_parse("/dev", -1, path, &eternal_scope, c->arena.scratch);
 	if (msg != NULL)
 		message_get_body(msg);
 	message_free(msg);
@@ -43,5 +45,6 @@ teardown(void *userdata)
 	struct test_context *c = userdata;
 
 	arena_free(c->arena.eternal);
+	arena_free(c->arena.scratch);
 }
 FUZZER_TEARDOWN(teardown);

@@ -346,7 +346,8 @@ handle_message(struct expr *expr, struct maildir *md,
 
 	arena_scope(eternal, eternal_scope);
 
-	msg = message_parse(me->dir, me->dirfd, me->path, &eternal_scope);
+	msg = message_parse(me->dir, me->dirfd, me->path, &eternal_scope,
+	    scratch);
 	if (msg == NULL)
 		return 1;
 
