@@ -56,6 +56,12 @@
     <symbolName>expr_set_stat</symbolName>
   </suppress>
 
+  <!-- libks/vector.h -->
+  <suppress>
+    <fileName>libks/vector.h</fileName>
+    <id>unusedFunction</id>
+  </suppress>
+
   <!-- macro.c -->
   <suppress>
     <fileName>macro.c</fileName>
