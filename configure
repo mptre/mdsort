@@ -139,16 +139,6 @@ check_pledge() {
 	EOF
 }
 
-check_reallocarray() {
-	compile <<-EOF
-	#include <stdlib.h>
-
-	int main(void) {
-		return !(reallocarray(NULL, 1, 1) != NULL);
-	}
-	EOF
-}
-
 check_stat_tim() {
 	compile <<-EOF
 	#include <sys/stat.h>
@@ -250,7 +240,6 @@ HAVE_ARC4RANDOM=0
 HAVE_ERRC=0
 HAVE_GNU_SOURCE=0
 HAVE_PLEDGE=0
-HAVE_REALLOCARRAY=0
 HAVE_STAT_TIM=0
 HAVE_STRLCPY=0
 HAVE_WARNC=0
@@ -303,7 +292,6 @@ check_arc4random && HAVE_ARC4RANDOM=1
 check_errc && HAVE_ERRC=1
 check_gnu_source && HAVE_GNU_SOURCE=1
 check_pledge && HAVE_PLEDGE=1
-check_reallocarray && HAVE_REALLOCARRAY=1
 check_stat_tim && HAVE_STAT_TIM=1
 check_strlcpy && HAVE_STRLCPY=1
 check_warnc && HAVE_WARNC=1
@@ -320,14 +308,12 @@ printf '#ifndef CONFIG_H\n#define CONFIG_H\n'
 # Headers needed for function prototypes.
 {
 [ "${HAVE_ARC4RANDOM}" -eq 0 ] && echo stdint.h
-[ "${HAVE_REALLOCARRAY}" -eq 0 ] && echo stddef.h
 [ "${HAVE_STRLCPY}" -eq 0 ] && echo stddef.h
 } | sort | uniq | headers
 
 [ "${HAVE_ARC4RANDOM}" -eq 1 ] && printf '#define HAVE_ARC4RANDOM\t1\n'
 [ "${HAVE_ERRC}" -eq 1 ] && printf '#define HAVE_ERRC\t1\n'
 [ "${HAVE_PLEDGE}" -eq 1 ] && printf '#define HAVE_PLEDGE\t1\n'
-[ "${HAVE_REALLOCARRAY}" -eq 1 ] && printf '#define HAVE_REALLOCARRAY\t1\n'
 [ "${HAVE_STRLCPY}" -eq 1 ] && printf '#define HAVE_STRLCPY\t1\n'
 [ "${HAVE_WARNC}" -eq 1 ] && printf '#define HAVE_WARNC\t1\n'
 
@@ -353,8 +339,6 @@ fi
 	printf '\t__attribute__((__noreturn__, __format__ (printf, 3, 4)));\n'; }
 [ "${HAVE_PLEDGE}" -eq 0 ] &&
 	printf 'int pledge(const char *, const char *);\n'
-[ "${HAVE_REALLOCARRAY}" -eq 0 ] &&
-	printf 'void *reallocarray(void *, size_t, size_t);\n'
 [ "${HAVE_STRLCPY}" -eq 0 ] &&
 	printf 'size_t strlcpy(char *, const char *, size_t);\n'
 [ "${HAVE_WARNC}" -eq 0 ] && {

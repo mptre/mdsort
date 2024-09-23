@@ -9,7 +9,6 @@ SRCS+=	buffer.c
 SRCS+=	compat-arc4random.c
 SRCS+=	compat-errc.c
 SRCS+=	compat-pledge.c
-SRCS+=	compat-reallocarray.c
 SRCS+=	compat-strlcpy.c
 SRCS+=	compat-warnc.c
 SRCS+=	conf.c
