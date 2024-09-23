@@ -36,8 +36,11 @@ static const char	*match_backref(const struct match *,
     const struct backref *);
 
 static const char	*interpolate(const struct match *,
-    const struct macro_list *,
-    struct arena *, const char *, struct arena_scope *);
+    const struct macro_list *, struct arena *, const char *,
+    struct arena_scope *);
+static const char	*interpolate_with_scratch_scope(const struct match *,
+    const struct macro_list *, const char *, struct arena_scope *,
+    struct arena_scope *);
 static ssize_t		 isbackref(const char *, struct backref *);
 
 /*
@@ -352,12 +355,11 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 		VECTOR(char *const) labels;
 		struct buffer *bf;
 		const struct string *str;
-		const char *label;
-		char *buf;
+		const char *buf, *label;
 
-		bf = buffer_alloc(128);
-		if (bf == NULL)
-			err(1, NULL);
+		arena_scope(scratch, scratch_scope);
+
+		bf = arena_buffer_alloc(&scratch_scope, 128);
 
 		labels = message_get_header(msg, "X-Label");
 		if (labels != NULL) {
@@ -374,11 +376,9 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 				buffer_putc(bf, ' ');
 			buffer_printf(bf, "%s", str->val);
 		}
-		buffer_putc(bf, '\0');
-		buf = buffer_release(bf);
-		buffer_free(bf);
-		label = interpolate(mh, macros, scratch, buf, eternal_scope);
-		free(buf);
+		buf = buffer_str(bf);
+		label = interpolate_with_scratch_scope(mh, macros, buf,
+		    eternal_scope, &scratch_scope);
 		if (label == NULL)
 			return 1;
 		message_set_header(msg, "X-Label", label);
@@ -553,14 +553,22 @@ isbackref(const char *str, struct backref *br)
 
 static const char *
 interpolate(const struct match *mh, const struct macro_list *macros,
-    struct arena *scratch, const char *str, struct arena_scope *s)
+    struct arena *scratch, const char *str, struct arena_scope *eternal_scope)
+{
+	arena_scope(scratch, scratch_scope);
+	return interpolate_with_scratch_scope(mh, macros, str, eternal_scope,
+	    &scratch_scope);
+}
+
+static const char *
+interpolate_with_scratch_scope(const struct match *mh,
+    const struct macro_list *macros, const char *str,
+    struct arena_scope *eternal_scope, struct arena_scope *scratch_scope)
 {
 	struct buffer *bf;
 	size_t i = 0;
 
-	arena_scope(scratch, scratch_scope);
-
-	bf = arena_buffer_alloc(s, 64);
+	bf = arena_buffer_alloc(eternal_scope, 64);
 
 	while (str[i] != '\0') {
 		struct backref br;
@@ -581,7 +589,7 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 			continue;
 		}
 
-		n = ismacro(&str[i], &macro, &scratch_scope);
+		n = ismacro(&str[i], &macro, scratch_scope);
 		if (n < 0)
 			goto mcerr;
 		if (n > 0) {
