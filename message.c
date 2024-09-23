@@ -38,6 +38,10 @@ struct message {
 
 	VECTOR(struct header)	 me_headers;
 	VECTOR(struct message)	 me_attachments;
+
+	struct {
+		struct arena_scope	*eternal_scope;
+	} me_arena;
 };
 
 struct header {
@@ -161,7 +165,8 @@ message_flags_set(struct message_flags *mf, char flag)
  * message_free().
  */
 struct message *
-message_parse(const char *dir, int dirfd, const char *path)
+message_parse(const char *dir, int dirfd, const char *path,
+    struct arena_scope *eternal_scope)
 {
 	struct buffer *bf;
 	struct message *msg;
@@ -190,6 +195,7 @@ message_parse(const char *dir, int dirfd, const char *path)
 	msg = calloc(1, sizeof(*msg));
 	if (msg == NULL)
 		err(1, NULL);
+	msg->me_arena.eternal_scope = eternal_scope;
 	msg->me_fd = fd;
 	msg->me_buf = buf;
 	if (VECTOR_INIT(msg->me_headers))

@@ -1,5 +1,6 @@
 #include <stddef.h>	/* size_t */
 
+struct arena_scope;
 struct environment;
 
 struct message_flags {
@@ -12,7 +13,8 @@ int	 message_flags_isset(const struct message_flags *, char);
 int	 message_flags_clr(struct message_flags *, char);
 int	 message_flags_set(struct message_flags *, char);
 
-struct message	*message_parse(const char *, int, const char *);
+struct message	*message_parse(const char *, int, const char *,
+    struct arena_scope *);
 void		 message_free(struct message *);
 
 int	message_write(struct message *, int);

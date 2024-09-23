@@ -52,12 +52,12 @@ static void		 usage(void) __attribute__((noreturn));
 
 static int	handle_message(struct expr *, struct maildir *,
     const struct maildir_entry *, int *, const struct environment *,
-    struct arena *);
+    struct arena *, struct arena *);
 
 int
 main(int argc, char *argv[])
 {
-	struct arena *scratch = NULL;
+	struct arena *eternal, *scratch;
 	struct config_list cl;
 	struct environment env;
 	struct maildir_entry me;
@@ -73,8 +73,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
+	eternal = arena_alloc();
+	arena_scope(eternal, eternal_scope);
 	scratch = arena_alloc();
-	arena_scope(scratch, eternal_scope);
 
 	config_list_init(&cl, &eternal_scope);
 	environment_init(&env);
@@ -188,7 +189,7 @@ main(int argc, char *argv[])
 				}
 
 				if (handle_message(conf->expr, md,
-				    &me, &reject, &env, scratch))
+				    &me, &reject, &env, eternal, scratch))
 					error = 1;
 			}
 			maildir_close(md);
@@ -337,17 +338,17 @@ readenv(struct environment *env)
 static int
 handle_message(struct expr *expr, struct maildir *md,
     const struct maildir_entry *me, int *reject, const struct environment *env,
-    struct arena *scratch)
+    struct arena *eternal, struct arena *scratch)
 {
 	struct match_list matches;
 	struct message *msg;
 	int error = 0;
 
-	msg = message_parse(me->dir, me->dirfd, me->path);
+	arena_scope(eternal, eternal_scope);
+
+	msg = message_parse(me->dir, me->dirfd, me->path, &eternal_scope);
 	if (msg == NULL)
 		return 1;
-
-	arena_scope(scratch, s);
 
 	LIST_INIT(&matches);
 
@@ -355,7 +356,7 @@ handle_message(struct expr *expr, struct maildir *md,
 		.ea_ml		= &matches,
 		.ea_msg		= msg,
 		.ea_arena	= scratch,
-		.ea_scope	= &s,
+		.ea_scope	= &eternal_scope,
 		.ea_env		= env,
 	};
 	switch (expr_eval(expr, &ea)) {
