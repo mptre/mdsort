@@ -124,7 +124,7 @@ rfc2047_decode(const char *str, struct arena_scope *s)
 	return buffer_str(bf);
 
 err:
-	return str;
+	return arena_strdup(s, str);
 }
 
 static void
