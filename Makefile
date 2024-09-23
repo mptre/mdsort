@@ -3,6 +3,7 @@ include ${.CURDIR}/config.mk
 VERSION=	11.6.0
 
 SRCS+=	arena-buffer.c
+SRCS+=	arena-vector.c
 SRCS+=	arena.c
 SRCS+=	arithmetic.c
 SRCS+=	buffer.c

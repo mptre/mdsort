@@ -198,7 +198,6 @@ main(int argc, char *argv[])
 	}
 
 out:
-	config_list_free(&cl);
 	arena_free(scratch);
 	arena_free(eternal);
 	FAULT_SHUTDOWN();

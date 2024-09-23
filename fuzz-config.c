@@ -33,7 +33,6 @@ target(const char *path, void *userdata)
 
 	config_list_init(&cl, &s);
 	config_list_parse(&cl, path, &c->env, &s);
-	config_list_free(&cl);
 }
 FUZZER_TARGET_FILE(target);
 

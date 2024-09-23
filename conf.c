@@ -2,9 +2,7 @@
 
 #include "config.h"
 
-#include <err.h>
-
-#include "libks/vector.h"
+#include "libks/arena-vector.h"
 
 #include "macro.h"
 
@@ -12,26 +10,11 @@ void
 config_list_init(struct config_list *cl, struct arena_scope *s)
 {
 	cl->cl_macros = macros_alloc(MACRO_CTX_DEFAULT, s);
-	if (VECTOR_INIT(cl->cl_list))
-		err(1, NULL);
-}
-
-void
-config_list_free(struct config_list *cl)
-{
-	if (cl == NULL)
-		return;
-
-	VECTOR_FREE(cl->cl_list);
+	ARENA_VECTOR_INIT(s, cl->cl_list, 8);
 }
 
 struct config *
 config_list_append(struct config_list *cl)
 {
-	struct config *conf;
-
-	conf = VECTOR_ALLOC(cl->cl_list);
-	if (conf == NULL)
-		err(1, NULL);
-	return conf;
+	return ARENA_VECTOR_ALLOC(cl->cl_list);
 }
