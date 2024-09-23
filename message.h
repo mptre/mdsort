@@ -32,5 +32,5 @@ const char		*message_get_name(const struct message *);
 struct message	**message_get_attachments(struct message *);
 void		  message_free_attachments(struct message **);
 
-void	message_set_header(struct message *, const char *, char *);
+void	message_set_header(struct message *, const char *, const char *);
 int	message_set_file(struct message *, const char *, const char *, int);

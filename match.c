@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "libks/arena-buffer.h"
 #include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/list.h"
@@ -34,9 +35,10 @@ static void	matches_merge(struct match_list *, struct match *);
 static const char	*match_backref(const struct match *,
     const struct backref *);
 
-static char	*interpolate(const struct match *, const struct macro_list *,
-    struct arena *, const char *);
-static ssize_t	 isbackref(const char *, struct backref *);
+static const char	*interpolate(const struct match *,
+    const struct macro_list *,
+    struct arena *, const char *, struct arena_scope *);
+static ssize_t		 isbackref(const char *, struct backref *);
 
 /*
  * Append the given match to the list and construct the maildir destination path
@@ -95,7 +97,8 @@ matches_clear(struct match_list *ml)
 }
 
 int
-matches_interpolate(struct match_list *ml, struct arena *scratch)
+matches_interpolate(struct match_list *ml, struct arena_scope *eternal_scope,
+    struct arena *scratch)
 {
 	struct macro_list *macros;
 	struct match *mh;
@@ -109,7 +112,7 @@ matches_interpolate(struct match_list *ml, struct arena *scratch)
 	    message_get_path(LIST_FIRST(ml)->mh_msg));
 
 	LIST_FOREACH(mh, ml) {
-		if (match_interpolate(mh, macros, scratch)) {
+		if (match_interpolate(mh, macros, eternal_scope, scratch)) {
 			error = 1;
 			break;
 		}
@@ -193,7 +196,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 					break;
 				}
 			}
-			error = exec(mh->mh_exec, fd);
+			error = exec((char *const *)mh->mh_exec, fd);
 			if (fd != -1)
 				close(fd);
 			if (error > 0) {
@@ -315,13 +318,9 @@ match_alloc(struct expr *ex, struct message *msg, struct arena_scope *s)
 void
 match_free(struct match *mh)
 {
-	unsigned int i;
-
 	if (mh == NULL)
 		return;
 
-	for (i = 0; i < mh->mh_nexec; i++)
-		free(mh->mh_exec[i]);
 	free(mh->mh_exec);
 
 	arena_poison(mh, sizeof(*mh));
@@ -329,22 +328,22 @@ match_free(struct match *mh)
 
 int
 match_interpolate(struct match *mh, const struct macro_list *macros,
-    struct arena *scratch)
+    struct arena_scope *eternal_scope, struct arena *scratch)
 {
 	struct message *msg = mh->mh_msg;
 
 	switch (mh->mh_expr->ex_type) {
 	case EXPR_TYPE_STAT:
 	case EXPR_TYPE_MOVE: {
-		char *path;
+		const char *path;
 		size_t n, siz;
 
-		path = interpolate(mh, macros, scratch, mh->mh_path);
+		path = interpolate(mh, macros, scratch, mh->mh_path,
+		    eternal_scope);
 		if (path == NULL)
 			return 1;
 		siz = sizeof(mh->mh_path);
 		n = strlcpy(mh->mh_path, path, siz);
-		free(path);
 		if (n >= siz) {
 			warnc(ENAMETOOLONG, "%s", __func__);
 			return 1;
@@ -356,7 +355,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 		VECTOR(char *const) labels;
 		struct buffer *bf;
 		const struct string *str;
-		char *label = NULL;
+		const char *label;
 		char *buf;
 
 		bf = buffer_alloc(128);
@@ -381,7 +380,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 		buffer_putc(bf, '\0');
 		buf = buffer_release(bf);
 		buffer_free(bf);
-		label = interpolate(mh, macros, scratch, buf);
+		label = interpolate(mh, macros, scratch, buf, eternal_scope);
 		free(buf);
 		if (label == NULL)
 			return 1;
@@ -403,9 +402,10 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 		memset(mh->mh_exec, 0, len * sizeof(*mh->mh_exec));
 		mh->mh_nexec = len;
 		LIST_FOREACH(str, mh->mh_expr->ex_strings) {
-			char *arg;
+			const char *arg;
 
-			arg = interpolate(mh, macros, scratch, str->val);
+			arg = interpolate(mh, macros, scratch, str->val,
+			    eternal_scope);
 			if (arg == NULL)
 				return 1;
 			mh->mh_exec[nargs++] = arg;
@@ -415,9 +415,10 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 
 	case EXPR_TYPE_ADD_HEADER: {
 		const struct expr *ex = mh->mh_expr;
-		char *val;
+		const char *val;
 
-		val = interpolate(mh, macros, scratch, ex->ex_add_header.val);
+		val = interpolate(mh, macros, scratch, ex->ex_add_header.val,
+		    eternal_scope);
 		if (val == NULL)
 			return 1;
 		message_set_header(msg, ex->ex_add_header.key, val);
@@ -555,19 +556,16 @@ isbackref(const char *str, struct backref *br)
 	return end - str;
 }
 
-static char *
+static const char *
 interpolate(const struct match *mh, const struct macro_list *macros,
-    struct arena *scratch, const char *str)
+    struct arena *scratch, const char *str, struct arena_scope *s)
 {
 	struct buffer *bf;
-	char *buf;
 	size_t i = 0;
 
-	bf = buffer_alloc(64);
-	if (bf == NULL)
-		err(1, NULL);
+	arena_scope(scratch, scratch_scope);
 
-	arena_scope(scratch, s);
+	bf = arena_buffer_alloc(s, 64);
 
 	while (str[i] != '\0') {
 		struct backref br;
@@ -588,7 +586,7 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 			continue;
 		}
 
-		n = ismacro(&str[i], &macro, &s);
+		n = ismacro(&str[i], &macro, &scratch_scope);
 		if (n < 0)
 			goto mcerr;
 		if (n > 0) {
@@ -606,17 +604,12 @@ interpolate(const struct match *mh, const struct macro_list *macros,
 		buffer_putc(bf, str[i++]);
 	}
 
-	buffer_putc(bf, '\0');
-	buf = buffer_release(bf);
-	buffer_free(bf);
-	return buf;
+	return buffer_str(bf);
 
 brerr:
 	warnx("%s: invalid back-reference", str);
-	buffer_free(bf);
 	return NULL;
 mcerr:
 	warnx("%s: invalid macro", str);
-	buffer_free(bf);
 	return NULL;
 }

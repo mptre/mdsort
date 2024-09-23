@@ -33,7 +33,7 @@ struct match {
 	} *mh_matches;
 	size_t			  mh_nmatches;
 
-	char			**mh_exec;
+	const char		**mh_exec;
 	size_t			  mh_nexec;
 
 	char			 *mh_key;
@@ -44,7 +44,8 @@ struct match {
 
 int	matches_append(struct match_list *, struct match *);
 void	matches_clear(struct match_list *);
-int	matches_interpolate(struct match_list *, struct arena *);
+int	matches_interpolate(struct match_list *, struct arena_scope *,
+    struct arena *);
 int	matches_exec(const struct match_list *, struct maildir *,
     const struct environment *, struct arena *);
 int	matches_inspect(const struct match_list *, const struct environment *,
@@ -55,6 +56,6 @@ struct match	*match_alloc(struct expr *, struct message *,
 void		 match_free(struct match *);
 
 int		 match_interpolate(struct match *, const struct macro_list *,
-    struct arena *);
+    struct arena_scope *, struct arena *);
 struct match	*matches_find(struct match_list *, int);
 int		 matches_remove(struct match_list *, int);

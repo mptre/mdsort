@@ -609,9 +609,9 @@ expr_eval_command(struct expr *ex, struct expr_eval_arg *ea)
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
-	if (match_interpolate(mh, NULL, ea->ea_arena)) {
+	if (match_interpolate(mh, NULL, ea->ea_scope, ea->ea_arena)) {
 		ev = EXPR_ERROR;
-	} else if ((error = exec(mh->mh_exec, -1)) != 0) {
+	} else if ((error = exec((char *const *)mh->mh_exec, -1)) != 0) {
 		/* A non-zero exit is not considered fatal. */
 		if (error < 0)
 			ev = EXPR_ERROR;
@@ -911,7 +911,7 @@ expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 	if (strlcpy(mh->mh_path, str, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		ev = EXPR_ERROR;
-	} else if (match_interpolate(mh, NULL, ea->ea_arena)) {
+	} else if (match_interpolate(mh, NULL, ea->ea_scope, ea->ea_arena)) {
 		ev = EXPR_ERROR;
 	} else if (stat(mh->mh_path, &st) == 0) {
 		switch (ex->ex_stat.stat) {

@@ -370,7 +370,7 @@ handle_message(struct expr *expr, struct maildir *md,
 		goto out;
 	}
 
-	if (matches_interpolate(&matches, scratch)) {
+	if (matches_interpolate(&matches, &eternal_scope, scratch)) {
 		error = 1;
 		goto out;
 	}

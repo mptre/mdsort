@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
@@ -48,11 +47,8 @@ struct message {
 struct header {
 	unsigned long		 id;
 
-	unsigned int		 flags;
-#define HEADER_FLAG_DIRTY	0x00000001u	/* val must be freed */
-
 	const char		*key;
-	char			*val;
+	const char		*val;
 	VECTOR(const char *)	 values;	/* all values for key */
 };
 
@@ -243,8 +239,6 @@ message_free(struct message *msg)
 
 		hdr = VECTOR_POP(msg->me_headers);
 		VECTOR_FREE(hdr->values);
-		if (hdr->flags & HEADER_FLAG_DIRTY)
-			free(hdr->val);
 	}
 	VECTOR_FREE(msg->me_headers);
 
@@ -453,7 +447,7 @@ message_get_header1(const struct message *msg, const char *header)
 }
 
 void
-message_set_header(struct message *msg, const char *header, char *val)
+message_set_header(struct message *msg, const char *header, const char *val)
 {
 	struct header *hdr;
 	ssize_t idx;
@@ -463,7 +457,6 @@ message_set_header(struct message *msg, const char *header, char *val)
 	    header, &nfound);
 	if (idx == -1) {
 		hdr = message_headers_alloc(msg);
-		hdr->flags = HEADER_FLAG_DIRTY;
 		hdr->key = header;
 		hdr->val = val;
 		VECTOR_SORT(msg->me_headers, cmpheaderkey);
@@ -485,10 +478,6 @@ message_set_header(struct message *msg, const char *header, char *val)
 		}
 
 		hdr = &msg->me_headers[idx];
-		if (hdr->flags & HEADER_FLAG_DIRTY)
-			free(hdr->val);
-		else
-			hdr->flags |= HEADER_FLAG_DIRTY;
 		hdr->val = val;
 		VECTOR_FREE(hdr->values);
 	}
