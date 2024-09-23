@@ -319,7 +319,7 @@ match_alloc(struct expr *ex, struct message *msg, struct arena_scope *s)
 }
 
 void
-match_free(struct match *mh)
+match_free(const struct match *mh)
 {
 	if (mh == NULL)
 		return;

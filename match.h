@@ -53,7 +53,7 @@ int	matches_inspect(const struct match_list *, const struct environment *,
 
 struct match	*match_alloc(struct expr *, struct message *,
     struct arena_scope *);
-void		 match_free(struct match *);
+void		 match_free(const struct match *);
 
 int		 match_interpolate(struct match *, const struct macro_list *,
     struct arena_scope *, struct arena *);
