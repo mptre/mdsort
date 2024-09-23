@@ -13,6 +13,7 @@
 #include <strings.h>
 #include <unistd.h>
 
+#include "libks/arena-buffer.h"
 #include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/tmp.h"
@@ -88,7 +89,8 @@ static const char	*unfoldheader(const char *, struct arena_scope *);
 static int		 parseattachments(struct message *, struct message *,
     int);
 static const char	*findboundary(const char *, const char *, int *);
-static int		 parseboundary(const char *, char **);
+static int		 parseboundary(const char *, const char **,
+    struct arena_scope *);
 
 static const char	*skipline(const char *);
 static char		*skipseparator(char *);
@@ -182,22 +184,15 @@ message_parse(const char *dir, int dirfd, const char *path,
 		warn("open: %s/%s", dir, path);
 		return NULL;
 	}
-	bf = buffer_read_fd(fd);
+	bf = arena_buffer_read_fd(eternal_scope, fd);
 	if (bf == NULL) {
 		warn("%s", path);
 		close(fd);
 		return NULL;
 	}
 	buf = buffer_str(bf);
-	buffer_free(bf);
-	if (buf == NULL) {
-		warn(NULL);
-		return NULL;
-	}
 
-	msg = calloc(1, sizeof(*msg));
-	if (msg == NULL)
-		err(1, NULL);
+	msg = arena_calloc(eternal_scope, 1, sizeof(*msg));
 	msg->me_arena.eternal_scope = eternal_scope;
 	msg->me_arena.scratch = scratch;
 	msg->me_fd = fd;
@@ -255,9 +250,6 @@ message_free(struct message *msg)
 
 	if (msg->me_fd != -1)
 		close(msg->me_fd);
-	free(msg->me_buf);
-	if ((msg->me_flags & MESSAGE_FLAG_ATTACHMENT) == 0)
-		free(msg);
 }
 
 int
@@ -870,8 +862,7 @@ static int
 parseattachments(struct message *msg, struct message *parent, int depth)
 {
 	struct message *attach;
-	const char *b, *beg, *body, *end, *type;
-	char *boundary;
+	const char *b, *beg, *body, *boundary, *end, *type;
 	int term;
 
 	if (depth > 4) {
@@ -880,10 +871,12 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 		return 1;
 	}
 
+	arena_scope(msg->me_arena.scratch, scratch_scope);
+
 	type = message_get_header1(msg, "Content-Type");
 	if (type == NULL)
 		return 0;
-	switch (parseboundary(type, &boundary)) {
+	switch (parseboundary(type, &boundary, &scratch_scope)) {
 	case 0:
 		return 0;
 	case -1:
@@ -917,9 +910,8 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 		attach->me_fd = -1;
 		attach->me_flags = MESSAGE_FLAG_ATTACHMENT;
 		len = (size_t)(end - beg);
-		attach->me_buf = strndup(beg, len);
-		if (attach->me_buf == NULL)
-			err(1, NULL);
+		attach->me_buf = arena_strndup(attach->me_arena.eternal_scope,
+		    beg, len);
 		if (VECTOR_INIT(attach->me_headers))
 			err(1, NULL);
 		(void)strlcpy(attach->me_path, msg->me_path,
@@ -935,7 +927,6 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 
 		beg = end = NULL;
 	}
-	free(boundary);
 
 	return term ? 0 : 1;
 }
@@ -980,7 +971,7 @@ findboundary(const char *boundary, const char *s, int *term)
 }
 
 static int
-parseboundary(const char *str, char **boundary)
+parseboundary(const char *str, const char **boundary, struct arena_scope *s)
 {
 	const char *needle, *p;
 	size_t len;
@@ -1010,9 +1001,7 @@ parseboundary(const char *str, char **boundary)
 	len = (size_t)(p - str);
 	if (len == 0)
 		return -1;
-	*boundary = strndup(str, len);
-	if (*boundary == NULL)
-		err(1, NULL);
+	*boundary = arena_strndup(s, str, len);
 	return 1;
 }
 
