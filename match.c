@@ -186,7 +186,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 			int fd = -1;
 
 			if (flags & EXPR_EXEC_STDIN) {
-				fd = message_get_fd(msg, env,
+				fd = message_get_fd(msg,
 				    flags & EXPR_EXEC_BODY);
 				if (fd == -1) {
 					error = 1;

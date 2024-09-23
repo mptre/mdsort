@@ -2,7 +2,6 @@
 
 struct arena;
 struct arena_scope;
-struct environment;
 
 struct message_flags {
 	unsigned int	mf_upper;
@@ -20,8 +19,7 @@ void		 message_free(struct message *);
 
 int	message_write(struct message *, int);
 
-int			 message_get_fd(struct message *,
-    const struct environment *, int);
+int			 message_get_fd(struct message *, int);
 const char		*message_get_body(struct message *);
 char *const		*message_get_header(const struct message *,
     const char *);

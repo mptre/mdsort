@@ -2,8 +2,6 @@
 
 #include "config.h"
 
-#include <sys/stat.h>
-
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -17,10 +15,10 @@
 
 #include "libks/arena.h"
 #include "libks/buffer.h"
+#include "libks/tmp.h"
 #include "libks/vector.h"
 
 #include "decode.h"
-#include "environment.h"
 #include "fault.h"
 #include "log.h"
 #include "util.h"
@@ -95,7 +93,6 @@ static int		 parseboundary(const char *, char **);
 static const char	*skipline(const char *);
 static char		*skipseparator(char *);
 static ssize_t		 strflags(unsigned int, unsigned char, char *, size_t);
-static int		 writefd(const char *);
 
 char *
 message_flags_str(const struct message_flags *mf, char *buf, size_t bufsiz)
@@ -333,9 +330,9 @@ out:
  * The caller is responsible for closing the returned file descriptor.
  */
 int
-message_get_fd(struct message *msg, const struct environment *env,
-    int skipheaders)
+message_get_fd(struct message *msg, int skipheaders)
 {
+	char path[PATH_MAX];
 	int fd;
 
 	if (skipheaders) {
@@ -345,26 +342,13 @@ message_get_fd(struct message *msg, const struct environment *env,
 		body = message_get_body(msg);
 		if (body == NULL)
 			return -1;
+		len = strlen(body);
 
-		fd = writefd(env->ev_tmpdir);
+		fd = KS_tmpfd(body, len, path, sizeof(path));
 		if (fd == -1)
 			return -1;
-
-		len = strlen(body);
-		while (len > 0) {
-			ssize_t nw;
-
-			nw = write(fd, body, len);
-			if (nw == -1) {
-				warn("write");
-				close(fd);
-				return -1;
-			}
-			len -= (size_t)nw;
-			body += nw;
-		}
 	} else if (msg->me_flags & MESSAGE_FLAG_ATTACHMENT) {
-		fd = writefd(env->ev_tmpdir);
+		fd = KS_tmpfd(NULL, 0, path, sizeof(path));
 		if (fd == -1)
 			return -1;
 		if (message_write(msg, fd)) {
@@ -1079,36 +1063,4 @@ strflags(unsigned int flags, unsigned char offset, char *buf, size_t bufsiz)
 	}
 
 	return (ssize_t)i;
-}
-
-/*
- * Get a writeable file descriptor by creating a temporary file in the given
- * directory. The file is immediately removed in the hopes of returning the last
- * reference to the file.
- */
-static int
-writefd(const char *dir)
-{
-	char path[PATH_MAX];
-	mode_t old_umask;
-	int fd;
-
-	if (pathjoin(path, sizeof(path), dir, "mdsort-XXXXXXXX") == NULL) {
-		warnc(ENAMETOOLONG, "%s", __func__);
-		return -1;
-	}
-
-	old_umask = umask(0777);
-	fd = mkstemp(path);
-	umask(old_umask);
-	if (fd == -1) {
-		warn("mkstemp");
-		return -1;
-	}
-	if (unlink(path) == -1) {
-		warn("unlink: %s", path);
-		close(fd);
-		return -1;
-	}
-	return fd;
 }
