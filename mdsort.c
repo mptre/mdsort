@@ -77,6 +77,7 @@ main(int argc, char *argv[])
 	arena_scope(eternal, eternal_scope);
 	scratch = arena_alloc();
 
+	FAULT_INIT(&eternal_scope);
 	config_list_init(&cl, &eternal_scope);
 	environment_init(&env);
 

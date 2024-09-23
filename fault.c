@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "libks/arena.h"
 #include "libks/list.h"
 
 #include "log.h"
@@ -24,7 +25,6 @@ struct fault {
 	LIST_ENTRY(fault_list, fault);
 };
 
-static void	fault_init(void);
 static int	fault_match(const char *);
 
 static const char	*parse_attr(struct fault *, const char *, const char *);
@@ -35,8 +35,6 @@ static int			cold = 1;
 int
 fault(const char *name)
 {
-	fault_init();
-
 	if (!fault_match(name))
 		return 0;
 	warnx("fault: %s", name);
@@ -49,23 +47,20 @@ fault_shutdown(void)
 	struct fault *fu;
 	int error = 0;
 
-	fault_init();
-
 	while ((fu = LIST_FIRST(&faults)) != NULL) {
 		LIST_REMOVE(&faults, fu);
 		if (fu->fu_hits == 0) {
 			warnx("%s: %s: fault never hit", __func__, fu->fu_name);
 			error = 1;
 		}
-		free(fu);
 	}
 
 	if (error)
 		exit(66);
 }
 
-static void
-fault_init(void)
+void
+fault_init(struct arena_scope *eternal_scope)
 {
 	const char *str;
 
@@ -87,10 +82,7 @@ fault_init(void)
 		if (end == NULL)
 			end = str + strlen(str);
 
-		fu = calloc(1, sizeof(*fu));
-		if (fu == NULL)
-			err(1, NULL);
-
+		fu = arena_calloc(eternal_scope, 1, sizeof(*fu));
 		for (;;) {
 			str = parse_attr(fu, str, end);
 			if (str == NULL)
