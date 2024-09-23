@@ -356,9 +356,11 @@ handle_message(struct expr *expr, struct maildir *md,
 	struct expr_eval_arg ea = {
 		.ea_ml		= &matches,
 		.ea_msg		= msg,
-		.ea_arena	= scratch,
-		.ea_scope	= &eternal_scope,
 		.ea_env		= env,
+		.ea_arena	= {
+			.eternal_scope	= &eternal_scope,
+			.scratch	= scratch,
+		},
 	};
 	switch (expr_eval(expr, &ea)) {
 	case EXPR_MATCH:

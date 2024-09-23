@@ -65,9 +65,12 @@ enum expr_stat {
 struct expr_eval_arg {
 	struct match_list		*ea_ml;
 	struct message			*ea_msg;
-	struct arena			*ea_arena;
-	struct arena_scope		*ea_scope;
 	const struct environment	*ea_env;
+
+	struct {
+		struct arena_scope	*eternal_scope;
+		struct arena		*scratch;
+	} ea_arena;
 };
 
 struct expr {

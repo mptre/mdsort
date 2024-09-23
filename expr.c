@@ -464,7 +464,7 @@ expr_eval_add_header(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
@@ -587,7 +587,7 @@ expr_eval_break(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
@@ -605,11 +605,12 @@ expr_eval_command(struct expr *ex, struct expr_eval_arg *ea)
 	int ev = EXPR_NOMATCH;
 	int error;
 
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
-	if (match_interpolate(mh, NULL, ea->ea_scope, ea->ea_arena)) {
+	if (match_interpolate(mh, NULL, ea->ea_arena.eternal_scope,
+	    ea->ea_arena.scratch)) {
 		ev = EXPR_ERROR;
 	} else if ((error = exec((char *const *)mh->mh_exec, -1)) != 0) {
 		/* A non-zero exit is not considered fatal. */
@@ -706,7 +707,7 @@ expr_eval_flag(struct expr *ex, struct expr_eval_arg *ea)
 	const char *subdir;
 	size_t siz;
 
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	subdir = LIST_FIRST(ex->ex_strings)->val;
 	siz = sizeof(mh->mh_subdir);
 	if (strlcpy(mh->mh_subdir, subdir, siz) >= siz) {
@@ -736,7 +737,7 @@ expr_eval_flags(struct expr *ex, struct expr_eval_arg *ea)
 	if (error)
 		return EXPR_ERROR;
 
-	mh = match_alloc(ex, msg, ea->ea_scope);
+	mh = match_alloc(ex, msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
@@ -783,7 +784,7 @@ expr_eval_match(struct expr *ex, struct expr_eval_arg *ea)
 	 * match list. Such match is used as a sentinel when finding matches
 	 * eligble for interpolation.
 	 */
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
@@ -798,7 +799,7 @@ expr_eval_move(struct expr *ex, struct expr_eval_arg *ea)
 	size_t siz;
 
 	maildir = LIST_FIRST(ex->ex_strings)->val;
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	siz = sizeof(mh->mh_maildir);
 	if (strlcpy(mh->mh_maildir, maildir, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
@@ -872,7 +873,7 @@ expr_eval_pass(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 
@@ -900,7 +901,7 @@ expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 	size_t siz;
 	int ev = EXPR_NOMATCH;
 
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh)) {
 		ev = EXPR_ERROR;
 		goto out;
@@ -911,7 +912,8 @@ expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 	if (strlcpy(mh->mh_path, str, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
 		ev = EXPR_ERROR;
-	} else if (match_interpolate(mh, NULL, ea->ea_scope, ea->ea_arena)) {
+	} else if (match_interpolate(mh, NULL, ea->ea_arena.eternal_scope,
+	    ea->ea_arena.scratch)) {
 		ev = EXPR_ERROR;
 	} else if (stat(mh->mh_path, &st) == 0) {
 		switch (ex->ex_stat.stat) {
@@ -1037,7 +1039,7 @@ expr_match(struct expr *ex, struct expr_eval_arg *ea)
 {
 	struct match *mh;
 
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
 	return EXPR_MATCH;
@@ -1057,14 +1059,14 @@ expr_regexec(struct expr *ex, struct expr_eval_arg *ea, const char *key,
 	if (error != 0)
 		return EXPR_ERROR;
 
-	mh = match_alloc(ex, ea->ea_msg, ea->ea_scope);
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
 		return EXPR_ERROR;
-	expr_regcopy(ex, mh, val, ea->ea_scope);
+	expr_regcopy(ex, mh, val, ea->ea_arena.eternal_scope);
 
 	if (ea->ea_env->ev_options & OPTION_DRYRUN) {
-		mh->mh_key = arena_strdup(ea->ea_scope, key);
-		mh->mh_val = arena_strdup(ea->ea_scope, val);
+		mh->mh_key = arena_strdup(ea->ea_arena.eternal_scope, key);
+		mh->mh_val = arena_strdup(ea->ea_arena.eternal_scope, val);
 	}
 
 	return EXPR_MATCH;
