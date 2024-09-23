@@ -227,7 +227,6 @@ expr_free(struct expr *ex)
 
 	expr_free(ex->ex_lhs);
 	expr_free(ex->ex_rhs);
-	strings_free(ex->ex_strings);
 	if (ex->ex_re != NULL)
 		regfree(&ex->ex_re->pattern);
 }
@@ -254,13 +253,14 @@ expr_set_date(struct expr *ex, enum expr_date_field field,
 }
 
 void
-expr_set_stat(struct expr *ex, const char *path, enum expr_stat stat)
+expr_set_stat(struct expr *ex, const char *path, enum expr_stat stat,
+    struct arena_scope *s)
 {
 	struct string_list *strings;
 
 	assert(ex->ex_type == EXPR_TYPE_STAT);
 
-	strings = strings_alloc();
+	strings = strings_alloc(s);
 	strings_append(strings, path);
 	expr_set_strings(ex, strings);
 	ex->ex_stat.stat = stat;

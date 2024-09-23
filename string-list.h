@@ -2,6 +2,8 @@
 
 #include "libks/list.h"
 
+struct arena_scope;
+
 LIST(string_list, string);
 
 struct string {
@@ -9,8 +11,7 @@ struct string {
 	LIST_ENTRY(string_list, string);
 };
 
-struct string_list	*strings_alloc(void);
-void			 strings_free(struct string_list *);
+struct string_list	*strings_alloc(struct arena_scope *);
 
 struct string	*strings_append(struct string_list *, const char *);
 

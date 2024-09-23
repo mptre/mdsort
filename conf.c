@@ -8,7 +8,6 @@
 
 #include "expr.h"
 #include "macro.h"
-#include "string-list.h"
 
 void
 config_list_init(struct config_list *cl, struct arena_scope *s)
@@ -28,7 +27,6 @@ config_list_free(struct config_list *cl)
 		struct config *conf;
 
 		conf = VECTOR_POP(cl->cl_list);
-		strings_free(conf->paths);
 		expr_free(conf->expr);
 	}
 	VECTOR_FREE(cl->cl_list);

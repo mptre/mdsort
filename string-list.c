@@ -2,42 +2,49 @@
 
 #include "config.h"
 
-#include <err.h>
-#include <stdlib.h>
-
+#include "libks/arena.h"
 #include "libks/list.h"
 
-/*
- * Allocate a list of strings.
- *
- * The caller is responsible for freeing the returned memory using
- * strings_free().
- */
-struct string_list *
-strings_alloc(void)
-{
-	struct string_list *strings;
+struct string_list_impl {
+	struct {
+		struct arena_scope	*eternal_scope;
+	} arena;
+};
 
-	strings = malloc(sizeof(*strings));
-	if (strings == NULL)
-		err(1, NULL);
-	LIST_INIT(strings);
-	return strings;
+union string_list_addr {
+	struct string_list_impl	*impl;
+	struct string_list	*list;
+};
+
+static struct string_list_impl *
+list_to_impl(struct string_list *list)
+{
+	union string_list_addr u = {.list = list};
+
+	u.impl--;
+	return u.impl;
 }
 
-void
-strings_free(struct string_list *strings)
+static struct string_list *
+impl_to_list(struct string_list_impl *impl)
 {
-	struct string *str;
+	union string_list_addr u = {.impl = impl};
 
-	if (strings == NULL)
-		return;
+	u.impl++;
+	return u.list;
+}
 
-	while ((str = LIST_FIRST(strings)) != NULL) {
-		LIST_REMOVE(strings, str);
-		free(str);
-	}
-	free(strings);
+struct string_list *
+strings_alloc(struct arena_scope *eternal_scope)
+{
+	struct string_list_impl *impl;
+	struct string_list *strings;
+
+	impl = arena_malloc(eternal_scope, sizeof(*impl) + sizeof(*strings));
+	impl->arena.eternal_scope = eternal_scope;
+	strings = impl_to_list(impl);
+	LIST_INIT(strings);
+	return strings;
 }
 
 size_t
@@ -54,11 +61,10 @@ strings_len(const struct string_list *strings)
 struct string *
 strings_append(struct string_list *strings, const char *val)
 {
+	struct string_list_impl *impl = list_to_impl(strings);
 	struct string *str;
 
-	str = malloc(sizeof(*str));
-	if (str == NULL)
-		err(1, NULL);
+	str = arena_malloc(impl->arena.eternal_scope, sizeof(*str));
 	str->val = val;
 	LIST_INSERT_TAIL(strings, str);
 	return str;

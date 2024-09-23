@@ -213,7 +213,7 @@ maildir_paths	: MAILDIR strings {
 				}
 			}
 
-			$$ = strings_alloc();
+			$$ = strings_alloc(parser_state.scope);
 			strings_append($$, "/dev/stdin");
 		}
 		;
@@ -320,7 +320,7 @@ expr3		: BODY pattern {
 			$$ = expr_alloc(EXPR_TYPE_STAT, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
 			path = expand($2, MACRO_CTX_DEFAULT);
-			expr_set_stat($$, path, EXPR_STAT_DIR);
+			expr_set_stat($$, path, EXPR_STAT_DIR, parser_state.scope);
 		}
 		| COMMAND strings {
 			$$ = expr_alloc(EXPR_TYPE_COMMAND, parser_state.lineno,
@@ -359,7 +359,7 @@ expraction	: BREAK {
 			$$ = expr_alloc(EXPR_TYPE_MOVE, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
 			path = expand($2, MACRO_CTX_ACTION);
-			strings = strings_alloc();
+			strings = strings_alloc(parser_state.scope);
 			strings_append(strings, path);
 			expr_set_strings($$, strings);
 		}
@@ -368,7 +368,7 @@ expraction	: BREAK {
 
 			$$ = expr_alloc(EXPR_TYPE_FLAG, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
-			strings = strings_alloc();
+			strings = strings_alloc(parser_state.scope);
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
 		}
@@ -377,7 +377,7 @@ expraction	: BREAK {
 
 			$$ = expr_alloc(EXPR_TYPE_FLAGS, parser_state.lineno,
 			    NULL, NULL, parser_state.scope);
-			strings = strings_alloc();
+			strings = strings_alloc(parser_state.scope);
 			strings_append(strings, $2);
 			expr_set_strings($$, strings);
 		}
@@ -423,13 +423,13 @@ strings		: '{' stringblock '}' {
 			$$ = $2;
 		}
 		| STRING {
-			$$ = strings_alloc();
+			$$ = strings_alloc(parser_state.scope);
 			strings_append($$, $1);
 		}
 		;
 
 stringblock	: /* empty */ {
-			$$ = strings_alloc();
+			$$ = strings_alloc(parser_state.scope);
 		}
 		| stringblock STRING {
 			$$ = $1;
