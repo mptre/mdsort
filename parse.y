@@ -42,7 +42,7 @@ static void yyrecover(void);
 static void macros_validate(const struct macro_list *);
 
 static const char *expand(const char *, unsigned int);
-static const char *expandmacros(const char *, struct macro_list *,
+static const char *expandmacros(const char *, const struct macro_list *,
     unsigned int, struct arena_scope *);
 static struct string_list *expandstrings(struct string_list *, unsigned int);
 static const char *expandtilde(const char *, const char *,
@@ -166,7 +166,7 @@ macro		: MACRO '=' STRING {
 
 maildir		: maildir_paths exprblock {
 			struct config *conf;
-			struct string *str;
+			const struct string *str;
 
 			/* Favor more specific error messages. */
 			if (parser_state.error == 0 &&
@@ -862,12 +862,14 @@ yygetc(void)
 static int
 yypeek(int want)
 {
-	int c, cc;
+	int c;
 
 	c = yygetc();
 	if (c == want)
 		return 1;
 	if (c == '\\') {
+		int cc;
+
 		cc = yygetc();
 		yyungetc(cc);
 		if (cc == want)
@@ -891,9 +893,9 @@ yyungetc(int c)
 static void
 yyrecover(void)
 {
-	int c;
-
 	for (;;) {
+		int c;
+
 		c = yygetc();
 		if (c == '\n' || c == EOF)
 			break;
@@ -927,7 +929,7 @@ expand(const char *str, unsigned int curctx)
 }
 
 static const char *
-expandmacros(const char *str, struct macro_list *macros, unsigned int curctx,
+expandmacros(const char *str, const struct macro_list *macros, unsigned int curctx,
     struct arena_scope *s)
 {
 	struct buffer *bf;
