@@ -39,7 +39,7 @@ static int yypeek(int);
 static void yyungetc(int);
 static void yyrecover(void);
 
-static void macros_validate(const struct macro_list *);
+static void macros_validate(const struct macro_list *, struct arena *);
 
 static const char *expand(const char *, unsigned int);
 static const char *expandmacros(const char *, const struct macro_list *,
@@ -529,7 +529,8 @@ optneg		: /* empty */ {
 
 int
 config_list_parse(struct config_list *cl, const char *path,
-    const struct environment *env, struct arena_scope *s)
+    const struct environment *env,
+    struct arena *scratch, struct arena_scope *s)
 {
 	memset(&parser_state, 0, sizeof(parser_state));
 	parser_state.path = path;
@@ -546,7 +547,7 @@ config_list_parse(struct config_list *cl, const char *path,
 
 	yyparse();
 	fclose(parser_state.fh);
-	macros_validate(parser_state.config->cl_macros);
+	macros_validate(parser_state.config->cl_macros, scratch);
 	return parser_state.error;
 }
 
@@ -903,20 +904,20 @@ yyrecover(void)
 }
 
 static void
-macros_validate(const struct macro_list *macros)
+macros_validate(const struct macro_list *macros, struct arena *scratch)
 {
 	struct macro **unused;
 	size_t i;
 
-	unused = macros_unused(macros);
+	arena_scope(scratch, s);
+
+	unused = macros_unused(macros, &s);
 	for (i = 0; i < VECTOR_LENGTH(unused); i++) {
 		const struct macro *mc = unused[i];
 
 		yyerror_at_line(macro_get_lno(mc),
 		    "unused macro: %s", macro_get_name(mc));
 	}
-	/* coverity[leaked_storage: FALSE] */
-	VECTOR_FREE(unused);
 }
 
 static const char *

@@ -20,7 +20,8 @@ enum macro_error	  macros_insert(struct macro_list *, const char *,
 void			  macros_insertc(struct macro_list *, const char *,
     const char *);
 struct macro		 *macros_find(const struct macro_list *, const char *);
-struct macro		**macros_unused(const struct macro_list *);
+struct macro		**macros_unused(const struct macro_list *,
+    struct arena_scope *);
 
 void	macro_ref(struct macro *);
 

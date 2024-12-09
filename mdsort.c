@@ -142,7 +142,8 @@ main(int argc, char *argv[])
 
 	if (env.ev_confpath == NULL)
 		env.ev_confpath = defaultconf(env.ev_home);
-	if (config_list_parse(&cl, env.ev_confpath, &env, &eternal_scope)) {
+	if (config_list_parse(&cl, env.ev_confpath, &env, scratch,
+	    &eternal_scope)) {
 		error = 1;
 		goto out;
 	}

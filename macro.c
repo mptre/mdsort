@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "libks/arena-vector.h"
 #include "libks/arena.h"
 #include "libks/vector.h"
 
@@ -101,15 +102,15 @@ macros_find(const struct macro_list *macros, const char *name)
 }
 
 struct macro **
-macros_unused(const struct macro_list *macros)
+macros_unused(const struct macro_list *macros, struct arena_scope *s)
 {
 	VECTOR(struct macro *) unused;
+	size_t n = VECTOR_LENGTH(macros->ml_list);
 	size_t i;
 
-	if (VECTOR_INIT(unused))
-		err(1, NULL);
+	ARENA_VECTOR_INIT(s, unused, n);
 
-	for (i = 0; i < VECTOR_LENGTH(macros->ml_list); i++) {
+	for (i = 0; i < n; i++) {
 		struct macro *mc = &macros->ml_list[i];
 		struct macro **dst;
 
