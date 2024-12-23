@@ -247,8 +247,7 @@ lint:
 .PHONY: lint
 
 lint-clang-tidy:
-	cd ${.CURDIR} && echo ${CLANGTIDY} | xargs printf '%s\n' | \
-		xargs -I{} clang-tidy --quiet {} -- ${CPPFLAGS}
+	cd ${.CURDIR} && clang-tidy --quiet ${CLANGTIDY} -- ${CPPFLAGS}
 .PHONY: lint-clang-tidy
 
 lint-cppcheck:

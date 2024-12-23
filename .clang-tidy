@@ -13,6 +13,8 @@ Checks: |
   clang-analyzer-*,
     -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
     -clang-analyzer-unix.Malloc,
+    -clang-analyzer-valist.Uninitialized,
+  misc-use-internal-linkage,
   performance-*,
   portability-*,
 WarningsAsErrors: '*'

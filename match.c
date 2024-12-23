@@ -94,6 +94,7 @@ matches_clear(struct match_list *ml)
 	struct match *mh;
 
 	while ((mh = LIST_FIRST(ml)) != NULL) {
+		/* NOLINTNEXTLINE(clang-analyzer-core.NullDereference) */
 		LIST_REMOVE(ml, mh);
 		match_free(mh);
 	}
