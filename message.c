@@ -23,20 +23,17 @@
 #include "log.h"
 #include "util.h"
 
-#define message_flags_resolve(mf, flag, flags, mask) __extension__ ({	\
-	int _rv = 0;							\
+#define message_flags_resolve(mf, flag, flags, mask) do {		\
 	if (isupper((unsigned char)(flag))) {				\
 		*(flags) = &(mf)->mf_upper;				\
 		*(mask) = 1 << ((flag) - 'A');				\
-	} else if (islower((unsigned char)(flag))) {			\
+	} else {							\
 		*(flags) = &(mf)->mf_lower;				\
 		*(mask) = 1 << ((flag) - 'a');				\
-	} else {							\
-		warnx("%c: unknown flag", (flag));			\
-		_rv = 1;						\
 	}								\
-	_rv;								\
-})
+	/* Suppress cppcheck unreadVariable false positive. */		\
+	(void)flags;							\
+} while (0)
 
 struct message {
 	char			 me_path[PATH_MAX];	/* full path */
@@ -134,27 +131,39 @@ err:
 	return NULL;
 }
 
+static int
+is_message_flag_valid(char flag)
+{
+	return isupper((unsigned char)flag) || islower((unsigned char)flag);
+}
+
 int
 message_flags_isset(const struct message_flags *mf, char flag)
 {
-	const unsigned int *flags;
+	const unsigned int *flags = NULL;
 	unsigned int mask;
 
-	if (message_flags_resolve(mf, flag, &flags, &mask))
-		return 0;
-	if (*flags & mask)
+	if (!is_message_flag_valid(flag)) {
+		warnx("%c: unknown flag", flag);
 		return 1;
-	return 0;
+	}
+
+	message_flags_resolve(mf, flag, &flags, &mask);
+	return (*flags & mask) ? 1 : 0;
 }
 
 int
 message_flags_clr(struct message_flags *mf, char flag)
 {
-	unsigned int *flags;
+	unsigned int *flags = NULL;
 	unsigned int mask;
 
-	if (message_flags_resolve(mf, flag, &flags, &mask))
+	if (!is_message_flag_valid(flag)) {
+		warnx("%c: unknown flag", flag);
 		return 1;
+	}
+
+	message_flags_resolve(mf, flag, &flags, &mask);
 	*flags &= ~mask;
 	return 0;
 }
@@ -162,11 +171,15 @@ message_flags_clr(struct message_flags *mf, char flag)
 int
 message_flags_set(struct message_flags *mf, char flag)
 {
-	unsigned int *flags;
+	unsigned int *flags = NULL;
 	unsigned int mask;
 
-	if (message_flags_resolve(mf, flag, &flags, &mask))
+	if (!is_message_flag_valid(flag)) {
+		warnx("%c: unknown flag", flag);
 		return 1;
+	}
+
+	message_flags_resolve(mf, flag, &flags, &mask);
 	*flags |= mask;
 	return 0;
 }
