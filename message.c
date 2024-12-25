@@ -32,7 +32,7 @@
 		*(mask) = 1 << ((flag) - 'a');				\
 	}								\
 	/* Suppress cppcheck unreadVariable false positive. */		\
-	(void)flags;							\
+	(void)(flags);							\
 } while (0)
 
 struct message {
