@@ -21,7 +21,7 @@ int	log_level = 0;
  *     <0    Fatal error.
  */
 int
-exec(char *const *argv, int fdin)
+exec(const char **argv, int fdin)
 {
 	pid_t pid;
 	int error = 1;
@@ -45,9 +45,14 @@ exec(char *const *argv, int fdin)
 		goto out;
 	}
 	if (pid == 0) {
+		union {
+			const char	**src;
+			char *const	 *dst;
+		} u = {.src = argv};
+
 		if (dup2(fdin, 0) == -1)
 			err(1, "dup2");
-		execvp(argv[0], argv);
+		execvp(argv[0], u.dst);
 		warn("%s", argv[0]);
 		_exit(127);
 	}

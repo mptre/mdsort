@@ -603,7 +603,7 @@ expr_eval_command(struct expr *ex, struct expr_eval_arg *ea)
 	if (match_interpolate(mh, NULL, ea->ea_arena.eternal_scope,
 	    ea->ea_arena.scratch)) {
 		ev = EXPR_ERROR;
-	} else if ((error = exec((char *const *)mh->mh_exec, -1)) != 0) {
+	} else if ((error = exec(mh->mh_exec, -1)) != 0) {
 		/* A non-zero exit is not considered fatal. */
 		if (error < 0)
 			ev = EXPR_ERROR;
@@ -740,7 +740,7 @@ expr_eval_header(struct expr *ex, struct expr_eval_arg *ea)
 	const struct string *key;
 
 	LIST_FOREACH(key, ex->ex_strings) {
-		VECTOR(char *const) values;
+		VECTOR(const char *const) values;
 		size_t j;
 
 		values = message_get_header(ea->ea_msg, key->val);

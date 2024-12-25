@@ -23,6 +23,21 @@
 #include "log.h"
 #include "util.h"
 
+#define message_flags_resolve(mf, flag, flags, mask) __extension__ ({	\
+	int _rv = 0;							\
+	if (isupper((unsigned char)(flag))) {				\
+		*(flags) = &(mf)->mf_upper;				\
+		*(mask) = 1 << ((flag) - 'A');				\
+	} else if (islower((unsigned char)(flag))) {			\
+		*(flags) = &(mf)->mf_lower;				\
+		*(mask) = 1 << ((flag) - 'a');				\
+	} else {							\
+		warnx("%c: unknown flag", (flag));			\
+		_rv = 1;						\
+	}								\
+	_rv;								\
+})
+
 struct message {
 	char			 me_path[PATH_MAX];	/* full path */
 	char			 me_name[NAME_MAX + 1];	/* file name */
@@ -61,8 +76,6 @@ struct header_slice {
 
 static int		 message_flags_parse(struct message_flags *,
     const char *);
-static int		 message_flags_resolve(struct message_flags *, char,
-    unsigned int **, unsigned int *);
 static struct header	*message_headers_alloc(struct message *);
 static int		 message_is_content_type(const struct message *,
     const char *);
@@ -124,11 +137,10 @@ err:
 int
 message_flags_isset(const struct message_flags *mf, char flag)
 {
-	unsigned int *flags;
+	const unsigned int *flags;
 	unsigned int mask;
 
-	if (message_flags_resolve((struct message_flags *)mf, flag, &flags,
-	    &mask))
+	if (message_flags_resolve(mf, flag, &flags, &mask))
 		return 0;
 	if (*flags & mask)
 		return 1;
@@ -401,7 +413,7 @@ message_get_body(struct message *msg)
 	return message_decode_body(msg, found);
 }
 
-char *const *
+const char *const *
 message_get_header(const struct message *msg, const char *header)
 {
 	struct header *hdr;
@@ -432,13 +444,13 @@ message_get_header(const struct message *msg, const char *header)
 			    msg->me_arena.eternal_scope, msg->me_arena.scratch);
 		}
 	}
-	return (char *const *)hdr->values;
+	return hdr->values;
 }
 
 const char *
 message_get_header1(const struct message *msg, const char *header)
 {
-	VECTOR(char *const) values;
+	VECTOR(const char *const) values;
 
 	values = message_get_header(msg, header);
 	if (values == NULL || VECTOR_EMPTY(values))
@@ -523,9 +535,9 @@ message_get_path(const struct message *msg)
 }
 
 struct message_flags *
-message_get_flags(const struct message *msg)
+message_get_flags(struct message *msg)
 {
-	return (struct message_flags *)&msg->me_mflags;
+	return &msg->me_mflags;
 }
 
 const char *
@@ -593,25 +605,6 @@ message_flags_parse(struct message_flags *mf, const char *path)
 	}
 
 	return 0;
-}
-
-static int
-message_flags_resolve(struct message_flags *mf, char flag,
-    unsigned int **flags, unsigned int *mask)
-{
-	if (isupper((unsigned char)flag)) {
-		*flags = &mf->mf_upper;
-		*mask = 1 << (flag - 'A');
-		return 0;
-	}
-	if (islower((unsigned char)flag)) {
-		*flags = &mf->mf_lower;
-		*mask = 1 << (flag - 'a');
-		return 0;
-	}
-
-	warnx("%c: unknown flag", flag);
-	return 1;
 }
 
 static struct header *

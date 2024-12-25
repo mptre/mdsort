@@ -200,7 +200,7 @@ matches_exec(const struct match_list *ml, struct maildir *src,
 					break;
 				}
 			}
-			error = exec((char *const *)mh->mh_exec, fd);
+			error = exec(mh->mh_exec, fd);
 			if (fd != -1)
 				close(fd);
 			if (error > 0) {
@@ -353,7 +353,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 	}
 
 	case EXPR_TYPE_LABEL: {
-		VECTOR(char *const) labels;
+		VECTOR(const char *const) labels;
 		struct buffer *bf;
 		const struct string *str;
 		const char *buf, *label;

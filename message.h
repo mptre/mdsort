@@ -21,12 +21,12 @@ int	message_write(struct message *, int);
 
 int			 message_get_fd(struct message *, int);
 const char		*message_get_body(struct message *);
-char *const		*message_get_header(const struct message *,
+const char *const	*message_get_header(const struct message *,
     const char *);
 const char		*message_get_header1(const struct message *,
     const char *);
 const char		*message_get_path(const struct message *);
-struct message_flags	*message_get_flags(const struct message *);
+struct message_flags	*message_get_flags(struct message *);
 const char		*message_get_name(const struct message *);
 
 struct message	**message_get_attachments(struct message *);

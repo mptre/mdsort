@@ -51,7 +51,7 @@ static int		 maildir_rename(const struct maildir *,
 
 static int	isfile(int, const char *);
 static int	msgflags(const struct maildir *, const struct maildir *,
-    const struct message *, char *, size_t);
+    struct message *, char *, size_t);
 static int	parsesubdir(const char *, enum subdir *);
 
 /*
@@ -566,7 +566,7 @@ isfile(int dirfd, const char *path)
 
 static int
 msgflags(const struct maildir *src, const struct maildir *dst,
-    const struct message *msg, char *buf, size_t bufsiz)
+    struct message *msg, char *buf, size_t bufsiz)
 {
 	struct message_flags flags = *message_get_flags(msg);
 
