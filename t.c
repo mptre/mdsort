@@ -17,14 +17,14 @@ struct test_context {
 
 #define test_base64_decode(str, exp)					\
 	error |= test_base64_decode0(&c, (str), (exp), "base64_decode", __LINE__);\
-	if (xflag && error) goto out;
+	if (xflag && error) goto out
 static int	test_base64_decode0(struct test_context *, const char *,
     const char *, const char *,
     int);
 
 #define test_rfc2047_decode(str, exp)					\
 	error |= test_rfc2047_decode0(&c, (str), (exp), "rfc2047_decode", __LINE__);\
-	if (xflag && error) goto out;
+	if (xflag && error) goto out
 static int	test_rfc2047_decode0(struct test_context *, const char *,
     const char *, const char *,
     int);
