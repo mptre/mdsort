@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+int	log_level = 0;
+
 void
 logit(const char *fmt, ...)
 {

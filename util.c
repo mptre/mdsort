@@ -12,8 +12,6 @@
 
 #include "libks/compiler.h"
 
-int	log_level = 0;
-
 /*
  * Execute external command. If fdin is equal to -1, /dev/null will be used as
  * standard input. Returns one of the following:
