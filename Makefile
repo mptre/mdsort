@@ -19,6 +19,7 @@ SRCS+=	decode.c
 SRCS+=	environment.c
 SRCS+=	expr.c
 SRCS+=	fault.c
+SRCS+=	fs.c
 SRCS+=	log.c
 SRCS+=	macro.c
 SRCS+=	maildir.c
@@ -26,7 +27,6 @@ SRCS+=	match.c
 SRCS+=	message.c
 SRCS+=	parse.c
 SRCS+=	string-list.c
-SRCS+=	tmp.c
 SRCS+=	util.c
 SRCS+=	vector.c
 

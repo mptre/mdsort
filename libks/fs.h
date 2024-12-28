@@ -14,11 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef LIBKS_TMP_H
-#define LIBKS_TMP_H
+#ifndef LIBKS_FS_H
+#define LIBKS_FS_H
 
 #include <stddef.h>	/* size_t */
 
-int	KS_tmpfd(const char *, size_t, char *, size_t);
+int	KS_fs_replace(const char *, const char *, size_t);
+int	KS_fs_tmpfd(const char *, size_t, char *, size_t);
 
-#endif /* !LIBKS_TMP_H */
+#endif /* !LIBKS_FS_H */

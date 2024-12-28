@@ -16,7 +16,11 @@
 
 #include "libks/arena-buffer.h"
 
+#include <sys/stat.h>
+
 #include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "libks/arena.h"
 #include "libks/buffer.h"
@@ -26,27 +30,58 @@ static void	*callback_alloc(size_t, void *);
 static void	*callback_realloc(void *, size_t, size_t, void *);
 static void	 callback_free(void *, size_t, void *);
 
-struct buffer *
-arena_buffer_alloc(struct arena_scope *s, size_t init_size)
+static struct buffer_callbacks *
+init_callbacks(struct buffer_callbacks *callbacks, struct arena_scope *s)
 {
-	return buffer_alloc_impl(init_size, &(struct buffer_callbacks){
+	*callbacks = (struct buffer_callbacks){
 	    .alloc	= callback_alloc,
 	    .realloc	= callback_realloc,
 	    .free	= callback_free,
 	    .arg	= s,
-	});
+	};
+	return callbacks;
+}
+
+struct buffer *
+arena_buffer_alloc(struct arena_scope *s, size_t init_size)
+{
+	struct buffer_callbacks callbacks;
+
+	return buffer_alloc_impl(init_size, 1, init_callbacks(&callbacks, s));
+}
+
+static int
+estimate_size(int fd, size_t *size)
+{
+	struct stat sb;
+
+	if (fstat(fd, &sb) == -1 || !S_ISREG(sb.st_mode) || sb.st_size <= 0)
+		return 0;
+	*size = (size_t)sb.st_size;
+	return 1;
 }
 
 struct buffer *
 arena_buffer_read(struct arena_scope *s, const char *path)
 {
+	struct buffer_callbacks callbacks;
 	struct buffer *bf;
+	size_t init_size = 1 << 10;
+	int overshoot = 1;
+	int errno_save, error, fd;
 
-	bf = arena_buffer_alloc(s, 1 << 13);
-	if (buffer_read_impl(bf, path)) {
-		int errno_save;
+	fd = open(path, O_RDONLY | O_CLOEXEC);
+	if (fd == -1)
+		return NULL;
 
-		errno_save = errno;
+	if (estimate_size(fd, &init_size))
+		overshoot = 0;
+	bf = buffer_alloc_impl(init_size, overshoot,
+	    init_callbacks(&callbacks, s));
+	error = buffer_read_fd_impl(bf, fd);
+	errno_save = errno;
+	close(fd);
+	if (error) {
 		buffer_free(bf);
 		errno = errno_save;
 		return NULL;

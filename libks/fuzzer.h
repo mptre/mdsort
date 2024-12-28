@@ -21,8 +21,8 @@
 #include <stdint.h>
 
 #include "libks/buffer.h"
+#include "libks/fs.h"
 #include "libks/section.h"
-#include "libks/tmp.h"
 
 #if !defined(FUZZER_AFL) && !defined(FUZZER_LLVM)
 #  define FUZZER_AFL
@@ -56,14 +56,14 @@ union fuzzer_callback {
 extern const struct fuzzer_target fuzzer_target;
 
 #define FUZZER_INIT(func)						\
-	__attribute__((used))						\
-	SECTION(fz_init)						\
-	union fuzzer_callback _fuzzer_init_impl = {.init = (func)}	\
+	static union fuzzer_callback					\
+	__attribute__((used)) SECTION(fz_init)				\
+	_fuzzer_init_impl = {.init = (func)}
 
 #define FUZZER_TEARDOWN(func)						\
-	__attribute__((used))						\
-	SECTION(fz_teardown)						\
-	union fuzzer_callback _fuzzer_teardown_impl = {.teardown = (func)}\
+	static union fuzzer_callback					\
+	__attribute__((used)) SECTION(fz_teardown)			\
+	_fuzzer_teardown_impl = {.teardown = (func)}
 
 #define FUZZER_TARGET_BUFFER(func)					\
 	const struct fuzzer_target fuzzer_target = {			\
@@ -78,9 +78,9 @@ extern const struct fuzzer_target fuzzer_target;
 	}
 
 #define FUZZER_SECTION(type)						\
-	__attribute__((used))						\
-	SECTION(fz_ ## type)						\
-	union fuzzer_callback _fuzzer_ ## type ## _default = {0}	\
+	static union fuzzer_callback					\
+	__attribute__((used)) SECTION(fz_ ## type)			\
+	_fuzzer_ ## type ## _default = {0}
 
 /*
  * Since init and teardown callbacks are optional, ensure respective section is
@@ -170,7 +170,7 @@ LLVMFuzzerTestOneInput(const uint8_t *buf, size_t buflen)
 		char path[PATH_MAX];
 		int fd;
 
-		fd = KS_tmpfd((const char *)buf, buflen, path, sizeof(path));
+		fd = KS_fs_tmpfd((const char *)buf, buflen, path, sizeof(path));
 		if (fd == -1)
 			__builtin_trap();
 		fuzzer_target.file_cb(path, fuzzer_llvm_userdata);

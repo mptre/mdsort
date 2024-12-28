@@ -27,6 +27,7 @@ enum vector_type {
 
 struct vector_public {
 	size_t			len;
+	size_t			stride;
 	enum vector_type	type;
 };
 
@@ -39,7 +40,8 @@ struct vector_callbacks {
 
 #define VECTOR(type) type *
 
-#define VECTOR_INIT(vc) vector_init((void **)&(vc), sizeof(*(vc)))
+#define VECTOR_INIT(vc) \
+	vector_init((void **)&(vc), sizeof(__typeof__(*(vc))))
 int	vector_init(void **, size_t);
 int	vector_init_impl(enum vector_type, void **, size_t,
     const struct vector_callbacks *);
@@ -88,20 +90,25 @@ size_t	vector_first(void *);
 size_t	vector_last(void *);
 
 #define VECTOR_LENGTH(vc) vector_length((const void *)(vc))
-
 static inline size_t
 vector_length(const void *vc)
 {
 	const struct vector_public *vp = vc;
-
 	return vp[-1].len;
+}
+
+#define VECTOR_STRIDE(vc) vector_stride((const void *)(vc))
+static inline size_t
+vector_stride(const void *vc)
+{
+	const struct vector_public *vp = vc;
+	return vp[-1].stride;
 }
 
 static inline enum vector_type
 vector_type(const void *vc)
 {
 	const struct vector_public *vp = vc;
-
 	return vp[-1].type;
 }
 

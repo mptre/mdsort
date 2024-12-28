@@ -15,7 +15,7 @@
 #include "libks/arena-buffer.h"
 #include "libks/arena.h"
 #include "libks/buffer.h"
-#include "libks/tmp.h"
+#include "libks/fs.h"
 #include "libks/vector.h"
 
 #include "decode.h"
@@ -355,11 +355,11 @@ message_get_fd(struct message *msg, int skipheaders)
 			return -1;
 		len = strlen(body);
 
-		fd = KS_tmpfd(body, len, path, sizeof(path));
+		fd = KS_fs_tmpfd(body, len, path, sizeof(path));
 		if (fd == -1)
 			return -1;
 	} else if (msg->me_flags & MESSAGE_FLAG_ATTACHMENT) {
-		fd = KS_tmpfd(NULL, 0, path, sizeof(path));
+		fd = KS_fs_tmpfd(NULL, 0, path, sizeof(path));
 		if (fd == -1)
 			return -1;
 		if (message_write(msg, fd)) {
