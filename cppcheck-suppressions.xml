@@ -27,6 +27,16 @@
   <!-- expr.c -->
   <suppress>
     <fileName>expr.c</fileName>
+    <id>staticFunction</id>
+    <symbolName>expr_set_pattern</symbolName>
+  </suppress>
+  <suppress>
+    <fileName>expr.c</fileName>
+    <id>staticFunction</id>
+    <symbolName>expr_set_strings</symbolName>
+  </suppress>
+  <suppress>
+    <fileName>expr.c</fileName>
     <id>unusedFunction</id>
     <symbolName>expr_alloc</symbolName>
   </suppress>
@@ -63,6 +73,11 @@
   </suppress>
 
   <!-- macro.c -->
+  <suppress>
+    <fileName>macro.c</fileName>
+    <id>staticFunction</id>
+    <symbolName>macro_context</symbolName>
+  </suppress>
   <suppress>
     <fileName>macro.c</fileName>
     <id>unusedFunction</id>
