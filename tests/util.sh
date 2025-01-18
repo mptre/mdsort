@@ -379,3 +379,5 @@ esac
 NMSG=0
 
 export LC_ALL=C
+
+[ -z "${VALGRINDRC:-}" ] || export "VALGRIND_OPTS=$(xargs <"${VALGRINDRC}")"

@@ -266,6 +266,7 @@ test: ${PROG_mdsort} test-${PROG_test}
 	${MAKE} -C ${.CURDIR}/tests \
 		"COREDUMP=${.CURDIR}" \
 		"MDSORT=${.OBJDIR}/${PROG_mdsort}" \
+		"VALGRINDRC=${.CURDIR}/.valgrindrc" \
 		"TESTFLAGS=${TESTFLAGS}"
 .PHONY: test
 

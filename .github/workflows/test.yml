@@ -97,7 +97,6 @@ jobs:
           CPPFLAGS: -DDIAGNOSTIC
           EXEC: valgrind
           TESTFLAGS: -Tfdleak -Tmemleak
-          VALGRIND_OPTS: --quiet --error-exitcode=1 --leak-check=full --errors-for-leak-kinds=all --show-leak-kinds=all
         run: |
           ./configure --pedantic
           make -j`nproc` test
