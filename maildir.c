@@ -477,6 +477,13 @@ out:
 		warn("close");
 		error = 1;
 	}
+
+	/*
+	 * Rewind ensuring the newly written file while be observed during
+	 * maildir_walk().
+	 */
+	rewinddir(md->md_dir);
+
 	return error;
 }
 
