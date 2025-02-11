@@ -148,6 +148,37 @@ CPPCHECKFLAGS+=	--max-configs=2
 CPPCHECKFLAGS+=	--suppress-xml=cppcheck-suppressions.xml
 CPPCHECKFLAGS+=	${CPPFLAGS}
 
+IWYU+=	conf.c
+IWYU+=	conf.h
+IWYU+=	date-time.c
+IWYU+=	date-time.h
+IWYU+=	decode.c
+IWYU+=	decode.h
+IWYU+=	environment.c
+IWYU+=	environment.h
+IWYU+=	expr.c
+IWYU+=	expr.h
+IWYU+=	fault.c
+IWYU+=	fault.h
+IWYU+=	fuzz-config.c
+IWYU+=	fuzz-message.c
+IWYU+=	log.c
+IWYU+=	log.h
+IWYU+=	macro.c
+IWYU+=	macro.h
+IWYU+=	maildir.c
+IWYU+=	maildir.h
+IWYU+=	match.c
+IWYU+=	match.h
+IWYU+=	mdsort.c
+IWYU+=	message.c
+IWYU+=	message.h
+IWYU+=	string-list.c
+IWYU+=	string-list.h
+IWYU+=	t.c
+IWYU+=	util.c
+IWYU+=	util.h
+
 IWYUFLAGS+=	-DDIAGNOSTIC
 IWYUFLAGS+=	-d config.h
 IWYUFLAGS+=	${CPPFLAGS}
@@ -255,7 +286,7 @@ lint-cppcheck:
 .PHONY: lint-cppcheck
 
 lint-include-what-you-use:
-	cd ${.CURDIR} && iwyu-filter ${IWYUFLAGS} -- ${CPPCHECK}
+	cd ${.CURDIR} && iwyu-filter ${IWYUFLAGS} -- ${IWYU}
 .PHONY: lint-include-what-you-use
 
 lint-shellcheck:

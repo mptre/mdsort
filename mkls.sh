@@ -5,6 +5,7 @@ KNFMT		!(compat-*|parse).c !(config).h \
 CLANGTIDY	!(compat-*|parse).c !(config).h \
 		compat-?(arc4random|pledge).c -- \
 CPPCHECK	!(compat-*|parse).c compat-?(arc4random|pledge).c -- \
+IWYU		!(compat-*|parse).c !(config).h -- \
 SHLINT		configure tests/!(t).sh
 
 cd tests
