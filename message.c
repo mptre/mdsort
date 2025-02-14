@@ -24,12 +24,14 @@
 #include "util.h"
 
 #define message_flags_resolve(mf, flag, flags, mask) do {		\
-	if (isupper((unsigned char)(flag))) {				\
+	if ((flag) >= 'A' && (flag) <= 'Z') {				\
 		*(flags) = &(mf)->mf_upper;				\
 		*(mask) = 1 << ((flag) - 'A');				\
-	} else {							\
+	} else if ((flag) >= 'a' && (flag) <= 'z') {			\
 		*(flags) = &(mf)->mf_lower;				\
 		*(mask) = 1 << ((flag) - 'a');				\
+	} else {							\
+		__builtin_unreachable();				\
 	}								\
 	/* Suppress cppcheck unreadVariable false positive. */		\
 	(void)(flags);							\
