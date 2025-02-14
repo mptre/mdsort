@@ -394,7 +394,7 @@ match_interpolate(struct match *mh, const struct macro_list *macros,
 
 		/* Make room for NULL-terminator. */
 		len = strings_len(mh->mh_expr->ex_strings) + 1;
-		mh->mh_exec = arena_calloc(eternal_scope, len,
+		mh->mh_exec = (const char **)arena_calloc(eternal_scope, len,
 		    sizeof(*mh->mh_exec));
 		mh->mh_nexec = len;
 		LIST_FOREACH(str, mh->mh_expr->ex_strings) {
