@@ -143,12 +143,18 @@ is_arena_trace_enabled(const struct arena *a)
 	return a->trace.fd != -1;
 }
 
+#if defined(__x86_64__)
+#define REG_BP "rbp"
+#elif defined(__i386__)
+#define REG_BP "ebp"
+#endif
+
 static void
 read_stack_trace(uintptr_t *stack_trace, uint32_t stack_trace_length)
 {
-#if defined(__x86_64__)
+#if defined(__x86_64__) || defined(__i386__)
 	void **rbp;
-	__asm__ volatile ("mov %%rbp, %0" : "=r" (rbp));
+	__asm__ volatile ("mov %%" REG_BP ", %0" : "=r" (rbp));
 
 	for (uint32_t i = 0; i < stack_trace_length && rbp != 0; i++) {
 		stack_trace[i] = (uintptr_t)rbp[1];
