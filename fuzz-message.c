@@ -18,8 +18,8 @@ init(int UNUSED(argc), char **UNUSED(argv))
 {
 	static struct test_context c;
 
-	c.arena.eternal = arena_alloc();
-	c.arena.scratch = arena_alloc();
+	c.arena.eternal = arena_alloc("eternal");
+	c.arena.scratch = arena_alloc("scratch");
 	return &c;
 }
 FUZZER_INIT(init);

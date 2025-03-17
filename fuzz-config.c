@@ -18,7 +18,7 @@ init(int UNUSED(argc), char **UNUSED(argv))
 	static struct test_context c;
 
 	environment_init(&c.env);
-	c.scratch = arena_alloc();
+	c.scratch = arena_alloc("scratch");
 	return &c;
 }
 FUZZER_INIT(init);

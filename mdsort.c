@@ -73,9 +73,9 @@ main(int argc, char *argv[])
 
 	setlocale(LC_CTYPE, "");
 
-	eternal = arena_alloc();
+	eternal = arena_alloc("eternal");
 	arena_scope(eternal, eternal_scope);
-	scratch = arena_alloc();
+	scratch = arena_alloc("scratch");
 
 	FAULT_INIT(&eternal_scope);
 	config_list_init(&cl, &eternal_scope);

@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	c.arena.scratch = arena_alloc();
+	c.arena.scratch = arena_alloc("scratch");
 
 	test_base64_decode("", "");
 	test_base64_decode("Zg==", "f");
