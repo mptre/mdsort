@@ -479,7 +479,7 @@ out:
 	}
 
 	/*
-	 * Rewind ensuring the newly written file while be observed during
+	 * Rewind ensuring the newly written file to be observed during
 	 * maildir_walk().
 	 */
 	rewinddir(md->md_dir);
