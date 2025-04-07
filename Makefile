@@ -212,6 +212,7 @@ SHLINT+=	tests/match-header-qp.sh
 SHLINT+=	tests/match-header.sh
 SHLINT+=	tests/match-isdirectory.sh
 SHLINT+=	tests/match-logical.sh
+SHLINT+=	tests/match-neg.sh
 SHLINT+=	tests/match-new.sh
 SHLINT+=	tests/match-old.sh
 SHLINT+=	tests/stdin.sh

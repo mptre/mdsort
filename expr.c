@@ -806,17 +806,28 @@ expr_eval_move(struct expr *ex, struct expr_eval_arg *ea)
 static int
 expr_eval_neg(struct expr *ex, struct expr_eval_arg *ea)
 {
+	struct match *mh;
+
 	assert(ex->ex_rhs == NULL);
+
+	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
+	if (matches_append(ea->ea_ml, mh))
+		return EXPR_ERROR;
 
 	switch (expr_eval(ex->ex_lhs, ea)) {
 	case EXPR_ERROR:
 		return EXPR_ERROR;
+
 	case EXPR_NOMATCH:
+		LIST_REMOVE(ea->ea_ml, mh);
+		match_free(mh);
 		return EXPR_MATCH;
 	}
 
 	/* No match, invalidate match below current expression. */
-	matches_clear(ea->ea_ml);
+	matches_remove_until(ea->ea_ml, mh);
+	LIST_REMOVE(ea->ea_ml, mh);
+	match_free(mh);
 	return EXPR_NOMATCH;
 }
 

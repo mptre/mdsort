@@ -26,6 +26,7 @@ TESTS+=	match-header-qp.sh
 TESTS+=	match-header.sh
 TESTS+=	match-isdirectory.sh
 TESTS+=	match-logical.sh
+TESTS+=	match-neg.sh
 TESTS+=	match-new.sh
 TESTS+=	match-old.sh
 TESTS+=	stdin.sh

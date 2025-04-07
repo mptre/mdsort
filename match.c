@@ -308,6 +308,17 @@ matches_remove(struct match_list *ml, int type)
 	return n;
 }
 
+void
+matches_remove_until(struct match_list *ml, const struct match *stop)
+{
+	struct match *mh;
+
+	while ((mh = LIST_LAST(ml)) != NULL && mh != stop) {
+		LIST_REMOVE(ml, mh);
+		match_free(mh);
+	}
+}
+
 struct match *
 match_alloc(struct expr *ex, struct message *msg, struct arena_scope *s)
 {
