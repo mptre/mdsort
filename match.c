@@ -288,7 +288,7 @@ matches_find(struct match_list *ml, int type)
  * Returns the number of actions left in the match list.
  */
 int
-matches_remove(struct match_list *ml, int type)
+matches_remove_by_type(struct match_list *ml, int type)
 {
 	struct match *mh, *tmp;
 	enum expr_type expr_type = (enum expr_type)type;

@@ -58,6 +58,6 @@ void		 match_free(const struct match *);
 int		 match_interpolate(struct match *, const struct macro_list *,
     struct arena_scope *, struct arena *);
 struct match	*matches_find(struct match_list *, int);
-int		 matches_remove(struct match_list *, int);
+int		 matches_remove_by_type(struct match_list *, int);
 void		 matches_remove_until(struct match_list *,
     const struct match *);

@@ -544,7 +544,7 @@ expr_eval_block(struct expr *ex, struct expr_eval_arg *ea)
 		return EXPR_ERROR;
 
 	if (matches_find(ea->ea_ml, EXPR_TYPE_BREAK) != NULL) {
-		matches_remove(ea->ea_ml, EXPR_TYPE_BREAK);
+		matches_remove_by_type(ea->ea_ml, EXPR_TYPE_BREAK);
 		return EXPR_NOMATCH; /* break, continue evaluation */
 	}
 
@@ -554,7 +554,7 @@ expr_eval_block(struct expr *ex, struct expr_eval_arg *ea)
 		 * any actions left, we got a pass followed by no effective
 		 * action. Therefore treat it as a no match.
 		 */
-		if (matches_remove(ea->ea_ml, EXPR_TYPE_PASS) == 0)
+		if (matches_remove_by_type(ea->ea_ml, EXPR_TYPE_PASS) == 0)
 			return EXPR_NOMATCH;
 		return EXPR_MATCH;
 	}
