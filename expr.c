@@ -611,8 +611,7 @@ expr_eval_command(struct expr *ex, struct expr_eval_arg *ea)
 		ev = EXPR_MATCH;
 	}
 
-	LIST_REMOVE(ea->ea_ml, mh);
-	match_free(mh);
+	matches_remove(ea->ea_ml, mh);
 
 	return ev;
 }
@@ -819,15 +818,13 @@ expr_eval_neg(struct expr *ex, struct expr_eval_arg *ea)
 		return EXPR_ERROR;
 
 	case EXPR_NOMATCH:
-		LIST_REMOVE(ea->ea_ml, mh);
-		match_free(mh);
+		matches_remove(ea->ea_ml, mh);
 		return EXPR_MATCH;
 	}
 
 	/* No match, invalidate match below current expression. */
 	matches_remove_until(ea->ea_ml, mh);
-	LIST_REMOVE(ea->ea_ml, mh);
-	match_free(mh);
+	matches_remove(ea->ea_ml, mh);
 	return EXPR_NOMATCH;
 }
 
@@ -927,9 +924,7 @@ expr_eval_stat(struct expr *ex, struct expr_eval_arg *ea)
 	}
 
 out:
-	LIST_REMOVE(ea->ea_ml, mh);
-	match_free(mh);
-
+	matches_remove(ea->ea_ml, mh);
 	return ev;
 }
 

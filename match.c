@@ -93,11 +93,8 @@ matches_clear(struct match_list *ml)
 {
 	struct match *mh;
 
-	while ((mh = LIST_FIRST(ml)) != NULL) {
-		/* NOLINTNEXTLINE(clang-analyzer-core.NullDereference) */
-		LIST_REMOVE(ml, mh);
-		match_free(mh);
-	}
+	while ((mh = LIST_FIRST(ml)) != NULL)
+		matches_remove(ml, mh);
 }
 
 int
@@ -283,6 +280,14 @@ matches_find(struct match_list *ml, int type)
 	return NULL;
 }
 
+void
+matches_remove(struct match_list *ml, struct match *mh)
+{
+	/* NOLINTNEXTLINE(clang-analyzer-core.NullDereference) */
+	LIST_REMOVE(ml, mh);
+	match_free(mh);
+}
+
 /*
  * Remove all expressions with the given type from the match list.
  * Returns the number of actions left in the match list.
@@ -297,12 +302,10 @@ matches_remove_by_type(struct match_list *ml, int type)
 	LIST_FOREACH_SAFE(mh, ml, tmp) {
 		const struct expr *ex = mh->mh_expr;
 
-		if (ex->ex_type == expr_type) {
-			LIST_REMOVE(ml, mh);
-			match_free(mh);
-		} else if (ex->ex_flags & EXPR_FLAG_ACTION) {
+		if (ex->ex_type == expr_type)
+			matches_remove(ml, mh);
+		else if (ex->ex_flags & EXPR_FLAG_ACTION)
 			n++;
-		}
 	}
 
 	return n;
@@ -313,10 +316,8 @@ matches_remove_until(struct match_list *ml, const struct match *stop)
 {
 	struct match *mh;
 
-	while ((mh = LIST_LAST(ml)) != NULL && mh != stop) {
-		LIST_REMOVE(ml, mh);
-		match_free(mh);
-	}
+	while ((mh = LIST_LAST(ml)) != NULL && mh != stop)
+		matches_remove(ml, mh);
 }
 
 struct match *
@@ -472,8 +473,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 	 */
 	dup = LIST_LAST(ml);
 	if (dup != NULL && dup->mh_expr->ex_type == ex->ex_type) {
-		LIST_REMOVE(ml, dup);
-		match_free(dup);
+		matches_remove(ml, dup);
 		return;
 	}
 
@@ -496,8 +496,7 @@ matches_merge(struct match_list *ml, struct match *mh)
 		    sizeof(mh->mh_maildir));
 	}
 
-	LIST_REMOVE(ml, dup);
-	match_free(dup);
+	matches_remove(ml, dup);
 }
 
 static const char *
