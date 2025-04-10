@@ -285,7 +285,6 @@ matches_remove(struct match_list *ml, struct match *mh)
 {
 	/* NOLINTNEXTLINE(clang-analyzer-core.NullDereference) */
 	LIST_REMOVE(ml, mh);
-	match_free(mh);
 }
 
 /*
@@ -329,14 +328,6 @@ match_alloc(struct expr *ex, struct message *msg, struct arena_scope *s)
 	mh->mh_expr = ex;
 	mh->mh_msg = msg;
 	return mh;
-}
-
-void
-match_free(const struct match *mh)
-{
-	if (mh == NULL)
-		return;
-	arena_poison(mh, sizeof(*mh));
 }
 
 int
