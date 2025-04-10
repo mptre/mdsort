@@ -73,6 +73,7 @@ struct header_slice {
 	} key, val;
 };
 
+static void		 message_free(void *);
 static int		 message_flags_parse(struct message_flags *,
     const char *);
 static struct header	*message_headers_alloc(struct message *);
@@ -186,12 +187,6 @@ message_flags_set(struct message_flags *mf, char flag)
 	return 0;
 }
 
-/*
- * Parse the message located at path.
- *
- * The caller is responsible for freeing the returned memory using
- * message_free().
- */
 struct message *
 message_parse(const char *dir, int dirfd, const char *path,
     struct arena_scope *eternal_scope, struct arena *scratch)
@@ -222,34 +217,30 @@ message_parse(const char *dir, int dirfd, const char *path,
 	msg->me_buf = buf;
 	if (VECTOR_INIT(msg->me_headers))
 		err(1, NULL);
+	arena_cleanup(eternal_scope, message_free, msg);
 
 	if (pathjoin(msg->me_path, sizeof(msg->me_path), dir, path) == NULL) {
 		warnc(ENAMETOOLONG, "%s", __func__);
-		goto err;
+		return NULL;
 	}
 	siz = sizeof(msg->me_name);
 	if (strlcpy(msg->me_name, path, siz) >= siz) {
 		warnc(ENAMETOOLONG, "%s", __func__);
-		goto err;
+		return NULL;
 	}
 
 	msg->me_body = message_parse_headers(msg);
 
 	if (message_flags_parse(&msg->me_mflags, msg->me_path))
-		goto err;
+		return NULL;
 
 	return msg;
-
-err:
-	message_free(msg);
-	return NULL;
 }
 
-void
-message_free(struct message *msg)
+static void
+message_free(void *arg)
 {
-	if (msg == NULL)
-		return;
+	struct message *msg = arg;
 
 	if (msg->me_attachments != NULL) {
 		while (!VECTOR_EMPTY(msg->me_attachments)) {

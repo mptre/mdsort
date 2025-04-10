@@ -15,7 +15,6 @@ int	 message_flags_set(struct message_flags *, char);
 
 struct message	*message_parse(const char *, int, const char *,
     struct arena_scope *, struct arena *);
-void		 message_free(struct message *);
 
 int	message_write(struct message *, int);
 

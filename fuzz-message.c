@@ -35,7 +35,6 @@ target(const char *path, void *userdata)
 	msg = message_parse("/dev", -1, path, &eternal_scope, c->arena.scratch);
 	if (msg != NULL)
 		message_get_body(msg);
-	message_free(msg);
 }
 FUZZER_TARGET_FILE(target);
 

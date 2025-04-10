@@ -395,6 +395,5 @@ handle_message(struct expr *expr, struct maildir *md,
 
 out:
 	matches_clear(&matches);
-	message_free(msg);
 	return error;
 }
