@@ -24,14 +24,6 @@ struct macro_list {
 	VECTOR(struct macro)	ml_list;
 };
 
-static void
-macros_free(void *arg)
-{
-	struct macro_list *macros = arg;
-
-	VECTOR_FREE(macros->ml_list);
-}
-
 struct macro_list *
 macros_alloc(unsigned int ctx, struct arena_scope *s)
 {
@@ -39,9 +31,7 @@ macros_alloc(unsigned int ctx, struct arena_scope *s)
 
 	macros = arena_calloc(s, 1, sizeof(*macros));
 	macros->ml_ctx = ctx;
-	if (VECTOR_INIT(macros->ml_list))
-		err(1, NULL);
-	arena_cleanup(s, macros_free, macros);
+	ARENA_VECTOR_INIT(s, macros->ml_list, 4);
 	return macros;
 }
 
@@ -62,9 +52,7 @@ macros_insert(struct macro_list *macros, const char *name, const char *value,
 		return MACRO_ERR_EXIST;
 	}
 
-	mc = VECTOR_CALLOC(macros->ml_list);
-	if (mc == NULL)
-		err(1, NULL);
+	mc = ARENA_VECTOR_CALLOC(macros->ml_list);
 	mc->mc_name = name;
 	mc->mc_value = value;
 	mc->mc_refs = 0;
@@ -112,15 +100,10 @@ macros_unused(const struct macro_list *macros, struct arena_scope *s)
 
 	for (i = 0; i < n; i++) {
 		struct macro *mc = &macros->ml_list[i];
-		struct macro **dst;
 
 		if (mc->mc_refs > 0)
 			continue;
-
-		dst = VECTOR_ALLOC(unused);
-		if (dst == NULL)
-			err(1, NULL);
-		*dst = mc;
+		*ARENA_VECTOR_ALLOC(unused) = mc;
 	}
 	return unused;
 }
