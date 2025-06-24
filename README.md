@@ -90,7 +90,7 @@ $ make install
 
 ## License
 
-Copyright (c) 2018-2024 Anton Lindqvist.
+Copyright (c) 2018-2025 Anton Lindqvist.
 Distributed under the MIT license.
 
 [mdsort]: https://www.basename.se/mdsort/
