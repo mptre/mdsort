@@ -238,7 +238,7 @@ if [ -s "$INCLUDE" ] && [ -s "$EXCLUDE" ]; then
 	_fatal "including and excluding tests is mutually exclusive"
 fi
 
-for a; do
-	NAME="${a##*/}"
-	. "$a"
+for _a; do
+	NAME="${_a##*/}"
+	. "$_a"
 done
