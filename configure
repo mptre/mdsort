@@ -357,19 +357,19 @@ exec 1>config.mk
 # Use echo to normalize whitespace.
 # shellcheck disable=SC1083,SC2086,SC2116
 cat <<EOF
-CC=		$(echo ${CC})
-CFLAGS=		$(rmdup ${CFLAGS})
-CPPFLAGS=	$(rmdup ${CPPFLAGS} -I\${.CURDIR})
-DEBUG=		$(rmdup ${DEBUG})
-LDFLAGS=	$(rmdup ${LDFLAGS})
-YACC=		$(echo ${YACC})
-YFLAGS=		$(rmdup ${YFLAGS})
+CC=			$(echo ${CC})
+CFLAGS=			$(rmdup ${CFLAGS})
+CPPFLAGS=		$(rmdup ${CPPFLAGS} -I\${.CURDIR})
+DEBUG=			$(rmdup ${DEBUG})
+LDFLAGS=		$(rmdup ${LDFLAGS})
+YACC=			$(echo ${YACC})
+YFLAGS=			$(rmdup ${YFLAGS})
 
-BINDIR?=	$(echo ${BINDIR})
-MANDIR?=	$(echo ${MANDIR})
-INSTALL?=	$(echo ${INSTALL})
-INSTALL_MAN?=	$(echo ${INSTALL_MAN})
+BINDIR?=		$(echo ${BINDIR})
+MANDIR?=		$(echo ${MANDIR})
+INSTALL?=		$(echo ${INSTALL})
+INSTALL_MAN?=		$(echo ${INSTALL_MAN})
 
 .PATH:	\${.CURDIR}/libks
-VPATH=	\${.CURDIR}/libks
+VPATH+=	\${.CURDIR}/libks
 EOF
