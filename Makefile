@@ -2,24 +2,25 @@ include ${.CURDIR}/config.mk
 
 VERSION=	11.6.0
 
-SRCS+=	arena-buffer.c
-SRCS+=	arena-vector.c
-SRCS+=	arena.c
-SRCS+=	arithmetic.c
-SRCS+=	buffer.c
 SRCS+=	compat-arc4random.c
 SRCS+=	compat-errc.c
 SRCS+=	compat-pledge.c
 SRCS+=	compat-strlcpy.c
 SRCS+=	compat-warnc.c
 SRCS+=	conf.c
-SRCS+=	consistency.c
 SRCS+=	date-time.c
 SRCS+=	decode.c
 SRCS+=	environment.c
 SRCS+=	expr.c
 SRCS+=	fault.c
-SRCS+=	fs.c
+SRCS+=	libks/arena-buffer.c
+SRCS+=	libks/arena-vector.c
+SRCS+=	libks/arena.c
+SRCS+=	libks/arithmetic.c
+SRCS+=	libks/buffer.c
+SRCS+=	libks/consistency.c
+SRCS+=	libks/fs.c
+SRCS+=	libks/vector.c
 SRCS+=	log.c
 SRCS+=	macro.c
 SRCS+=	maildir.c
@@ -28,7 +29,6 @@ SRCS+=	message.c
 SRCS+=	parse.c
 SRCS+=	string-list.c
 SRCS+=	util.c
-SRCS+=	vector.c
 
 SRCS_mdsort+=	${SRCS}
 SRCS_mdsort+=	mdsort.c
