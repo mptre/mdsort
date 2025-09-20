@@ -5,7 +5,6 @@
 #include <sys/types.h> /* ssize_t */
 
 #include <ctype.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "libks/arena-buffer.h"
