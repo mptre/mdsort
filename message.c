@@ -2,6 +2,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -880,6 +881,8 @@ parseattachments(struct message *msg, struct message *parent, int depth)
 	while (!term) {
 		size_t len;
 
+		/* Redundant, used to silence clang-tidy false positive. */
+		assert(body != NULL);
 		b = findboundary(boundary, body, &term);
 		if (b == NULL)
 			break;
