@@ -320,7 +320,7 @@ matches_remove_until(struct match_list *ml, const struct match *stop)
 }
 
 struct match *
-match_alloc(struct expr *ex, struct message *msg, struct arena_scope *s)
+match_alloc(const struct expr *ex, struct message *msg, struct arena_scope *s)
 {
 	struct match *mh;
 
