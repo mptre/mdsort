@@ -65,6 +65,13 @@
     <id>unusedFunction</id>
     <symbolName>expr_set_stat</symbolName>
   </suppress>
+  <!-- False positive, expr_match() passes non-const pointer of ex->ex_ml to
+       match_append(). -->
+  <suppress>
+    <fileName>expr.c</fileName>
+    <id>constParameterPointer</id>
+    <symbolName>ex</symbolName>
+  </suppress>
 
   <!-- libks/vector.h -->
   <suppress>
