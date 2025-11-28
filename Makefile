@@ -20,6 +20,7 @@ SRCS+=	libks/arithmetic.c
 SRCS+=	libks/buffer.c
 SRCS+=	libks/consistency.c
 SRCS+=	libks/fs.c
+SRCS+=	libks/valgrind.c
 SRCS+=	libks/vector.c
 SRCS+=	log.c
 SRCS+=	macro.c
