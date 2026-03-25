@@ -39,7 +39,8 @@ static void yyerror(const char *, ...)
 	__attribute__((__format__(printf, 1, 2)));
 static void yyerror_at_line(unsigned int, const char *, ...)
 	__attribute__((__format__(printf, 2, 3)));
-static void yyverror(const char *, va_list, unsigned int);
+static void yyverror(const char *, va_list, unsigned int)
+	__attribute__((__format__(printf, 1, 0)));
 static int yygetc(void);
 static int yylex(void);
 static int yylex1(int);
