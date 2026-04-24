@@ -272,7 +272,6 @@ if [ "${_pedantic}" -eq 1 ]; then
 	-Werror
 	-Wextra
 	-Wcast-qual
-	
 	-Wmissing-prototypes
 	-Wpedantic
 	-Wshadow
