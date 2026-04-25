@@ -1,7 +1,5 @@
 #include "message.h"
-
 #include "config.h"
-
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -12,13 +10,11 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
-
 #include "libks/arena-buffer.h"
 #include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/fs.h"
 #include "libks/vector.h"
-
 #include "decode.h"
 #include "fault.h"
 #include "log.h"

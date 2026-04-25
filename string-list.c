@@ -1,7 +1,5 @@
 #include "string-list.h"
-
 #include "config.h"
-
 #include "libks/arena.h"
 #include "libks/list.h"
 

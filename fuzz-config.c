@@ -1,9 +1,7 @@
 #include "config.h"
-
 #include "libks/arena.h"
 #include "libks/compiler.h"
 #include "libks/fuzzer.h"
-
 #include "conf.h"
 #include "environment.h"
 

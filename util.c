@@ -1,15 +1,11 @@
 #include "util.h"
-
 #include "config.h"
-
 #include <sys/wait.h>
-
 #include <err.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "libks/compiler.h"
 
 /*

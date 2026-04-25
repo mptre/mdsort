@@ -1,5 +1,4 @@
 #include <stddef.h>	/* size_t */
-
 #include "libks/list.h"
 
 struct arena_scope;

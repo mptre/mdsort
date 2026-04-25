@@ -1,6 +1,6 @@
 ---
 BasedOnStyle: OpenBSD
-IncludeBlocks: Regroup
+IncludeBlocks: Merge
 IncludeCategories:
   - Regex: '^"config\.h"'
     Priority: 1

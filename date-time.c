@@ -1,13 +1,10 @@
 #include "date-time.h"
-
 #include "config.h"
-
 #include <err.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
 #include "environment.h"
 #include "util.h"
 

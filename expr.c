@@ -1,9 +1,6 @@
 #include "expr.h"
-
 #include "config.h"
-
 #include <sys/stat.h>
-
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -15,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-
 #include "libks/arena-buffer.h"
 #include "libks/arena.h"
 #include "libks/buffer.h"
@@ -23,7 +19,6 @@
 #include "libks/consistency.h"
 #include "libks/list.h"
 #include "libks/vector.h"
-
 #include "date-time.h"
 #include "environment.h"
 #include "match.h"

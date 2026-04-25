@@ -1,9 +1,6 @@
 #include "conf.h"
-
 #include "config.h"
-
 #include "libks/arena-vector.h"
-
 #include "macro.h"
 
 void

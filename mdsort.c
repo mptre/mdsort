@@ -1,5 +1,4 @@
 #include "config.h"
-
 #include <err.h>
 #include <errno.h>
 #include <limits.h>	/* PATH_MAX */
@@ -11,11 +10,9 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-
 #include "libks/arena.h"
 #include "libks/list.h"
 #include "libks/vector.h"
-
 #include "conf.h"
 #include "environment.h"
 #include "expr.h"

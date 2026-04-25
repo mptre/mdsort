@@ -1,7 +1,5 @@
 #include "match.h"
-
 #include "config.h"
-
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -10,13 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "libks/arena-buffer.h"
 #include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/list.h"
 #include "libks/vector.h"
-
 #include "environment.h"
 #include "expr.h"
 #include "log.h"

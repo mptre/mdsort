@@ -1,13 +1,9 @@
 #include "decode.h"
-
 #include "config.h"
-
 #include <sys/types.h> /* ssize_t */
-
 #include <ctype.h>
 #include <stdint.h>
 #include <string.h>
-
 #include "libks/arena-buffer.h"
 #include "libks/arena.h"
 #include "libks/buffer.h"

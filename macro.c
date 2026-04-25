@@ -1,10 +1,7 @@
 #include "macro.h"
-
 #include "config.h"
-
 #include <err.h>
 #include <string.h>
-
 #include "libks/arena-vector.h"
 #include "libks/arena.h"
 #include "libks/vector.h"

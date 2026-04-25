@@ -1,9 +1,7 @@
 #include "config.h"
-
 #include "libks/arena.h"
 #include "libks/compiler.h"
 #include "libks/fuzzer.h"
-
 #include "message.h"
 
 struct test_context {
