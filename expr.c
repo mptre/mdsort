@@ -1087,11 +1087,11 @@ expr_regcopy(const struct expr *ex, struct match *mh, const char *str,
 		cpy = arena_strndup(s, str + off[i].rm_so, len);
 		if (ex->ex_re->flags & EXPR_PATTERN_LCASE) {
 			for (j = 0; cpy[j] != '\0'; j++)
-				cpy[j] = tolower((unsigned char)cpy[j]);
+				cpy[j] = (char)tolower((unsigned char)cpy[j]);
 		}
 		if (ex->ex_re->flags & EXPR_PATTERN_UCASE) {
 			for (j = 0; cpy[j] != '\0'; j++)
-				cpy[j] = toupper((unsigned char)cpy[j]);
+				cpy[j] = (char)toupper((unsigned char)cpy[j]);
 		}
 		mh->mh_matches[i].m_str = cpy;
 		mh->mh_matches[i].m_beg = so;

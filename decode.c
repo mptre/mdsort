@@ -5,6 +5,7 @@
 #include <sys/types.h> /* ssize_t */
 
 #include <ctype.h>
+#include <stdint.h>
 #include <string.h>
 
 #include "libks/arena-buffer.h"
@@ -21,13 +22,9 @@ static int	htoa(char, char *);
 const char *
 base64_decode(const char *str, struct arena_scope *s)
 {
-	unsigned char *dec = NULL;
-	size_t len;
-	int n;
-
-	len = strlen(str);
-	dec = arena_malloc(s, len + 1);
-	n = b64_pton(str, dec, len + 1);
+	size_t len = strlen(str);
+	uint8_t *dec = arena_malloc(s, len + 1);
+	ssize_t n = b64_pton(str, dec, len + 1);
 	if (n == -1)
 		return NULL;
 	dec[n] = '\0';
@@ -170,7 +167,7 @@ quoted_printable_decode_buffer(struct buffer *bf, const char *str, size_t len,
 			continue;
 		}
 
-		buffer_putc(bf, (hi << 4) | lo);
+		buffer_putc(bf, (char)((hi << 4) | lo));
 		i += 2;
 	}
 }
@@ -205,7 +202,8 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 			if (target) {
 				if (tarindex >= targsize)
 					return -1;
-				target[tarindex] = (pos - Base64) << 2;
+				target[tarindex] =
+				    (uint8_t)((pos - Base64) << 2);
 			}
 			state = 1;
 			break;
@@ -214,7 +212,8 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 				if (tarindex >= targsize)
 					return -1;
 				target[tarindex] |= (pos - Base64) >> 4;
-				nextbyte = ((pos - Base64) & 0x0f) << 4;
+				nextbyte =
+				    (uint8_t)(((pos - Base64) & 0x0f) << 4);
 				if (tarindex + 1 < targsize)
 					target[tarindex + 1] = nextbyte;
 				else if (nextbyte)
@@ -228,7 +227,8 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 				if (tarindex >= targsize)
 					return -1;
 				target[tarindex] |= (pos - Base64) >> 2;
-				nextbyte = ((pos - Base64) & 0x03) << 6;
+				nextbyte =
+				    (uint8_t)(((pos - Base64) & 0x03) << 6);
 				if (tarindex + 1 < targsize)
 					target[tarindex + 1] = nextbyte;
 				else if (nextbyte)

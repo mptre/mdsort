@@ -701,7 +701,7 @@ again:
 				yyerror("string too long");
 				return 0;
 			}
-			*buf++ = c;
+			*buf++ = (char)c;
 		}
 		*buf = '\0';
 		len = strlen(lexeme);
@@ -712,7 +712,7 @@ again:
 	}
 
 	if (parser_state.pflag) {
-		unsigned char delim = c;
+		unsigned char delim = (unsigned char)c;
 
 		for (;;) {
 			if (yypeek(delim))
@@ -727,7 +727,7 @@ again:
 				yyerror("pattern too long");
 				return 0;
 			}
-			*buf++ = c;
+			*buf++ = (char)c;
 		}
 		*buf = '\0';
 		yylval.pattern.string = lexeme;
@@ -785,7 +785,7 @@ again:
 				yyerror("keyword too long");
 				return 0;
 			}
-			*buf++ = c;
+			*buf++ = (char)c;
 		}
 		*buf = '\0';
 		yyungetc(c);

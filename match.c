@@ -6,6 +6,7 @@
 #include <err.h>
 #include <errno.h>
 #include <limits.h>	/* INT_MAX */
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -527,27 +528,30 @@ isbackref(const char *str, struct backref *br)
 {
 	const char *s = str;
 	char *end;
-	unsigned long val;
+	union {
+		uint64_t u64;
+		uint32_t u32;
+	} val;
 
 	if (s[0] != '\\' || !isdigit((unsigned char)s[1]))
 		return 0;
 
-	val = strtoul(&s[1], &end, 10);
-	if (val > INT_MAX)
+	val.u64 = strtoul(&s[1], &end, 10);
+	if (val.u64 > INT_MAX)
 		return -1;
 	s = end;
 
 	if (s[0] == '.') {
-		br->br_mi = val;
-		val = strtoul(&s[1], &end, 10);
-		if (val > INT_MAX)
+		br->br_mi = val.u32;
+		val.u64 = strtoul(&s[1], &end, 10);
+		if (val.u64 > INT_MAX)
 			return -1;
-		br->br_si = val;
+		br->br_si = val.u32;
 	} else {
 		if (s[0] == '\\' && s[1] == '.')
 			end++;
 		br->br_mi = 0;
-		br->br_si = val;
+		br->br_si = val.u32;
 	}
 
 	return end - str;
