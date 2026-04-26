@@ -1,3 +1,11 @@
+# 11.6.1 - YYYY-MM-DD
+
+## Bug fixes
+
+- Do not invalidate previous matches after a non-matching negate expr.
+  (6a182f436fe2)
+  (Anton Lindqvist)
+
 # 11.6.0 - 2024-09-01
 
 ## News
