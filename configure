@@ -60,6 +60,13 @@ headers() {
 	xargs printf '#include <%s>\n' <"${_tmp}"
 }
 
+is_openbsd() {
+	case "$(uname -s)" in
+	OpenBSD)	return 0;;
+	*)		return 1;;
+	esac
+}
+
 make_has_object_dir() (
 	cd "${WRKDIR}"
 	# shellcheck disable=SC2016
@@ -212,13 +219,13 @@ check_yystype() {
 
 _fuzz=''
 _pedantic=0
-_sanitize=0
+_sanitize=''
 
 while [ $# -gt 0 ]; do
 	case "$1" in
-	--fuzz)		shift; _fuzz="$1"; _sanitize=1;;
+	--fuzz)		shift; _fuzz="$1"; _sanitize="address";;
 	--pedantic)	_pedantic=1;;
-	--sanitize)	_sanitize=1;;
+	--sanitize)	shift; _sanitize="${1}";;
 	*)		;;
 	esac
 	shift
@@ -304,19 +311,26 @@ if [ "${_pedantic}" -eq 1 ]; then
 	DEBUG="-g ${DEBUG}"
 fi
 
-if [ "${_sanitize}" -eq 1 ]; then
-	_runtime="$(cc_sanitizer_runtime)"
-	{
-		cc_has_sanitizer "${_sanitize}" ${_runtime:+"${_runtime}"}
-		cc_has_sanitizer undefined ${_runtime:+"${_runtime}"}
-		cc_has_sanitizer unsigned-integer-overflow ${_runtime:+"${_runtime}"}
-		[ "${_fuzz}" = "llvm" ] && echo fuzzer
-	} >"${WRKDIR}/sanitize"
+if [ -n "${_sanitize}" ]; then
+	(
+		if is_openbsd; then
+			# Abuse CPPFLAGS honored by compile.
+			CPPFLAGS="${CPPFLAGS} -fsanitize-minimal-runtime"
+			CPPFLAGS="${CPPFLAGS} -Wl,--no-execute-only"
+		fi
+		cc_has_sanitizer "${_sanitize}"
+		cc_has_sanitizer undefined
+		cc_has_sanitizer unsigned-integer-overflow
+		{ [ "${_fuzz}" = "llvm" ] && echo fuzzer; } || :
+	) >"${WRKDIR}/sanitize"
 	if ! cmp -s /dev/null "${WRKDIR}/sanitize"; then
-		_sanitize="${_runtime}"
-		_sanitize="${_sanitize} -fsanitize=$(paste -sd , "${WRKDIR}/sanitize")"
+		_sanitize="-fsanitize=$(paste -sd , "${WRKDIR}/sanitize")"
 		_sanitize="${_sanitize} $(cc_has_option -fno-sanitize-recover=all)"
 		_sanitize="${_sanitize} $(cc_has_option -fno-omit-frame-pointer)"
+		if is_openbsd; then
+			_sanitize="${_sanitize} -fsanitize-minimal-runtime"
+			LDFLAGS="${LDFLAGS} -Wl,--no-execute-only"
+		fi
 		CFLAGS="${_sanitize} ${CFLAGS}"
 		DEBUG="${_sanitize} ${DEBUG}"
 	fi
