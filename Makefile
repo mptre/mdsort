@@ -1,6 +1,6 @@
 include ${.CURDIR}/config.mk
 
-VERSION=	11.6.1rc1
+VERSION=	11.6.1
 
 SRCS+=	compat-arc4random.c
 SRCS+=	compat-errc.c
