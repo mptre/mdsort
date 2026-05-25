@@ -14,8 +14,12 @@ Checks: |
     -clang-analyzer-unix.Malloc,
     -clang-analyzer-unix.StdCLibraryFunctions,
     -clang-analyzer-valist.Uninitialized,
+  hicpp-uppercase-literal-suffix,
+  misc-misplaced-const,
   misc-use-internal-linkage,
   performance-*,
   portability-*,
+  readability-math-missing-parentheses,
+  readability-redundant-casting,
 WarningsAsErrors: '*'
 ...
