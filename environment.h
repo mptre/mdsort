@@ -21,9 +21,9 @@ struct environment {
 	int32_t		 ev_pid;
 
 	unsigned int	 ev_options;
-#define OPTION_DRYRUN	0x00000001u
-#define OPTION_SYNTAX	0x00000002u
-#define OPTION_STDIN	0x00000004u
+#define OPTION_DRYRUN	0x00000001U
+#define OPTION_SYNTAX	0x00000002U
+#define OPTION_STDIN	0x00000004U
 };
 
 void	environment_init(struct environment *);

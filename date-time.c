@@ -174,6 +174,6 @@ tzoff(const char *str, time_t *tz)
 	if (minutes > 59)
 		return 1;
 
-	*tz = sign * (hours * 60 * 60 + minutes * 60);
+	*tz = sign * ((hours * 60 * 60) + (minutes * 60));
 	return 0;
 }

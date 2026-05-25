@@ -815,7 +815,7 @@ searchheader(const struct header *headers, size_t nmemb, const char *key,
 		size_t mi;
 		int cmp;
 
-		mi = lo + (hi - lo)/2;
+		mi = lo + ((hi - lo) / 2);
 		cmp = cmpheaderkey(&needle, headers + mi);
 		if (cmp == 0) {
 			size_t beg, end;

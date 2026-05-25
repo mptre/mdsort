@@ -7,9 +7,9 @@ struct match;
 #define EXPR_ERROR	(-1)
 
 /* expr_set_pattern() flags */
-#define EXPR_PATTERN_ICASE	0x00000001u
-#define EXPR_PATTERN_LCASE	0x00000002u
-#define EXPR_PATTERN_UCASE	0x00000004u
+#define EXPR_PATTERN_ICASE	0x00000001U
+#define EXPR_PATTERN_LCASE	0x00000002U
+#define EXPR_PATTERN_UCASE	0x00000004U
 
 enum expr_type {
 	/* blocks */
@@ -78,13 +78,13 @@ struct expr {
 	unsigned int		 ex_lno;
 	unsigned int		 ex_flags;
 /* Denotes an action. */
-#define EXPR_FLAG_ACTION	0x00000001u
+#define EXPR_FLAG_ACTION	0x00000001U
 /* Associated with a match that must be displayed during dry run. */
-#define EXPR_FLAG_INSPECT	0x00000002u
+#define EXPR_FLAG_INSPECT	0x00000002U
 /* Associated with a match that can be used during interpolation. */
-#define EXPR_FLAG_INTERPOLATE	0x00000004u
+#define EXPR_FLAG_INTERPOLATE	0x00000004U
 /* Associated with a match that requires a maildir destination path. */
-#define EXPR_FLAG_PATH		0x00000008u
+#define EXPR_FLAG_PATH		0x00000008U
 
 	int			 (*ex_eval)(struct expr *,
 	    struct expr_eval_arg *);
@@ -104,8 +104,8 @@ struct expr {
 
 		struct {
 			unsigned int	flags;
-#define EXPR_EXEC_STDIN	0x00000001u
-#define EXPR_EXEC_BODY	0x00000002u
+#define EXPR_EXEC_STDIN	0x00000001U
+#define EXPR_EXEC_BODY	0x00000002U
 		} ex_exec;
 
 		struct {
