@@ -44,6 +44,15 @@
 #  define FALLTHROUGH	do {} while (0) /* FALLTHROUGH */
 #endif
 
+#ifndef NDEBUG
+#  define FP(invariant, ...) do {				\
+	 if (!(invariant))					\
+		__builtin_unreachable();			\
+} while (0)
+#else
+#  define FP(invariant, ...) ((void)0)
+#endif
+
 #define UNSAFE_CAST(type, ptr) __extension__ ({			\
 	union {							\
 		__typeof__(ptr) src;				\

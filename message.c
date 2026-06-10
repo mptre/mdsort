@@ -13,6 +13,7 @@
 #include "libks/arena-buffer.h"
 #include "libks/arena.h"
 #include "libks/buffer.h"
+#include "libks/compiler.h"
 #include "libks/fs.h"
 #include "libks/vector.h"
 #include "decode.h"
@@ -30,8 +31,7 @@
 	} else {							\
 		__builtin_unreachable();				\
 	}								\
-	/* Suppress cppcheck unreadVariable false positive. */		\
-	(void)(flags);							\
+	FP((flags), cppcheck, unreadVariable);				\
 } while (0)
 
 struct message {
