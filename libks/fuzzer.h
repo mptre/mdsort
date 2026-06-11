@@ -17,7 +17,6 @@
 #ifndef LIBKS_FUZZER_H
 #define LIBKS_FUZZER_H
 
-#include <assert.h>
 #include <stdint.h>
 #include "libks/buffer.h"
 #include "libks/compiler.h"
@@ -84,8 +83,7 @@ fuzzer_init(int argc, char *argv[])
 {
 	union fuzzer_callback *it = NULL;
 	while (SECTION_ITERATE(it, fz_init)) {
-		/* Suppress cppcheck nullPointer false positive. */
-		assert(it != NULL);
+		FP(it != NULL, cppcheck, nullPointer);
 		if (it->init != NULL)
 			return it->init(argc, argv);
 	}
@@ -99,8 +97,7 @@ fuzzer_teardown(void *userdata)
 {
 	union fuzzer_callback *it = NULL;
 	while (SECTION_ITERATE(it, fz_teardown)) {
-		/* Suppress cppcheck nullPointer false positive. */
-		assert(it != NULL);
+		FP(it != NULL, cppcheck, nullPointer);
 		if (it->teardown != NULL)
 			it->teardown(userdata);
 	}
