@@ -46,8 +46,14 @@
 
 #ifndef NDEBUG
 #  define FP(invariant, ...) do {				\
+	/* Suppress GCC warnings about always true statements	\
+	   when suppressing unused warnings by taking the	\
+	   address of a local variable. */			\
+	_Pragma("GCC diagnostic push")				\
+	_Pragma("GCC diagnostic ignored \"-Waddress\"")		\
 	 if (!(invariant))					\
 		__builtin_unreachable();			\
+	_Pragma("GCC diagnostic pop")				\
 } while (0)
 #else
 #  define FP(invariant, ...) ((void)0)
