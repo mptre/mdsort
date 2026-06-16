@@ -39,7 +39,7 @@ static void	*callback_alloc(size_t, void *);
 static void	*callback_realloc(void *, size_t, size_t, void *);
 static void	 callback_free(void *, size_t, void *);
 
-struct buffer *
+KS_PRIVATE struct buffer *
 buffer_alloc(size_t init_size)
 {
 	return buffer_alloc_impl(init_size, 1, &(struct buffer_callbacks){
@@ -49,7 +49,7 @@ buffer_alloc(size_t init_size)
 	});
 }
 
-struct buffer *
+KS_PRIVATE struct buffer *
 buffer_alloc_impl(size_t init_size, int overshoot,
     const struct buffer_callbacks *callbacks)
 {
@@ -79,7 +79,7 @@ buffer_read_impl(struct buffer *bf, const char *path)
 	return error;
 }
 
-struct buffer *
+KS_PRIVATE struct buffer *
 buffer_read(const char *path)
 {
 	struct buffer *bf;
@@ -94,7 +94,7 @@ buffer_read(const char *path)
 	return bf;
 }
 
-struct buffer *
+KS_PRIVATE struct buffer *
 buffer_read_fd(int fd)
 {
 	struct buffer *bf;
@@ -119,7 +119,7 @@ estimate_size(int fd)
 	return (size_t)sb.st_size;
 }
 
-int
+KS_PRIVATE int
 buffer_read_fd_impl(struct buffer *bf, int fd)
 {
 	int doreserve = estimate_size(fd) != bf->bf_siz - bf->bf_len;
@@ -140,7 +140,7 @@ buffer_read_fd_impl(struct buffer *bf, int fd)
 	return 0;
 }
 
-void
+KS_PRIVATE void
 buffer_free(struct buffer *bf)
 {
 	if (bf == NULL)
@@ -149,7 +149,7 @@ buffer_free(struct buffer *bf)
 	bf->bf_callbacks.free(bf, sizeof(*bf), bf->bf_callbacks.arg);
 }
 
-int
+KS_PRIVATE int
 buffer_puts(struct buffer *bf, const char *str, size_t len)
 {
 	if (str == NULL || len == 0)
@@ -161,13 +161,13 @@ buffer_puts(struct buffer *bf, const char *str, size_t len)
 	return (int)len;
 }
 
-int
+KS_PRIVATE int
 buffer_putc(struct buffer *bf, char ch)
 {
 	return buffer_puts(bf, &ch, 1);
 }
 
-int
+KS_PRIVATE int
 buffer_printf(struct buffer *bf, const char *fmt, ...)
 {
 	va_list ap;
@@ -185,7 +185,7 @@ is_string_directive(const char *fmt)
 	return fmt[0] == '%' && fmt[1] == 's' && fmt[2] == '\0';
 }
 
-int
+KS_PRIVATE int
 buffer_vprintf(struct buffer *bf, const char *fmt, va_list ap)
 {
 	va_list cp;
@@ -219,7 +219,7 @@ buffer_vprintf(struct buffer *bf, const char *fmt, va_list ap)
 	return n;
 }
 
-char *
+KS_PRIVATE char *
 buffer_release(struct buffer *bf)
 {
 	char *ptr;
@@ -231,7 +231,7 @@ buffer_release(struct buffer *bf)
 	return ptr;
 }
 
-char *
+KS_PRIVATE char *
 buffer_str(struct buffer *bf)
 {
 	if (bf->bf_len == 0 || bf->bf_ptr[bf->bf_len - 1] != '\0') {
@@ -241,13 +241,13 @@ buffer_str(struct buffer *bf)
 	return buffer_release(bf);
 }
 
-void
+KS_PRIVATE void
 buffer_reset(struct buffer *bf)
 {
 	bf->bf_len = 0;
 }
 
-size_t
+KS_PRIVATE size_t
 buffer_pop(struct buffer *bf, size_t n)
 {
 	if (n > bf->bf_len)
@@ -256,7 +256,7 @@ buffer_pop(struct buffer *bf, size_t n)
 	return n;
 }
 
-int
+KS_PRIVATE int
 buffer_cmp(const struct buffer *a, const struct buffer *b)
 {
 	if (a->bf_len != b->bf_len)
@@ -266,25 +266,25 @@ buffer_cmp(const struct buffer *a, const struct buffer *b)
 	return memcmp(a->bf_ptr, b->bf_ptr, a->bf_len);
 }
 
-const char *
+KS_PRIVATE const char *
 buffer_get_ptr(const struct buffer *bf)
 {
 	return bf->bf_ptr;
 }
 
-size_t
+KS_PRIVATE size_t
 buffer_get_len(const struct buffer *bf)
 {
 	return bf->bf_len;
 }
 
-size_t
+KS_PRIVATE size_t
 buffer_get_size(const struct buffer *bf)
 {
 	return bf->bf_siz;
 }
 
-const char *
+KS_PRIVATE const char *
 buffer_getline(const struct buffer *bf, struct buffer_getline *getline)
 {
 	if (getline->bf == NULL) {
@@ -296,7 +296,7 @@ buffer_getline(const struct buffer *bf, struct buffer_getline *getline)
 	return buffer_getline_impl(bf, getline);
 }
 
-const char *
+KS_PRIVATE const char *
 buffer_getline_impl(const struct buffer *bf, struct buffer_getline *getline)
 {
 	const char *line, *newline;
@@ -321,7 +321,7 @@ done:
 	return NULL;
 }
 
-void
+KS_PRIVATE void
 buffer_getline_free(struct buffer_getline *getline)
 {
 	buffer_free(getline->bf);
