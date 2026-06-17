@@ -19,10 +19,7 @@
 
 #include <stdarg.h> /* va_list */
 #include <stddef.h> /* size_t */
-
-#if !defined(KS_PRIVATE)
-#  define KS_PRIVATE
-#endif
+#include "libks/private.h"
 
 struct buffer;
 

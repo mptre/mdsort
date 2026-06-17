@@ -25,6 +25,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "libks/compiler.h"
+#include "libks/private.h"
 
 struct buffer {
 	struct buffer_callbacks	 bf_callbacks;
