@@ -281,7 +281,7 @@ if [ "${_pedantic}" -eq 1 ]; then
 		CFLAGS="${CFLAGS} ${_o}"
 	done <<-CC-PEDANTIC
 	-g
-	-O${_opt}
+	-O2
 	-Wall
 	-Werror
 	-Wextra
