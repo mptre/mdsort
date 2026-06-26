@@ -22,24 +22,43 @@
 #include "libks/arena.h"
 #include "libks/buffer.h"
 #include "libks/compiler.h"
+#include "libks/private.h"
 
-static void	*callback_alloc(size_t, void *);
-static void	*callback_realloc(void *, size_t, size_t, void *);
-static void	 callback_free(void *, size_t, void *);
+static void *
+arena_buffer_callback_alloc(size_t size, void *arg)
+{
+	struct arena_scope *s = arg;
+
+	return arena_calloc(s, 1, size);
+}
+
+static void *
+arena_buffer_callback_realloc(void *ptr, size_t old_size, size_t new_size, void *arg)
+{
+	struct arena_scope *s = arg;
+
+	return arena_realloc(s, ptr, old_size, new_size);
+}
+
+static void
+arena_buffer_callback_free(void *ptr, size_t size, void *UNUSED(arg))
+{
+	arena_poison(ptr, size);
+}
 
 static struct buffer_callbacks *
 init_callbacks(struct buffer_callbacks *callbacks, struct arena_scope *s)
 {
 	*callbacks = (struct buffer_callbacks){
-	    .alloc	= callback_alloc,
-	    .realloc	= callback_realloc,
-	    .free	= callback_free,
+	    .alloc	= arena_buffer_callback_alloc,
+	    .realloc	= arena_buffer_callback_realloc,
+	    .free	= arena_buffer_callback_free,
 	    .arg	= s,
 	};
 	return callbacks;
 }
 
-struct buffer *
+KS_PRIVATE struct buffer *
 arena_buffer_alloc(struct arena_scope *s, size_t init_size)
 {
 	struct buffer_callbacks callbacks;
@@ -48,7 +67,7 @@ arena_buffer_alloc(struct arena_scope *s, size_t init_size)
 }
 
 static int
-estimate_size(int fd, size_t *size)
+arena_buffer_estimate_size(int fd, size_t *size)
 {
 	struct stat sb;
 
@@ -58,7 +77,7 @@ estimate_size(int fd, size_t *size)
 	return 1;
 }
 
-struct buffer *
+KS_PRIVATE struct buffer *
 arena_buffer_read(struct arena_scope *s, const char *path)
 {
 	struct buffer_callbacks callbacks;
@@ -71,7 +90,7 @@ arena_buffer_read(struct arena_scope *s, const char *path)
 	if (fd == -1)
 		return NULL;
 
-	if (estimate_size(fd, &init_size))
+	if (arena_buffer_estimate_size(fd, &init_size))
 		overshoot = 0;
 	bf = buffer_alloc_impl(init_size, overshoot,
 	    init_callbacks(&callbacks, s));
@@ -86,7 +105,7 @@ arena_buffer_read(struct arena_scope *s, const char *path)
 	return bf;
 }
 
-struct buffer *
+KS_PRIVATE struct buffer *
 arena_buffer_read_fd(struct arena_scope *s, int fd)
 {
 	struct buffer *bf;
@@ -99,7 +118,7 @@ arena_buffer_read_fd(struct arena_scope *s, int fd)
 	return bf;
 }
 
-const char *
+KS_PRIVATE const char *
 arena_buffer_getline(struct arena_scope *s, const struct buffer *bf,
     struct buffer_getline *getline)
 {
@@ -107,26 +126,4 @@ arena_buffer_getline(struct arena_scope *s, const struct buffer *bf,
 		getline->bf = arena_buffer_alloc(s, 1 << 10);
 
 	return buffer_getline_impl(bf, getline);
-}
-
-static void *
-callback_alloc(size_t size, void *arg)
-{
-	struct arena_scope *s = arg;
-
-	return arena_calloc(s, 1, size);
-}
-
-static void *
-callback_realloc(void *ptr, size_t old_size, size_t new_size, void *arg)
-{
-	struct arena_scope *s = arg;
-
-	return arena_realloc(s, ptr, old_size, new_size);
-}
-
-static void
-callback_free(void *ptr, size_t size, void *UNUSED(arg))
-{
-	arena_poison(ptr, size);
 }

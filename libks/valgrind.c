@@ -20,6 +20,7 @@
 
 #include <stddef.h>	/* size_t */
 #include <stdint.h>
+#include "libks/private.h"
 
 static int
 KS_valgrind_request(const uint64_t *request)
@@ -38,7 +39,7 @@ KS_valgrind_request(const uint64_t *request)
 	return d;
 }
 
-int
+KS_PRIVATE int
 KS_valgrind_is_running(void)
 {
 	static int is_running = -1;
@@ -50,7 +51,7 @@ KS_valgrind_is_running(void)
 	return is_running;
 }
 
-int
+KS_PRIVATE int
 KS_valgrind_make_mem_noaccess(const void *ptr, size_t len)
 {
 	if (!KS_valgrind_is_running())
@@ -60,7 +61,7 @@ KS_valgrind_make_mem_noaccess(const void *ptr, size_t len)
 	return KS_valgrind_request(request) == -1;
 }
 
-int
+KS_PRIVATE int
 KS_valgrind_make_mem_undefined(const void *ptr, size_t len)
 {
 	if (!KS_valgrind_is_running())
@@ -70,7 +71,7 @@ KS_valgrind_make_mem_undefined(const void *ptr, size_t len)
 	return KS_valgrind_request(request) == -1;
 }
 
-int
+KS_PRIVATE int
 KS_valgrind_make_mem_defined(const void *ptr, size_t len)
 {
 	if (!KS_valgrind_is_running())
@@ -83,26 +84,27 @@ KS_valgrind_make_mem_defined(const void *ptr, size_t len)
 #else
 
 #include "libks/compiler.h"
+#include "libks/private.h"
 
-int
+KS_PRIVATE int
 KS_valgrind_is_running(void)
 {
 	return 0;
 }
 
-int
+KS_PRIVATE int
 KS_valgrind_make_mem_noaccess(const void *UNUSED(ptr), size_t UNUSED(len))
 {
 	return 0;
 }
 
-int
+KS_PRIVATE int
 KS_valgrind_make_mem_undefined(const void *UNUSED(ptr), size_t UNUSED(len))
 {
 	return 0;
 }
 
-int
+KS_PRIVATE int
 KS_valgrind_make_mem_defined(const void *UNUSED(ptr), size_t UNUSED(len))
 {
 	return 0;

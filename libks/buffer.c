@@ -36,17 +36,31 @@ struct buffer {
 
 static int	buffer_reserve(struct buffer *, size_t, int);
 
-static void	*callback_alloc(size_t, void *);
-static void	*callback_realloc(void *, size_t, size_t, void *);
-static void	 callback_free(void *, size_t, void *);
+static void *
+buffer_callback_alloc(size_t size, void *UNUSED(arg))
+{
+	return calloc(1, size);
+}
+
+static void *
+buffer_callback_realloc(void *ptr, size_t UNUSED(old_size), size_t new_size, void *UNUSED(arg))
+{
+	return realloc(ptr, new_size);
+}
+
+static void
+buffer_callback_free(void *ptr, size_t UNUSED(size), void *UNUSED(arg))
+{
+	free(ptr);
+}
 
 KS_PRIVATE struct buffer *
 buffer_alloc(size_t init_size)
 {
 	return buffer_alloc_impl(init_size, 1, &(struct buffer_callbacks){
-	    .alloc	= callback_alloc,
-	    .realloc	= callback_realloc,
-	    .free	= callback_free,
+	    .alloc	= buffer_callback_alloc,
+	    .realloc	= buffer_callback_realloc,
+	    .free	= buffer_callback_free,
 	});
 }
 
@@ -111,7 +125,7 @@ buffer_read_fd(int fd)
 }
 
 static size_t
-estimate_size(int fd)
+buffer_estimate_size(int fd)
 {
 	struct stat sb;
 
@@ -123,7 +137,7 @@ estimate_size(int fd)
 KS_PRIVATE int
 buffer_read_fd_impl(struct buffer *bf, int fd)
 {
-	int doreserve = estimate_size(fd) != bf->bf_siz - bf->bf_len;
+	int doreserve = buffer_estimate_size(fd) != bf->bf_siz - bf->bf_len;
 
 	for (;;) {
 		ssize_t n;
@@ -362,23 +376,4 @@ buffer_reserve(struct buffer *bf, size_t len, int overshoot)
 overflow:
 	errno = EOVERFLOW;
 	return 1;
-}
-
-static void *
-callback_alloc(size_t size, void *UNUSED(arg))
-{
-	return calloc(1, size);
-}
-
-static void *
-callback_realloc(void *ptr, size_t UNUSED(old_size), size_t new_size,
-    void *UNUSED(arg))
-{
-	return realloc(ptr, new_size);
-}
-
-static void
-callback_free(void *ptr, size_t UNUSED(size), void *UNUSED(arg))
-{
-	free(ptr);
 }

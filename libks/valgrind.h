@@ -18,10 +18,11 @@
 #define LIBKS_VALGRIND_H
 
 #include <stddef.h> /* size_t */
+#include "libks/private.h"
 
-int KS_valgrind_is_running(void);
-int KS_valgrind_make_mem_noaccess(const void *, size_t);
-int KS_valgrind_make_mem_undefined(const void *, size_t);
-int KS_valgrind_make_mem_defined(const void *, size_t);
+KS_PRIVATE int KS_valgrind_is_running(void);
+KS_PRIVATE int KS_valgrind_make_mem_noaccess(const void *, size_t);
+KS_PRIVATE int KS_valgrind_make_mem_undefined(const void *, size_t);
+KS_PRIVATE int KS_valgrind_make_mem_defined(const void *, size_t);
 
 #endif /* !LIBKS_VALGRIND_H */

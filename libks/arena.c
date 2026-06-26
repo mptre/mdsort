@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include "libks/arithmetic.h"
 #include "libks/compiler.h"
+#include "libks/private.h"
+#include "libks/private.h"
 #include "libks/valgrind.h"
 
 #if defined(__has_feature)
@@ -382,7 +384,7 @@ arena_frame_alloc(struct arena *a, size_t frame_size)
 	return 1;
 }
 
-struct arena *
+KS_PRIVATE struct arena *
 arena_alloc(const char *name)
 {
 	struct arena *a;
@@ -412,7 +414,7 @@ arena_alloc(const char *name)
 	return a;
 }
 
-void
+KS_PRIVATE void
 arena_free(struct arena *a)
 {
 	if (a == NULL)
@@ -433,7 +435,7 @@ arena_free(struct arena *a)
 	}
 }
 
-void
+KS_PRIVATE void
 arena_scope_leave(struct arena_scope *s)
 {
 	struct arena *a = s->arena;
@@ -471,7 +473,7 @@ arena_scope_leave(struct arena_scope *s)
 	arena_rele(a);
 }
 
-struct arena_scope
+KS_PRIVATE struct arena_scope
 arena_scope_enter_impl(struct arena *a, const char *fun, int lno)
 {
 	struct arena_scope s;
@@ -529,7 +531,7 @@ arena_scope_validate(struct arena *a, const struct arena_scope *s, size_t size)
 	__builtin_trap();
 }
 
-void *
+KS_PRIVATE void *
 arena_malloc(struct arena_scope *s, size_t size)
 {
 	struct arena *a = s->arena;
@@ -568,7 +570,7 @@ arena_malloc(struct arena_scope *s, size_t size)
 	return ptr;
 }
 
-void *
+KS_PRIVATE void *
 arena_calloc(struct arena_scope *s, size_t nmemb, size_t size)
 {
 	void *ptr;
@@ -613,7 +615,7 @@ arena_realloc_fast(struct arena_scope *s, char *ptr, size_t old_size,
 	return 1;
 }
 
-void *
+KS_PRIVATE void *
 arena_realloc(struct arena_scope *s, void *ptr, size_t old_size,
     size_t new_size)
 {
@@ -636,7 +638,7 @@ arena_realloc(struct arena_scope *s, void *ptr, size_t old_size,
 	return new_ptr;
 }
 
-char *
+KS_PRIVATE char *
 arena_sprintf(struct arena_scope *s, const char *fmt, ...)
 {
 	va_list ap, cp;
@@ -666,13 +668,13 @@ arena_sprintf(struct arena_scope *s, const char *fmt, ...)
 	return str;
 }
 
-char *
+KS_PRIVATE char *
 arena_strdup(struct arena_scope *s, const char *src)
 {
 	return arena_strndup(s, src, strlen(src));
 }
 
-char *
+KS_PRIVATE char *
 arena_strndup(struct arena_scope *s, const char *src, size_t len)
 {
 	char *dst;
@@ -687,7 +689,7 @@ arena_strndup(struct arena_scope *s, const char *src, size_t len)
 	return dst;
 }
 
-void
+KS_PRIVATE void
 arena_cleanup(struct arena_scope *s, void (*fun)(void *), void *ptr)
 {
 	struct arena_cleanup *ac;
@@ -699,14 +701,14 @@ arena_cleanup(struct arena_scope *s, void (*fun)(void *), void *ptr)
 	s->cleanup = ac;
 }
 
-size_t
+KS_PRIVATE size_t
 arena_capacity(const struct arena_scope *s)
 {
 	const struct arena_frame *frame = s->arena->frame;
 	return frame->size - frame->len;
 }
 
-void
+KS_PRIVATE void
 arena_poison(const void *ptr, size_t size)
 {
 	ASAN_POISON_MEMORY_REGION(ptr, size);

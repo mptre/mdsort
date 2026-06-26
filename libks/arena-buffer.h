@@ -17,15 +17,16 @@
 #ifndef LIBKS_ARENA_BUFFER_H
 #define LIBKS_ARENA_BUFFER_H
 
-#include <stddef.h>	/* size_t */
+#include <stddef.h> /* size_t */
+#include "libks/private.h"
 
 struct arena_scope;
 struct buffer_getline;
 
-struct buffer	*arena_buffer_alloc(struct arena_scope *, size_t);
-struct buffer	*arena_buffer_read(struct arena_scope *, const char *);
-struct buffer	*arena_buffer_read_fd(struct arena_scope *, int);
-const char	*arena_buffer_getline(struct arena_scope *,
+KS_PRIVATE struct buffer *arena_buffer_alloc(struct arena_scope *, size_t);
+KS_PRIVATE struct buffer *arena_buffer_read(struct arena_scope *, const char *);
+KS_PRIVATE struct buffer *arena_buffer_read_fd(struct arena_scope *, int);
+KS_PRIVATE const char *arena_buffer_getline(struct arena_scope *,
     const struct buffer *, struct buffer_getline *);
 
 #endif /* !LIBKS_ARENA_BUFFER_H */
