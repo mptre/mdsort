@@ -219,12 +219,14 @@ check_yystype() {
 }
 
 _fuzz=''
+_opt=2
 _pedantic=0
 _sanitize=''
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 	--fuzz)		shift; _fuzz="$1"; _sanitize="address";;
+	--debug)	_opt=0;;
 	--pedantic)	_pedantic=1;;
 	--sanitize)	shift; _sanitize="${1}";;
 	*)		;;
@@ -270,12 +272,16 @@ INSTALL_MAN="$(make_variable INSTALL_MAN || echo "${INSTALL}")"
 
 # Following chunks must happen after CC is defined.
 
+if [ "${_opt}" -eq 0 ]; then
+	CFLAGS="${CFLAGS} -g -O0"
+fi
+
 if [ "${_pedantic}" -eq 1 ]; then
 	while read -r _o; do
 		CFLAGS="${CFLAGS} ${_o}"
 	done <<-CC-PEDANTIC
 	-g
-	-O2
+	-O${_opt}
 	-Wall
 	-Werror
 	-Wextra
