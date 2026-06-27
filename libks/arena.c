@@ -27,7 +27,6 @@
 #include "libks/arithmetic.h"
 #include "libks/compiler.h"
 #include "libks/private.h"
-#include "libks/private.h"
 #include "libks/valgrind.h"
 
 #if defined(__has_feature)
