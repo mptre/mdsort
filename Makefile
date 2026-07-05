@@ -145,6 +145,7 @@ CPPCHECKFLAGS+=	--quiet
 CPPCHECKFLAGS+=	--check-level=exhaustive
 CPPCHECKFLAGS+=	--enable=all
 CPPCHECKFLAGS+=	--error-exitcode=1
+CPPCHECKFLAGS+=	--library=bsd
 CPPCHECKFLAGS+=	--max-configs=1
 CPPCHECKFLAGS+=	--suppress-xml=cppcheck-suppressions.xml
 CPPCHECKFLAGS+=	-D__has_builtin
