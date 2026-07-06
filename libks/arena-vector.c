@@ -58,19 +58,15 @@ arena_vector_init(struct arena_scope *s, void **vv, size_t stride, size_t n)
 size_t
 arena_vector_alloc(void **vv)
 {
-	if (vector_type(*vv) != VECTOR_ARENA) {
+	if (vector_type(*vv) != VECTOR_ARENA)
 		errx(1, "expected arena vector");
-		__builtin_unreachable();
-	}
 	return vector_alloc(vv, 0);
 }
 
 size_t
 arena_vector_calloc(void **vv)
 {
-	if (vector_type(*vv) != VECTOR_ARENA) {
+	if (vector_type(*vv) != VECTOR_ARENA)
 		errx(1, "expected arena vector");
-		__builtin_unreachable();
-	}
 	return vector_alloc(vv, 1);
 }
