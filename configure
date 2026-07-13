@@ -306,6 +306,7 @@ if [ "${_pedantic}" -eq 1 ]; then
 	-Wtautological-unsigned-enum-zero-compare
 	-Wunreachable-code-aggressive
 	-Wused-but-marked-unused
+	-Wvla
 	-Wno-gnu-zero-variadic-macro-arguments
 	CC-PEDANTIC-OPTIONAL
 
