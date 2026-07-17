@@ -86,6 +86,19 @@ void	vector_sort(void *, int (*)(const void *, const void *));
 	KS_binary_search((vc), _n, (cmp), (needle));			\
 })
 
+#define VECTOR_FIND(vc, candidate, ...) __extension__ ({		\
+	__typeof__(vc) _match = NULL;					\
+	for (size_t _i = 0; _i < VECTOR_LENGTH(vc); _i++) {		\
+		__typeof__(vc) candidate = &(vc)[_i];			\
+		int _rv = __extension__ __VA_ARGS__;			\
+		if (_rv) {						\
+			_match = candidate;				\
+			break;						\
+		}							\
+	}								\
+	_match;								\
+})
+
 #define VECTOR_FIRST(vc) __extension__ ({				\
 	size_t _i = vector_first((void *)(vc));				\
 	_i == ULONG_MAX ? NULL : (vc) + _i;				\
