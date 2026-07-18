@@ -22,7 +22,7 @@ if testcase "destination missing"; then
 	EOF
 fi
 
-if testcase "interpolation too long"; then
+if testcase -t musl "interpolation too long"; then
 	_to="user@$(genstr "${PATH_MAX}").com"
 	mkmd "src"
 	mkmsg "src/new" -- "To" "${_to}"
@@ -30,7 +30,7 @@ if testcase "interpolation too long"; then
 	maildir "src" { match header "To" /(.+)/ move "\1" }
 	EOF
 	mdsort -e - <<-EOF
-	mdsort: match_interpolate: $(errno ENAMETOOLONG)
+	mdsort: match_interpolate: Filename too long
 	EOF
 fi
 
