@@ -90,7 +90,7 @@ void	vector_sort(void *, int (*)(const void *, const void *));
 	__typeof__(vc) _match = NULL;					\
 	for (size_t _i = 0; _i < VECTOR_LENGTH(vc); _i++) {		\
 		__typeof__(vc) candidate = &(vc)[_i];			\
-		int _rv = __extension__ __VA_ARGS__;			\
+		int _rv = !!(__extension__ __VA_ARGS__);		\
 		if (_rv) {						\
 			_match = candidate;				\
 			break;						\
