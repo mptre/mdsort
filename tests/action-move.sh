@@ -30,7 +30,7 @@ if testcase -t musl "interpolation too long"; then
 	maildir "src" { match header "To" /(.+)/ move "\1" }
 	EOF
 	mdsort -e - <<-EOF
-	mdsort: match_interpolate: Filename too long
+	mdsort: match_interpolate: File name too long
 	EOF
 fi
 
