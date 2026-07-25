@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 		goto out;
 	}
 
-	/* Drop exec privilegies unless needed. */
+	/* Drop exec privileges unless needed. */
 	if (!config_has_exec(&cl, &env)) {
 		if (pledge("stdio rpath wpath cpath fattr", NULL) == -1)
 			err(1, "pledge");

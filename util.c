@@ -85,7 +85,7 @@ pathjoin(char *buf, size_t bufsiz, const char *dirname, const char *filename)
  * Writes the given number of components from path to buf.
  * The component range as given by beg and end may either be positive (start
  * from the beginning) or negative (start from the end).
- * If beg is equal to end, only a single component of the path is extract.
+ * If beg is equal to end, only a single component of the path is extracted.
  */
 char *
 pathslice(const char *path, char *buf, size_t bufsiz, int beg, int end)

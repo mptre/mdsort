@@ -766,7 +766,7 @@ expr_eval_match(struct expr *ex, struct expr_eval_arg *ea)
 	/*
 	 * Behaves like EXPR_TYPE_AND with the exception of adding itself to the
 	 * match list. Such match is used as a sentinel when finding matches
-	 * eligble for interpolation.
+	 * eligible for interpolation.
 	 */
 	mh = match_alloc(ex, ea->ea_msg, ea->ea_arena.eternal_scope);
 	if (matches_append(ea->ea_ml, mh))
@@ -870,7 +870,7 @@ expr_eval_pass(struct expr *ex, struct expr_eval_arg *ea)
 		return EXPR_ERROR;
 
 	/*
-	 * Return no match in order stop evaluation and move on to the next
+	 * Return no match in order to stop evaluation and move on to the next
 	 * expression within the same block. The return value is later inverted
 	 * by expr_eval_block() in order to not continue evaluation outside of
 	 * the current block.

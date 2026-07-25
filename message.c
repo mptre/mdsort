@@ -270,7 +270,7 @@ message_write(struct message *msg, int fd)
 	int newfd;
 
 	/*
-	 * Since fclose(3) uncondtionally closes the file descriptor, operate on
+	 * Since fclose(3) unconditionally closes the file descriptor, operate on
 	 * a duplicate in order to prevent side effects.
 	 */
 	newfd = fcntl(fd, F_DUPFD_CLOEXEC, 0);
@@ -551,7 +551,7 @@ message_get_name(const struct message *msg)
 
 /*
  * Parse all attachments in message into the given message list.
- * Returns non NULL-on success, even if no attachments where found.
+ * Returns non NULL-on success, even if no attachments were found.
  */
 struct message **
 message_get_attachments(struct message *msg)
