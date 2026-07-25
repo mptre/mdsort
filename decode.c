@@ -13,7 +13,20 @@ static ssize_t	b64_pton(const char *, unsigned char *, size_t);
 static void	quoted_printable_decode_buffer(struct buffer *, const char *,
     size_t, int);
 
-static int	htoa(char, char *);
+static int
+htoa(char c, char *res)
+{
+	char up = toupper((int)c);
+	if (up >= 'A' && up <= 'F') {
+		*res = 10 + (up - 'A');
+		return 0;
+	}
+	if (up >= '0' && up <= '9') {
+		*res = up - '0';
+		return 0;
+	}
+	return 1;
+}
 
 const char *
 base64_decode(const char *str, struct arena_scope *s)
@@ -300,22 +313,4 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 	}
 
 	return (ssize_t)tarindex;
-}
-
-/*
- * Hexadecimal to ASCII.
- */
-static int
-htoa(char c, char *res)
-{
-	char up = toupper((int)c);
-	if (up >= 'A' && up <= 'F') {
-		*res = 10 + (up - 'A');
-		return 0;
-	}
-	if (up >= '0' && up <= '9') {
-		*res = up - '0';
-		return 0;
-	}
-	return 1;
 }
