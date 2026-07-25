@@ -378,6 +378,19 @@ if testcase "many headers"; then
 	refute_empty "dst/new"
 fi
 
+if testcase "colon in maildir path"; then
+	mkmd "src:2015" "dst"
+	mkmsg "src:2015/new"
+	cat <<-EOF >"${CONF}"
+	maildir "src:2015" {
+		match all move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src:2015/new"
+	refute_empty "dst/new"
+fi
+
 if testcase -t fault "readdir failure"; then
 	mkmd "src"
 	mkmsg "src/new"
