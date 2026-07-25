@@ -1076,6 +1076,9 @@ expr_regcopy(const struct expr *ex, struct match *mh, const char *str,
 		char *cpy;
 		size_t eo, j, len, so;
 
+		if (off[i].rm_so == -1 || off[i].rm_eo == -1)
+			continue;
+
 		so = (size_t)off[i].rm_so;
 		eo = (size_t)off[i].rm_eo;
 		len = eo - so;

@@ -513,7 +513,7 @@ match_backref(const struct match *mh, const struct backref *br)
 			break;
 		}
 	}
-	if (mi == NULL || br->br_si >= mi->mh_nmatches)
+	if (mi == NULL || br->br_si >= mi->mh_nmatches || mi->mh_matches[br->br_si].m_str == NULL)
 		return NULL;
 
 	return mi->mh_matches[br->br_si].m_str;

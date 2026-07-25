@@ -184,6 +184,19 @@ if testcase "interpolation out of bounds"; then
 	EOF
 fi
 
+if testcase -t regress "interpolation out of bounds"; then
+	mkmd "src"
+	mkmsg "src/new" -- "To" "second@example.com"
+	cat <<-'EOF' >"${CONF}"
+	maildir "src" {
+		match header "To" /(first)|(second)/ move "\1"
+	}
+	EOF
+	mdsort -e - <<-'EOF'
+	mdsort: \1/new: invalid back-reference
+	EOF
+fi
+
 if testcase "interpolation out of range"; then
 	mkmd "src"
 	mkmsg "src/new" -- "To" "user@example.com"
