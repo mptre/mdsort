@@ -308,12 +308,13 @@ b64_pton(const char *src, unsigned char *target, size_t targsize)
 static int
 htoa(char c, char *res)
 {
-	if (c >= 'A' && c <= 'F') {
-		*res = 10 + (c - 'A');
+	char up = toupper((int)c);
+	if (up >= 'A' && up <= 'F') {
+		*res = 10 + (up - 'A');
 		return 0;
 	}
-	if (c >= '0' && c <= '9') {
-		*res = c - '0';
+	if (up >= '0' && up <= '9') {
+		*res = up - '0';
 		return 0;
 	}
 	return 1;

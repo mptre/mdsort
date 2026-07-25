@@ -82,6 +82,19 @@ if testcase "trailing equal"; then
 	refute_empty "dst/new"
 fi
 
+if testcase "lowercase hexadecimal"; then
+	mkmd "src" "dst"
+	printf 'f=6fo\n' | mkmsg -b "src/new" -- "Content-Transfer-Encoding" "quoted-printable"
+	cat <<-EOF >"${CONF}"
+	maildir "src" {
+		match body /^foo$/ move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
 if testcase "dry run"; then
 	mkmd "src"
 	mkmsg -b "src/new" -- "Content-Transfer-Encoding" "quoted-printable" <<-EOF
