@@ -633,7 +633,7 @@ message_is_content_type(const struct message *msg, const char *needle)
 		return 0;
 
 	len = strlen(needle);
-	if (strncmp(type, needle, len) != 0 ||
+	if (strncasecmp(type, needle, len) != 0 ||
 	    (type[len] != ';' && type[len] != '\0'))
 		return 0;
 
@@ -965,7 +965,7 @@ parseboundary(const char *str, const char **boundary, struct arena_scope *s)
 
 	needle = "multipart/";
 	len = strlen(needle);
-	if (strncmp(str, needle, len) != 0)
+	if (strncasecmp(str, needle, len) != 0)
 		return 0;
 	str += len;
 	for (; *str != '\0' && *str != ';'; str++)

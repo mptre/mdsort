@@ -230,6 +230,22 @@ if testcase "content type boundary ordering"; then
 	refute_empty "dst/new"
 fi
 
+if testcase "content type case insensitive"; then
+	mkmd "src" "dst"
+	printf -- '--deadbeef\nContent-Type: text/calendar\n\nfirst\n--deadbeef--\n' |
+	mkmsg -H -b "src/new" -- \
+		"Content-Type" "MULTIPART/MIXED; boundary=\"deadbeef\""
+	cat <<-EOF >"${CONF}"
+	maildir "src" {
+		match attachment header "Content-Type" /text\/calendar/ \
+			move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
+fi
+
 if testcase "terminating boundary invalid"; then
 	mkmd "src"
 	mkmsg -b -H "src/new" <<-EOF -- \
