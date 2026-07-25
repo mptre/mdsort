@@ -172,20 +172,6 @@ if testcase "content type boundary empty"; then
 	refute_empty "src/new"
 fi
 
-if testcase "content type boundary invalid"; then
-	mkmd "src"
-	mkmsg -H "src/new" -- "Content-Type" "multipart/alternative; boundary=\"xxx"
-	cat <<-EOF >"${CONF}"
-	maildir "src" {
-		match attachment all move "dst"
-	}
-	EOF
-	mdsort -e - <<-EOF
-	mdsort: $(findmsg "src/new"): invalid boundary
-	EOF
-	refute_empty "src/new"
-fi
-
 if testcase "content type boundary missing"; then
 	mkmd "src"
 	mkmsg -H "src/new" -- "Content-Type" "multipart/alternative"
@@ -211,6 +197,21 @@ if testcase "content type boundary without attachments"; then
 	EOF
 	mdsort -e
 	refute_empty "src/new"
+fi
+
+if testcase "content type boundary without quotes"; then
+	mkmd "src" "dst"
+	printf -- '--deadbeef\nContent-Type: text/calendar\n\nfirst\n--deadbeef--\n' |
+	mkmsg -H -b "src/new" -- "Content-Type" "multipart/mixed; boundary=deadbeef"
+	cat <<-EOF >"${CONF}"
+	maildir "src" {
+		match attachment header "Content-Type" /text\/calendar/ \
+			move "dst"
+	}
+	EOF
+	mdsort
+	assert_empty "src/new"
+	refute_empty "dst/new"
 fi
 
 if testcase "terminating boundary invalid"; then

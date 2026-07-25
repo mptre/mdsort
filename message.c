@@ -975,16 +975,16 @@ parseboundary(const char *str, const char **boundary, struct arena_scope *s)
 	str++;
 	str += nspaces(str);
 
-	needle = "boundary=\"";
+	needle = "boundary=";
 	len = strlen(needle);
 	if (strncmp(str, needle, len) != 0)
 		return 0;
+	if (str[len] == '"')
+		len++;
 	str += len;
 	p = str;
 	for (; *p != '\0' && *p != '"'; p++)
 		continue;
-	if (*p != '"')
-		return -1;
 	len = (size_t)(p - str);
 	if (len == 0)
 		return -1;
