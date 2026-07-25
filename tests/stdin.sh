@@ -94,6 +94,21 @@ if testcase "mbox separator"; then
 	refute_empty "dst/new"
 fi
 
+if testcase -t fault "short write"; then
+	cat <<-EOF >"${TMP1}"
+	From user@localhost Wed Dec 13 00:00:01 2020
+	To: to
+
+	EOF
+	cat <<-EOF >"${CONF}"
+	stdin { match all move "dst" }
+	EOF
+	mdsort -t -f "name=maildir_stdin" -- - <"${TMP1}" | grep fault >"${TMP2}"
+	assert_file - "${TMP2}" <<-EOF
+	mdsort: fault: maildir_stdin
+	EOF
+fi
+
 if testcase "dry run"; then
 	cat <<-EOF >"${CONF}"
 	stdin { match all move "dst" }

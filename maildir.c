@@ -458,6 +458,10 @@ maildir_stdin(struct maildir *md, const struct environment *env)
 			warn("write: %s/%s", path, name);
 			error = 1;
 			goto out;
+		} else if (nw < nr || FAULT("maildir_stdin")) {
+			warnx("write: %s/%s: Partial write", path, name);
+			error = 1;
+			goto out;
 		}
 	}
 
