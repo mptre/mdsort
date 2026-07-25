@@ -234,28 +234,28 @@ TESTFLAGS?=	-Tfault
 all: ${PROG_mdsort}
 
 ${PROG_mdsort}: ${OBJS_mdsort}
-	${CC} ${DEBUG} -o ${PROG_mdsort} ${OBJS_mdsort} ${LDFLAGS}
+	${Q}${CC} ${DEBUG} -o ${PROG_mdsort} ${OBJS_mdsort} ${LDFLAGS}
 
 ${PROG_test}: ${OBJS_test}
-	${CC} ${DEBUG} -o ${PROG_test} ${OBJS_test} ${LDFLAGS}
+	${Q}${CC} ${DEBUG} -o ${PROG_test} ${OBJS_test} ${LDFLAGS}
 
 ${PROG_fuzz-config}: ${OBJS_fuzz-config}
-	${CC} ${DEBUG} -o ${PROG_fuzz-config} ${OBJS_fuzz-config} ${LDFLAGS}
+	${Q}${CC} ${DEBUG} -o ${PROG_fuzz-config} ${OBJS_fuzz-config} ${LDFLAGS}
 
 ${PROG_fuzz-message}: ${OBJS_fuzz-message}
-	${CC} ${DEBUG} -o ${PROG_fuzz-message} ${OBJS_fuzz-message} ${LDFLAGS}
+	${Q}${CC} ${DEBUG} -o ${PROG_fuzz-message} ${OBJS_fuzz-message} ${LDFLAGS}
 
 fuzz: ${PROG_fuzz-config} ${PROG_fuzz-message}
 
 clean:
-	rm -f ${DEPS_mdsort} ${OBJS_mdsort} ${PROG_mdsort} parse.c y.tab.h \
+	${Q}rm -f ${DEPS_mdsort} ${OBJS_mdsort} ${PROG_mdsort} parse.c y.tab.h \
 		${DEPS_test} ${OBJS_test} ${PROG_test} \
 		${DEPS_fuzz-config} ${OBJS_fuzz-config} ${PROG_fuzz-config} \
 		${DEPS_fuzz-message} ${OBJS_fuzz-message} ${PROG_fuzz-message}
 .PHONY: clean
 
 cleandir: clean
-	cd ${.CURDIR} && rm -f config.h config.log config.mk
+	${Q}cd ${.CURDIR} && rm -f config.h config.log config.mk
 .PHONY: cleandir
 
 dist:
@@ -265,41 +265,41 @@ dist:
 .PHONY: dist
 
 format:
-	cd ${.CURDIR} && knfmt -is ${KNFMT}
+	${Q}cd ${.CURDIR} && knfmt -is ${KNFMT}
 .PHONY: format
 
 install: all
-	@mkdir -p ${DESTDIR}${BINDIR}
-	${INSTALL} ${PROG_mdsort} ${DESTDIR}${BINDIR}
-	@mkdir -p ${DESTDIR}${MANDIR}/man1
-	${INSTALL_MAN} ${.CURDIR}/mdsort.1 ${DESTDIR}${MANDIR}/man1
-	@mkdir -p ${DESTDIR}${MANDIR}/man5
-	${INSTALL_MAN} ${.CURDIR}/mdsort.conf.5 ${DESTDIR}${MANDIR}/man5
+	${Q}mkdir -p ${DESTDIR}${BINDIR}
+	${Q}${INSTALL} ${PROG_mdsort} ${DESTDIR}${BINDIR}
+	${Q}mkdir -p ${DESTDIR}${MANDIR}/man1
+	${Q}${INSTALL_MAN} ${.CURDIR}/mdsort.1 ${DESTDIR}${MANDIR}/man1
+	${Q}mkdir -p ${DESTDIR}${MANDIR}/man5
+	${Q}${INSTALL_MAN} ${.CURDIR}/mdsort.conf.5 ${DESTDIR}${MANDIR}/man5
 .PHONY: install
 
 lint:
-	cd ${.CURDIR} && knfmt -ds ${KNFMT}
-	cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
+	${Q}cd ${.CURDIR} && knfmt -ds ${KNFMT}
+	${Q}cd ${.CURDIR} && mandoc -Tlint -Wstyle mdsort.1 mdsort.conf.5
 .PHONY: lint
 
 lint-clang-tidy:
-	cd ${.CURDIR} && clang-tidy --quiet ${CLANGTIDY} -- ${CPPFLAGS}
+	${Q}cd ${.CURDIR} && clang-tidy --quiet ${CLANGTIDY} -- ${CPPFLAGS}
 .PHONY: lint-clang-tidy
 
 lint-cppcheck:
-	cd ${.CURDIR} && cppcheck ${CPPCHECKFLAGS} ${CPPCHECK}
+	${Q}cd ${.CURDIR} && cppcheck ${CPPCHECKFLAGS} ${CPPCHECK}
 .PHONY: lint-cppcheck
 
 lint-include-what-you-use:
-	cd ${.CURDIR} && iwyu-filter ${IWYUFLAGS} -- ${IWYU}
+	${Q}cd ${.CURDIR} && iwyu-filter ${IWYUFLAGS} -- ${IWYU}
 .PHONY: lint-include-what-you-use
 
 lint-shellcheck:
-	cd ${.CURDIR} && shellcheck ${SHELLCHECKFLAGS} ${SHLINT}
+	${Q}cd ${.CURDIR} && shellcheck ${SHELLCHECKFLAGS} ${SHLINT}
 .PHONY: lint-shellcheck
 
 test: ${PROG_mdsort} test-${PROG_test}
-	${MAKE} -C ${.CURDIR}/tests \
+	${Q}${MAKE} -C ${.CURDIR}/tests \
 		"COREDUMP=${.CURDIR}" \
 		"MDSORT=${.OBJDIR}/${PROG_mdsort}" \
 		"VALGRINDRC=${.CURDIR}/.valgrindrc" \

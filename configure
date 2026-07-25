@@ -432,13 +432,13 @@ if make_has_object_dir; then
 
 .SUFFIXES: .c .o
 .c.o:
-	\${CC} \${CPPFLAGS} \${CFLAGS} \${DEBUG} -c -o \${<:\${.CURDIR}/%.c=%.o} \$<
+	\${Q}\${CC} \${CPPFLAGS} \${CFLAGS} \${DEBUG} -c -o \${<:\${.CURDIR}/%.c=%.o} \$<
 EOF
 else
 	cat <<EOF
 
 .SUFFIXES: .c .o
 .c.o:
-	\${CC} \${CPPFLAGS} \${CFLAGS} \${DEBUG} -c -o \$@ \$<
+	\${Q}\${CC} \${CPPFLAGS} \${CFLAGS} \${DEBUG} -c -o \$@ \$<
 EOF
 fi
