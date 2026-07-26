@@ -1,3 +1,35 @@
+# 11.6.2 - 2026-07-26
+
+## Bug fixes
+
+- Decode lowercase quoted printable encodings in headers and bodies.
+  (808a66f2d599)
+  (Anton Lindqvist)
+
+- Only consider message flags as part of the file name.
+  (fc0488f635a0)
+  (Anton Lindqvist)
+
+- Content type boundary is not required to be quoted.
+  (c4659e668dd1)
+  (Anton Lindqvist)
+
+- Content type boundary can be positioned anywhere.
+  (58615637b2f7, cb62a85af691)
+  (Anton Lindqvist)
+
+- Make content type comparison case insensitive.
+  (614018a08134)
+  (Anton Lindqvist)
+
+- Avoid copying absent regular expression matches.
+  (31ec4b1e21c5)
+  (Anton Lindqvist)
+
+- Detect partial writes during stdin delivery.
+  (d4a8b5baecd0)
+  (Anton Lindqvist)
+
 # 11.6.1 - 2026-05-07
 
 ## Bug fixes
