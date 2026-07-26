@@ -16,7 +16,7 @@ static void	quoted_printable_decode_buffer(struct buffer *, const char *,
 static int
 htoa(char c, char *res)
 {
-	char up = toupper((int)c);
+	char up = toupper((unsigned char)c);
 	if (up >= 'A' && up <= 'F') {
 		*res = 10 + (up - 'A');
 		return 0;
