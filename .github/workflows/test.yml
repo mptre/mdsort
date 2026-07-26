@@ -78,8 +78,7 @@ jobs:
         env:
           CC: musl-gcc
           CPPFLAGS: -DDIAGNOSTIC
-          MUSL: 1
-          TESTFLAGS: -Tfdleak
+          TESTFLAGS: -Tfdleak -Tmusl
         run: |
           ./configure --pedantic
           make -j`nproc` test
