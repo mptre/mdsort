@@ -983,7 +983,7 @@ parseboundary(const char *str, const char **boundary, struct arena_scope *s)
 	if (*p == '"')
 		p++;
 	str = p;
-	for (; *p != '\0' && *p != '"'; p++)
+	for (; *p != '\0' && *p != '"' && *p != ';'; p++)
 		continue;
 	len = (size_t)(p - str);
 	if (len == 0)
