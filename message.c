@@ -551,7 +551,7 @@ message_get_name(const struct message *msg)
 
 /*
  * Parse all attachments in message into the given message list.
- * Returns non NULL-on success, even if no attachments were found.
+ * Returns non-NULL on success, even if no attachments were found.
  */
 struct message **
 message_get_attachments(struct message *msg)
